@@ -10,7 +10,7 @@
     <inceptionYear>2016</inceptionYear>
     <description>BaseCubeOne Ontology Library</description>
 
-    <url>https://github.com/openbase/jps.git/wiki</url>
+    <url>https://github.com/openbase/ontology.lib.git/wiki</url>
 
     <organization>
         <name>openbase.org</name>
@@ -18,6 +18,18 @@
     </organization>
 
     <developers>
+        <developer>
+            <id>agatting</id>
+            <name>Andreas Gatting</name>
+            <email>agatting@techfak.uni-bielefeld.de</email>
+            <url>https://github.com/agatting</url>
+            <organization>openbase.org</organization>
+            <organizationUrl>https://github.com/openbase</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
         <developer>
             <id>DivineThreepwood</id>
             <name>Marian Pohling</name>
@@ -27,19 +39,6 @@
             <organizationUrl>https://github.com/openbase</organizationUrl>
             <roles>
                 <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-        <developer>
-            <id>pLeminoq</id>
-            <name>Tamino Huxohl</name>
-            <email>taminoh@ymail.com</email>
-            <url>https://github.com/pLeminoq</url>
-            <organization>openbase.org</organization>
-            <organizationUrl>https://github.com/openbase</organizationUrl>
-            <roles>
-                <role>developer</role>
             </roles>
             <timezone>+1</timezone>
         </developer>
@@ -55,9 +54,9 @@
     <packaging>jar</packaging>
     
     <scm>
-        <connection>scm:git:git@github.com/openbase/jps.git</connection>
-        <developerConnection>scm:git:git@github.com/openbase/jps.git</developerConnection>
-        <url>git@github.com/openbase/jps.git</url>
+        <connection>scm:git:git@github.com/openbase/ontology.lib.git</connection>
+        <developerConnection>scm:git:git@github.com/openbase/ontology.lib.git</developerConnection>
+        <url>git@github.com/openbase/ontology.lib.git</url>
     </scm>
 
     <build>
@@ -183,10 +182,20 @@
             </build>
         </profile>
     </profiles>
-	
+
+    <dependency.bco.manager.version>1.1-SNAPSHOT</dependency.bco.manager.version>
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skipTests>false</skipTests>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <test.configs>${project.basedir}/target/generated-test-config</test.configs>
+        <target.java.version>1.8</target.java.version>
+        <source.java.version>1.8</source.java.version>
+        <plugin.checkstyle.version>2.15</plugin.checkstyle.version>
+        <plugin.pmd.version>3.5</plugin.pmd.version>
+        <plugin.javadoc.version>2.10.3</plugin.javadoc.version>
+        <failOnStyleError>false</failOnStyleError>
+        <dependency.jul.version>1.1-SNAPSHOT</dependency.jul.version>
+        <dependency.bco.dal.version>1.1-SNAPSHOT</dependency.bco.dal.version>
     </properties>
 
     <dependencies>
@@ -195,15 +204,51 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.21</version>
         </dependency>
+
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.21</version>
-        </dependency>       
+            <groupId>org.openbase</groupId>
+            <artifactId>jul.extension.rct</artifactId>
+            <version>${dependency.jul.version}</version>
+        </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
+            <groupId>org.openbase</groupId>
+            <artifactId>jul.schedule</artifactId>
+            <version>${dependency.jul.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>dal.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>registry.unit.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>manager.location.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>manager.user.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>manager.scene.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>manager.app.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>manager.agent.remote</artifactId>
+            <version>${dependency.bco.dal.version}</version>
         </dependency>
      
         <dependency>
