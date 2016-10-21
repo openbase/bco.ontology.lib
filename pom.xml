@@ -103,6 +103,52 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${plugin.checkstyle.version}</version>
+                <configuration>
+                    <configLocation>${project.basedir}/codecheck/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${project.basedir}/codecheck</propertyExpansion>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                    <consoleOutput>true</consoleOutput>
+                    <violationSeverity>warning</violationSeverity>
+                    <failOnViolation>${failOnStyleError}</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>checkstyle-validate</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Generate PMD warnings on the command line during compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${plugin.pmd.version}</version>
+                <configuration>
+                    <targetJdk>${target.java.version}</targetJdk>
+                    <rulesets>
+                        <ruleset>${project.basedir}/codecheck/pmd-rules.xml</ruleset>
+                    </rulesets>
+                    <failOnViolation>${failOnStyleError}</failOnViolation>
+                    <verbose>true</verbose>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pmd-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>cpd-check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>
