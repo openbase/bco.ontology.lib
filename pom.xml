@@ -72,36 +72,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>1.9</version>
-                <configuration>
-                    <verbose>false</verbose>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>first</id>
-                        <goals>
-                            <goal>update-file-header</goal>
-                        </goals>
-                        <phase>process-sources</phase>
-                        <configuration>
-                            <licenseName>lgpl_v3</licenseName>
-                            <roots>
-                                <root>src/main/java</root>
-                                <root>src/test</root>
-                            </roots>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>download-licenses</id>
-                        <goals>
-                            <goal>download-licenses</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${plugin.checkstyle.version}</version>
@@ -229,7 +199,6 @@
         </profile>
     </profiles>
 
-    <dependency.bco.manager.version>1.1-SNAPSHOT</dependency.bco.manager.version>
     <properties>
         <skipTests>false</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -242,6 +211,7 @@
         <failOnStyleError>false</failOnStyleError>
         <dependency.jul.version>1.1-SNAPSHOT</dependency.jul.version>
         <dependency.bco.dal.version>1.1-SNAPSHOT</dependency.bco.dal.version>
+        <dependency.bco.manager.version>1.1-SNAPSHOT</dependency.bco.manager.version>
     </properties>
 
     <dependencies>
@@ -296,7 +266,12 @@
             <artifactId>manager.agent.remote</artifactId>
             <version>${dependency.bco.dal.version}</version>
         </dependency>
-     
+        <dependency>
+            <groupId>org.apache.jena</groupId>
+            <artifactId>apache-jena-libs</artifactId>
+            <type>pom</type>
+            <version>3.1.0</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
