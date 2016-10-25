@@ -17,7 +17,24 @@
  * ==================================================================
  */
 
+package org.openbase.bco.ontology.lib;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Created by agatting on 24.10.16.
  */
-package org.openbase.bco.ontology.lib;
+public class OntologyValidation {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyValidation.class);
+
+    public void check() {
+
+        LOGGER.info("Start validation ...");
+
+        //TODO: check uri...
+
+    }
+
+}

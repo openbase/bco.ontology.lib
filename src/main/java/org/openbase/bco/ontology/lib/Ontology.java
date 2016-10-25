@@ -22,15 +22,35 @@ import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import rst.domotic.unit.UnitConfigType;
 
 /**
  * Created by agatting on 20.10.16.
  */
 public class Ontology {
+
+    /**
+     * Tool name.
+     */
+    public static final String TOOL_NAME = Ontology.class.getSimpleName() + "Tool";
+    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+
+    /**
+     * Main Method starting ontology tool.
+     *
+     * @param args Arguments from commandline.
+     */
     public static void main(String[] args) {
 
-        UnitRegistry registry = null ;
+        LOGGER.info("Start " + TOOL_NAME + " ...");
+
+        CreateOntology ontology = new CreateOntology();
+        ontology.loadOntology("src/Ontology.owl");
+        ontology.cleanOntology();
+
+        /*UnitRegistry registry = null;
         try {
             registry = CachedUnitRegistryRemote.getRegistry();
             CachedUnitRegistryRemote.waitForData();
@@ -45,7 +65,9 @@ public class Ontology {
 
         } catch (CouldNotPerformException e) {
             e.printStackTrace();
-        }
+        }*/
+
+        LOGGER.info(TOOL_NAME + " finished!");
 
     }
 }
