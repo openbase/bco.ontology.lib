@@ -1,0 +1,36 @@
+language: java
+
+branches:
+  except:
+  - /^(?i:feature)-.*$/
+  - /^(?i:release)-.*$/
+
+jdk:
+  - oraclejdk8
+
+install:
+  - mvn --settings .travis/settings.xml install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+before_install:
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+
+notifications:
+    slack: openbase-org:vGz7LO4CvGoGMneYkEm3ON7E
+    on_failure: change
+    on_success: change	
+
+deploy:
+  - provider: script
+    script: .travis/deploy.sh
+    on:
+        repo: openbase/jps
+        branch: master
+        jdk: oraclejdk8
+  - provider: script
+    script: .travis/deploy.sh
+    on:
+        repo: openbase/jps
+        tags: true
+        jdk: oraclejdk8
+
