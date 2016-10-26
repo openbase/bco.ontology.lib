@@ -29,7 +29,8 @@ public class OntologyValidation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyValidation.class);
 
-    public void check() {
+
+    private void checkValidation() {
 
         LOGGER.info("Start validation ...");
 

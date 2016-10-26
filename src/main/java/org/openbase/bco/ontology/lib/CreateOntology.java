@@ -48,7 +48,15 @@ public class CreateOntology {
      * Constructor for creating ontology model.
      */
     public CreateOntology() {
-        ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
+        this.ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
+    }
+
+    /**
+     * Get the ontology model.
+     * @return ontology model
+     */
+    public OntModel getModel() {
+        return ontModel;
     }
 
     /**
@@ -59,7 +67,7 @@ public class CreateOntology {
     public void loadOntology(final String ontologyFilePath) {
 
         try {
-            InputStream inputStream = FileManager.get().open(ontologyFilePath);
+            final InputStream inputStream = FileManager.get().open(ontologyFilePath);
 
             if (inputStream == null) {
                 throw new IllegalArgumentException("File not found!");
@@ -69,7 +77,7 @@ public class CreateOntology {
 
             ontModel.read(inputStream, null);
         } catch (JenaException jenaException) {
-            LOGGER.info("ERROR " + jenaException.getMessage());
+            LOGGER.error(jenaException.getMessage());
         }
     }
 
@@ -77,14 +85,15 @@ public class CreateOntology {
      * Method is used to save the current developed ontology.
      */
     public void saveOntology() {
+        LOGGER.info("Save ontology ...");
         try {
-            OutputStream output = new FileOutputStream("src/Ontology2.owl");
+            final OutputStream output = new FileOutputStream("src/Ontology2.owl");
             ontModel.writeAll(output, "RDF/XML", null);
             output.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException fileNotFoundException) {
+            LOGGER.error(fileNotFoundException.getMessage());
+        } catch (IOException iOException) {
+            LOGGER.error(iOException.getMessage());
         }
     }
 
@@ -93,7 +102,7 @@ public class CreateOntology {
      */
     public void cleanOntology() {
         LOGGER.info("Delete individuals ...");
-        ExtendedIterator individualIterator = ontModel.listIndividuals();
+        final ExtendedIterator individualIterator = ontModel.listIndividuals();
 
         if (individualIterator.hasNext()) {
             LOGGER.info("Ontology has some individuals");
@@ -114,7 +123,7 @@ public class CreateOntology {
     }
 
     private void checkCleanProcessValidity() {
-        ExtendedIterator individualIterator = ontModel.listIndividuals();
+        final ExtendedIterator individualIterator = ontModel.listIndividuals();
 
         if (individualIterator.hasNext()) {
             LOGGER.error("Clean process failed!");

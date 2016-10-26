@@ -18,56 +18,37 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.registry.unit.lib.UnitRegistry;
-import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
-import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import rst.domotic.unit.UnitConfigType;
 
 /**
  * Created by agatting on 20.10.16.
  */
-public class Ontology {
+class Ontology {
 
     /**
-     * Tool name.
+     * App name.
      */
-    public static final String TOOL_NAME = Ontology.class.getSimpleName() + "Tool";
+    public static final String APP_NAME = Ontology.class.getSimpleName() + "App";
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
 
     /**
-     * Main Method starting ontology tool.
+     * Main Method starting ontology application.
      *
      * @param args Arguments from commandline.
      */
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
-        LOGGER.info("Start " + TOOL_NAME + " ...");
+        LOGGER.info("Start " + APP_NAME + " ...");
 
-        CreateOntology ontology = new CreateOntology();
+        final CreateOntology ontology = new CreateOntology();
         ontology.loadOntology("src/Ontology.owl");
         ontology.cleanOntology();
+        final FillOntology fillOntology = new FillOntology(ontology.getModel());
+        fillOntology.fillWithIndividuals();
+        ontology.saveOntology();
 
-        /*UnitRegistry registry = null;
-        try {
-            registry = CachedUnitRegistryRemote.getRegistry();
-            CachedUnitRegistryRemote.waitForData();
-        } catch (CouldNotPerformException | InterruptedException ex) {
-            ExceptionPrinter.printHistory("Could not start App", ex,System.err);
-        }
-
-        try {
-            for(UnitConfigType.UnitConfig config : registry.getUnitConfigs()) {
-                System.out.println(config.getLabel());
-            }
-
-        } catch (CouldNotPerformException e) {
-            e.printStackTrace();
-        }*/
-
-        LOGGER.info(TOOL_NAME + " finished!");
+        LOGGER.info(APP_NAME + " finished!");
 
     }
 }
