@@ -45,10 +45,10 @@ class Ontology {
         ontology.loadOntology("src/Ontology.owl");
         ontology.cleanOntology();
         final FillOntology fillOntology = new FillOntology(ontology.getModel());
-        fillOntology.fillWithIndividuals();
+        fillOntology.fillUnitIndividuals();
         ontology.saveOntology();
 
         LOGGER.info(APP_NAME + " finished!");
-
+        System.exit(0);
     }
 }

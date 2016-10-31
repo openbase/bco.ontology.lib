@@ -23,15 +23,22 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
+import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceConfigType;
 import rst.domotic.unit.UnitConfigType;
 
-import java.util.Objects;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by agatting on 25.10.16.
@@ -54,8 +61,8 @@ public class FillOntology {
     /**
      * Method fills the given ontology with information (instances).
      */
-    public void fillWithIndividuals() {
-        LOGGER.info("Start filling ontology...");
+    public void fillUnitIndividuals() {
+        LOGGER.info("Start filling ontology with individual units...");
 
         UnitRegistry registry = null;
         try {
@@ -66,35 +73,119 @@ public class FillOntology {
         }
 
         try {
-            for (final UnitConfigType.UnitConfig config : registry.getUnitConfigs()) {
-                //System.out.println(config.getLabel());
-
-                String registryName = config.getType().toString().toLowerCase();
-                //TODO: check correct nomination (space character, etc. ... leads to wrong characters in ontology)
-                registryName = registryName.replaceAll("_", "");
-                //System.out.println(registryName);
-
+            // init: nur unitindividuen die enabled sind (disabled ignorieren)
+            //TODO: reject disabled units
+            //TODO: maybe a more efficient way of comparing?
+            for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
                 final ExtendedIterator classIterator = ontModel.listClasses();
+                String individualUnitName = unitConfig.getType().toString().toLowerCase();
+                individualUnitName = individualUnitName.replaceAll("[^\\p{Alpha}]", "");
 
                 while (classIterator.hasNext()) {
-                    final OntClass ontClass = (OntClass) classIterator.next();
-                    final String className = ontClass.getLocalName().toString().toLowerCase();
+                    OntClass ontClass = (OntClass) classIterator.next();
+                    final String className = ontClass.getLocalName().toLowerCase();
 
-                    //System.out.println(className);
-
-                    if (Objects.equals(className, registryName)) {
+                    if (className.equals(individualUnitName)) {
                         try {
-                            //TODO: Handling of not unique unit labels...
-                            ontModel.createIndividual(NAMESPACE + config.getLabel(), ontClass);
+                            if (individualUnitName.equals("connection")) {
+                                switch (unitConfig.getConnectionConfig().getType().toString().toLowerCase()) {
+                                    case "door":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Door");
+                                        break;
+                                    case "window":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Window");
+                                        break;
+                                    case "passage":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Passage");
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            } else if (individualUnitName.equals("location")) {
+                                switch (unitConfig.getLocationConfig().getType().toString().toLowerCase()) {
+                                    case "region":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Region");
+                                        break;
+                                    case "tile":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Tile");
+                                        break;
+                                    case "zone":
+                                        ontClass = ontModel.getOntClass(NAMESPACE + "Zone");
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            ontModel.createIndividual(NAMESPACE + unitConfig.getId(), ontClass);
+
                         } catch (JenaException jenaException) {
                             LOGGER.error(jenaException.getMessage());
                         }
+                        break;
                     }
                 }
-            }
 
+                fillProviderServiceIndividuals(unitConfig);
+            }
+            //TODO test, if all elements are used...
         } catch (CouldNotPerformException couldNotPerformException) {
             LOGGER.error(couldNotPerformException.getMessage());
+        }
+        fillStateValueIndividuals();
+    }
+
+    public void fillStateValueIndividuals() {
+        LOGGER.info("Start filling ontology with individual state values...");
+
+        UnitRegistry registry = null;
+        try {
+            registry = CachedUnitRegistryRemote.getRegistry();
+            CachedUnitRegistryRemote.waitForData();
+        } catch (CouldNotPerformException | InterruptedException ex) {
+            ExceptionPrinter.printHistory("Could not start App", ex, System.err);
+        }
+
+        //Map<UnitTemplateType.UnitTemplate.UnitType, List<UnitRemote>> unitTypeListMap;
+
+
+        ColorableLightRemote remote = new ColorableLightRemote();
+        try {
+            remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
+            remote.activate();
+            remote.waitForData();
+
+            System.out.println(remote.getData().getPowerState().getValue());
+
+        } catch (InterruptedException | CouldNotPerformException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
+                System.out.println(unitConfig.getType().toString().toLowerCase());
+                if (unitConfig.getType().toString().toLowerCase().equals("dimmablelight")) {
+                    //replaceAll("[^\\p{Alpha}]", "")
+                    UnitRemote<?, UnitConfigType.UnitConfig> unitRemote =  UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
+                    System.out.println(unitRemote.getDataClass().getMethod("getPowerState").invoke(unitRemote.getData()));
+                }
+                //TODO
+
+
+            }
+        } catch (CouldNotPerformException | NoSuchMethodException | IllegalAccessException | InvocationTargetException
+                | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void fillProviderServiceIndividuals(UnitConfigType.UnitConfig unitConfig) {
+            for (final ServiceConfigType.ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                if (serviceConfig.getServiceTemplate().getPattern().toString().toLowerCase().equals("provider") ) {
+                    OntClass ontClass = ontModel.getOntClass(NAMESPACE + "ProviderService");
+                    ontModel.createIndividual(NAMESPACE + serviceConfig.getServiceTemplate().getType(), ontClass);
+                }
         }
     }
 }

@@ -65,6 +65,7 @@ public class CreateOntology {
      * @param ontologyFilePath path of ontology file.
      */
     public void loadOntology(final String ontologyFilePath) {
+        //TODO find a better way than local file path
 
         try {
             final InputStream inputStream = FileManager.get().open(ontologyFilePath);
@@ -88,6 +89,7 @@ public class CreateOntology {
         LOGGER.info("Save ontology ...");
         try {
             final OutputStream output = new FileOutputStream("src/Ontology2.owl");
+            //TODO format correct?
             ontModel.writeAll(output, "RDF/XML", null);
             output.close();
         } catch (FileNotFoundException fileNotFoundException) {
