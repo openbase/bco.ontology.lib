@@ -37,8 +37,10 @@ import rst.domotic.service.ServiceConfigType;
 import rst.domotic.unit.UnitConfigType;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Created by agatting on 25.10.16.
@@ -148,7 +150,7 @@ public class FillOntology {
         //Map<UnitTemplateType.UnitTemplate.UnitType, List<UnitRemote>> unitTypeListMap;
 
 
-        ColorableLightRemote remote = new ColorableLightRemote();
+        /*ColorableLightRemote remote = new ColorableLightRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
@@ -158,15 +160,38 @@ public class FillOntology {
 
         } catch (InterruptedException | CouldNotPerformException e) {
             e.printStackTrace();
-        }
+        }*/
 
         try {
             for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
-                System.out.println(unitConfig.getType().toString().toLowerCase());
-                if (unitConfig.getType().toString().toLowerCase().equals("dimmablelight")) {
-                    //replaceAll("[^\\p{Alpha}]", "")
+                //final String unitName = unitConfig.getType().toString().toLowerCase().replaceAll("[^\\p{Alpha}]", "");
+                if (unitConfig.getId().equals("3249a1a5-52d1-4be1-910f-2063974b53f5")) {
                     UnitRemote<?, UnitConfigType.UnitConfig> unitRemote =  UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
-                    System.out.println(unitRemote.getDataClass().getMethod("getPowerState").invoke(unitRemote.getData()));
+                    unitRemote.activate();
+                    unitRemote.waitForData();
+
+                    //System.out.println(getValue);
+
+                    Method[] method = unitRemote.getDataClass().getMethods();
+                    for (Method aMethod : method) {
+                        //System.out.println(method[i].getName());
+                        if (Pattern.matches("get" + "[a-zA-Z]*" + "State", aMethod.getName())) {
+                            Object getPowerState = unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
+                            try {
+                                Object getValue = getPowerState.getClass().getMethod("getValue").invoke(getPowerState);
+
+                                OntClass ontClass = ontModel.getOntClass(NAMESPACE + "StateValue");
+                                ontModel.createIndividual(NAMESPACE + getValue, ontClass);
+                            } catch (NoSuchMethodException e) {
+                                LOGGER.error(e.getMessage() + " - NoSuchMethodException");
+                            }
+
+                            //System.out.println(method[i].getName());
+                        }
+                    }
+
+
+
                 }
                 //TODO
 
@@ -176,8 +201,6 @@ public class FillOntology {
                 | InterruptedException e) {
             e.printStackTrace();
         }
-
-
     }
 
     public void fillProviderServiceIndividuals(UnitConfigType.UnitConfig unitConfig) {
@@ -187,5 +210,9 @@ public class FillOntology {
                     ontModel.createIndividual(NAMESPACE + serviceConfig.getServiceTemplate().getType(), ontClass);
                 }
         }
+    }
+
+    public void observer() {
+        //TODO observer
     }
 }
