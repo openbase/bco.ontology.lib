@@ -26,10 +26,11 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.FileManager;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,8 +78,8 @@ public class CreateOntology {
             }
 
             ontModel.read(inputStream, null);
-        } catch (JenaException jenaException) {
-            LOGGER.error(jenaException.getMessage());
+        } catch (JenaException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -92,10 +93,8 @@ public class CreateOntology {
             //TODO format correct?
             ontModel.writeAll(output, "RDF/XML", null);
             output.close();
-        } catch (FileNotFoundException fileNotFoundException) {
-            LOGGER.error(fileNotFoundException.getMessage());
-        } catch (IOException iOException) {
-            LOGGER.error(iOException.getMessage());
+        } catch (IOException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 

@@ -45,7 +45,8 @@ class Ontology {
         ontology.loadOntology("src/Ontology.owl");
         ontology.cleanOntology();
         final FillOntology fillOntology = new FillOntology(ontology.getModel());
-        fillOntology.fillUnitIndividuals();
+        fillOntology.integrateIndivUnitTypes(true);
+        fillOntology.integrateIndivStateValues();
         ontology.saveOntology();
 
         LOGGER.info(APP_NAME + " finished!");

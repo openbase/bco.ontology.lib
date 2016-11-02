@@ -23,7 +23,6 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
@@ -31,15 +30,17 @@ import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rst.domotic.service.ServiceConfigType;
+import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
@@ -60,36 +61,37 @@ public class FillOntology {
         this.ontModel = ontModel;
     }
 
+    //TODO take all units or dis-/enabled units as config choice...
+
     /**
-     * Method fills the given ontology with information (instances).
+     * Method fills the given ontology with unitType instances.
+     * @param integrateProviderService instances of the providerService are integrated if true.
      */
-    public void fillUnitIndividuals() {
-        LOGGER.info("Start filling ontology with individual units...");
+    protected void integrateIndivUnitTypes(final boolean integrateProviderService) {
+        LOGGER.info("Start integrate ontology with individual unitTypes...");
 
         UnitRegistry registry = null;
         try {
             registry = CachedUnitRegistryRemote.getRegistry();
             CachedUnitRegistryRemote.waitForData();
-        } catch (CouldNotPerformException | InterruptedException ex) {
-            ExceptionPrinter.printHistory("Could not start App", ex, System.err);
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
         try {
-            // init: nur unitindividuen die enabled sind (disabled ignorieren)
-            //TODO: reject disabled units
             //TODO: maybe a more efficient way of comparing?
             for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
-                final ExtendedIterator classIterator = ontModel.listClasses();
-                String individualUnitName = unitConfig.getType().toString().toLowerCase();
-                individualUnitName = individualUnitName.replaceAll("[^\\p{Alpha}]", "");
+                if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
+                    final ExtendedIterator classIterator = ontModel.listClasses();
+                    String indivUnitName = unitConfig.getType().toString().toLowerCase();
+                    indivUnitName = indivUnitName.replaceAll("[^\\p{Alpha}]", "");
 
-                while (classIterator.hasNext()) {
-                    OntClass ontClass = (OntClass) classIterator.next();
-                    final String className = ontClass.getLocalName().toLowerCase();
+                    while (classIterator.hasNext()) {
+                        OntClass ontClass = (OntClass) classIterator.next();
+                        final String className = ontClass.getLocalName().toLowerCase();
 
-                    if (className.equals(individualUnitName)) {
                         try {
-                            if (individualUnitName.equals("connection")) {
+                            if (className.equals(indivUnitName) && "connection".equals(className)) {
                                 switch (unitConfig.getConnectionConfig().getType().toString().toLowerCase()) {
                                     case "door":
                                         ontClass = ontModel.getOntClass(NAMESPACE + "Door");
@@ -103,7 +105,7 @@ public class FillOntology {
                                     default:
                                         break;
                                 }
-                            } else if (individualUnitName.equals("location")) {
+                            } else if (className.equals(indivUnitName) && "location".equals(className)) {
                                 switch (unitConfig.getLocationConfig().getType().toString().toLowerCase()) {
                                     case "region":
                                         ontClass = ontModel.getOntClass(NAMESPACE + "Region");
@@ -118,101 +120,106 @@ public class FillOntology {
                                         break;
                                 }
                             }
-                            ontModel.createIndividual(NAMESPACE + unitConfig.getId(), ontClass);
-
-                        } catch (JenaException jenaException) {
-                            LOGGER.error(jenaException.getMessage());
+                            if (className.equals(indivUnitName)) {
+                                ontModel.createIndividual(NAMESPACE + unitConfig.getId(), ontClass);
+                            }
+                        } catch (JenaException e) {
+                            LOGGER.error(e.getMessage());
                         }
-                        break;
+                    }
+                    if (integrateProviderService) {
+                        integrateIndivProviderServices(unitConfig);
                     }
                 }
-
-                fillProviderServiceIndividuals(unitConfig);
             }
             //TODO test, if all elements are used...
-        } catch (CouldNotPerformException couldNotPerformException) {
-            LOGGER.error(couldNotPerformException.getMessage());
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
-        fillStateValueIndividuals();
     }
 
-    public void fillStateValueIndividuals() {
-        LOGGER.info("Start filling ontology with individual state values...");
+    /**
+     * Integration of the individual stateValues into the ontology.
+     */
+    protected void integrateIndivStateValues() {
+        LOGGER.info("Start integrate ontology with individual stateValues...");
+        final OntClass ontClass = ontModel.getOntClass(NAMESPACE + "StateValue");
 
         UnitRegistry registry = null;
         try {
             registry = CachedUnitRegistryRemote.getRegistry();
             CachedUnitRegistryRemote.waitForData();
-        } catch (CouldNotPerformException | InterruptedException ex) {
-            ExceptionPrinter.printHistory("Could not start App", ex, System.err);
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-        //Map<UnitTemplateType.UnitTemplate.UnitType, List<UnitRemote>> unitTypeListMap;
-
-
-        /*ColorableLightRemote remote = new ColorableLightRemote();
-        try {
-            remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
-            remote.activate();
-            remote.waitForData();
-
-            System.out.println(remote.getData().getPowerState().getValue());
-
-        } catch (InterruptedException | CouldNotPerformException e) {
-            e.printStackTrace();
-        }*/
+        // TODO get something like the group of units for generic behavior
+        final ArrayList<UnitType> notDalUnits = new ArrayList<>();
+        //AUTHORIZATION_GROUP, DISPLAY, RFID, TELEVISION
+        notDalUnits.addAll(Arrays.asList(UnitType.AGENT, UnitType.APP, UnitType.AUDIO_SINK, UnitType.AUDIO_SOURCE,
+                UnitType.AUTHORIZATION_GROUP, UnitType.CONNECTION, UnitType.DEVICE, UnitType.LOCATION, UnitType.SCENE,
+                UnitType.USER, UnitType.VIDEO_DEPTH_SOURCE, UnitType.VIDEO_RGB_SOURCE));
 
         try {
             for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
-                //final String unitName = unitConfig.getType().toString().toLowerCase().replaceAll("[^\\p{Alpha}]", "");
-                if (unitConfig.getId().equals("3249a1a5-52d1-4be1-910f-2063974b53f5")) {
-                    UnitRemote<?, UnitConfigType.UnitConfig> unitRemote =  UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
+                if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)
+                        && !notDalUnits.contains(unitConfig.getType())) {
+                    //System.out.println(unitConfig.getLabel() + "---------" + unitConfig.getType());
+                    final UnitRemote unitRemote = UnitRemoteFactoryImpl.getInstance()
+                            .newInitializedInstance(unitConfig);
                     unitRemote.activate();
                     unitRemote.waitForData();
 
-                    //System.out.println(getValue);
+                    final Object object = findStateMethod(unitRemote);
 
-                    Method[] method = unitRemote.getDataClass().getMethods();
-                    for (Method aMethod : method) {
-                        //System.out.println(method[i].getName());
-                        if (Pattern.matches("get" + "[a-zA-Z]*" + "State", aMethod.getName())) {
-                            Object getPowerState = unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
-                            try {
-                                Object getValue = getPowerState.getClass().getMethod("getValue").invoke(getPowerState);
-
-                                OntClass ontClass = ontModel.getOntClass(NAMESPACE + "StateValue");
-                                ontModel.createIndividual(NAMESPACE + getValue, ontClass);
-                            } catch (NoSuchMethodException e) {
-                                LOGGER.error(e.getMessage() + " - NoSuchMethodException");
-                            }
-
-                            //System.out.println(method[i].getName());
-                        }
+                    if (object != null) {
+                        ontModel.createIndividual(NAMESPACE + object, ontClass);
                     }
-
-
-
                 }
-                //TODO
-
-
             }
-        } catch (CouldNotPerformException | NoSuchMethodException | IllegalAccessException | InvocationTargetException
-                | InterruptedException e) {
-            e.printStackTrace();
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
-    public void fillProviderServiceIndividuals(UnitConfigType.UnitConfig unitConfig) {
-            for (final ServiceConfigType.ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-                if (serviceConfig.getServiceTemplate().getPattern().toString().toLowerCase().equals("provider") ) {
-                    OntClass ontClass = ontModel.getOntClass(NAMESPACE + "ProviderService");
-                    ontModel.createIndividual(NAMESPACE + serviceConfig.getServiceTemplate().getType(), ontClass);
+    private Object findStateMethod(final UnitRemote unitRemote) {
+        final Method[] method = unitRemote.getDataClass().getMethods();
+        for (final Method aMethod : method) {
+            if (Pattern.matches("get" + "[a-zA-Z]*" + "State", aMethod.getName())) {
+                try {
+                    final Object getState = unitRemote.getDataClass().getMethod(aMethod.getName())
+                            .invoke(unitRemote.getData());
+                    //final Object getName = getState.getClass().getName();
+                    //System.out.println(getName);
+                    return getState.getClass().getMethod("getValue")
+                            .invoke(getState);
+                } catch (IllegalAccessException | InvocationTargetException | NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                } catch (NoSuchMethodException e) {
+                    LOGGER.warn(e + " - wrong State. Insignificant.");
                 }
+            }
         }
+        return null;
     }
 
-    public void observer() {
+    /**
+     * Integration of the individual providerServices into the ontology.
+     * @param unitConfig the config list of the units.
+     */
+    protected void integrateIndivProviderServices(final UnitConfigType.UnitConfig unitConfig) {
+        //LOGGER.info("Start integrate ontology with individual providerServices...");
+        unitConfig.getServiceConfigList().stream().filter(serviceConfig -> serviceConfig.getServiceTemplate()
+                .getPattern().toString().toLowerCase().equals("provider")).forEach(serviceConfig -> {
+            final OntClass ontClass = ontModel.getOntClass(NAMESPACE + "ProviderService");
+            ontModel.createIndividual(NAMESPACE + serviceConfig.getServiceTemplate().getType(), ontClass);
+        });
+    }
+
+    /**
+     * Observer.
+     */
+    protected void observer() {
         //TODO observer
     }
 }
