@@ -174,3 +174,6 @@ proguard/
 gen-external-apklibs
 
 
+### Ontology ###
+catalog-v001.xml
+*.owl
