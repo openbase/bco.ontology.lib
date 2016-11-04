@@ -29,7 +29,7 @@ class Ontology {
     /**
      * App name.
      */
-    public static final String APP_NAME = Ontology.class.getSimpleName() + "App";
+    private static final String APP_NAME = Ontology.class.getSimpleName() + "App";
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
 
     /**
@@ -37,7 +37,7 @@ class Ontology {
      *
      * @param args Arguments from commandline.
      */
-    public static void main(final String[] args) {
+    private static void main(final String[] args) {
 
         LOGGER.info("Start " + APP_NAME + " ...");
 

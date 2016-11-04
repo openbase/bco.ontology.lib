@@ -143,7 +143,8 @@ public class FillOntology {
      */
     protected void integrateIndivStateValues() {
         LOGGER.info("Start integrate ontology with individual stateValues...");
-        final OntClass ontClass = ontModel.getOntClass(NAMESPACE + "StateValue");
+        final OntClass ontClassStateValue = ontModel.getOntClass(NAMESPACE + "StateValue");
+        //final OntClass ontClassState = ontModel.getOntClass(NAMESPACE + "State");
 
         UnitRegistry registry = null;
         try {
@@ -170,10 +171,24 @@ public class FillOntology {
                     unitRemote.activate();
                     unitRemote.waitForData();
 
-                    final Object object = findStateMethod(unitRemote);
+                    final Object objectState = findStateMethod(unitRemote);
+                    final Object objectStateValue = findGetValueMethod(objectState);
 
-                    if (object != null) {
-                        ontModel.createIndividual(NAMESPACE + object, ontClass);
+                    if (objectStateValue != null) {
+                        ontModel.createIndividual(NAMESPACE + objectStateValue, ontClassStateValue);
+                    }
+
+                    final Object objectId = findIdMethod(unitRemote);
+                    final ExtendedIterator classIterator = ontModel.listClasses();
+
+                    while (classIterator.hasNext()) {
+                        final OntClass ontClass = (OntClass) classIterator.next();
+                        final String className = ontClass.getLocalName().toLowerCase();
+
+                        //TODO find a better way of comparing (getClass().getName() provides whole path...)
+                        if (objectId != null && objectState.getClass().getName().toLowerCase().contains(className)) {
+                            ontModel.createIndividual(NAMESPACE + objectId, ontClass);
+                        }
                     }
                 }
             }
@@ -187,16 +202,39 @@ public class FillOntology {
         for (final Method aMethod : method) {
             if (Pattern.matches("get" + "[a-zA-Z]*" + "State", aMethod.getName())) {
                 try {
-                    final Object getState = unitRemote.getDataClass().getMethod(aMethod.getName())
-                            .invoke(unitRemote.getData());
-                    //final Object getName = getState.getClass().getName();
-                    //System.out.println(getName);
-                    return getState.getClass().getMethod("getValue")
-                            .invoke(getState);
-                } catch (IllegalAccessException | InvocationTargetException | NotAvailableException e) {
+                    return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
+                    //return getState.getClass().getMethod("getValue").invoke(getState);
+                } catch (IllegalAccessException | InvocationTargetException | NotAvailableException
+                        | NoSuchMethodException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                } catch (NoSuchMethodException e) {
-                    LOGGER.warn(e + " - wrong State. Insignificant.");
+                }
+            }
+        }
+        return null;
+    }
+
+    private Object findGetValueMethod(final Object getState) {
+        try {
+            if (getState != null) {
+                return getState.getClass().getMethod("getValue").invoke(getState);
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (NoSuchMethodException e) {
+            LOGGER.warn(e + " - wrong State. Insignificant.");
+        }
+        return null;
+    }
+
+    private Object findIdMethod(final UnitRemote unitRemote) {
+        final Method[] method = unitRemote.getDataClass().getMethods();
+        for (final Method aMethod : method) {
+            if (Pattern.matches("getId", aMethod.getName())) {
+                try {
+                    return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
+                        | NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
             }
         }
