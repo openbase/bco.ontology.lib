@@ -37,7 +37,7 @@ class Ontology {
      *
      * @param args Arguments from commandline.
      */
-    private static void main(final String[] args) {
+    public static void main(final String[] args) {
 
         LOGGER.info("Start " + APP_NAME + " ...");
 

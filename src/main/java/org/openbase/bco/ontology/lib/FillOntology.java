@@ -50,6 +50,8 @@ public class FillOntology {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FillOntology.class);
     private static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
+    private static final String GET = "get";
+    private static final String DATAUNIT = "dataunit";
     private final OntModel ontModel;
 
     /**
@@ -62,6 +64,7 @@ public class FillOntology {
     }
 
     //TODO take all units or dis-/enabled units as config choice...
+    //TODO create lists with necessary classes for comparing (e.g. all subclasses of superclass "state")
 
     /**
      * Method fills the given ontology with unitType instances.
@@ -77,6 +80,18 @@ public class FillOntology {
         } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
+
+        // test code
+        /*BrightnessSensorRemote remote = new BrightnessSensorRemote();
+        try {
+            remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
+            remote.activate();
+            remote.waitForData();
+
+            System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
+        } catch (InterruptedException | CouldNotPerformException e) {
+                e.printStackTrace();
+        }*/
 
         try {
             //TODO: maybe a more efficient way of comparing?
@@ -173,6 +188,7 @@ public class FillOntology {
 
                     final Object objectState = findStateMethod(unitRemote);
                     final Object objectStateValue = findGetValueMethod(objectState);
+                    final Object objectDataUnit = findDataUnitMethod(objectState);
 
                     if (objectStateValue != null) {
                         ontModel.createIndividual(NAMESPACE + objectStateValue, ontClassStateValue);
@@ -186,8 +202,15 @@ public class FillOntology {
                         final String className = ontClass.getLocalName().toLowerCase();
 
                         //TODO find a better way of comparing (getClass().getName() provides whole path...)
-                        if (objectId != null && objectState.getClass().getName().toLowerCase().contains(className)) {
+
+                        // find correct state type
+                        if (objectId != null && objectState.getClass().getName().toLowerCase().contains(className)
+                                && !className.equals("state")) {
                             ontModel.createIndividual(NAMESPACE + objectId, ontClass);
+                        }
+
+                        if (objectDataUnit != null && className.equals(DATAUNIT)) {
+                            ontModel.createIndividual(NAMESPACE + objectDataUnit, ontClass);
                         }
                     }
                 }
@@ -200,7 +223,7 @@ public class FillOntology {
     private Object findStateMethod(final UnitRemote unitRemote) {
         final Method[] method = unitRemote.getDataClass().getMethods();
         for (final Method aMethod : method) {
-            if (Pattern.matches("get" + "[a-zA-Z]*" + "State", aMethod.getName())) {
+            if (Pattern.matches(GET + "[a-zA-Z]*" + "State", aMethod.getName())) {
                 try {
                     return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
                     //return getState.getClass().getMethod("getValue").invoke(getState);
@@ -229,11 +252,26 @@ public class FillOntology {
     private Object findIdMethod(final UnitRemote unitRemote) {
         final Method[] method = unitRemote.getDataClass().getMethods();
         for (final Method aMethod : method) {
-            if (Pattern.matches("getId", aMethod.getName())) {
+            if (Pattern.matches("getid", aMethod.getName().toLowerCase())) {
                 try {
                     return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
                         | NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
+            }
+        }
+        return null;
+    }
+
+    //TODO reduce find-methods to one generic method
+    private Object findDataUnitMethod(final Object getState) {
+        final Method[] method = getState.getClass().getMethods();
+        for (final Method aMethod : method) {
+            if (Pattern.matches(GET + "[a-z]*" + DATAUNIT, aMethod.getName().toLowerCase())) {
+                try {
+                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
             }
