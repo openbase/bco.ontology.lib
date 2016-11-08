@@ -19,6 +19,8 @@
 
 package org.openbase.bco.ontology.lib;
 
+import org.apache.jena.ontology.Individual;
+import org.apache.jena.ontology.ObjectProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.shared.JenaException;
@@ -34,7 +36,7 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
-import rst.domotic.unit.UnitConfigType;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.lang.reflect.InvocationTargetException;
@@ -52,6 +54,8 @@ public class FillOntology {
     private static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
     private static final String GET = "get";
     private static final String DATAUNIT = "dataunit";
+    private static final String STATE = "state";
+    private static final String PATTERN = "[a-z]*";
     private final OntModel ontModel;
 
     /**
@@ -70,7 +74,7 @@ public class FillOntology {
      * Method fills the given ontology with unitType instances.
      * @param integrateProviderService instances of the providerService are integrated if true.
      */
-    protected void integrateIndivUnitTypes(final boolean integrateProviderService) {
+    protected void integrateIndividualUnitTypes(final boolean integrateProviderService) {
         LOGGER.info("Start integrate ontology with individual unitTypes...");
 
         UnitRegistry registry = null;
@@ -82,7 +86,7 @@ public class FillOntology {
         }
 
         // test code
-        /*BrightnessSensorRemote remote = new BrightnessSensorRemote();
+        /*LocationRemote remote = new LocationRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
@@ -95,18 +99,18 @@ public class FillOntology {
 
         try {
             //TODO: maybe a more efficient way of comparing?
-            for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
+            for (final UnitConfig unitConfig : registry.getUnitConfigs()) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
                     final ExtendedIterator classIterator = ontModel.listClasses();
-                    String indivUnitName = unitConfig.getType().toString().toLowerCase();
-                    indivUnitName = indivUnitName.replaceAll("[^\\p{Alpha}]", "");
+                    String individualUnitName = unitConfig.getType().toString().toLowerCase();
+                    individualUnitName = individualUnitName.replaceAll("[^\\p{Alpha}]", "");
 
                     while (classIterator.hasNext()) {
                         OntClass ontClass = (OntClass) classIterator.next();
                         final String className = ontClass.getLocalName().toLowerCase();
 
                         try {
-                            if (className.equals(indivUnitName) && "connection".equals(className)) {
+                            if (className.equals(individualUnitName) && "connection".equals(className)) {
                                 switch (unitConfig.getConnectionConfig().getType().toString().toLowerCase()) {
                                     case "door":
                                         ontClass = ontModel.getOntClass(NAMESPACE + "Door");
@@ -120,7 +124,7 @@ public class FillOntology {
                                     default:
                                         break;
                                 }
-                            } else if (className.equals(indivUnitName) && "location".equals(className)) {
+                            } else if (className.equals(individualUnitName) && "location".equals(className)) {
                                 switch (unitConfig.getLocationConfig().getType().toString().toLowerCase()) {
                                     case "region":
                                         ontClass = ontModel.getOntClass(NAMESPACE + "Region");
@@ -135,7 +139,7 @@ public class FillOntology {
                                         break;
                                 }
                             }
-                            if (className.equals(indivUnitName)) {
+                            if (className.equals(individualUnitName)) {
                                 ontModel.createIndividual(NAMESPACE + unitConfig.getId(), ontClass);
                             }
                         } catch (JenaException e) {
@@ -148,6 +152,52 @@ public class FillOntology {
                 }
             }
             //TODO test, if all elements are used...
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+    }
+
+    /**
+     * Fill the ontology with object properties.
+     */
+    protected void integrateObjectProperties() {
+        //TODO need to check if there are individuals to link them
+        UnitRegistry registry = null;
+        try {
+            registry = CachedUnitRegistryRemote.getRegistry();
+            CachedUnitRegistryRemote.waitForData();
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        try {
+            for (final UnitConfig unitConfigLocation : registry.getUnitConfigs(UnitType.LOCATION)) {
+                String locationName = unitConfigLocation.getLocationConfig().getType().name().toLowerCase();
+                char[] charVar = locationName.toCharArray();
+                charVar[0] = Character.toUpperCase(charVar[0]);
+                locationName = new String(charVar);
+
+                final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                        .getOntClass(NAMESPACE + locationName));
+
+                while (individualIterator.hasNext()) {
+                    final Individual individual = (Individual) individualIterator.next();
+                    // hint: getLocalName() doesn't work perfect, if the first characters of the id are numbers.
+                    // Method expects the numbers as part of the namespace...
+                    //TODO maybe error potential...
+                    final String locationIdName = individual.getURI().substring(NAMESPACE.length());
+                    if (locationIdName.equals(unitConfigLocation.getId())) {
+                        for (final String childId : unitConfigLocation.getLocationConfig().getChildIdList()) {
+                            //TODO check Individual if null...
+                            final Individual child = ontModel.getIndividual(NAMESPACE + childId);
+                            final ObjectProperty objectProperty = ontModel
+                                    .getObjectProperty(NAMESPACE + "hasSubLocation");
+                            individual.addProperty(objectProperty, child);
+                        }
+                        break;
+                    }
+                }
+            }
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -170,6 +220,7 @@ public class FillOntology {
         }
 
         // TODO get something like the group of units for generic behavior
+        // registry.getDalUnitConfigs....
         final ArrayList<UnitType> notDalUnits = new ArrayList<>();
         //AUTHORIZATION_GROUP, DISPLAY, RFID, TELEVISION
         notDalUnits.addAll(Arrays.asList(UnitType.AGENT, UnitType.APP, UnitType.AUDIO_SINK, UnitType.AUDIO_SOURCE,
@@ -177,7 +228,7 @@ public class FillOntology {
                 UnitType.USER, UnitType.VIDEO_DEPTH_SOURCE, UnitType.VIDEO_RGB_SOURCE));
 
         try {
-            for (final UnitConfigType.UnitConfig unitConfig : registry.getUnitConfigs()) {
+            for (final UnitConfig unitConfig : registry.getUnitConfigs()) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)
                         && !notDalUnits.contains(unitConfig.getType())) {
                     //System.out.println(unitConfig.getLabel() + "---------" + unitConfig.getType());
@@ -202,13 +253,13 @@ public class FillOntology {
                         final String className = ontClass.getLocalName().toLowerCase();
 
                         //TODO find a better way of comparing (getClass().getName() provides whole path...)
-
-                        // find correct state type
+                        // find correct state type class
                         if (objectId != null && objectState.getClass().getName().toLowerCase().contains(className)
-                                && !className.equals("state")) {
+                                && !className.equals(STATE)) {
                             ontModel.createIndividual(NAMESPACE + objectId, ontClass);
                         }
 
+                        // find correct data unit class
                         if (objectDataUnit != null && className.equals(DATAUNIT)) {
                             ontModel.createIndividual(NAMESPACE + objectDataUnit, ontClass);
                         }
@@ -223,7 +274,7 @@ public class FillOntology {
     private Object findStateMethod(final UnitRemote unitRemote) {
         final Method[] method = unitRemote.getDataClass().getMethods();
         for (final Method aMethod : method) {
-            if (Pattern.matches(GET + "[a-zA-Z]*" + "State", aMethod.getName())) {
+            if (Pattern.matches(GET + PATTERN + STATE, aMethod.getName().toLowerCase())) {
                 try {
                     return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
                     //return getState.getClass().getMethod("getValue").invoke(getState);
@@ -268,7 +319,7 @@ public class FillOntology {
     private Object findDataUnitMethod(final Object getState) {
         final Method[] method = getState.getClass().getMethods();
         for (final Method aMethod : method) {
-            if (Pattern.matches(GET + "[a-z]*" + DATAUNIT, aMethod.getName().toLowerCase())) {
+            if (Pattern.matches(GET + PATTERN + DATAUNIT, aMethod.getName().toLowerCase())) {
                 try {
                     return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -283,7 +334,7 @@ public class FillOntology {
      * Integration of the individual providerServices into the ontology.
      * @param unitConfig the config list of the units.
      */
-    protected void integrateIndivProviderServices(final UnitConfigType.UnitConfig unitConfig) {
+    protected void integrateIndivProviderServices(final UnitConfig unitConfig) {
         //LOGGER.info("Start integrate ontology with individual providerServices...");
         unitConfig.getServiceConfigList().stream().filter(serviceConfig -> serviceConfig.getServiceTemplate()
                 .getPattern().toString().toLowerCase().equals("provider")).forEach(serviceConfig -> {
