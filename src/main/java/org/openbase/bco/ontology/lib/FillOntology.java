@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
+import rst.domotic.unit.location.LocationConfigType.LocationConfig.LocationType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -170,15 +171,17 @@ public class FillOntology {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
+
         try {
             for (final UnitConfig unitConfigLocation : registry.getUnitConfigs(UnitType.LOCATION)) {
-                String locationName = unitConfigLocation.getLocationConfig().getType().name().toLowerCase();
-                char[] charVar = locationName.toCharArray();
+                String locationTypeName = unitConfigLocation.getLocationConfig().getType().name();
+                char[] charVar = locationTypeName.toLowerCase().toCharArray();
                 charVar[0] = Character.toUpperCase(charVar[0]);
-                locationName = new String(charVar);
+                locationTypeName = new String(charVar);
 
+                // maybe without "Region"-class (no subLocation)
                 final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
-                        .getOntClass(NAMESPACE + locationName));
+                        .getOntClass(NAMESPACE + locationTypeName));
 
                 while (individualIterator.hasNext()) {
                     final Individual individual = (Individual) individualIterator.next();
@@ -187,6 +190,7 @@ public class FillOntology {
                     //TODO maybe error potential...
                     final String locationIdName = individual.getURI().substring(NAMESPACE.length());
                     if (locationIdName.equals(unitConfigLocation.getId())) {
+                        // property "hasSubLocation"
                         for (final String childId : unitConfigLocation.getLocationConfig().getChildIdList()) {
                             //TODO check Individual if null...
                             final Individual child = ontModel.getIndividual(NAMESPACE + childId);
@@ -194,7 +198,40 @@ public class FillOntology {
                                     .getObjectProperty(NAMESPACE + "hasSubLocation");
                             individual.addProperty(objectProperty, child);
                         }
+                        // property "hasUnit"
+                        for (final String unitId : unitConfigLocation.getLocationConfig().getUnitIdList()) {
+                            //TODO check Individual if null...
+                            final Individual unit = ontModel.getIndividual(NAMESPACE + unitId);
+                            final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasUnit");
+                            individual.addProperty(objectProperty, unit);
+                        }
                         break;
+                    }
+                }
+            }
+
+            for (final UnitConfig unitConfigConnection : registry.getUnitConfigs(UnitType.CONNECTION)) {
+                String connectionTypeName = unitConfigConnection.getConnectionConfig().getType().name();
+
+                char[] charVar = connectionTypeName.toLowerCase().toCharArray();
+                charVar[0] = Character.toUpperCase(charVar[0]);
+                connectionTypeName = new String(charVar);
+
+                final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                        .getOntClass(NAMESPACE + connectionTypeName));
+
+                while (individualIterator.hasNext()) {
+                    final Individual connectionIndividual = (Individual) individualIterator.next();
+                    final String connectionIdName = connectionIndividual.getURI().substring(NAMESPACE.length());
+
+                    if (connectionIdName.equals(unitConfigConnection.getId())) {
+                        for (final String connectionTile : unitConfigConnection.getConnectionConfig().getTileIdList()) {
+                            final Individual tileIndividual = ontModel.getIndividual(NAMESPACE + connectionTile);
+                            final ObjectProperty objectProperty = ontModel
+                                    .getObjectProperty(NAMESPACE + "hasConnection");
+                            tileIndividual.addProperty(objectProperty, connectionIndividual);
+                        }
+                        //System.out.println(unitConfigConnection.getConnectionConfig().getTileIdList());
                     }
                 }
             }
