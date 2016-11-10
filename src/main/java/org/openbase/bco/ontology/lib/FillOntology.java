@@ -19,10 +19,12 @@
 
 package org.openbase.bco.ontology.lib;
 
+import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.ObjectProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
+import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
@@ -35,10 +37,12 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceConfigType;
+import rst.domotic.service.ServiceTemplateType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-import rst.domotic.unit.location.LocationConfigType.LocationConfig.LocationType;
+import rst.timing.TimestampType.Timestamp;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -57,6 +61,7 @@ public class FillOntology {
     private static final String DATAUNIT = "dataunit";
     private static final String STATE = "state";
     private static final String PATTERN = "[a-z]*";
+    private static final String OBSERVATION = "Observation";
     private final OntModel ontModel;
 
     /**
@@ -70,6 +75,8 @@ public class FillOntology {
 
     //TODO take all units or dis-/enabled units as config choice...
     //TODO create lists with necessary classes for comparing (e.g. all subclasses of superclass "state")
+    //TODO efficiency: e.g. getIndividual faster
+    //TODO check iterator (if empty => nullPointer)
 
     /**
      * Method fills the given ontology with unitType instances.
@@ -87,11 +94,12 @@ public class FillOntology {
         }
 
         // test code
-        /*LocationRemote remote = new LocationRemote();
+        /*BrightnessSensorRemote remote = new BrightnessSensorRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
             remote.waitForData();
+            remote.getData().getBrightnessState().
 
             System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
         } catch (InterruptedException | CouldNotPerformException e) {
@@ -148,7 +156,7 @@ public class FillOntology {
                         }
                     }
                     if (integrateProviderService) {
-                        integrateIndivProviderServices(unitConfig);
+                        integrateIndividualProviderServices(unitConfig);
                     }
                 }
             }
@@ -174,79 +182,151 @@ public class FillOntology {
 
         try {
             for (final UnitConfig unitConfigLocation : registry.getUnitConfigs(UnitType.LOCATION)) {
-                String locationTypeName = unitConfigLocation.getLocationConfig().getType().name();
-                char[] charVar = locationTypeName.toLowerCase().toCharArray();
-                charVar[0] = Character.toUpperCase(charVar[0]);
-                locationTypeName = new String(charVar);
+                if (unitConfigLocation.getEnablingState().getValue().equals(State.ENABLED)) {
+                    String locationTypeName = unitConfigLocation.getLocationConfig().getType().name().toLowerCase();
+                    char[] charVar = locationTypeName.toCharArray();
+                    charVar[0] = Character.toUpperCase(charVar[0]);
+                    locationTypeName = new String(charVar);
 
-                // maybe without "Region"-class (no subLocation)
-                final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
-                        .getOntClass(NAMESPACE + locationTypeName));
+                    // maybe without "Region"-class (no subLocation)
+                    final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                            .getOntClass(NAMESPACE + locationTypeName));
 
-                while (individualIterator.hasNext()) {
-                    final Individual individual = (Individual) individualIterator.next();
-                    // hint: getLocalName() doesn't work perfect, if the first characters of the id are numbers.
-                    // Method expects the numbers as part of the namespace...
-                    //TODO maybe error potential...
-                    final String locationIdName = individual.getURI().substring(NAMESPACE.length());
-                    if (locationIdName.equals(unitConfigLocation.getId())) {
-                        // property "hasSubLocation"
-                        for (final String childId : unitConfigLocation.getLocationConfig().getChildIdList()) {
-                            //TODO check Individual if null...
-                            final Individual child = ontModel.getIndividual(NAMESPACE + childId);
-                            final ObjectProperty objectProperty = ontModel
-                                    .getObjectProperty(NAMESPACE + "hasSubLocation");
-                            individual.addProperty(objectProperty, child);
+                    while (individualIterator.hasNext()) {
+                        final Individual individual = (Individual) individualIterator.next();
+                        // hint: getLocalName() doesn't work perfect, if the first characters of the id are numbers.
+                        // Method expects the numbers as part of the namespace...
+                        //TODO maybe error potential...
+                        final String locationIdName = individual.getURI().substring(NAMESPACE.length());
+                        if (locationIdName.equals(unitConfigLocation.getId())) {
+                            // property "hasSubLocation"
+                            for (final String childId : unitConfigLocation.getLocationConfig().getChildIdList()) {
+                                //TODO check Individual if null...
+                                final Individual child = ontModel.getIndividual(NAMESPACE + childId);
+                                final ObjectProperty objectProperty = ontModel
+                                        .getObjectProperty(NAMESPACE + "hasSubLocation");
+                                individual.addProperty(objectProperty, child);
+                            }
+                            // property "hasUnit"
+                            for (final String unitId : unitConfigLocation.getLocationConfig().getUnitIdList()) {
+                                //TODO check Individual if null...
+                                final Individual unit = ontModel.getIndividual(NAMESPACE + unitId);
+                                final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasUnit");
+                                individual.addProperty(objectProperty, unit);
+                            }
+                            break;
                         }
-                        // property "hasUnit"
-                        for (final String unitId : unitConfigLocation.getLocationConfig().getUnitIdList()) {
-                            //TODO check Individual if null...
-                            final Individual unit = ontModel.getIndividual(NAMESPACE + unitId);
-                            final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasUnit");
-                            individual.addProperty(objectProperty, unit);
-                        }
-                        break;
                     }
                 }
             }
 
             for (final UnitConfig unitConfigConnection : registry.getUnitConfigs(UnitType.CONNECTION)) {
-                String connectionTypeName = unitConfigConnection.getConnectionConfig().getType().name();
+                if (unitConfigConnection.getEnablingState().getValue().equals(State.ENABLED)) {
+                    String connectionTypeName = unitConfigConnection.getConnectionConfig().getType().name()
+                            .toLowerCase();
 
-                char[] charVar = connectionTypeName.toLowerCase().toCharArray();
-                charVar[0] = Character.toUpperCase(charVar[0]);
-                connectionTypeName = new String(charVar);
+                    char[] charVar = connectionTypeName.toCharArray();
+                    charVar[0] = Character.toUpperCase(charVar[0]);
+                    connectionTypeName = new String(charVar);
 
-                final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
-                        .getOntClass(NAMESPACE + connectionTypeName));
+                    final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasConnection");
+                    final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                            .getOntClass(NAMESPACE + connectionTypeName));
 
-                while (individualIterator.hasNext()) {
-                    final Individual connectionIndividual = (Individual) individualIterator.next();
-                    final String connectionIdName = connectionIndividual.getURI().substring(NAMESPACE.length());
+                    while (individualIterator.hasNext()) {
+                        final Individual connectionIndividual = (Individual) individualIterator.next();
+                        final String connectionIdName = connectionIndividual.getURI().substring(NAMESPACE.length());
 
-                    if (connectionIdName.equals(unitConfigConnection.getId())) {
-                        for (final String connectionTile : unitConfigConnection.getConnectionConfig().getTileIdList()) {
-                            final Individual tileIndividual = ontModel.getIndividual(NAMESPACE + connectionTile);
-                            final ObjectProperty objectProperty = ontModel
-                                    .getObjectProperty(NAMESPACE + "hasConnection");
-                            tileIndividual.addProperty(objectProperty, connectionIndividual);
+                        if (connectionIdName.equals(unitConfigConnection.getId())) {
+                            // property "hasConnection"
+                            for (final String connectionTile : unitConfigConnection.getConnectionConfig()
+                                    .getTileIdList()) {
+                                final Individual tileIndividual = ontModel.getIndividual(NAMESPACE + connectionTile);
+
+                                tileIndividual.addProperty(objectProperty, connectionIndividual);
+                            }
                         }
-                        //System.out.println(unitConfigConnection.getConnectionConfig().getTileIdList());
                     }
                 }
+            }
+
+            for (final ServiceConfigType.ServiceConfig serviceConfig : registry.getServiceConfigs()) {
+                final Individual stateIndividual = ontModel.getIndividual(NAMESPACE + serviceConfig.getUnitId());
+                final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasState");
+                final Individual serviceTypeIndividual = ontModel.getIndividual(NAMESPACE + serviceConfig
+                        .getServiceTemplate().getType());
+
+                if (stateIndividual != null) {
+                    serviceTypeIndividual.addProperty(objectProperty, stateIndividual);
+                }
+
+                //alternative code...test, if better performance later...
+                /*final ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasState");
+
+                //to do while service...
+                final String serviceTypeName = serviceConfig.getServiceTemplate().getType().toString();
+                final String stateIdNameReg = serviceConfig.getUnitId();
+
+                final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                    .getOntClass(NAMESPACE + "State"));
+
+                while (individualIterator.hasNext()) {
+                    final Individual individual = (Individual) individualIterator.next();
+                    final String stateIdNameOnt = individual.getURI().substring(NAMESPACE.length());
+
+                    if (stateIdNameOnt.equals(stateIdNameReg)) {
+                        final Individual serviceIndividual = ontModel.getIndividual(NAMESPACE + serviceTypeName);
+                        serviceIndividual.addProperty(objectProperty, individual);
+                    }
+                }*/
             }
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
+    private void createObservationIndivdual(final UnitConfig unitConfig
+            , final ServiceTemplateType.ServiceTemplate.ServiceType serviceType, final Timestamp timestamp) {
+        //TODO sout values (timestamp)
+
+        int observationNumber = 0;
+        final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
+                .getOntClass(NAMESPACE + OBSERVATION));
+
+        //TODO alternative to list all individuals...
+        while (individualIterator.hasNext()) {
+            individualIterator.next();
+            observationNumber++;
+        }
+
+        // create observation individual
+        final Individual startIndividualObservation = ontModel.createIndividual(NAMESPACE + "o" + observationNumber
+                , ontModel.getOntClass(NAMESPACE + OBSERVATION));
+
+        // create objectProperty hasUnitId
+        final Individual endIndividualUnit = ontModel.getIndividual(NAMESPACE + unitConfig.getId());
+        ObjectProperty objectProperty = ontModel.getObjectProperty("hasUnitId");
+        startIndividualObservation.addProperty(objectProperty, endIndividualUnit);
+
+        // create objectProperty hasTimeStamp
+        final Literal literal = ontModel.createLiteral(timestamp.toString());
+        final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(NAMESPACE + "hasTimeStamp");
+        startIndividualObservation.addLiteral(datatypeProperty, literal);
+
+        // create objectProperty hasProviderService
+        final Individual endIndividualServiceType = ontModel.getIndividual(NAMESPACE + serviceType.toString()); //TODO
+        objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasProviderService");
+        startIndividualObservation.addProperty(objectProperty, endIndividualServiceType);
+
+        //TODO check string output
+    }
+
     /**
      * Integration of the individual stateValues into the ontology.
      */
-    protected void integrateIndivStateValues() {
+    protected void integrateIndividualStateValues() {
         LOGGER.info("Start integrate ontology with individual stateValues...");
         final OntClass ontClassStateValue = ontModel.getOntClass(NAMESPACE + "StateValue");
-        //final OntClass ontClassState = ontModel.getOntClass(NAMESPACE + "State");
 
         UnitRegistry registry = null;
         try {
@@ -268,7 +348,6 @@ public class FillOntology {
             for (final UnitConfig unitConfig : registry.getUnitConfigs()) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)
                         && !notDalUnits.contains(unitConfig.getType())) {
-                    //System.out.println(unitConfig.getLabel() + "---------" + unitConfig.getType());
                     final UnitRemote unitRemote = UnitRemoteFactoryImpl.getInstance()
                             .newInitializedInstance(unitConfig);
                     unitRemote.activate();
@@ -371,7 +450,7 @@ public class FillOntology {
      * Integration of the individual providerServices into the ontology.
      * @param unitConfig the config list of the units.
      */
-    protected void integrateIndivProviderServices(final UnitConfig unitConfig) {
+    protected void integrateIndividualProviderServices(final UnitConfig unitConfig) {
         //LOGGER.info("Start integrate ontology with individual providerServices...");
         unitConfig.getServiceConfigList().stream().filter(serviceConfig -> serviceConfig.getServiceTemplate()
                 .getPattern().toString().toLowerCase().equals("provider")).forEach(serviceConfig -> {

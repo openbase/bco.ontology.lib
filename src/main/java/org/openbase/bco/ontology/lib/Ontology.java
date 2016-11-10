@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 /**
  * Created by agatting on 20.10.16.
  */
-class Ontology {
+public final class Ontology {
 
     /**
      * App name.
@@ -32,12 +32,14 @@ class Ontology {
     private static final String APP_NAME = Ontology.class.getSimpleName() + "App";
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
 
+    private Ontology() { }
+
     /**
      * Main Method starting ontology application.
      *
      * @param args Arguments from commandline.
      */
-    public static void main(final String[] args) {
+    public static void main(final String... args) {
 
         LOGGER.info("Start " + APP_NAME + " ...");
 
@@ -46,7 +48,7 @@ class Ontology {
         ontology.cleanOntology();
         final FillOntology fillOntology = new FillOntology(ontology.getModel());
         fillOntology.integrateIndividualUnitTypes(true);
-        fillOntology.integrateIndivStateValues();
+        fillOntology.integrateIndividualStateValues();
         fillOntology.integrateObjectProperties();
         ontology.saveOntology();
 
