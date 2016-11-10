@@ -42,8 +42,6 @@ import rst.domotic.service.ServiceTemplateType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-import rst.timing.TimestampType.Timestamp;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -61,8 +59,8 @@ public class FillOntology {
     private static final String DATAUNIT = "dataunit";
     private static final String STATE = "state";
     private static final String PATTERN = "[a-z]*";
-    private static final String OBSERVATION = "Observation";
     private final OntModel ontModel;
+    private long observationNumber = 0;
 
     /**
      * Constructor for filling ontology model.
@@ -94,14 +92,14 @@ public class FillOntology {
         }
 
         // test code
-        /*BrightnessSensorRemote remote = new BrightnessSensorRemote();
+        /*ColorableLightRemote remote = new ColorableLightRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
             remote.waitForData();
-            remote.getData().getBrightnessState().
+            remote.getColorState().getColor().getRgbColor();
 
-            System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
+            //System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
         } catch (InterruptedException | CouldNotPerformException e) {
                 e.printStackTrace();
         }*/
@@ -286,38 +284,61 @@ public class FillOntology {
     }
 
     private void createObservationIndivdual(final UnitConfig unitConfig
-            , final ServiceTemplateType.ServiceTemplate.ServiceType serviceType, final Timestamp timestamp) {
-        //TODO sout values (timestamp)
-
-        int observationNumber = 0;
-        final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
-                .getOntClass(NAMESPACE + OBSERVATION));
-
-        //TODO alternative to list all individuals...
-        while (individualIterator.hasNext()) {
-            individualIterator.next();
-            observationNumber++;
-        }
+            , final ServiceTemplateType.ServiceTemplate.ServiceType serviceType) {
+        //TODO serviceType via unitConfig
+        observationNumber++;
 
         // create observation individual
         final Individual startIndividualObservation = ontModel.createIndividual(NAMESPACE + "o" + observationNumber
-                , ontModel.getOntClass(NAMESPACE + OBSERVATION));
+                , ontModel.getOntClass(NAMESPACE + "Observation"));
 
         // create objectProperty hasUnitId
         final Individual endIndividualUnit = ontModel.getIndividual(NAMESPACE + unitConfig.getId());
         ObjectProperty objectProperty = ontModel.getObjectProperty("hasUnitId");
         startIndividualObservation.addProperty(objectProperty, endIndividualUnit);
 
-        // create objectProperty hasTimeStamp
-        final Literal literal = ontModel.createLiteral(timestamp.toString());
-        final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(NAMESPACE + "hasTimeStamp");
-        startIndividualObservation.addLiteral(datatypeProperty, literal);
-
         // create objectProperty hasProviderService
-        final Individual endIndividualServiceType = ontModel.getIndividual(NAMESPACE + serviceType.toString()); //TODO
+        final Individual endIndividualServiceType = ontModel.getIndividual(NAMESPACE + serviceType.toString());
         objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasProviderService");
         startIndividualObservation.addProperty(objectProperty, endIndividualServiceType);
 
+        // create objectProperty hasStateValue
+        try {
+            final UnitRemote unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
+            unitRemote.activate();
+            unitRemote.waitForData();
+
+            final Object objectState = findStateMethod(unitRemote);
+            final Object objectStateValue = findGetValueMethod(objectState);
+
+            if (objectStateValue == null) {
+                //measure point of the unit has a dataTypeValue
+                final Object objectDataTypeStateValue = findDataTypeStateValue(objectState);
+                if (objectDataTypeStateValue == null) {
+                    LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId());
+                } else {
+                    final Individual endIndividualDataTypeValue = ontModel
+                            .getIndividual(NAMESPACE + objectDataTypeStateValue);
+                    final DatatypeProperty datatypeProperty = ontModel
+                            .getDatatypeProperty(NAMESPACE + "hasStateValueLiteral");
+                    startIndividualObservation.addLiteral(datatypeProperty, endIndividualDataTypeValue);
+                }
+            } else {
+                //measure point of the unit has a normal stateValue
+                final Individual endIndividualStateValue = ontModel.getIndividual(NAMESPACE + objectStateValue);
+                objectProperty = ontModel.getObjectProperty("hasStateValue");
+                startIndividualObservation.addProperty(objectProperty, endIndividualStateValue);
+            }
+
+            // create dataTypeProperty hasTimeStamp
+            final Object objectTimeStamp = findTimeStampMethod(objectState);
+            final Literal literal = ontModel.createLiteral(objectTimeStamp.toString());
+            final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(NAMESPACE + "hasTimeStamp");
+            startIndividualObservation.addLiteral(datatypeProperty, literal);
+
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
         //TODO check string output
     }
 
@@ -436,6 +457,35 @@ public class FillOntology {
         final Method[] method = getState.getClass().getMethods();
         for (final Method aMethod : method) {
             if (Pattern.matches(GET + PATTERN + DATAUNIT, aMethod.getName().toLowerCase())) {
+                try {
+                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
+            }
+        }
+        return null;
+    }
+
+    private Object findTimeStampMethod(final Object getState) {
+        final Method[] method = getState.getClass().getMethods();
+        for (final Method aMethod : method) {
+            if (Pattern.matches("gettimestamp", aMethod.getName().toLowerCase())) {
+                try {
+                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
+            }
+        }
+        return null;
+    }
+
+    private Object findDataTypeStateValue(final Object getState) {
+        final Method[] method = getState.getClass().getMethods();
+        final String state = getState.getClass().getName().toLowerCase().replaceAll(STATE, "");
+        for (final Method aMethod : method) {
+            if (Pattern.matches(state, aMethod.getName().toLowerCase())) {
                 try {
                     return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
