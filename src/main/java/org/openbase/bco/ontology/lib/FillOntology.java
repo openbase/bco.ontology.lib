@@ -92,12 +92,12 @@ public class FillOntology {
         }
 
         // test code
-        /*ColorableLightRemote remote = new ColorableLightRemote();
+        /*TemperatureSensorRemote remote = new TemperatureSensorRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
             remote.waitForData();
-            remote.getColorState().getColor().getRgbColor();
+            remote.getTemperatureState().getTemperatureDataUnit()
 
             //System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
         } catch (InterruptedException | CouldNotPerformException e) {
@@ -302,7 +302,7 @@ public class FillOntology {
         objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasProviderService");
         startIndividualObservation.addProperty(objectProperty, endIndividualServiceType);
 
-        // create objectProperty hasStateValue
+        // create objectProperty hasStateValue (or hasStateValueLiteral with hasDataUnit)
         try {
             final UnitRemote unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
             unitRemote.activate();
@@ -315,13 +315,26 @@ public class FillOntology {
                 //measure point of the unit has a dataTypeValue
                 final Object objectDataTypeStateValue = findDataTypeStateValue(objectState);
                 if (objectDataTypeStateValue == null) {
-                    LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId());
+                    LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is unitType: "
+                            + unitConfig.getType());
                 } else {
-                    final Individual endIndividualDataTypeValue = ontModel
-                            .getIndividual(NAMESPACE + objectDataTypeStateValue);
-                    final DatatypeProperty datatypeProperty = ontModel
+                    // create dataTypeProperty "hasStateValueLiteral
+                    final Literal dataTypeValueLiteral = ontModel.createLiteral(objectDataTypeStateValue.toString());
+                    final DatatypeProperty dataTypeProperty = ontModel
                             .getDatatypeProperty(NAMESPACE + "hasStateValueLiteral");
-                    startIndividualObservation.addLiteral(datatypeProperty, endIndividualDataTypeValue);
+                    startIndividualObservation.addLiteral(dataTypeProperty, dataTypeValueLiteral);
+
+                    //create objectProperty hasDataUnit
+                    final Object objectDataUnit = findDataUnitMethod(objectState);
+                    if (objectDataUnit == null) {
+                        LOGGER.error("No dataUnit by unit: " + unitConfig.getId() + " is unitType: "
+                                + unitConfig.getType());
+                    } else {
+                        final Individual endIndividualDataUnit = ontModel.getIndividual(NAMESPACE + objectState
+                                .toString());
+                        objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasDataUnit");
+                        startIndividualObservation.addProperty(objectProperty, endIndividualDataUnit);
+                    }
                 }
             } else {
                 //measure point of the unit has a normal stateValue
