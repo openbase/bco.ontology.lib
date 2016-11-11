@@ -52,6 +52,9 @@ public final class Ontology {
         fillOntology.integrateObjectProperties();
         ontology.saveOntology();
 
+        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
+        queryOntology.queryModel();
+
         LOGGER.info(APP_NAME + " finished!");
         System.exit(0);
     }

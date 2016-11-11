@@ -315,7 +315,7 @@ public class FillOntology {
                 //measure point of the unit has a dataTypeValue
                 final Object objectDataTypeStateValue = findDataTypeStateValue(objectState);
                 if (objectDataTypeStateValue == null) {
-                    LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is unitType: "
+                    LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is: "
                             + unitConfig.getType());
                 } else {
                     // create dataTypeProperty "hasStateValueLiteral
