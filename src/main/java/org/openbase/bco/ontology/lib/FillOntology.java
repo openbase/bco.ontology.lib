@@ -309,12 +309,18 @@ public class FillOntology {
             unitRemote.activate();
             unitRemote.waitForData();
 
-            final Object objectState = findStateMethod(unitRemote);
-            final Object objectStateValue = findGetValueMethod(objectState);
+            final Object objectState = findMethodByUnitRemote(unitRemote, GET + PATTERN + STATE);
+            final Object objectStateValue = findMethodByObject(objectState, "getValue");
 
+            //measure point of the unit has a dataTypeValue
             if (objectStateValue == null) {
-                //measure point of the unit has a dataTypeValue
-                final Object objectDataTypeStateValue = findDataTypeStateValue(objectState);
+
+                // whole string to lower case and delete substring "state"
+                String state = objectState.getClass().getName().toLowerCase().replaceAll(STATE, "");
+                // string has whole class path name. cut string at position of method name (starts with char "$")
+                state = state.substring(state.lastIndexOf('$') + 1);
+                final Object objectDataTypeStateValue = findMethodByObject(objectState, GET + state);
+
                 if (objectDataTypeStateValue == null) {
                     LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is: "
                             + unitConfig.getType());
@@ -326,7 +332,7 @@ public class FillOntology {
                     startIndividualObservation.addLiteral(dataTypeProperty, dataTypeValueLiteral);
 
                     //create objectProperty hasDataUnit
-                    final Object objectDataUnit = findDataUnitMethod(objectState);
+                    final Object objectDataUnit = findMethodByObject(objectState, GET + PATTERN + DATA_UNIT);
                     if (objectDataUnit == null) {
                         LOGGER.error("No dataUnit by unit: " + unitConfig.getId() + " is unitType: "
                                 + unitConfig.getType());
@@ -345,7 +351,7 @@ public class FillOntology {
             }
 
             // create dataTypeProperty hasTimeStamp
-            final Object objectTimeStamp = findTimeStampMethod(objectState);
+            final Object objectTimeStamp = findMethodByObject(objectState, "gettimestamp");
             final Literal literal = ontModel.createLiteral(objectTimeStamp.toString());
             final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(NAMESPACE + "hasTimeStamp");
             startIndividualObservation.addLiteral(datatypeProperty, literal);
@@ -388,18 +394,18 @@ public class FillOntology {
                     unitRemote.activate();
                     unitRemote.waitForData();
 
-                    final Object objectState = findStateMethod(unitRemote);
+                    final Object objectState = findMethodByUnitRemote(unitRemote, GET + PATTERN + STATE);
                     String objectStateName = objectState.getClass().getName().toLowerCase();
                     objectStateName = objectStateName.substring(objectStateName.lastIndexOf(DOLLAR_SIGN) + 1);
 
-                    final Object objectStateValue = findGetValueMethod(objectState);
-                    final Object objectDataUnit = findDataUnitMethod(objectState);
+                    final Object objectStateValue = findMethodByObject(objectState, "getValue");
+                    final Object objectDataUnit = findMethodByObject(objectState, GET + PATTERN + DATA_UNIT);
 
                     if (objectStateValue != null) {
                         ontModel.createIndividual(NAMESPACE + objectStateValue, ontClassStateValue);
                     }
 
-                    final Object objectId = findIdMethod(unitRemote);
+                    final Object objectId = findMethodByUnitRemote(unitRemote, "getid");
                     final ExtendedIterator classIterator = ontModel.listClasses();
 
                     while (classIterator.hasNext()) {
@@ -424,90 +430,51 @@ public class FillOntology {
         }
     }
 
-    private Object findStateMethod(final UnitRemote unitRemote) {
-        final Method[] method = unitRemote.getDataClass().getMethods();
-        for (final Method aMethod : method) {
-            if (Pattern.matches(GET + PATTERN + STATE, aMethod.getName().toLowerCase())) {
-                try {
-                    return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
-                    //return getState.getClass().getMethod("getValue").invoke(getState);
-                } catch (IllegalAccessException | InvocationTargetException | NotAvailableException
-                        | NoSuchMethodException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+    /**
+     * Get a method of an unknown java object.
+     * @param object Source object (/class) of the method. Based on normal object to get class (compare with
+     *               method: findMethodByUnitRemote(final UnitRemote unitRemote, String regex)).
+     * @param regex Regular expression to find the method (method name). Better success if detailed.
+     * @return Returns method-object by success, else null.
+     */
+    private Object findMethodByObject(final Object object, String regex) {
+        try {
+            regex = regex.toLowerCase();
+            final Method[] method = object.getClass().getMethods();
+
+            for (final Method aMethod : method) {
+                if (Pattern.matches(regex, aMethod.getName().toLowerCase())) {
+                    try {
+                        return object.getClass().getMethod(aMethod.getName()).invoke(object);
+                    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    }
                 }
             }
-        }
-        return null;
-    }
-
-    private Object findGetValueMethod(final Object getState) {
-        try {
-            if (getState != null) {
-                return getState.getClass().getMethod("getValue").invoke(getState);
-            }
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (NullPointerException | IllegalArgumentException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        } catch (NoSuchMethodException e) {
-            LOGGER.warn(e + " - wrong State. Insignificant.");
         }
+        //TODO regex enum
+
         return null;
     }
 
-    private Object findIdMethod(final UnitRemote unitRemote) {
+    /**
+     * Get a method of an unknown java object.
+     * @param unitRemote Source object (/class) of the method. Based on the remote to get data class directly.
+     * @param regex Regular expression to find the method (method name). Better success if detailed.
+     * @return Returns method-object by success, else null.
+     */
+    private Object findMethodByUnitRemote(final UnitRemote unitRemote, String regex) {
+        regex = regex.toLowerCase();
         final Method[] method = unitRemote.getDataClass().getMethods();
+
         for (final Method aMethod : method) {
-            if (Pattern.matches("getid", aMethod.getName().toLowerCase())) {
+            if (Pattern.matches(regex, aMethod.getName().toLowerCase())) {
                 try {
                     return unitRemote.getDataClass().getMethod(aMethod.getName()).invoke(unitRemote.getData());
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
                         | NotAvailableException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                }
-            }
-        }
-        return null;
-    }
-
-    //TODO reduce find-methods to one generic method
-    private Object findDataUnitMethod(final Object getState) {
-        final Method[] method = getState.getClass().getMethods();
-        for (final Method aMethod : method) {
-            if (Pattern.matches(GET + PATTERN + DATA_UNIT, aMethod.getName().toLowerCase())) {
-                try {
-                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                }
-            }
-        }
-        return null;
-    }
-
-    private Object findTimeStampMethod(final Object getState) {
-        final Method[] method = getState.getClass().getMethods();
-        for (final Method aMethod : method) {
-            if (Pattern.matches("gettimestamp", aMethod.getName().toLowerCase())) {
-                try {
-                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                }
-            }
-        }
-        return null;
-    }
-
-    private Object findDataTypeStateValue(final Object getState) {
-        final Method[] method = getState.getClass().getMethods();
-        // whole string to lower case and delete substring "state"
-        String state = getState.getClass().getName().toLowerCase().replaceAll(STATE, "");
-        // string has whole class path name. cut string at position of method name (starts with char "$")
-        state = state.substring(state.lastIndexOf(DOLLAR_SIGN) + 1);
-        for (final Method aMethod : method) {
-            if (Pattern.matches(GET + state, aMethod.getName().toLowerCase())) {
-                try {
-                    return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
             }
