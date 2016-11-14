@@ -50,6 +50,7 @@ public final class Ontology {
         fillOntology.integrateIndividualUnitTypes(true);
         fillOntology.integrateIndividualStateValues();
         fillOntology.integrateObjectProperties();
+        fillOntology.observer();
         ontology.saveOntology();
 
         final QueryOntology queryOntology = new QueryOntology(ontology.getModel());

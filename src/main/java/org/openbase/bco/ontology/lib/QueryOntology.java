@@ -21,17 +21,25 @@ package org.openbase.bco.ontology.lib;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Statement;
 
 /**
  * Created by agatting on 11.11.16.
  */
 public class QueryOntology {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
     private final OntModel ontModel;
 
     /**
@@ -49,15 +57,25 @@ public class QueryOntology {
     public void queryModel() {
 
         final String queryString =
-                "SELECT ?x"
-                        + "WHERE { ?x  <http://www.w3.org/2001/vcard-rdf/3.0#FN>  \"John Smith\" }";
+                "PREFIX  ns: <http://www.openbase.org/bco/ontology#>"
+                        + " SELECT ?Lux"
+                        + " WHERE { ?x ns:DataUnit \"Lux\" }";
+                //"PREFIX rdf: <http://www.openbase.org/bco/ontology#>"
+                //+ " SELECT DISTINCT ?type"
+                //+ " WHERE {"
+                //+ " ?s a ?type."
+                //+ " }";
 
-        final Query query = QueryFactory.create(queryString);
-        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
-        final ResultSet resultSet = queryExecution.execSelect();
+        try {
+            final Query query = QueryFactory.create(queryString);
+            final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+            final ResultSet resultSet = queryExecution.execSelect();
+            ResultSetFormatter.out(System.out, resultSet, query);
 
-        ResultSetFormatter.out(System.out, resultSet, query);
-
-        queryExecution.close();
+            queryExecution.close();
+            ontModel.close();
+        } catch (QueryException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 }

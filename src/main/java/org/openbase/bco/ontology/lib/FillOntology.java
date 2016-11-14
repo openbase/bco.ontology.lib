@@ -38,7 +38,7 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceConfigType;
-import rst.domotic.service.ServiceTemplateType;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
@@ -56,9 +56,10 @@ public class FillOntology {
     private static final Logger LOGGER = LoggerFactory.getLogger(FillOntology.class);
     private static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
     private static final String GET = "get";
-    private static final String DATAUNIT = "dataunit";
+    private static final String DATA_UNIT = "dataunit";
     private static final String STATE = "state";
     private static final String PATTERN = "[a-z]*";
+    private static final char DOLLAR_SIGN = '$';
     private final OntModel ontModel;
     private long observationNumber = 0;
 
@@ -75,6 +76,7 @@ public class FillOntology {
     //TODO create lists with necessary classes for comparing (e.g. all subclasses of superclass "state")
     //TODO efficiency: e.g. getIndividual faster
     //TODO check iterator (if empty => nullPointer)
+    //TODO getLocalName() not stable, if first char is a number...
 
     /**
      * Method fills the given ontology with unitType instances.
@@ -92,12 +94,12 @@ public class FillOntology {
         }
 
         // test code
-        /*TemperatureSensorRemote remote = new TemperatureSensorRemote();
+        /*BrightnessSensorRemote remote = new BrightnessSensorRemote();
         try {
             remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
             remote.activate();
             remote.waitForData();
-            remote.getTemperatureState().getTemperatureDataUnit()
+            remote.getBrightnessState().getBrightness();
 
             //System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
         } catch (InterruptedException | CouldNotPerformException e) {
@@ -283,8 +285,7 @@ public class FillOntology {
         }
     }
 
-    private void createObservationIndivdual(final UnitConfig unitConfig
-            , final ServiceTemplateType.ServiceTemplate.ServiceType serviceType) {
+    private void createObservationIndivdual(final UnitConfig unitConfig, final ServiceType serviceType) {
         //TODO serviceType via unitConfig
         observationNumber++;
 
@@ -294,7 +295,7 @@ public class FillOntology {
 
         // create objectProperty hasUnitId
         final Individual endIndividualUnit = ontModel.getIndividual(NAMESPACE + unitConfig.getId());
-        ObjectProperty objectProperty = ontModel.getObjectProperty("hasUnitId");
+        ObjectProperty objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasUnitId");
         startIndividualObservation.addProperty(objectProperty, endIndividualUnit);
 
         // create objectProperty hasProviderService
@@ -330,7 +331,7 @@ public class FillOntology {
                         LOGGER.error("No dataUnit by unit: " + unitConfig.getId() + " is unitType: "
                                 + unitConfig.getType());
                     } else {
-                        final Individual endIndividualDataUnit = ontModel.getIndividual(NAMESPACE + objectState
+                        final Individual endIndividualDataUnit = ontModel.getIndividual(NAMESPACE + objectDataUnit
                                 .toString());
                         objectProperty = ontModel.getObjectProperty(NAMESPACE + "hasDataUnit");
                         startIndividualObservation.addProperty(objectProperty, endIndividualDataUnit);
@@ -388,6 +389,9 @@ public class FillOntology {
                     unitRemote.waitForData();
 
                     final Object objectState = findStateMethod(unitRemote);
+                    String objectStateName = objectState.getClass().getName().toLowerCase();
+                    objectStateName = objectStateName.substring(objectStateName.lastIndexOf(DOLLAR_SIGN) + 1);
+
                     final Object objectStateValue = findGetValueMethod(objectState);
                     final Object objectDataUnit = findDataUnitMethod(objectState);
 
@@ -402,15 +406,14 @@ public class FillOntology {
                         final OntClass ontClass = (OntClass) classIterator.next();
                         final String className = ontClass.getLocalName().toLowerCase();
 
-                        //TODO find a better way of comparing (getClass().getName() provides whole path...)
                         // find correct state type class
-                        if (objectId != null && objectState.getClass().getName().toLowerCase().contains(className)
+                        if (objectId != null && objectStateName.contains(className)
                                 && !className.equals(STATE)) {
                             ontModel.createIndividual(NAMESPACE + objectId, ontClass);
                         }
 
                         // find correct data unit class
-                        if (objectDataUnit != null && className.equals(DATAUNIT)) {
+                        if (objectDataUnit != null && className.equals(DATA_UNIT)) {
                             ontModel.createIndividual(NAMESPACE + objectDataUnit, ontClass);
                         }
                     }
@@ -469,7 +472,7 @@ public class FillOntology {
     private Object findDataUnitMethod(final Object getState) {
         final Method[] method = getState.getClass().getMethods();
         for (final Method aMethod : method) {
-            if (Pattern.matches(GET + PATTERN + DATAUNIT, aMethod.getName().toLowerCase())) {
+            if (Pattern.matches(GET + PATTERN + DATA_UNIT, aMethod.getName().toLowerCase())) {
                 try {
                     return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -496,9 +499,12 @@ public class FillOntology {
 
     private Object findDataTypeStateValue(final Object getState) {
         final Method[] method = getState.getClass().getMethods();
-        final String state = getState.getClass().getName().toLowerCase().replaceAll(STATE, "");
+        // whole string to lower case and delete substring "state"
+        String state = getState.getClass().getName().toLowerCase().replaceAll(STATE, "");
+        // string has whole class path name. cut string at position of method name (starts with char "$")
+        state = state.substring(state.lastIndexOf(DOLLAR_SIGN) + 1);
         for (final Method aMethod : method) {
-            if (Pattern.matches(state, aMethod.getName().toLowerCase())) {
+            if (Pattern.matches(GET + state, aMethod.getName().toLowerCase())) {
                 try {
                     return getState.getClass().getMethod(aMethod.getName()).invoke(getState);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
@@ -526,6 +532,49 @@ public class FillOntology {
      * Observer.
      */
     protected void observer() {
+
+        /**
+         * Test example to create one observation individual.
+         */
+        UnitRegistry registry = null;
+        try {
+            registry = CachedUnitRegistryRemote.getRegistry();
+            CachedUnitRegistryRemote.waitForData();
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        boolean testBool = false;
+
+        try {
+            for (final UnitConfig unitConfig : registry.getUnitConfigs(UnitType.BRIGHTNESS_SENSOR)) {
+                if (!testBool && unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
+                    testBool = true;
+                    final ServiceType serviceType = ServiceType.BRIGHTNESS_STATE_SERVICE;
+
+                    /*TemperatureSensorRemote remote = new TemperatureSensorRemote();
+                    try {
+                        remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
+                        remote.activate();
+                        remote.waitForData();
+                        remote.getTemperatureState().getTemperatureDataUnit()
+
+                        //System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
+                    } catch (InterruptedException | CouldNotPerformException e) {
+                            e.printStackTrace();
+                    }*/
+
+                    createObservationIndivdual(unitConfig, serviceType);
+                }
+            }
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        /**
+         * End of test example.
+         */
+
+
         //TODO observer
     }
 }
