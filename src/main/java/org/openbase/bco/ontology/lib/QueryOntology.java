@@ -32,8 +32,6 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Statement;
-
 /**
  * Created by agatting on 11.11.16.
  */
