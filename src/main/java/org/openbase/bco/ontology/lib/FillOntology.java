@@ -304,18 +304,17 @@ public class FillOntology {
         objectProperty = ontModel.getObjectProperty(Constants.NAMESPACE + "hasProviderService");
         startIndividualObservation.addProperty(objectProperty, endIndividualServiceType);
 
-        // create objectProperty hasStateValue (or hasStateValueLiteral with hasDataUnit)
+        // create property hasStateValue
         try {
             final UnitRemote unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
             unitRemote.activate();
             unitRemote.waitForData();
 
-            final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegExp.GET_PATTERN_STATE);
-            final Object objectStateValue = findMethodByObject(objectState, Constants.RegExp.GET_VALUE);
+            final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegEx.GET_PATTERN_STATE);
+            final Object objectStateValue = findMethodByObject(objectState, Constants.RegEx.GET_VALUE);
 
             //measure point of the unit has a dataTypeValue
             if (objectStateValue == null) {
-
                 // whole string to lower case and delete substring "state"
                 String state = objectState.getClass().getName().toLowerCase().replaceAll(Constants.STATE, "");
                 // string has whole class path name. cut string at position of method name (starts with char "$")
@@ -326,27 +325,23 @@ public class FillOntology {
                     LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is: "
                             + unitConfig.getType());
                 } else {
-                    // create dataTypeProperty "hasStateValueLiteral
-                    final Literal dataTypeValueLiteral = ontModel.createLiteral(objectDataTypeStateValue.toString());
-                    final DatatypeProperty dataTypeProperty = ontModel
-                            .getDatatypeProperty(Constants.NAMESPACE + "hasStateValueLiteral");
-                    startIndividualObservation.addLiteral(dataTypeProperty, dataTypeValueLiteral);
-
-                    //create objectProperty hasDataUnit
+                    //get dataUnit
                     final Object objectDataUnit = findMethodByObject(objectState
-                            , Constants.RegExp.GET_PATTERN_DATA_UNIT);
+                            , Constants.RegEx.GET_PATTERN_DATA_UNIT);
                     if (objectDataUnit == null) {
                         LOGGER.error("No dataUnit by unit: " + unitConfig.getId() + " is unitType: "
                                 + unitConfig.getType());
                     } else {
-                        final Individual endIndividualDataUnit = ontModel
-                                .getIndividual(Constants.NAMESPACE + objectDataUnit.toString());
-                        objectProperty = ontModel.getObjectProperty(Constants.NAMESPACE + "hasDataUnit");
-                        startIndividualObservation.addProperty(objectProperty, endIndividualDataUnit);
+                        final Literal dataTypeValueLiteral = ontModel.createLiteral(objectDataTypeStateValue.toString()
+                                + " " + objectDataUnit.toString());
+                        // create dataTypeProperty "hasStateValue"
+                        final DatatypeProperty dataTypeProperty = ontModel
+                                .getDatatypeProperty(Constants.NAMESPACE + "hasStateValue");
+                        startIndividualObservation.addLiteral(dataTypeProperty, dataTypeValueLiteral);
                     }
                 }
             } else {
-                //measure point of the unit has a normal stateValue
+                //measure point of the unit has a normal stateValue: create objectProperty "hasStateValue"
                 final Individual endIndividualStateValue = ontModel
                         .getIndividual(Constants.NAMESPACE + objectStateValue);
                 objectProperty = ontModel.getObjectProperty("hasStateValue");
@@ -354,7 +349,7 @@ public class FillOntology {
             }
 
             // create dataTypeProperty hasTimeStamp
-            final Object objectTimeStamp = findMethodByObject(objectState, Constants.RegExp.GET_TIME_STAMP);
+            final Object objectTimeStamp = findMethodByObject(objectState, Constants.RegEx.GET_TIME_STAMP);
             final Literal literal = ontModel.createLiteral(objectTimeStamp.toString());
             final DatatypeProperty datatypeProperty = ontModel
                     .getDatatypeProperty(Constants.NAMESPACE + "hasTimeStamp");
@@ -398,20 +393,20 @@ public class FillOntology {
                     unitRemote.activate();
                     unitRemote.waitForData();
 
-                    final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegExp.GET_PATTERN_STATE);
+                    final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegEx.GET_PATTERN_STATE);
                     String objectStateName = objectState.getClass().getName().toLowerCase();
                     objectStateName = objectStateName.substring(objectStateName.lastIndexOf(Constants.DOLLAR_SIGN) + 1);
 
                     final Object objectStateValue = findMethodByObject(objectState
-                            , Constants.RegExp.GET_VALUE);
+                            , Constants.RegEx.GET_VALUE);
                     final Object objectDataUnit = findMethodByObject(objectState
-                            , Constants.RegExp.GET_PATTERN_DATA_UNIT);
+                            , Constants.RegEx.GET_PATTERN_DATA_UNIT);
 
                     if (objectStateValue != null) {
                         ontModel.createIndividual(Constants.NAMESPACE + objectStateValue, ontClassStateValue);
                     }
 
-                    final Object objectId = findMethodByUnitRemote(unitRemote, Constants.RegExp.GET_ID);
+                    final Object objectId = findMethodByUnitRemote(unitRemote, Constants.RegEx.GET_ID);
                     final ExtendedIterator classIterator = ontModel.listClasses();
 
                     while (classIterator.hasNext()) {

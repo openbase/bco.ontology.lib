@@ -41,7 +41,7 @@ public class QueryOntology {
     private final OntModel ontModel;
 
     /**
-     * Constructor for query the ontology model.
+     * Constructor to start queries to the ontology model.
      *
      * @param ontModel the ontology model.
      */
@@ -55,14 +55,11 @@ public class QueryOntology {
     public void queryModel() {
 
         final String queryString =
-                "PREFIX  ns: <http://www.openbase.org/bco/ontology#>"
-                        + " SELECT ?Lux"
-                        + " WHERE { ?x ns:DataUnit \"Lux\" }";
+                        " SELECT * "
+                        + "WHERE { ?x <http://www.openbase.org/bco/ontology#hasDataUnit> <http://www.openbase.org/bco/ontology#LUX> }";
                 //"PREFIX rdf: <http://www.openbase.org/bco/ontology#>"
                 //+ " SELECT DISTINCT ?type"
-                //+ " WHERE {"
-                //+ " ?s a ?type."
-                //+ " }";
+                //+ " WHERE { ?s a ?type. }";
 
         try {
             final Query query = QueryFactory.create(queryString);

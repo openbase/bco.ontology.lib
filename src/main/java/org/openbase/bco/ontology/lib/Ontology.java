@@ -56,7 +56,9 @@ public final class Ontology {
         final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
         queryOntology.queryModel();
 
-        LOGGER.info(APP_NAME + " finished!");
-        System.exit(0);
+        if (ontology.getModel().isClosed()) {
+            LOGGER.info(APP_NAME + " finished!");
+            System.exit(0);
+        }
     }
 }

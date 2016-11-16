@@ -57,7 +57,7 @@ public final class Constants {
     /**
      * Regular expressions for method searching.
      */
-    public interface RegExp {
+    public interface RegEx {
         /**
          * Regular expression "getid".
          */
