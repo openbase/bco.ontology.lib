@@ -27,7 +27,7 @@ public final class Constants {
     /**
      * Namespace of the ontology.
      */
-    public static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
+    public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
      * General string pattern (lower case only).
