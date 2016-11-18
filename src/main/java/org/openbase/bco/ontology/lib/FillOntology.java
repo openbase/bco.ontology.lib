@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceConfigType;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
-import rst.domotic.state.ContactStateType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
@@ -47,7 +46,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -289,7 +287,7 @@ public class FillOntology {
      * Fill the ontology with dataTypeProperties.
      * @param registry the unit registry.
      */
-    protected void integrateDataTypeProperties(UnitRegistry registry) {
+    protected void integrateDataTypeProperties(final UnitRegistry registry) {
         try {
             // create dataTypeProperty hasLabel
             registry.getUnitConfigs().stream().filter(unitConfig ->
@@ -338,6 +336,8 @@ public class FillOntology {
             final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegEx.GET_PATTERN_STATE);
             final Object objectStateValue = findMethodByObject(objectState, Constants.RegEx.GET_VALUE);
 
+            objectProperty = ontModel.getObjectProperty("hasStateValue");
+
             //measure point of the unit has a dataTypeValue
             if (objectStateValue == null) {
                 // whole string to lower case and delete substring "state"
@@ -360,15 +360,12 @@ public class FillOntology {
                         final Literal stateValueLiteral = ontModel.createTypedLiteral(objectDataTypeStateValue
                                 .toString() + " " + objectDataUnit.toString());
                         // create dataTypeProperty "hasStateValue"
-                        final ObjectProperty objectPropertyStateValue = ontModel
-                                .getObjectProperty(Constants.NS + "hasStateValue");
-                        startIndividualObservation.addLiteral(objectPropertyStateValue, stateValueLiteral);
+                        startIndividualObservation.addLiteral(objectProperty, stateValueLiteral);
                     }
                 }
             } else {
                 //measure point of the unit has a normal stateValue: create objectProperty "hasStateValue"
                 final Individual endIndividualStateValue = ontModel.getIndividual(Constants.NS + objectStateValue);
-                objectProperty = ontModel.getObjectProperty("hasStateValue");
                 startIndividualObservation.addProperty(objectProperty, endIndividualStateValue);
             }
 

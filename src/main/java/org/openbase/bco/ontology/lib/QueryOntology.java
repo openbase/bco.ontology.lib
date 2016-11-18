@@ -54,12 +54,7 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString =
-                        " SELECT * "
-                        + "WHERE { ?x <http://www.openbase.org/bco/ontology#hasDataUnit> <http://www.openbase.org/bco/ontology#LUX> }";
-                //"PREFIX rdf: <http://www.openbase.org/bco/ontology#>"
-                //+ " SELECT DISTINCT ?type"
-                //+ " WHERE { ?s a ?type. }";
+        final String queryString = QueryStrings.REQ_1;
 
         try {
             final Query query = QueryFactory.create(queryString);
