@@ -26,6 +26,7 @@ final class QueryStrings {
 
     //TODO Use webTool/webFrontend for query input
 
+    //CHECKSTYLE.OFF: MultipleStringLiterals
     // competence questions for ontology validation
     /**
      * Wurde jemals ein Sabotagekontakt ausgelöst und wenn ja, wo?
@@ -40,6 +41,41 @@ final class QueryStrings {
                 + "?location NS:hasUnit ?unit . "
             + "} ";
 
+    /**
+     * Welche unitTypen befinden sich im Wohnzimmer und welche sind davon eingeschaltet/erreichbar?
+     */
+    //TODO @Ontology: list all units (disabled enclosed)?
+    static final String REQ_2 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT * WHERE { "
+                + "?location NS:hasLabel \"Living\" . "
+                + "?location NS:hasUnit ?unit . "
+                + "?observation NS:hasUnitId ?unit . "
+                + "?observation NS:hasStateValue NS:ENABLED . "
+                + "?unit a NS:EnablingState . "
+            + "}";
+
+    /**
+     * Welche Lampe wurden im Apartment bisher am häufigsten verwendet?
+     */
+    static final String REQ_3 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?unit (COUNT(?unit) as ?count) WHERE { "
+                    + "{ { ?unit a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?unit a NS:DimmableLight . } } "
+                    + "?observation NS:hasUnitId ?unit . "
+                    + "{ { ?unit a NS:BrightnessState . } "
+                        + "UNION "
+                    + "{ ?unit a NS:ColorState . } } "
+                    + "{ { ?observation NS:hasStateValue NS:ON . } "
+                        + "UNION "
+                    + "{ ?observation NS:hasStateValue NS:OFF . } } "
+            + "} "
+            + "GROUP BY ?unit "
+            + "ORDER BY DESC(?count)";
+
+    //CHECKSTYLE.ON: MultipleStringLiterals
     /**
      * Private Constructor.
      */

@@ -25,12 +25,14 @@ import org.apache.jena.query.QueryException;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Created by agatting on 11.11.16.
@@ -54,7 +56,9 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString = QueryStrings.REQ_1;
+        final String queryString = QueryStrings.REQ_3;
+
+        //System.out.println(getResultString(queryString, "unit"));
 
         try {
             final Query query = QueryFactory.create(queryString);
@@ -67,5 +71,29 @@ public class QueryOntology {
         } catch (QueryException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
+    }
+
+    /**
+     * Get the first result (resource) of the query.
+     * @param queryString The SPARQL query string.
+     * @param solutionString The string to search for (e.g. "unit").
+     * @return Returns the first resource as string.
+     */
+    public String getResultString(final String queryString, final String solutionString) {
+        try {
+            final Query query = QueryFactory.create(queryString);
+            final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+            final ResultSet resultSet = queryExecution.execSelect();
+            if (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.next();
+                queryExecution.close();
+
+                return querySolution.get(solutionString).toString();
+            }
+
+        } catch (QueryException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
     }
 }
