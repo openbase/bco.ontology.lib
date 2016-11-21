@@ -75,6 +75,38 @@ final class QueryStrings {
             + "GROUP BY ?unit "
             + "ORDER BY DESC(?count)";
 
+    /**
+     * Was ist die aktuelle Zeit?
+     */
+    static final String REQ_4 =
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT ?currentTime ?currentHours WHERE { "
+                + "BIND (now() AS ?currentTime) "
+                + "BIND (hours(?currentTime) AS ?currentHours) "
+            + "}";
+
+    /**
+     * Sind im Moment Lampen im Wohnzimmer an, die Rollos unten und ist es zwischen 22:00 - 6:00 Uhr? Welche sind diese?
+     */
+    //TODO order important for efficiency? if yes: (here) first ask current time...
+    //TODO dateTimeStamp or dateTime?
+    static final String REQ_5 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+                + "ASK { "
+                    + "{ { ?lamp a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?lamp a NS:DimmableLight . } } "
+                    + "{ { ?lamp a NS:BrightnessState . } "
+                        + "UNION "
+                    + "{ ?lamp a NS:ColorState . } } "
+                    + "?location NS:hasLabel \"Living\" . "
+                    + "?location NS:hasUnit ?lamp . "
+                    + "?observation NS:hasUnitId ?lamp . "
+                    + "?observation NS:hasStateValue ?stateValue . " //NS:ON
+                    + "?observation NS:hasTimeStamp ?time . "
+                + "} "
+                + "ORDER BY DESC(?time) LIMIT 1 ";
+
     //CHECKSTYLE.ON: MultipleStringLiterals
     /**
      * Private Constructor.

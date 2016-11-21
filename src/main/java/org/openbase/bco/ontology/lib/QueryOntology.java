@@ -56,21 +56,14 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString = QueryStrings.REQ_3;
+        final String queryString = QueryStrings.REQ_5;
+        //selectQuery(queryString);
+        final boolean solution = askQuery(queryString);
+        System.out.println(solution);
 
         //System.out.println(getResultString(queryString, "unit"));
 
-        try {
-            final Query query = QueryFactory.create(queryString);
-            final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
-            final ResultSet resultSet = queryExecution.execSelect();
-            ResultSetFormatter.out(System.out, resultSet, query);
-
-            queryExecution.close();
-            ontModel.close();
-        } catch (QueryException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
+        ontModel.close();
     }
 
     /**
@@ -84,6 +77,7 @@ public class QueryOntology {
             final Query query = QueryFactory.create(queryString);
             final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
             final ResultSet resultSet = queryExecution.execSelect();
+
             if (resultSet.hasNext()) {
                 final QuerySolution querySolution = resultSet.next();
                 queryExecution.close();
@@ -95,5 +89,34 @@ public class QueryOntology {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return null;
+    }
+
+    private boolean askQuery(final String queryString) {
+        try {
+            final Query query = QueryFactory.create(queryString);
+            final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+            final boolean solution = queryExecution.execAsk();
+
+            queryExecution.close();
+
+            return solution;
+        } catch (QueryException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return false;
+    }
+
+    private void selectQuery(final String queryString) {
+        try {
+            final Query query = QueryFactory.create(queryString);
+            final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+            final ResultSet resultSet = queryExecution.execSelect();
+
+            ResultSetFormatter.out(System.out, resultSet, query);
+
+            queryExecution.close();
+        } catch (QueryException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 }
