@@ -441,6 +441,7 @@ public class FillOntology {
 
                         // find correct data unit class
                         //TODO "UNKNOWN": sometimes in ontology, sometimes not...?!
+                        //TODO encapsulate integration of dataUnit individuals
                         if (objectDataUnit != null && className.equals(Constants.DATA_UNIT)) {
                             ontModel.createIndividual(Constants.NS + objectDataUnit, ontClass);
                         }

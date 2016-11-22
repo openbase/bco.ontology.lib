@@ -56,10 +56,10 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString = QueryStrings.REQ_5;
-        //selectQuery(queryString);
-        final boolean solution = askQuery(queryString);
-        System.out.println(solution);
+        final String queryString = QueryStrings.REQ_7_0;
+        selectQuery(queryString);
+//        final boolean solution = askQuery(queryString);
+//        System.out.println(solution);
 
         //System.out.println(getResultString(queryString, "unit"));
 
@@ -102,8 +102,8 @@ public class QueryOntology {
             return solution;
         } catch (QueryException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            return false;
         }
-        return false;
     }
 
     private void selectQuery(final String queryString) {

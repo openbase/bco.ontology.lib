@@ -57,6 +57,7 @@ public final class Constants {
     /**
      * Regular expressions for method searching.
      */
+    //TODO interface not nice...
     public interface RegEx {
         /**
          * Regular expression "getid".
