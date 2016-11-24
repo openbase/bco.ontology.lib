@@ -30,6 +30,7 @@ final class QueryStrings {
     //CHECKSTYLE.OFF: MultipleStringLiterals
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
+    //TODO readability -> get Labels
 
     /**
      * Wurde jemals ein Sabotagekontakt ausgelöst und wenn ja, wo?
@@ -300,7 +301,7 @@ final class QueryStrings {
     static final String REQ_12_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
                 + "SELECT * WHERE { "
-                    + ""
+                    + "" //TODO
                 + "} ";
 
     /**
@@ -309,14 +310,50 @@ final class QueryStrings {
     static final String REQ_13_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
-                + "SELECT * WHERE { "
+                + "SELECT * WHERE { " // ASK ...
                     + "?door a NS:Door . "
+                    + "?door NS:hasLabel ?label . "
                     + "?observation NS:hasUnitId ?door . "
-                    + "?observation NS:hasStateValue NS:OPEN . "
+                    + "?observation NS:hasStateValue NS:OPEN ,?stateValue FILTER (?stateValue = NS:OPEN) . "
                     + "?observation NS:hasTimeStamp ?time . "
                     + "FILTER ( "
-                        + "hours(?time) >= \"22\"^^xsd:double " //TODO
+                        + "hours(?time) >= \"22\"^^xsd:double || hours(?time) <= \"06\"^^xsd:double "
                     + ") . "
+                + "} ";
+
+    /**
+     * Ist die ((Temperatur im Badezimmer mindestens 25°C)) und sind die Türen zu den Nachbarräumen geschlossen?
+     */
+    //TODO efficiency: split query (if first true, then second...) or all in one query?
+    static final String REQ_14_0 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
+                + "SELECT (CONCAT(STR((SUM(?tempBuf) / COUNT(?tempVal))), STR(?dataUnit)) AS ?temperature) WHERE { " //ASK...
+                    + "?tempUnit a NS:TemperatureSensor . "
+                    + "?location NS:hasLabel \"Bath\" . "
+                    + "?location NS:hasUnit ?tempUnit . "
+                    + "?tempUnit NS:hasCurrentStateValue ?tempVal . "
+                    + "BIND (xsd:double (strbefore (?tempVal, \",\" )) AS ?tempBuf) . "
+                    + "BIND (strafter (?tempVal, \",\" ) AS ?dataUnit) . " //TODO possibility of one call...?
+                + "} "
+                + "GROUP BY ?dataUnit ";
+
+    /**
+     * Ist die Temperatur im ((Badezimmer)) mindestens 25°C und ((sind die Türen zu den Nachbarräumen geschlossen))?
+     */
+    static final String REQ_14_1 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
+                + "SELECT * WHERE { "
+                    + "?location NS:hasLabel \"Bath\" . "
+                    + "?location NS:hasConnection ?connection . "
+                    + "?connection NS:hasLabel ?connectionLabel . "
+                    + "?nextRoom NS:hasConnection ?connection . "
+                    + "?nextRoom NS:hasLabel ?nextRoomLabel . "
+                    + "FILTER not exists { "
+                        + "?nextRoom NS:hasLabel \"Home\" "
+                    + "} . "
+                    + "?connection NS:hasCurrentStateValue ?stateValue . "
                 + "} ";
 
 
