@@ -33,54 +33,72 @@ final class QueryStrings {
     //TODO readability -> get Labels and question
 
     /**
+     * Was ist die aktuelle Zeit?
+     */
+    static final String REQ_0 =
+            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?dateTime ?time ?hours WHERE { "
+                // function: get current dateTime
+                + "BIND (now() AS ?dateTime) . "
+                // get hours of current time
+                + "BIND (hours(?dateTime) AS ?hours) . "
+                // get current time of current dateTime
+                + "BIND (xsd:time(?dateTime) AS ?time) . "
+            + "}";
+
+    /**
      * Wurde jemals ein Sabotagekontakt ausgelöst und wenn ja, wo?
      */
-    static final String REQ_1_0 =
+    static final String REQ_1 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?unitLabel ?unitType ?stateValue ?locationLabel WHERE { "
-                + "?unit a NS:TamperDetector, ?unitType FILTER (?unitType = NS:TamperDetector) . "
+            + "SELECT ?unitLabel ?stateValue ?locationLabel WHERE { "
+                // get all units tamperDetector
+                + "?unit a NS:TamperDetector . "
                 + "?unit NS:hasLabel ?unitLabel . "
+                // get all observations of the units
                 + "?observation NS:hasUnitId ?unit . "
                 + "?observation NS:hasStateValue NS:OPEN, ?stateValue FILTER (?stateValue = NS:OPEN) . "
+                // get locations of the units
                 + "?location NS:hasUnit ?unit . "
                 + "?location NS:hasLabel ?locationLabel . "
-                + "FILTER not exists { "
-                    + "?location NS:hasLabel \"Home\" "
+                // filter all locations with specific literal
+                + "FILTER NOT EXISTS { "
+                    + "?location NS:hasLabel \"Home\" . "
                 + "} . "
             + "} ";
 
-    /**
-     * Welche units befinden sich im Wohnzimmer und welche sind davon eingeschaltet/erreichbar?
-     */
-    //TODO @Ontology: list all units (disabled enclosed)?
-    static final String REQ_2_0 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?locationLabel ?unitLabel ?stateValue WHERE { "
-                + "?location NS:hasLabel \"Living\", ?locationLabel FILTER (?locationLabel = \"Living\") . "
-                + "?location NS:hasUnit ?unit . "
-                + "?unit NS:hasLabel ?unitLabel . "
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue NS:ENABLED, ?stateValue FILTER (?stateValue = NS:ENABLED) . "
-                + "?unit a NS:EnablingState . "
-            + "}";
+//    /**
+//     * Welche units befinden sich im Wohnzimmer und welche sind davon eingeschaltet/erreichbar?
+//     */
+//    //TODO @Ontology: list all units (disabled enclosed)?
+//    static final String REQ_2 =
+//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+//            + "SELECT ?unitLabel ?stateValue WHERE { "
+//                + "?location NS:hasLabel \"Living\" . "
+//                + "?location NS:hasUnit ?unit . "
+//                + "?unit NS:hasLabel ?unitLabel . "
+//                + "?observation NS:hasUnitId ?unit . "
+//                + "?observation NS:hasStateValue NS:ENABLED, ?stateValue FILTER (?stateValue = NS:ENABLED) . "
+//                + "?unit a NS:EnablingState . "
+//            + "}";
 
     /**
      * Welche Lampe wurden im Apartment bisher am häufigsten verwendet?
      */
-    static final String REQ_3_0 =
+    static final String REQ_3 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?lampLabel (COUNT(?unit) as ?count) ?locationLabel WHERE { "
+                // get all lamp units and their labels
                 + "{ { ?unit a NS:ColorableLight . } "
                     + "UNION "
                 + "{ ?unit a NS:DimmableLight . } } "
                 + "?unit NS:hasLabel ?lampLabel . "
+                // get the observations with value ON or OFF
                 + "?observation NS:hasUnitId ?unit . "
-//                    + "{ { ?unit a NS:BrightnessState . } "
-//                        + "UNION "
-//                    + "{ ?unit a NS:ColorState . } } "
                 + "{ { ?observation NS:hasStateValue NS:ON . } "
                     + "UNION "
                 + "{ ?observation NS:hasStateValue NS:OFF . } } "
+                // get optional their label and location
                 + "OPTIONAL { "
                     + "?location NS:hasUnit ?unit . "
                     + "?location NS:hasLabel ?locationLabel . "
@@ -89,86 +107,105 @@ final class QueryStrings {
                     + "} . "
                 + "} "
             + "} "
+            // group all lamps and count them with the popular one in front
             + "GROUP BY ?unit ?lampLabel ?locationLabel "
             + "ORDER BY DESC(?count) LIMIT 1 ";
 
     /**
-     * ((Sind im Moment Lampen im Wohnzimmer an)), alle Rollos unten und ist es zwischen 22:00 - 6:00 Uhr?
+     * Sind im Moment Lampen im Wohnzimmer an, alle Rollos unten und ist es zwischen 22:00 - 6:00 Uhr?
      * Welche Lampen sind diese?
      */
-    //TODO ask query => true, then select query?
     //TODO maybe check all units (here rollerShutter), if they have min. one observation with a stateValue ...
-    static final String REQ_4_0 =
+    static final String REQ_4 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             //TODO better solution of SELECT [...]
-            + "SELECT (IF(?rolUP = false && ?time = true, ?lampLabel, 0) as ?labelLamp) "
-            + "(IF(?rolUP = false && ?time = true, ?lastObs, 0) as ?observation) "
-            + "(IF(?rolUP = false && ?time = true, ?stateValue, 0) as ?valueState) WHERE { "
+            // select lamps only, if conditions of the question apply
+            + "SELECT (IF(?lampOn = true && ?rolUP = false && ?time = true, ?lampLabel, 0) as ?labelLamp) "
+            + "(IF(?lampOn = true && ?rolUP = false && ?time = true, ?currentObsLamp, 0) as ?observation) "
+            + "(IF(?lampOn = true && ?rolUP = false && ?time = true, NS:ON, 0) as ?valueState) WHERE { "
+                // get all lamps in the living room and their labels
                 + "?location NS:hasLabel \"Living\" . "
                 + "?location NS:hasUnit ?lamp . "
+                + "?currentObsLamp NS:hasUnitId ?lamp . "
                 + "?lamp NS:hasLabel ?lampLabel . "
-                + "?lastObs NS:hasStateValue NS:ON, ?stateValue FILTER (?stateValue = NS:ON) . "
-                + "{ SELECT ?lastObs WHERE { "
+                // get the current observation of the lamp units
+                + "{ SELECT ?currentObsLamp WHERE { "
                     + "{ { ?lamp a NS:ColorableLight . } "
                         + "UNION "
                     + "{ ?lamp a NS:DimmableLight . } } "
-                    + "?lastObs NS:hasUnitId ?lamp . "
-                    + "?lastObs NS:hasTimeStamp ?timeLamp . "
-                + "}"
-                + "ORDER BY DESC(?timeLamp) LIMIT 1 } "
-                + "BIND (EXISTS { "
-                    + "?lastObsB NS:hasStateValue ?rolVal . FILTER (?rolVal = NS:UP || NS:UNKNOWN) . "
-                    + "{ SELECT ?rolObs WHERE { "
-                        + "?rol a NS:RollerShutter . "
-                        + "?lastObsB NS:hasUnitId ?rol . "
-                        + "?lastObsB NS:hasTimeStamp ?rolTime . "
-                    + "}"
-                    + "ORDER BY DESC(?rolTime) LIMIT 1 } " //TODO order by triggers jena warning ...
-                + " } AS ?rolUP) "
+                    + "?currentObsLamp NS:hasUnitId ?lamp . "
+                    + "?currentObsLamp NS:hasTimeStamp ?timeLamp . "
+                + "} ORDER BY DESC(?timeLamp) LIMIT 1 } "
+                // is there a lamp with current value ON?
+                + "BIND (EXISTS {?currentObsLamp NS:hasStateValue ?lampVal . FILTER (?lampVal = NS:ON) } AS ?lampOn) . "
+                // get current observation of rollerShutter units
+                + "{ SELECT ?currentObsRol WHERE { "
+                    + "?rol a NS:RollerShutter . "
+                    + "?currentObsRol NS:hasUnitId ?rol . "
+                    + "?currentObsRol NS:hasTimeStamp ?rolTime . "
+                + "} ORDER BY DESC(?rolTime) LIMIT 1 } "
+                // is there a rollerShutter with current value UP or UNKNOWN?
+                + "BIND (EXISTS { ?currentObsRol NS:hasStateValue ?rolVal . FILTER (?rolVal = NS:UP || NS:UNKNOWN) } "
+                    + "AS ?rolUP ) . "
+                // get current dateTime
                 + "BIND (xsd:time(now()) AS ?currentTime) . "
-                + "BIND( IF(?currentTime >= \"18:00:00.000+01:00\"^^xsd:time || ?currentTime <= \"06:00:00.000+01:00\"^^xsd:time, true, false) AS ?time ) . "
-            + "} "
-            + "LIMIT 1 ";
+                // is the current time in the time frame of the question?
+                + "BIND (IF(?currentTime >= \"14:00:00.000+01:00\"^^xsd:time "
+                    + "|| ?currentTime <= \"06:00:00.000+01:00\"^^xsd:time, true, false) AS ?time ) . "
+            + "} ";
 
-    //TODO maybe more efficiency: additional property like 'hasCurrentStateValue', because lots of queries ask
-    //TODO the current stateValue of a unit. With the additional amount the solution pool is less...
     /**
-     * Sind im Moment Lampen im Wohnzimmer an, ((alle Rollos unten)) und ist es zwischen 22:00 - 6:00 Uhr? Welche sind diese?
+     * Befindet sich momentan mindestens eine Person im Apartment und wenn nicht, sind alle Lampen ausgeschaltet?
      */
-    static final String REQ_4_1 =
+    static final String REQ_5 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT ?observation ?unit (max(?time) as ?max) WHERE { "
-                + "?unit a NS:RollerShutter . "
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue ?stateValue . "
-                + "?observation NS:hasTimeStamp ?time . "
-                //...
-            + "} "
-            + "GROUP BY ?observation ?unit ";
+                + "SELECT ?lampUnit ?maxi WHERE{ "
+//                    (IF(?isMotion = true, ?currentObsMotion, 0) AS ?motionObs) "
+//            + "(IF(?isMotion = true, ?motionLabel, 0) AS ?labelMotion) "
+//            + "(IF(?isMotion = true, ?locationMotionLabel, 0) AS ?labelMotionLocation) "
+//            + "(IF(?isMotion = false && ?isLampOn = true, ?lampLabel, 0) AS ?labelLamp) "
+//            + "(IF(?isMotion = false && ?isLampOn = true, ?locationLampLabel, 0) AS ?lampLocationLabel)
+                // get current observation of motion units
+                + "{ SELECT ?currentObsMotion ?motionUnit WHERE { "
+                    + "?motionUnit a NS:MotionDetector . "
+                    + "?currentObsMotion NS:hasUnitId ?motionUnit . "
+                    + "?currentObsMotion NS:hasTimeStamp ?timeMotion . "
+                + "} ORDER BY DESC(?timeMotion) LIMIT 1 } "
+                // get location- and unit labels of motion unit
+                + "OPTIONAL { "
+                    + "?motionUnit NS:hasLabel ?motionLabel . "
+                    + "?locationMotion NS:hasUnit ?motionUnit . "
+                    + "?locationMotion NS:hasLabel ?locationMotionLabel . "
+                    + "FILTER not exists { "
+                        + "?locationMotion NS:hasLabel \"Home\" "
+                    + "} . "
+                + "} "
+                // is there a motion unit with current value MOTION?
+                + "BIND (EXISTS { ?currentObsMotion NS:hasStateValue NS:MOTION } AS ?isMotion) . "
+                // get current observation of lamp units
 
-    /**
-     * Was ist die aktuelle Zeit?
-     */
-    static final String REQ_4_2 =
-            "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "SELECT ?currentTime ?time ?result WHERE { "
-                    + "BIND (now() AS ?currentTime) . "
-                    + "BIND (xsd:time(?currentTime) AS ?time) . "
-                    + "BIND( IF(?time >= \"18:00:00.000+01:00\"^^xsd:time || ?time <= \"06:00:00.000+01:00\"^^xsd:time, 1, 0) AS ?result ) . "
-//                    + "BIND (hours(?currentTime) AS ?currentHours) "
-                + "}";
 
-    /**
-     * ((Befindet sich momentan mindestens eine Person im Apartment)) und wenn nicht, sind alle Lampen ausgeschaltet?
-     */
-    //Hint: used additional property 'hasCurrentStateValue' (see above REQ_4_1)
-    static final String REQ_5_0 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-                + "ASK { "
-                    + "?motionUnit a NS:MotionDetector . " //NS:MotionState
-                    + "?motionUnit NS:hasCurrentStateValue NS:MOTION . "
+
+                + "{ SELECT ?lampUnit (MAX(?timeLamp) AS ?maxi) WHERE { "
+                    + "{ { ?lampUnit a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?lampUnit a NS:DimmableLight . } } "
+                    + "?currentObsLamp NS:hasUnitId ?lampUnit . "
+                    + "?currentObsLamp NS:hasTimeStamp ?timeLamp . "
+                + "} GROUP BY ?maxi ?lampUnit ORDER BY DESC(?timeLamp)} " //TODO LIMIT 1 reduces all different units to one...
+
+                // get location- and unit labels of lamp unit
+                + "OPTIONAL { "
+                    + "?lampUnit NS:hasLabel ?lampLabel . "
+                    + "?locationLamp NS:hasUnit ?lampUnit . "
+                    + "?locationLamp NS:hasLabel ?locationLampLabel . "
+                    + "FILTER not exists { "
+                        + "?locationLamp NS:hasLabel \"Home\" "
+                    + "} . "
+                + "} "
+                // is there a  lamp unit with current value ON?
+                + "BIND (EXISTS { ?currentObsLamp NS:hasStateValue NS:ON } AS ?isLampOn) . "
                 + "} ";
 
     /**
