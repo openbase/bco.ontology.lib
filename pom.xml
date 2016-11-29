@@ -66,9 +66,42 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${source.java.version}</source>
+                    <target>${target.java.version}</target>
                     <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <configuration>
+                    <executable>java</executable>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.10</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <programs>
+                        <program>
+                            <mainClass>org.openbase.bco.ontology.lib.Ontology</mainClass>
+                            <id>ontology.lib</id>
+                            <platforms>
+                                <platform>unix</platform>
+                            </platforms>
+                        </program>
+                    </programs>
+                    <copyConfigurationDirectory>true</copyConfigurationDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -126,6 +159,15 @@
                     <useReleaseProfile>true</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.zenjava</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>8.1.4</version>
+                <configuration>
+                    <mainClass>org.openbase.bco.ontology.lib.Ontology</mainClass>
+                    <needMenu>true</needMenu>
                 </configuration>
             </plugin>
         </plugins>
@@ -209,9 +251,9 @@
         <plugin.pmd.version>3.5</plugin.pmd.version>
         <plugin.javadoc.version>2.10.3</plugin.javadoc.version>
         <failOnStyleError>false</failOnStyleError>
-        <dependency.jul.version>1.1-SNAPSHOT</dependency.jul.version>
-        <dependency.bco.dal.version>1.1-SNAPSHOT</dependency.bco.dal.version>
-        <dependency.bco.manager.version>1.1-SNAPSHOT</dependency.bco.manager.version>
+        <dependency.jul.version>1.2-SNAPSHOT</dependency.jul.version>
+        <dependency.bco.dal.version>1.2-SNAPSHOT</dependency.bco.dal.version>
+        <dependency.bco.manager.version>1.2-SNAPSHOT</dependency.bco.manager.version>
     </properties>
 
     <dependencies>
@@ -278,7 +320,61 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <!-- Just so maven doesn't complain about a missing version. -->
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-project-info-reports-plugin</artifactId>
+            <version>2.9</version>
+        </dependency>
     </dependencies>
+
+    <reporting>
+        <plugins>
+            <!-- Generate cross-referenced HTML for the sources. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+
+            <!-- Generate Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${plugin.javadoc.version}</version>
+                <configuration>
+                    <show>protected</show>
+                    <excludePackageNames>spread</excludePackageNames>
+                    <quiet>true</quiet>
+                </configuration>
+            </plugin>
+
+            <!-- Also generate a PMD report. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${plugin.pmd.version}</version>
+                <configuration>
+                    <targetJdk>${target.java.version}</targetJdk>
+                    <rulesets>
+                        <ruleset>${project.basedir}/codecheck/pmd-rules.xml</ruleset>
+                    </rulesets>
+                </configuration>
+            </plugin>
+
+            <!-- Checkstyle -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${plugin.checkstyle.version}</version>
+                <configuration>
+                    <configLocation>${project.basedir}/codecheck/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${project.basedir}/codecheck</propertyExpansion>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <distributionManagement>
         <snapshotRepository>
