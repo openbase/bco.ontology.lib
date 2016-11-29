@@ -86,6 +86,9 @@ public class FillOntology {
             CachedUnitRegistryRemote.waitForData();
         } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            //TODO check in which group units are...
+            //UnitProcessor.
+            //UnitConfigProcessor.
         }
 
         // test code
@@ -150,7 +153,7 @@ public class FillOntology {
                             LOGGER.error(e.getMessage());
                         }
                     }
-                    if (integrateProviderService) {
+                    if (integrateProviderService) { //TODO
                         integrateIndividualProviderServices(unitConfig);
                     }
                 }
@@ -336,7 +339,7 @@ public class FillOntology {
             final Object objectState = findMethodByUnitRemote(unitRemote, Constants.RegEx.GET_PATTERN_STATE);
             final Object objectStateValue = findMethodByObject(objectState, Constants.RegEx.GET_VALUE);
 
-            objectProperty = ontModel.getObjectProperty("hasStateValue");
+            objectProperty = ontModel.getObjectProperty(Constants.NS + "hasStateValue");
 
             //measure point of the unit has a dataTypeValue
             if (objectStateValue == null) {
@@ -385,6 +388,7 @@ public class FillOntology {
      * Integration of the individual stateValues into the ontology.
      */
     protected void integrateIndividualStateValues() {
+        //TODO check all unitTypes and their stateValues (e.g. userActivity, userPresence)
         LOGGER.info("Start integrate ontology with individual stateValues...");
         final OntClass ontClassStateValue = ontModel.getOntClass(Constants.NS + "StateValue");
 
@@ -433,6 +437,7 @@ public class FillOntology {
                         final OntClass ontClass = (OntClass) classIterator.next();
                         final String className = ontClass.getLocalName().toLowerCase();
 
+                        //TODO auslagern
                         // find correct state type class
                         if (objectId != null && objectStateName.contains(className)
                                 && !className.equals(Constants.STATE)) {
@@ -539,12 +544,12 @@ public class FillOntology {
                     final ServiceType serviceType = ServiceType.BRIGHTNESS_STATE_SERVICE;
 
 
-                    /*TemperatureSensorRemote remote = new TemperatureSensorRemote();
+                    /*PowerConsumptionSensorRemote remote = new PowerConsumptionSensorRemote();
                     try {
                         remote.initById("3249a1a5-52d1-4be1-910f-2063974b53f5");
                         remote.activate();
                         remote.waitForData();
-                        remote.getTemperatureState().getTemperatureDataUnit()
+                        remote.getPowerConsumptionState().
 
                         //System.out.println(remote.getData().getBrightnessState().getBrightnessDataUnit());
                     } catch (InterruptedException | CouldNotPerformException e) {
