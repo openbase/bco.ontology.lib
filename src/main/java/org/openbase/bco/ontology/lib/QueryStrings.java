@@ -23,6 +23,7 @@ import org.apache.commons.lang.time.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by agatting on 16.11.16.
@@ -40,7 +41,7 @@ public final class QueryStrings {
     /**
      * Was ist die aktuelle Zeit?
      */
-    static final String REQ_0 =
+    public static final String REQ_0 =
             "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?dateTime ?time ?hours WHERE { "
                 // function: get current dateTime
@@ -54,7 +55,7 @@ public final class QueryStrings {
     /**
      * Wurde jemals ein Sabotagekontakt ausgelöst und wenn ja, wo?
      */
-    static final String REQ_1 =
+    public static final String REQ_1 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?unitLabel ?stateValue ?locationLabel WHERE { "
                 // get all units tamperDetector
@@ -76,7 +77,7 @@ public final class QueryStrings {
 //     * Welche units befinden sich im Wohnzimmer und welche sind davon eingeschaltet/erreichbar?
 //     */
 //    //TODO @Ontology: list all units (disabled enclosed)?
-//    static final String REQ_2 =
+//    public static final String REQ_2 =
 //            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
 //            + "SELECT ?unitLabel ?stateValue WHERE { "
 //                + "?location NS:hasLabel \"Living\" . "
@@ -90,7 +91,7 @@ public final class QueryStrings {
     /**
      * Welche Lampe wurden im Apartment bisher am häufigsten verwendet?
      */
-    static final String REQ_3 =
+    public static final String REQ_3 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?lampLabel (COUNT(?unit) as ?count) ?locationLabel WHERE { "
                 // get all lamp units and their labels
@@ -121,7 +122,7 @@ public final class QueryStrings {
      * Welche Lampen sind diese?
      */
     //TODO maybe check all units (here rollerShutter), if they have min. one observation with a stateValue ...
-    static final String REQ_4 =
+    public static final String REQ_4 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             //TODO better solution of SELECT [...]
@@ -164,12 +165,13 @@ public final class QueryStrings {
                     + "|| ?currentTime <= \"06:00:00.000+01:00\"^^xsd:time, true, false) "
                 + "AS ?time ) . "
             + "} "
-            + "GROUP BY ?isRolUP ?time ?lampLabel ?labelLamp "; // additionally GROUP to reduce duplication... //TODO why?!
+            // additionally GROUP to reduce duplication... //TODO why?!
+            + "GROUP BY ?isRolUP ?time ?lampLabel ?labelLamp ";
 
     /**
      * Befindet sich momentan mindestens eine Person im Apartment und wenn nicht, sind alle Lampen ausgeschaltet?
      */
-    static final String REQ_5 =
+    public static final String REQ_5 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             //TODO better solution of SELECT [...]
             + "SELECT (IF(?isMotion = true, ?motionLabel, 0) AS ?labelMotion) "
@@ -230,7 +232,7 @@ public final class QueryStrings {
     /**
      * Welcher Raum ist anhand der Häufigkeit der Gerätebenutzung am beliebtesten?
      */
-    static final String REQ_6 =
+    public static final String REQ_6 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>"
             // count the frequency of all locations by appearance via observations
@@ -252,7 +254,7 @@ public final class QueryStrings {
     /**
      * Welche unitTypen wurden in den letzten 3 Stunden manipuliert (z.B. ein/ausschalten) und wo befinden sich diese?
      */
-    static final String REQ_7 =
+    public static final String REQ_7 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?observation ?time WHERE { "
@@ -282,7 +284,7 @@ public final class QueryStrings {
      */
     //TODO general: stateValue literal based on xsd:string?!
     //Hint: powerConsumptionState only (=> powerConsumptionSensor)
-    static final String REQ_8_0 =
+    public static final String REQ_8_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT (CONCAT(STR(SUM(?diffConsumption)), STR(?dataUnit)) AS ?totalConsumption) WHERE { "
@@ -312,12 +314,12 @@ public final class QueryStrings {
     /**
      * Wie ist die Temperaturdifferenz im Badezimmer von jetzt zu vor 3 Stunden?
      */
-    static final String REQ_9_0 =
+    public static final String REQ_9_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 //TODO check negative value (java)
-                + "SELECT (CONCAT(STR((SUM(?oldBuf) / COUNT(?oldBuf)) - (SUM(?newBuf) / COUNT(?newBuf)))" +
-                    ", STR(?dataUnit)) AS ?diffTemp) WHERE { "
+                + "SELECT (CONCAT(STR((SUM(?oldBuf) / COUNT(?oldBuf)) - (SUM(?newBuf) / COUNT(?newBuf)))"
+                    + ", STR(?dataUnit)) AS ?diffTemp) WHERE { "
                     //TODO time: last 3 hours ...
 
                     //TODO get oldest observation within 3 hours ...
@@ -338,7 +340,7 @@ public final class QueryStrings {
     /**
      * Welche Batterien haben aktuell ((mindestens 80 %)) und welche Batterien unter 20 % Energie?
      */
-    static final String REQ_10_0 =
+    public static final String REQ_10_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT * WHERE { "
@@ -354,7 +356,7 @@ public final class QueryStrings {
     /**
      * Welche Batterien haben aktuell mindestens 80 % und welche Batterien ((unter 20 %)) Energie?
      */
-    static final String REQ_10_1 =
+    public static final String REQ_10_1 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT * WHERE { "
@@ -371,26 +373,26 @@ public final class QueryStrings {
      * Welche Geräte im Wohnzimmer sollen in den nächsten 3 Stunden aktiviert werden?
      */
     //TODO no information about future events in ontology...
-    static final String REQ_11_0 =
+    public static final String REQ_11_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
                 + "SELECT * WHERE { "
-                    + ""
+                    + " "
                 + "} ";
 
     /**
      * In welchen Räumen gab es in den letzten 3 Stunden Bewegung und gab es in diesen Räumen mehrfache Bewegungen
      * (zeitliche Pausen zw. den Bewegungen)?
      */
-    static final String REQ_12_0 =
+    public static final String REQ_12_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
                 + "SELECT * WHERE { "
-                    + "" //TODO
+                    + " " //TODO
                 + "} ";
 
     /**
      * Wurden Türen zwischen 22:00 und 6:00 geöffnet und welche sind diese?
      */
-    static final String REQ_13_0 =
+    public static final String REQ_13_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT * WHERE { " // ASK ...
@@ -408,10 +410,10 @@ public final class QueryStrings {
      * Ist die ((Temperatur im Badezimmer mindestens 25°C)) und sind die Türen zu den Nachbarräumen geschlossen?
      */
     //TODO efficiency: split query (if first true, then second...) or all in one query?
-    static final String REQ_14_0 =
+    public static final String REQ_14_0 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
-                + "SELECT (CONCAT(STR((SUM(?tempBuf) / COUNT(?tempVal))), STR(?dataUnit)) AS ?temperature) WHERE { " //ASK...
+                + "SELECT (CONCAT(STR((SUM(?tempBuf) / COUNT(?tempVal))), STR(?dataUnit)) AS ?temperature) WHERE { "
                     + "?tempUnit a NS:TemperatureSensor . "
                     + "?location NS:hasLabel \"Bath\" . "
                     + "?location NS:hasUnit ?tempUnit . "
@@ -424,7 +426,7 @@ public final class QueryStrings {
     /**
      * Ist die Temperatur im ((Badezimmer)) mindestens 25°C und ((sind die Türen zu den Nachbarräumen geschlossen))?
      */
-    static final String REQ_14_1 =
+    public static final String REQ_14_1 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT * WHERE { "
@@ -444,7 +446,7 @@ public final class QueryStrings {
     /**
      * Private Constructor.
      */
-    public QueryStrings() {
+    private QueryStrings() {
     }
 
     /**
@@ -452,10 +454,9 @@ public final class QueryStrings {
      * @return String in format yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public static String getCurrentDateTime() {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        Date date = new Date();
-        Date newDate = DateUtils.addHours(date, 3);
-        return simpleDateFormat.format(newDate);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Constants.DATE_TIME, Locale.ENGLISH);
+        final Date date = new Date();
+        return simpleDateFormat.format(date);
     }
 
     /**
@@ -466,8 +467,8 @@ public final class QueryStrings {
      */
     //TODO expand method with years, days....
     public static String addTime(final int hours, final int minutes) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        Date now = new Date();
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Constants.DATE_TIME, Locale.ENGLISH);
+        final Date now = new Date();
         Date newDate = DateUtils.addHours(now, hours);
         newDate = DateUtils.addMinutes(newDate, minutes);
 

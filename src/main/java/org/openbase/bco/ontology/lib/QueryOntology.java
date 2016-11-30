@@ -56,7 +56,7 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString = QueryStrings.REQ_7_0;
+        final String queryString = QueryStrings.REQ_7;
         selectQuery(queryString);
 //        final boolean solution = askQuery(queryString);
 //        System.out.println(solution);

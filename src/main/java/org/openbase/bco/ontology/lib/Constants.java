@@ -55,6 +55,11 @@ public final class Constants {
     public static final String GET = "get";
 
     /**
+     * dateTime String.
+     */
+    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
      * Regular expressions for method searching.
      */
     //TODO interface not nice...
