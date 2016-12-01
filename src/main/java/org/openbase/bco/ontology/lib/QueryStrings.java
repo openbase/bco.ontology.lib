@@ -32,7 +32,10 @@ public final class QueryStrings {
 
     //TODO Use webTool/webFrontend for query input
     //TODO later: get concrete object of query...
-    //TODO make filter string "home" generic
+    //TODO make all strings like "home" generic
+    //TODO make request of unitType generic
+
+    //TODO add link to providerService up to REQ_16
 
     //CHECKSTYLE.OFF: MultipleStringLiterals
 
@@ -418,7 +421,7 @@ public final class QueryStrings {
      */
     public static final String REQ_13 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT * WHERE { "
                 + "?door a NS:Door . "
                 + "?door NS:hasLabel ?label . "
@@ -435,7 +438,7 @@ public final class QueryStrings {
      */
     public static final String REQ_14 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT (SUM(?value) / COUNT(?value) AS ?temperature) ?connectionLabel ?stateValue WHERE { "
 
                 // get current timestamp of units with temperature
@@ -460,6 +463,159 @@ public final class QueryStrings {
                 + "?connection NS:hasCurrentStateValue ?stateValue . "
             + "} "
             + "GROUP BY ?stateValue ?temperature ?connectionLabel ";
+
+    /**
+     * Welche Geräte beziehen seit mindestens 3 Stunden Strom (power consumption) im Wohnzimmer?
+     */
+    public static final String REQ_15 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT * WHERE { "
+
+                // get units with timestamp within 3 hours via powerConsumptionState
+                + "{ SELECT ?unit WHERE { "
+                    + "?obs NS:hasTimeStamp ?time . "
+                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "?obs NS:hasUnitId ?unit . "
+                    + "?unit a NS:PowerConsumptionState . "
+                + "} "
+                + "GROUP BY ?unit } "
+
+                // get units from living room only. units are dalUnits because of powerConsumptionState (see above)
+                + "?location NS:hasLabel \"Living\" . "
+                + "?location NS:hasUnit ?unit . "
+                + "?location NS:hasLabel ?locationLabel . "
+                + "?unit NS:hasLabel ?unitLabel . "
+            + "} ";
+
+    /**
+     * Welche Geräte beziehen aktuell Strom (power consumption) und wie viel jeweils?
+     */
+    //TODO dataType physical unit
+    public static final String REQ_16 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?unitLabel ?value WHERE { "
+
+                // get units with current timestamp via powerConsumptionState
+                + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
+                    + "?obs NS:hasTimeStamp ?time . "
+                    + "?obs NS:hasUnitId ?unit . "
+                    + "?obs NS:hasProviderService NS:POWER_CONSUMPTION_STATE_SERVICE . "
+                    + "?unit a NS:PowerConsumptionState . "
+                + "} "
+                + "GROUP BY ?currentTime ?unit } "
+
+                // get the correct and unique observations from the units
+                + "?observation NS:hasUnitId ?unit . "
+                + "?observation NS:hasTimeStamp ?currentTime . "
+                + "?observation NS:hasProviderService NS:POWER_CONSUMPTION_STATE_SERVICE . "
+
+                // get label and value of the units with current timestamp
+                + "?unit NS:hasLabel ?unitLabel . "
+                + "?observation NS:hasStateValue ?value . "
+            + "} ";
+
+    /**
+     * Welche Orte im Apartment haben aktuell einen Helligkeitswert von mindestens 1000lx?
+     */
+    // hint: situation true, if one sensor has a value of min. 1000.0lx. alternative is a average over all sensor values
+    //TODO dataType physical unit
+    public static final String REQ_17 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?locationLabel ?unitLabel ?value WHERE { "
+
+                // get units with current timestamp via brightnessState
+                + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
+                    + "?obs NS:hasTimeStamp ?time . "
+                    + "?obs NS:hasUnitId ?unit . "
+                    + "?obs NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                    + "?unit a NS:BrightnessState . "
+                + "} "
+                + "GROUP BY ?currentTime ?unit } "
+
+                // get all units with min. 1000.0lx brightness via observation
+                + "?observation NS:hasTimeStamp ?currentTime . "
+                + "?observation NS:hasUnitId ?unit . "
+                + "?observation NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                + "?observation NS:hasStateValue ?value . "
+                + "FILTER (?value >= \"1000.0\"^^xsd:double) . "
+
+                // get the location of the positive units (without "home")
+                + "?location NS:hasUnit ?unit . "
+                + "?location NS:hasLabel ?locationLabel . "
+                + "FILTER NOT EXISTS { "
+                    + "?location NS:hasLabel \"Home\" "
+                + "} . "
+
+                // get unit label
+                + "?unit NS:hasLabel ?unitLabel . "
+            + "} ";
+
+    /**
+     * Welche Lampen sind aktuell im Flur eingeschaltet und welche Werte haben diese?
+     */
+    public static final String REQ_18 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?locationLabel ?unitLabel ?valueB ?valueC WHERE { "
+
+                // get lamps with current timestamp based on powerState
+                + "{ SELECT (MAX(?timeA) AS ?currentTimeA) ?unitA WHERE { "
+                    + "?obsA NS:hasTimeStamp ?timeA . "
+                    + "?obsA NS:hasUnitId ?unitA . "
+                    + "?obsA NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                    + "{ { ?unitA a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?unitA a NS:DimmableLight . } } "
+                    + "?unitA a NS:PowerState . "
+                    + "?obsA NS:hasStateValue NS:ON . "
+                + "} "
+                + "GROUP BY ?currentTimeA ?unitA } "
+
+                    // get lamps with current timestamp based on colorState
+                + "{ SELECT (MAX(?timeB) AS ?currentTimeB) ?unitB WHERE { "
+                    + "?obsB NS:hasTimeStamp ?timeB . "
+                    + "?obsB NS:hasUnitId ?unitB . "
+                    + "?obsB NS:hasProviderService NS:COLOR_STATE_SERVICE . "
+                    + "{ { ?unitB a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?unitB a NS:DimmableLight . } } "
+                    + "?unitB a NS:ColorState . "
+                + "} "
+                + "GROUP BY ?currentTimeB ?unitB } "
+
+                    // get lamps with current timestamp based on brightnessState
+                + "{ SELECT (MAX(?timeC) AS ?currentTimeC) ?unitC WHERE { "
+                    + "?obsC NS:hasTimeStamp ?timeC . "
+                    + "?obsC NS:hasUnitId ?unitC . "
+                    + "?obsC NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                    + "{ { ?unitC a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?unitC a NS:DimmableLight . } } "
+                    + "?unitC a NS:BrightnessState . "
+                + "} "
+                + "GROUP BY ?currentTimeC ?unitC } "
+
+                //TODO here: colorLamps only -> differentiate between colorLamp, dimmerLamp and normalLamp
+                + "FILTER (?unitB = ?unitA && ?unitB = ?unitC) . "
+
+                + "?observationB NS:hasTimeStamp ?currentTimeB . "
+                + "?observationB NS:hasUnitId ?unitB . "
+                + "?observationB NS:hasProviderService NS:COLOR_STATE_SERVICE . "
+                + "?observationB NS:hasStateValue ?valueB . "
+
+                + "?observationC NS:hasTimeStamp ?currentTimeC . "
+                + "?observationC NS:hasUnitId ?unitC . "
+                + "?observationC NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                + "?observationC NS:hasStateValue ?valueC . "
+
+                + "?unitA NS:hasLabel ?unitLabel . "
+                + "?location NS:hasUnit ?unitA . "
+                + "?location NS:hasLabel ?locationLabel . "
+                + "FILTER NOT EXISTS { "
+                    + "?location NS:hasLabel \"Home\" "
+                + "} . "
+            + "} ";
 
     //CHECKSTYLE.ON: MultipleStringLiterals
     /**
