@@ -40,6 +40,7 @@ public final class QueryStrings {
     //CHECKSTYLE.OFF: MultipleStringLiterals
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
+    // Queries based on SELECT to visualize the solutions
     //TODO readability -> get Labels and question
 
     /**
@@ -77,20 +78,19 @@ public final class QueryStrings {
                 + "} . "
             + "} ";
 
-//    /**
-//     * Welche units befinden sich im Wohnzimmer und welche sind davon eingeschaltet/erreichbar?
-//     */
-//    //TODO @Ontology: list all units (disabled enclosed)?
-//    public static final String REQ_2 =
-//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-//            + "SELECT ?unitLabel ?stateValue WHERE { "
-//                + "?location NS:hasLabel \"Living\" . "
-//                + "?location NS:hasUnit ?unit . "
-//                + "?unit NS:hasLabel ?unitLabel . "
-//                + "?observation NS:hasUnitId ?unit . "
-//                + "?observation NS:hasStateValue NS:ENABLED, ?stateValue FILTER (?stateValue = NS:ENABLED) . "
-//                + "?unit a NS:EnablingState . "
-//            + "}";
+    /**
+     * Welche units befinden sich im Wohnzimmer und sind sie erreichbar?
+     */
+    public static final String REQ_2 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?unitLabel ?isAvailable WHERE { "
+                // get units with location "living"
+                + "?location NS:hasLabel \"Living\" . "
+                + "?location NS:hasUnit ?unit . "
+                + "?unit NS:hasLabel ?unitLabel . "
+                // get the value of the units
+                + "?unit NS:isAvailable ?isAvailable . "
+            + "}";
 
     /**
      * Welche Lampe wurden im Apartment bisher am häufigsten verwendet?
@@ -129,7 +129,6 @@ public final class QueryStrings {
     public static final String REQ_4 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-            //TODO better solution of SELECT [...]
             // select lamps only, if conditions of the question apply
             + "SELECT (IF(?isRolUP = false && ?time = true, ?lampLabel, 0) as ?labelLamp) WHERE { "
                 // get the current observation of the lamp units
@@ -177,7 +176,6 @@ public final class QueryStrings {
      */
     public static final String REQ_5 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            //TODO better solution of SELECT [...]
             + "SELECT (IF(?isMotion = true, ?motionLabel, 0) AS ?labelMotion) "
                 + "(IF(?isMotion = true, ?locMotionLabel, 0) AS ?locationLabelMotion) "
                 + "(IF(?isMotion = true, NS:MOTION, NS:NO_MOTION) AS ?motionValue) "
@@ -553,68 +551,193 @@ public final class QueryStrings {
             + "} ";
 
     /**
-     * Welche Lampen sind aktuell im Flur eingeschaltet und welche Werte haben diese?
+     * Welche FarbLampen sind aktuell im Flur eingeschaltet und welche Werte haben diese?
      */
     public static final String REQ_18 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?locationLabel ?unitLabel ?valueB ?valueC WHERE { "
+            + "SELECT ?locationLabel ?unitLabel ?valueColor ?valueBrightness WHERE { "
 
                 // get lamps with current timestamp based on powerState
-                + "{ SELECT (MAX(?timeA) AS ?currentTimeA) ?unitA WHERE { "
-                    + "?obsA NS:hasTimeStamp ?timeA . "
-                    + "?obsA NS:hasUnitId ?unitA . "
-                    + "?obsA NS:hasProviderService NS:POWER_STATE_SERVICE . "
-                    + "{ { ?unitA a NS:ColorableLight . } "
-                        + "UNION "
-                    + "{ ?unitA a NS:DimmableLight . } } "
-                    + "?unitA a NS:PowerState . "
-                    + "?obsA NS:hasStateValue NS:ON . "
+                + "{ SELECT (MAX(?timePower) AS ?currentTimePower) ?unitPower WHERE { "
+                    + "?obsPower NS:hasTimeStamp ?timePower . "
+                    + "?obsPower NS:hasUnitId ?unitPower . "
+                    + "?obsPower NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                    + "?unitPower a NS:ColorableLight . "
+                    + "?unitPower a NS:PowerState . "
+                    + "?obsPower NS:hasStateValue NS:ON . "
                 + "} "
-                + "GROUP BY ?currentTimeA ?unitA } "
+                + "GROUP BY ?currentTimePower ?unitPower } "
 
                     // get lamps with current timestamp based on colorState
-                + "{ SELECT (MAX(?timeB) AS ?currentTimeB) ?unitB WHERE { "
-                    + "?obsB NS:hasTimeStamp ?timeB . "
-                    + "?obsB NS:hasUnitId ?unitB . "
-                    + "?obsB NS:hasProviderService NS:COLOR_STATE_SERVICE . "
-                    + "{ { ?unitB a NS:ColorableLight . } "
-                        + "UNION "
-                    + "{ ?unitB a NS:DimmableLight . } } "
-                    + "?unitB a NS:ColorState . "
+                + "{ SELECT (MAX(?timeColor) AS ?currentTimeColor) ?unitColor WHERE { "
+                    + "?obsColor NS:hasTimeStamp ?timeColor . "
+                    + "?obsColor NS:hasUnitId ?unitColor . "
+                    + "?obsColor NS:hasProviderService NS:COLOR_STATE_SERVICE . "
+                    + "?unitColor a NS:ColorableLight . "
+                    + "?unitColor a NS:ColorState . "
                 + "} "
-                + "GROUP BY ?currentTimeB ?unitB } "
+                + "GROUP BY ?currentTimeColor ?unitColor } "
 
                     // get lamps with current timestamp based on brightnessState
-                + "{ SELECT (MAX(?timeC) AS ?currentTimeC) ?unitC WHERE { "
-                    + "?obsC NS:hasTimeStamp ?timeC . "
-                    + "?obsC NS:hasUnitId ?unitC . "
-                    + "?obsC NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                    + "{ { ?unitC a NS:ColorableLight . } "
-                        + "UNION "
-                    + "{ ?unitC a NS:DimmableLight . } } "
-                    + "?unitC a NS:BrightnessState . "
+                + "{ SELECT (MAX(?timeBrightness) AS ?currentTimeBrightness) ?unitBrightness WHERE { "
+                    + "?obsBrightness NS:hasTimeStamp ?timeBrightness . "
+                    + "?obsBrightness NS:hasUnitId ?unitBrightness . "
+                    + "?obsBrightness NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                    + "?unitBrightness a NS:ColorableLight . "
+                    + "?unitBrightness a NS:BrightnessState . "
                 + "} "
-                + "GROUP BY ?currentTimeC ?unitC } "
+                + "GROUP BY ?currentTimeBrightness ?unitBrightness } "
 
-                //TODO here: colorLamps only -> differentiate between colorLamp, dimmerLamp and normalLamp
-                + "FILTER (?unitB = ?unitA && ?unitB = ?unitC) . "
+                // get the common unit with current observations to power, color and brightness
+                + "FILTER (?unitColor = ?unitPower && ?unitColor = ?unitBrightness) . "
 
-                + "?observationB NS:hasTimeStamp ?currentTimeB . "
-                + "?observationB NS:hasUnitId ?unitB . "
-                + "?observationB NS:hasProviderService NS:COLOR_STATE_SERVICE . "
-                + "?observationB NS:hasStateValue ?valueB . "
+                // get color value of lamps
+                + "?observationColor NS:hasTimeStamp ?currentTimeColor . "
+                + "?observationColor NS:hasUnitId ?unitColor . "
+                + "?observationColor NS:hasProviderService NS:COLOR_STATE_SERVICE . "
+                + "?observationColor NS:hasStateValue ?valueColor . "
 
-                + "?observationC NS:hasTimeStamp ?currentTimeC . "
-                + "?observationC NS:hasUnitId ?unitC . "
-                + "?observationC NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                + "?observationC NS:hasStateValue ?valueC . "
+                // get brightness value of lamps
+                + "?observationBrightness NS:hasTimeStamp ?currentTimeBrightness . "
+                + "?observationBrightness NS:hasUnitId ?unitBrightness . "
+                + "?observationBrightness NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
+                + "?observationBrightness NS:hasStateValue ?valueBrightness . "
 
-                + "?unitA NS:hasLabel ?unitLabel . "
-                + "?location NS:hasUnit ?unitA . "
+                // get labels of lamps and their locations
+                + "?unitPower NS:hasLabel ?unitLabel . "
+                + "?location NS:hasUnit ?unitPower . "
                 + "?location NS:hasLabel ?locationLabel . "
                 + "FILTER NOT EXISTS { "
                     + "?location NS:hasLabel \"Home\" "
                 + "} . "
+            + "} ";
+
+    /**
+     * Befindet sich aktuell im Wohnzimmer mindestens eine Person und ist dort momentan das Licht eingeschaltet?
+     */
+    // Hint: query via motion units. alternative query in REQ_20
+    public static final String REQ_19 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?motionLabel ?isMotion ?lampLabel ?isLampOn WHERE { "
+
+                // get motion units via current observation
+                + "{ SELECT (MAX(?timeMotion) AS ?currentTimeMotion) ?motionUnit WHERE { "
+                    + "?motionUnit a NS:MotionState . "
+                    + "?obsMotion NS:hasUnitId ?motionUnit . "
+                    + "?obsMotion NS:hasTimeStamp ?timeMotion . "
+                    + "?obsMotion NS:hasProviderService NS:MOTION_STATE_SERVICE . "
+                + "} GROUP BY ?currentTimeMotion ?motionUnit } "
+
+                // is there a motion unit with current value MOTION?
+                + "BIND (EXISTS { "
+                    + "?motionObs NS:hasUnitId ?motionUnit . "
+                    + "?motionObs NS:hasTimeStamp ?currentTimeMotion . "
+                    + "?motionObs NS:hasProviderService NS:MOTION_STATE_SERVICE . "
+                    + "?motionObs NS:hasStateValue NS:MOTION } "
+                + "AS ?isMotion) . "
+
+                // get lamp units via current observation
+                + "{ SELECT (MAX(?timeLamp) AS ?currentTimeLamp) ?lampUnit WHERE { "
+                    + "{ { ?lampUnit a NS:ColorableLight . } "
+                        + "UNION "
+                    + "{ ?lampUnit a NS:DimmableLight . } } "
+                    + "?obsLamp NS:hasUnitId ?lampUnit . "
+                    + "?obsLamp NS:hasTimeStamp ?timeLamp . "
+                    + "?obsLamp NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                + "} GROUP BY ?currentTimeLamp ?lampUnit } "
+
+                // get motion and lamp labels of location "living"
+                + "?lampUnit NS:hasLabel ?lampLabel . "
+                + "?motionUnit NS:hasLabel ?motionLabel . "
+                + "?location NS:hasUnit ?lampUnit . "
+                + "?location NS:hasUnit ?motionUnit . "
+                + "?location NS:hasLabel \"Living\" . "
+
+                // is there a lamp unit with current value ON?
+                + "BIND (EXISTS { "
+                    + "?observation NS:hasTimeStamp ?currentTimeLamp . "
+                    + "?observation NS:hasUnitId ?lampUnit . "
+                    + "?observation NS:hasProviderService ?POWER_STATE_SERVICE . "
+                    + "?observation NS:hasStateValue NS:ON . } "
+                + "AS ?isLampOn) . "
+            + "} ";
+
+    /**
+     * Befinden sich aktuell Personen im Apartment und in welchen Bereichen befinden sie sich?
+     */
+    // Hint: query via userPresenceState
+    public static final String REQ_20 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+                + "SELECT ?unitLabel ?locationLabel WHERE { "
+
+                // get all user units via current observation
+                + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
+                    + "?unit a NS:UserPresenceState . "
+                    + "?obs NS:hasUnitId ?unit . "
+                    + "?obs NS:hasTimeStamp ?time . "
+                    + "?obs NS:hasStateValue NS:AT_HOME . "
+//                    + "?obs NS:hasProviderService NS: . " //unknown state_service...
+                + "} GROUP BY ?currentTime ?unit } "
+
+                // get labels of units and their locations
+                + "?unit NS:hasLabel ?unitLabel . "
+                + "?location NS:hasUnit ?unit . "
+                + "?location NS:hasLabel ?locationLabel . "
+                + "FILTER NOT EXISTS { "
+                    + "?location NS:hasLabel \"Home\" "
+                + "} . "
+            + "} ";
+
+    /**
+     * Gibt es aktuell eine beliebige Verbindung (Türen offen) zwischen zwei Räumen, die eine Temperaturdifferenz von
+     * 10°C aufweisen?
+     */
+    public static final String REQ_21 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?door ((MAX(?average) - MIN(?average)) AS ?diffTemperature) WHERE { "
+
+                // get all door units via current observation
+                + "{ SELECT (MAX(?timeDoor) AS ?currentTimeDoor) ?door WHERE { "
+                    + "?door a NS:DoorState . "
+                    + "?obsDoor NS:hasUnitId ?door . "
+                    + "?obsDoor NS:hasTimeStamp ?timeDoor . "
+                    + "?obsDoor NS:hasStateValue NS:OPEN . "
+                    + "?obsDoor NS:hasProviderService NS:DOOR_STATE_SERVICE . "
+                + "} GROUP BY ?currentTimeDoor ?door } "
+
+                // get all locations with the average temperature
+                + "{ SELECT (AVG(?value) AS ?average) ?location WHERE { "
+                    + "?observation NS:hasUnitId ?tempUnit . "
+                    + "?observation NS:hasTimeStamp ?currentTimeTemp . "
+                    + "?observation NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
+                    + "?observation NS:hasStateValue ?value . "
+                    + "?location NS:hasUnit ?tempUnit . "
+                    + "FILTER NOT EXISTS { "
+                        + "?location NS:hasLabel \"Home\" "
+                    + "} . "
+
+                    // get all temperature units via current observation
+                    + "{ SELECT (MAX(?timeTemp) AS ?currentTimeTemp) ?tempUnit WHERE { "
+                        + "?tempUnit a NS:TemperatureState . "
+                        + "?obsTemp NS:hasUnitId ?tempUnit . "
+                        + "?obsTemp NS:hasTimeStamp ?timeTemp . "
+                        + "?obsTemp NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
+                    + "} GROUP BY ?currentTimeTemp ?tempUnit } "
+                + "} GROUP BY ?location ?average } "
+
+                // get the door connection between two adjacent-rooms
+                + "?location NS:hasConnection ?door . "
+            + "} "
+            + "GROUP BY ?door ?diffTemperature ";
+
+    /**
+     * Gibt es Geräte in der Küche, die länger als 3 Stunden eingeschaltet sind und welche sind diese?
+     */
+    public static final String REQ_22 =
+            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT * WHERE { "
+                //TODO
             + "} ";
 
     //CHECKSTYLE.ON: MultipleStringLiterals
