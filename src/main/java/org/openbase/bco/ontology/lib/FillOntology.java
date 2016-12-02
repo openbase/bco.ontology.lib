@@ -292,7 +292,9 @@ public class FillOntology {
      */
     protected void integrateDataTypeProperties(final UnitRegistry registry) {
         try {
-            // create dataTypeProperty hasLabel
+            final DatatypeProperty dataTypeHasLabel = ontModel.getDatatypeProperty(Constants.NS + "hasLabel");
+            final DatatypeProperty dataTypeIsAvailable = ontModel.getDatatypeProperty(Constants.NS + "isAvailable");
+
             registry.getUnitConfigs().stream().filter(unitConfig ->
                     unitConfig.getEnablingState().getValue().equals(State.ENABLED)).forEach(unitConfig -> {
 
@@ -302,8 +304,10 @@ public class FillOntology {
 
                 // create dataTypeProperty hasLabel
                 final Literal literal = ontModel.createTypedLiteral(unitLabel);
-                final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(Constants.NS + "hasLabel");
-                unitIndividual.addLiteral(datatypeProperty, literal);
+                unitIndividual.addLiteral(dataTypeHasLabel, literal);
+
+                // create dataTypeProperty isAvailable
+                unitIndividual.addLiteral(dataTypeIsAvailable, true);
             });
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -353,6 +357,7 @@ public class FillOntology {
                     LOGGER.error("No stateValue or dataTypeValue by unit: " + unitConfig.getId() + " is: "
                             + unitConfig.getType());
                 } else {
+                    //TODO literal format: stateValue + physical dataUnit
                     //get dataUnit
                     final Object objectDataUnit = findMethodByObject(objectState
                             , Constants.RegEx.GET_PATTERN_DATA_UNIT);
@@ -423,8 +428,6 @@ public class FillOntology {
 
                     final Object objectStateValue = findMethodByObject(objectState
                             , Constants.RegEx.GET_VALUE);
-                    final Object objectDataUnit = findMethodByObject(objectState
-                            , Constants.RegEx.GET_PATTERN_DATA_UNIT);
 
                     if (objectStateValue != null) {
                         ontModel.createIndividual(Constants.NS + objectStateValue, ontClassStateValue);
@@ -437,18 +440,11 @@ public class FillOntology {
                         final OntClass ontClass = (OntClass) classIterator.next();
                         final String className = ontClass.getLocalName().toLowerCase();
 
-                        //TODO auslagern
+                        //TODO swap out and a unit has (maybe) multiple states
                         // find correct state type class
                         if (objectId != null && objectStateName.contains(className)
                                 && !className.equals(Constants.STATE)) {
                             ontModel.createIndividual(Constants.NS + objectId, ontClass);
-                        }
-
-                        // find correct data unit class
-                        //TODO "UNKNOWN": sometimes in ontology, sometimes not...?!
-                        //TODO encapsulate integration of dataUnit individuals
-                        if (objectDataUnit != null && className.equals(Constants.DATA_UNIT)) {
-                            ontModel.createIndividual(Constants.NS + objectDataUnit, ontClass);
                         }
                     }
                 }
@@ -568,6 +564,6 @@ public class FillOntology {
          */
 
 
-        //TODO observer
+        //TODO observer (beside objectProperties -> dataTypeProperty 'isAvailable')
     }
 }
