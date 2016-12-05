@@ -125,7 +125,6 @@ public final class QueryStrings {
      * Sind im Moment Lampen im Wohnzimmer an, alle Rollos unten und ist es zwischen 22:00 - 6:00 Uhr?
      * Welche Lampen sind diese?
      */
-    //TODO maybe check all units (here rollerShutter), if they have min. one observation with a stateValue ...
     public static final String REQ_4 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
@@ -568,7 +567,7 @@ public final class QueryStrings {
                 + "} "
                 + "GROUP BY ?currentTimePower ?unitPower } "
 
-                    // get lamps with current timestamp based on colorState
+                // get lamps with current timestamp based on colorState
                 + "{ SELECT (MAX(?timeColor) AS ?currentTimeColor) ?unitColor WHERE { "
                     + "?obsColor NS:hasTimeStamp ?timeColor . "
                     + "?obsColor NS:hasUnitId ?unitColor . "
@@ -578,7 +577,7 @@ public final class QueryStrings {
                 + "} "
                 + "GROUP BY ?currentTimeColor ?unitColor } "
 
-                    // get lamps with current timestamp based on brightnessState
+                // get lamps with current timestamp based on brightnessState
                 + "{ SELECT (MAX(?timeBrightness) AS ?currentTimeBrightness) ?unitBrightness WHERE { "
                     + "?obsBrightness NS:hasTimeStamp ?timeBrightness . "
                     + "?obsBrightness NS:hasUnitId ?unitBrightness . "
@@ -736,8 +735,36 @@ public final class QueryStrings {
     public static final String REQ_22 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT * WHERE { "
-                //TODO
+            + "PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>"
+            + "SELECT ?unitLabel WHERE { "
+
+                    // get the observations which have additionally stateValue ON
+                    + "?observation NS:hasTimeStamp ?currentTime . "
+                    + "?observation NS:hasUnitId ?unit . "
+                    + "?observation NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                    + "?observation NS:hasStateValue NS:ON . "
+
+                    // get the current time and unit of all unitTypes which have a powerState
+                    + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
+                        + "?obs NS:hasTimeStamp ?time . "
+                        + "?obs NS:hasUnitId ?unit . "
+                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                        + "?unit a NS:PowerState . "
+                        + "?unit a ?unitType . "
+                        + "?unitType rdfs:subClassOf NS:DalUnit . "
+                    + "} "
+                    + "GROUP BY ?currentTime ?unit } "
+
+                    // check if the latest timeStamp is older than 3hours
+                    + "FILTER (?currentTime <= \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+
+                    // get location "kitchen" and labels of the units
+                    + "?location NS:hasLabel \"Kitchen\" . "
+                    + "FILTER NOT EXISTS { "
+                        + "?location NS:hasLabel \"Home\" "
+                    + "} . "
+                    + "?location NS:hasUnit ?unit . "
+                    + "?unit NS:hasLabel ?unitLabel . "
             + "} ";
 
     //CHECKSTYLE.ON: MultipleStringLiterals
