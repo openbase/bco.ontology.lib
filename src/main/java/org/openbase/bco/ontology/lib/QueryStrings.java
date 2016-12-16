@@ -30,7 +30,6 @@ import java.util.Locale;
  */
 public final class QueryStrings {
 
-    //TODO Use webTool/webFrontend for query input
     //TODO later: get concrete object of query...
     //TODO make all strings like "home" generic
     //TODO make request of unitType generic
@@ -41,7 +40,6 @@ public final class QueryStrings {
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
     // Queries based on SELECT to visualize the solutions
-    //TODO readability -> get Labels and question
 
     /**
      * Was ist die aktuelle Zeit?
@@ -262,7 +260,7 @@ public final class QueryStrings {
             + "SELECT ?unitLabel ?unitType (COUNT(?unit) AS ?unitCount) ?locationLabel WHERE { "
                     // get all timestamps of observations, which are not older than 3 hours from now
                     + "?observation NS:hasTimeStamp ?time . "
-                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get all units, which are dalUnits or Doors or Windows from the observations
                     + "?observation NS:hasUnitId ?unit . "
@@ -286,16 +284,15 @@ public final class QueryStrings {
     /**
      * Wie viel Energie wurde in den letzten 3 Stunden im Apartment und wie viel im Wohnzimmer verbraucht?
      */
-    //TODO howto create new datatype which based on double...
     public static final String REQ_8 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
-            + "SELECT (SUM(?currentValue - ?oldValue) AS ?consumption) ?labelLoc  WHERE { "
+            + "SELECT ?labelLoc (SUM(?currentValue - ?oldValue) AS ?consumption) ?physicalType WHERE { "
 
                 // get oldest (within 3 hours) and current timestamp of units with powerConsumption
                 + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?unit WHERE { "
                     + "?obs NS:hasTimeStamp ?time . "
-                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
                     + "?obs NS:hasUnitId ?unit . "
                     + "?unit a NS:PowerConsumptionState . "
                 + "} "
@@ -308,28 +305,32 @@ public final class QueryStrings {
                 // get state value of observation with oldest timestamp
                 + "?obsOld NS:hasUnitId ?unit . "
                 + "?obsOld NS:hasTimeStamp ?oldTime . "
-                + "?obsOld NS:hasStateValue ?oldValue . "
+                + "?obsOld NS:hasStateValue ?oldVal . "
 
                 // get state value of observation with current timestamp
                 + "?obsCurrent NS:hasUnitId ?unit . "
                 + "?obsCurrent NS:hasTimeStamp ?currentTime . "
-                + "?obsCurrent NS:hasStateValue ?currentValue . "
+                + "?obsCurrent NS:hasStateValue ?currentVal . "
+
+                // assign values to operate type (double) and physical type
+                + "BIND (xsd:double(?oldVal) AS ?oldValue) . "
+                + "BIND (xsd:double(?currentVal) AS ?currentValue) . "
+                + "BIND (datatype(?currentVal) AS ?physicalType) . "
             + "} "
-            + "GROUP BY ?labelLoc ?consumption ";
+            + "GROUP BY ?labelLoc ?consumption ?physicalType ";
 
     /**
      * Wie ist die Temperaturdifferenz im Badezimmer von jetzt zu vor 3 Stunden?
      */
-    //TODO datatype physical unit
     public static final String REQ_9 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
-                + "SELECT ?labelLoc ((SUM(?currentValue - ?oldValue) / COUNT(?unit)) AS ?temperatureDiff) WHERE { "
+                + "SELECT ?labelLoc (AVG(?currentValue) - AVG(?oldValue) AS ?temperatureDiff) ?physicalType WHERE { "
 
                     // get oldest (within 3 hours) and current timestamp of units with temperature
                     + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?unit WHERE { "
                         + "?obs NS:hasTimeStamp ?time . "
-                        + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                        + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:TemperatureState . "
                     + "} "
@@ -342,40 +343,48 @@ public final class QueryStrings {
                     // get state value of observation with oldest timestamp
                     + "?obsOld NS:hasUnitId ?unit . "
                     + "?obsOld NS:hasTimeStamp ?oldTime . "
-                    + "?obsOld NS:hasStateValue ?oldValue . "
+                    + "?obsOld NS:hasStateValue ?oldVal . "
 
                     // get state value of observation with current timestamp
                     + "?obsCurrent NS:hasUnitId ?unit . "
                     + "?obsCurrent NS:hasTimeStamp ?currentTime . "
-                    + "?obsCurrent NS:hasStateValue ?currentValue . "
+                    + "?obsCurrent NS:hasStateValue ?currentVal . "
+
+                    // assign values to operate type (double) and physical type
+                    + "BIND (xsd:double(?oldVal) AS ?oldValue) . "
+                    + "BIND (xsd:double(?currentVal) AS ?currentValue) . "
+                    + "BIND (datatype(?currentVal) AS ?physicalType) . "
                 + "} "
-                + "GROUP BY ?temperatureDiff ?labelLoc ";
+                + "GROUP BY ?temperatureDiff ?labelLoc ?physicalType ";
 
     /**
      * Welche Batterien haben aktuell mindestens 80 % und welche Batterien unter 20 % Energie?
      */
-    // if result should be two lists, the query should be split with different conditions (>= 0.8 and < 0.2)
-    //TODO datatype percentage
+    // if result should be two lists, the query should be split with different conditions (>= 80 and < 20)
     public static final String REQ_10 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
-            + "SELECT ?label ?value WHERE { "
+            + "SELECT ?label ?value ?scaleType WHERE { "
                 // get battery unit
                 + "?unit a NS:BatteryState . "
                 + "?unit NS:hasLabel ?label . "
 
                 // get observations of units
                 + "?obs NS:hasUnitId ?unit . "
-                + "?obs NS:hasStateValue ?value . "
+                + "?obs NS:hasStateValue ?val . "
+
+                // assign values to operate type (double) and physical type
+                + "BIND (xsd:double(?val) AS ?value) . "
+                + "BIND (datatype(?val) AS ?scaleType) . "
 
                 // filter to get values based on competence question
-                + "FILTER (?value >= \"0.8\"^^xsd:double || ?value < \"0.2\"^^xsd:double) "
+                + "FILTER (?value >= \"80\"^^xsd:double || ?value < \"20\"^^xsd:double) "
             + "} ";
 
     /**
      * Welche Geräte im Wohnzimmer sollen in den nächsten 3 Stunden aktiviert werden?
      */
-    //TODO no information about future events in ontology...
+    //Hint: no information about future events in ontology...
     public static final String REQ_11 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT * WHERE { "
@@ -396,7 +405,7 @@ public final class QueryStrings {
                     + "?obs NS:hasTimeStamp ?time . "
                     + "?obs NS:hasUnitId ?unit . "
                     + "?obs NS:hasStateValue NS:MOTION . "
-                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get location with MOTION value
                     + "?unit a NS:MotionState . "
@@ -436,7 +445,7 @@ public final class QueryStrings {
     public static final String REQ_14 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT (SUM(?value) / COUNT(?value) AS ?temperature) ?connectionLabel ?stateValue WHERE { "
+            + "SELECT (AVG(?value) AS ?temperature) ?physicalType ?connectionLabel ?stateValue WHERE { "
 
                 // get current timestamp of units with temperature
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
@@ -452,14 +461,18 @@ public final class QueryStrings {
 
                 // get temperature value of units via observations
                 + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue ?value . "
+                + "?observation NS:hasStateValue ?val . "
+
+                // assign values to operate type (double) and physical type
+                + "BIND (xsd:double(?val) AS ?value) . "
+                + "BIND (datatype(?val) AS ?physicalType) . "
 
                 // get connections via location "Bath"
                 + "?location NS:hasConnection ?connection . "
                 + "?connection NS:hasLabel ?connectionLabel . "
                 + "?connection NS:hasCurrentStateValue ?stateValue . "
             + "} "
-            + "GROUP BY ?stateValue ?temperature ?connectionLabel ";
+            + "GROUP BY ?stateValue ?physicalType ?val ?connectionLabel ";
 
     /**
      * Welche Geräte beziehen seit mindestens 3 Stunden Strom (power consumption) im Wohnzimmer?
@@ -472,7 +485,7 @@ public final class QueryStrings {
                 // get units with timestamp within 3 hours via powerConsumptionState
                 + "{ SELECT ?unit WHERE { "
                     + "?obs NS:hasTimeStamp ?time . "
-                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
                     + "?obs NS:hasUnitId ?unit . "
                     + "?unit a NS:PowerConsumptionState . "
                 + "} "
@@ -488,10 +501,10 @@ public final class QueryStrings {
     /**
      * Welche Geräte beziehen aktuell Strom (power consumption) und wie viel jeweils?
      */
-    //TODO dataType physical unit
     public static final String REQ_16 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?unitLabel ?value WHERE { "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?unitLabel ?value ?physicalType WHERE { "
 
                 // get units with current timestamp via powerConsumptionState
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
@@ -509,18 +522,21 @@ public final class QueryStrings {
 
                 // get label and value of the units with current timestamp
                 + "?unit NS:hasLabel ?unitLabel . "
-                + "?observation NS:hasStateValue ?value . "
+                + "?observation NS:hasStateValue ?val . "
+
+                // assign values to operate type (double) and physical type
+                + "BIND (xsd:double(?val) AS ?value) . "
+                + "BIND (datatype(?val) AS ?physicalType) . "
             + "} ";
 
     /**
      * Welche Orte im Apartment haben aktuell einen Helligkeitswert von mindestens 1000lx?
      */
     // hint: situation true, if one sensor has a value of min. 1000.0lx. alternative is a average over all sensor values
-    //TODO dataType physical unit
     public static final String REQ_17 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT ?locationLabel ?unitLabel ?value WHERE { "
+            + "SELECT ?locationLabel ?unitLabel ?value ?physicalType WHERE { "
 
                 // get units with current timestamp via brightnessState
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
@@ -535,8 +551,12 @@ public final class QueryStrings {
                 + "?observation NS:hasTimeStamp ?currentTime . "
                 + "?observation NS:hasUnitId ?unit . "
                 + "?observation NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                + "?observation NS:hasStateValue ?value . "
+                + "?observation NS:hasStateValue ?val . "
                 + "FILTER (?value >= \"1000.0\"^^xsd:double) . "
+
+                // assign values to operate type (double) and physical type
+                + "BIND (xsd:double(?val) AS ?value) . "
+                + "BIND (datatype(?val) AS ?physicalType) . "
 
                 // get the location of the positive units (without "home")
                 + "?location NS:hasUnit ?unit . "
@@ -693,7 +713,8 @@ public final class QueryStrings {
      */
     public static final String REQ_21 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?door ((MAX(?average) - MIN(?average)) AS ?diffTemperature) WHERE { "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?door ((MAX(?average) - MIN(?average)) AS ?diffTemperature) ?physicalType WHERE { "
 
                 // get all door units via current observation
                 + "{ SELECT (MAX(?timeDoor) AS ?currentTimeDoor) ?door WHERE { "
@@ -705,11 +726,17 @@ public final class QueryStrings {
                 + "} GROUP BY ?currentTimeDoor ?door } "
 
                 // get all locations with the average temperature
-                + "{ SELECT (AVG(?value) AS ?average) ?location WHERE { "
+                + "{ SELECT (AVG(?val) AS ?average) ?location ?physicalType WHERE { "
                     + "?observation NS:hasUnitId ?tempUnit . "
                     + "?observation NS:hasTimeStamp ?currentTimeTemp . "
                     + "?observation NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
                     + "?observation NS:hasStateValue ?value . "
+
+                    // assign values to operate type (double) and physical type
+                    + "BIND (xsd:double(?value) AS ?val) . "
+                    + "BIND (datatype(?value) AS ?physicalType) . "
+
+                    // get locations of temperature units
                     + "?location NS:hasUnit ?tempUnit . "
                     + "FILTER NOT EXISTS { "
                         + "?location NS:hasLabel \"Home\" "
@@ -722,12 +749,12 @@ public final class QueryStrings {
                         + "?obsTemp NS:hasTimeStamp ?timeTemp . "
                         + "?obsTemp NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
                     + "} GROUP BY ?currentTimeTemp ?tempUnit } "
-                + "} GROUP BY ?location ?average } "
+                + "} GROUP BY ?location ?average ?physicalType } "
 
                 // get the door connection between two adjacent-rooms
                 + "?location NS:hasConnection ?door . "
             + "} "
-            + "GROUP BY ?door ?diffTemperature ";
+            + "GROUP BY ?door ?diffTemperature ?physicalType ";
 
     /**
      * Gibt es Geräte in der Küche, die länger als 3 Stunden eingeschaltet sind und welche sind diese?
@@ -756,7 +783,7 @@ public final class QueryStrings {
                     + "GROUP BY ?currentTime ?unit } "
 
                     // check if the latest timeStamp is older than 3hours
-                    + "FILTER (?currentTime <= \"" + addTimeToCurrentDateTime(-3, 0) + "\"^^xsd:dateTime) . "
+                    + "FILTER (?currentTime <= \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get location "kitchen" and labels of the units
                     + "?location NS:hasLabel \"Kitchen\" . "
@@ -786,16 +813,23 @@ public final class QueryStrings {
 
     /**
      * Method adds/subtracts time from the current dateTime.
-     * @param hours The hours.
      * @param minutes The minutes.
+     * @param hours The hours.
+     * @param days The days.
+     * @param months The months.
+     * @param years The years.
      * @return The changed dateTime as String.
      */
-    //TODO expand method with years, days....
-    public static String addTimeToCurrentDateTime(final int hours, final int minutes) {
+    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
+                                                  final int years) {
         final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Constants.DATE_TIME, Locale.ENGLISH);
         final Date now = new Date();
+
         Date newDate = DateUtils.addHours(now, hours);
         newDate = DateUtils.addMinutes(newDate, minutes);
+        newDate = DateUtils.addDays(newDate, days);
+        newDate = DateUtils.addMonths(newDate, months);
+        newDate = DateUtils.addYears(newDate, years);
 
         return simpleDateFormat.format(newDate);
     }
