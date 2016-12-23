@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.ABoxSynchronisation.Configuration;
+package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntClass;
@@ -42,14 +42,18 @@ import java.util.List;
  */
 public class OntInstancesConfig {
     //TODO handling of units with missing data (e.g. location)
-    //TODO swap out strings (unit, providerService)
+    //TODO swap out strings (unit, providerService) + check npe
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstancesConfig.class);
 
-    public OntInstancesConfig(OntModel ontModel) {
+    /**
+     * Constructor for OntInstancesConfig.
+     * @param ontModel ontModel is the ontology model.
+     */
+    public OntInstancesConfig(final OntModel ontModel) {
 
-        DataPool dataPool = new DataPool();
-        UnitRegistry unitRegistry = dataPool.getUnitRegistry();
+        final DataPool dataPool = new DataPool();
+        final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
 
         inspectionOfUnits(ontModel, unitRegistry);
         inspectionOfServiceTypes(ontModel);
@@ -57,7 +61,7 @@ public class OntInstancesConfig {
 
     private void inspectionOfUnits(final OntModel ontModel, final UnitRegistry unitRegistry) {
 
-        List<UnitConfig> missingUnitConfigList = new ArrayList<>();
+        final List<UnitConfig> missingUnitConfigList = new ArrayList<>();
         List<Individual> ontUnitIndList = new ArrayList<>(); //Ind: individual
 
         // preparation: get all individuals of the class "Unit" which are currently in the model
@@ -77,14 +81,14 @@ public class OntInstancesConfig {
                 }
             }
         } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Could not perform unitRegistry in method '"
-                    + e.getStackTrace()[0].getMethodName() + "'!", e, LOGGER);
+            ExceptionPrinter.printHistory("Could not perform unitRegistry in method "
+                    + e.getStackTrace()[0].getMethodName(), e, LOGGER);
         }
     }
 
     private void inspectionOfServiceTypes(final OntModel ontModel) {
 
-        List<ServiceType> missingServiceTypeList = new ArrayList<>();
+        final List<ServiceType> missingServiceTypeList = new ArrayList<>();
         List<Individual> ontServiceTypeIndList = new ArrayList<>(); //Ind: individual
 
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
@@ -92,9 +96,9 @@ public class OntInstancesConfig {
         ontServiceTypeIndList = getIndOfOntSuperclass(ontServiceTypeIndList, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
-        ServiceType[] serviceTypeArray = ServiceTemplateType.ServiceTemplate.ServiceType.values();
+        final ServiceType[] serviceTypeArray = ServiceTemplateType.ServiceTemplate.ServiceType.values();
 
-        for (ServiceType serviceTypeElement : serviceTypeArray) {
+        for (final ServiceType serviceTypeElement : serviceTypeArray) {
             final String serviceType = serviceTypeElement.toString();
 
             // list all missing serviceTypes. Means serviceTypes, which aren't currently in the model
@@ -108,32 +112,27 @@ public class OntInstancesConfig {
     private List<Individual> getIndOfOntSuperclass(final List<Individual> individualList, final OntClass ontClass) {
         final ExtendedIterator instanceExIt;
 
-        try {
-            if (ontClass.hasSubClass()) {
+        if (ontClass.hasSubClass()) {
 
-                // case: class has subclass and individuals
-                instanceExIt = ontClass.listInstances();
-                while (instanceExIt.hasNext()) {
-                    individualList.add((Individual) instanceExIt.next());
-                }
-
-                // goto next (sub-)class
-                ExtendedIterator<OntClass> ontClassExIt = ontClass.listSubClasses();
-                while (ontClassExIt.hasNext()) {
-                    OntClass subOntClass = ontClassExIt.next();
-                    getIndOfOntSuperclass(individualList, subOntClass);
-                }
-            } else {
-
-                // class has no subclass(es) anymore. add individuals to list
-                instanceExIt = ontClass.listInstances();
-                while (instanceExIt.hasNext()) {
-                    individualList.add((Individual) instanceExIt.next());
-                }
+            // case: class has subclass and individuals
+            instanceExIt = ontClass.listInstances();
+            while (instanceExIt.hasNext()) {
+                individualList.add((Individual) instanceExIt.next());
             }
-        } catch (NullPointerException e) {
-            ExceptionPrinter.printHistory("No existing ontClass in method '"
-                    + e.getStackTrace()[0].getMethodName() + "'!", e, LOGGER);
+
+            // goto next (sub-)class
+            final ExtendedIterator<OntClass> ontClassExIt = ontClass.listSubClasses();
+            while (ontClassExIt.hasNext()) {
+                final OntClass ontSubClass = ontClassExIt.next();
+                getIndOfOntSuperclass(individualList, ontSubClass);
+            }
+        } else {
+
+            // class has no subclass(es) anymore. add individuals to list
+            instanceExIt = ontClass.listInstances();
+            while (instanceExIt.hasNext()) {
+                individualList.add((Individual) instanceExIt.next());
+            }
         }
         return individualList;
     }

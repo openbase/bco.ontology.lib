@@ -33,18 +33,20 @@ public class DataPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
 
+    /**
+     * Method provides the unitRegistry.
+     *
+     * @return unitRegistry.
+     */
     public UnitRegistry getUnitRegistry() {
-        UnitRegistry registry = null;
+        UnitRegistry unitRegistry = null;
         try {
-            registry = CachedUnitRegistryRemote.getRegistry();
+            unitRegistry = CachedUnitRegistryRemote.getRegistry();
             CachedUnitRegistryRemote.waitForData();
         } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
-        return registry;
-    }
-
-    public DataPool() {
+        return unitRegistry;
     }
 
 //    public Remote getRemote() {

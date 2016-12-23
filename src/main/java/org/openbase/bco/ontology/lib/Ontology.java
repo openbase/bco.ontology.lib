@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.ABoxSynchronisation.Configuration.OntInstancesConfig;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstancesConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -48,7 +48,7 @@ public final class Ontology {
         ontology.loadOntology("src/Ontology3.owl");
 
 //        WebInterface webInterface = new WebInterface();
-        OntInstancesConfig ontInstancesConfig = new OntInstancesConfig(ontology.getModel());
+        final OntInstancesConfig ontInstancesConfig = new OntInstancesConfig(ontology.getModel());
 //        RSBTest rsbTest = new RSBTest();
 
 //        ontology.cleanOntology();

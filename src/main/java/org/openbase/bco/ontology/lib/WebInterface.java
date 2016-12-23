@@ -29,8 +29,6 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.DatasetAccessor;
 import org.apache.jena.query.DatasetAccessorFactory;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -48,19 +46,20 @@ import java.util.List;
 public class WebInterface {
     //CHECKSTYLE.OFF: MultipleStringLiterals
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+    private static final int HTTP_SUCCESS_CODE = 200;
     private static final String UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
     private static final String DATA_URI = "http://localhost:3030/myAppFuseki/data";
-    private static final String UPDATE =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-                    + "INSERT DATA { "
-                    + "NS:bla a NS:Observation . "
-                    + "} ";
+//    private static final String UPDATE =
+//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+//                    + "INSERT DATA { "
+//                    + "NS:bla a NS:Observation . "
+//                    + "} ";
 
-    private static final String QUERY =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-                    + "ASK { "
-                    + "NS:o3 a NS:Observation . "
-                    + "} ";
+//    private static final String QUERY =
+//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+//                    + "ASK { "
+//                    + "NS:o3 a NS:Observation . "
+//                    + "} ";
 
     /**
      * WebInterface.
@@ -68,22 +67,23 @@ public class WebInterface {
     public WebInterface() {
 
         // ask query via remote SPARQL
-        final Query query = QueryFactory.create(QUERY);
+//        final Query query = QueryFactory.create(QUERY);
 //        HttpAuthenticator authenticator = new SimpleAuthenticator("admin", "admin".toCharArray());
 //        QueryEngineHTTP qEngine = QueryExecutionFactory
 //                .createServiceRequest("http://localhost:3030/myAppFuseki/query", query, authenticator);
 //        System.out.println(qEngine.execAsk());
 //
-//        try (QueryExecution qe = QueryExecutionFactory.sparqlService("http://localhost:3030/myAppFuseki/sparql",
+//        try (QueryExecution queryExecution = QueryExecutionFactory
+//                  .sparqlService("http://localhost:3030/myAppFuseki/sparql",
 //                "ASK { ?s a ?type }", authenticator)) {
-//            System.out.println(qe.execAsk());
+//            System.out.println(queryExecution.execAsk());
 //        }
 
 
-//            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-//            credsProvider.setCredentials(new AuthScope("http://localhost/myAppFuseki/update", 3030),
-//              new UsernamePasswordCredentials("admin", "admin"));
-//            CloseableHttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
+//        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+//        credsProvider.setCredentials(new AuthScope("http://localhost/myAppFuseki/update", 3030),
+//          new UsernamePasswordCredentials("admin", "admin"));
+//        CloseableHttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 
 //        CredentialsProvider credsProvider = new BasicCredentialsProvider();
 //        Credentials unscopedCredentials = new UsernamePasswordCredentials("admin", "admin");
@@ -100,22 +100,22 @@ public class WebInterface {
 
     private OntModel getOntology() {
         // access to fuseki server and download ontology model
-        DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(DATA_URI);
-        Model model = datasetAccessor.getModel();
+        final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(DATA_URI);
+        final Model model = datasetAccessor.getModel();
         return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
     }
 
     private boolean updateSPARQL(final String updateString) {
         try {
-            HttpClient httpclient = HttpClients.createDefault();
-            HttpPost httpPost = new HttpPost(UPDATE_URI);
+            final HttpClient httpclient = HttpClients.createDefault();
+            final HttpPost httpPost = new HttpPost(UPDATE_URI);
 
-            List<NameValuePair> params = new ArrayList<>();
+            final List<NameValuePair> params = new ArrayList<>();
             params.add(new BasicNameValuePair("update", updateString));
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            HttpResponse httpResponse = httpclient.execute(httpPost);
+            final HttpResponse httpResponse = httpclient.execute(httpPost);
 
-            return httpResponse.getStatusLine().getStatusCode() == 200;
+            return httpResponse.getStatusLine().getStatusCode() == HTTP_SUCCESS_CODE;
 
 //            HttpEntity httpEntity = httpResponse.getEntity();
 //

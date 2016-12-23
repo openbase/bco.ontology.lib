@@ -16,9 +16,11 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.TestCode;
+package org.openbase.bco.ontology.lib.testcode;
 
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.extension.rsb.iface.RSBListener;
@@ -35,30 +37,34 @@ import java.util.concurrent.TimeUnit;
 public class RSBTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RSBTest.class);
+    private static final String SCOPE = "/test/a3";
 
+    /**
+     * Constructor for RSBTest.
+     */
     public RSBTest() {
         try {
-            RSBInformer<String> synchronizedInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer("/test/a3", String.class);
+            final RSBInformer<String> synchronizedInformer = RSBFactoryImpl.getInstance()
+                    .createSynchronizedInformer(SCOPE, String.class);
             synchronizedInformer.activate();
 
-            Future taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            final Future taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         synchronizedInformer.publish("blub");
-                    } catch (CouldNotPerformException | InterruptedException e1) {
-                        e1.printStackTrace();
+                    } catch (CouldNotPerformException | InterruptedException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
                 }
-            }, 0, 10, TimeUnit.SECONDS);
+            }, 0, 5, TimeUnit.SECONDS);
 
-            RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener("/test/a3");
+            final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(SCOPE);
             rsbListener.activate();
-            rsbListener.addHandler(event -> LOGGER.info("receive event:"+event.getData()), false);
-
+            rsbListener.addHandler(event -> LOGGER.info("receive event:" + event.getData()), false);
 
         } catch (InterruptedException | CouldNotPerformException e) {
-            e.printStackTrace();
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 

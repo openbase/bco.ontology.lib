@@ -16,10 +16,12 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.ABoxSynchronisation.Configuration;
+package org.openbase.bco.ontology.lib.testcode;
 
 /**
  * Created by agatting on 21.12.16.
  */
-public class OntPropertiesConfig {
+public interface Trigger extends org.openbase.jul.pattern.Observable<Boolean> {
+
+
 }
