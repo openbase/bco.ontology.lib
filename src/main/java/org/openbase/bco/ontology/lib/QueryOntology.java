@@ -56,14 +56,14 @@ public class QueryOntology {
      */
     public void queryModel() {
 
-        final String queryString = QueryStrings.REQ_7;
+        final String queryString = QueryStrings.REQ_8;
         selectQuery(queryString);
 //        final boolean solution = askQuery(queryString);
 //        System.out.println(solution);
 
         //System.out.println(getResultString(queryString, "unit"));
 
-        ontModel.close();
+//        ontModel.close();
     }
 
     /**

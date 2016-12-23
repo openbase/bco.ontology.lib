@@ -89,7 +89,7 @@ public class CreateOntology {
     public void saveOntology() {
         LOGGER.info("Save ontology ...");
         try {
-            final OutputStream output = new FileOutputStream("src/Ontology2.owl");
+            final OutputStream output = new FileOutputStream("src/Ontology4.owl");
             //TODO format correct?
             ontModel.writeAll(output, "RDF/XML", null);
             output.close();

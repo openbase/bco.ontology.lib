@@ -19,6 +19,8 @@
 
 package org.openbase.bco.ontology.lib;
 
+import org.apache.jena.datatypes.BaseDatatype;
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.ObjectProperty;
@@ -67,7 +69,6 @@ public class FillOntology {
         this.ontModel = ontModel;
     }
 
-    //TODO take all units or dis-/enabled units as config choice...
     //TODO create lists with necessary classes for comparing (e.g. all subclasses of superclass "state")
     //TODO efficiency: e.g. getIndividual faster
     //TODO check iterator (if empty => nullPointer)
@@ -86,7 +87,6 @@ public class FillOntology {
             CachedUnitRegistryRemote.waitForData();
         } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-            //TODO check in which group units are...
             //UnitProcessor.
             //UnitConfigProcessor.
         }
@@ -158,7 +158,6 @@ public class FillOntology {
                     }
                 }
             }
-            //TODO test, if all elements are used...
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -314,7 +313,7 @@ public class FillOntology {
         }
     }
 
-    private void createObservationIndivdual(final UnitConfig unitConfig, final ServiceType serviceType) {
+    private void createObservationIndividual(final UnitConfig unitConfig, final ServiceType serviceType) {
         //TODO serviceType via unitConfig?
         observationNumber++;
 
@@ -367,6 +366,8 @@ public class FillOntology {
                     } else {
                         final Literal stateValueLiteral = ontModel.createTypedLiteral(objectDataTypeStateValue
                                 .toString() + " " + objectDataUnit.toString());
+//                        RDFDatatype rdfDatatype = new BaseDatatype(Constants.NS + "fahrenheit");
+//                        Literal literal = ontModel.createTypedLiteral(1.3, rdfDatatype);
                         // create dataTypeProperty "hasStateValue"
                         startIndividualObservation.addLiteral(objectProperty, stateValueLiteral);
                     }
@@ -552,7 +553,7 @@ public class FillOntology {
                             e.printStackTrace();
                     }*/
 
-                    createObservationIndivdual(unitConfig, serviceType);
+                    createObservationIndividual(unitConfig, serviceType);
                     break;
                 }
             }

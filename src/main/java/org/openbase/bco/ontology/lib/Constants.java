@@ -19,6 +19,9 @@
 
 package org.openbase.bco.ontology.lib;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by agatting on 14.11.16.
  */

@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.ABoxSynchronisation.Configuration.OntInstancesConfig;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -44,18 +45,24 @@ public final class Ontology {
         LOGGER.info("Start " + APP_NAME + " ...");
 
         final CreateOntology ontology = new CreateOntology();
-        ontology.loadOntology("src/Ontology.owl");
-        ontology.cleanOntology();
-        final FillOntology fillOntology = new FillOntology(ontology.getModel());
-        fillOntology.integrateIndividualUnitTypes(true);
-        fillOntology.integrateIndividualStateValues();
-        fillOntology.integrateObjectProperties();
-        fillOntology.observer();
-        ontology.saveOntology();
+        ontology.loadOntology("src/Ontology3.owl");
 
-        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
-        queryOntology.queryModel();
+//        WebInterface webInterface = new WebInterface();
+        OntInstancesConfig ontInstancesConfig = new OntInstancesConfig(ontology.getModel());
+//        RSBTest rsbTest = new RSBTest();
 
+//        ontology.cleanOntology();
+//        final FillOntology fillOntology = new FillOntology(ontology.getModel());
+//        fillOntology.integrateIndividualUnitTypes(true);
+//        fillOntology.integrateIndividualStateValues();
+//        fillOntology.integrateObjectProperties();
+//        fillOntology.observer();
+//        ontology.saveOntology();
+
+//        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
+//        queryOntology.queryModel();
+
+        ontology.getModel().close();
         if (ontology.getModel().isClosed()) {
             LOGGER.info(APP_NAME + " finished!");
             System.exit(0);
