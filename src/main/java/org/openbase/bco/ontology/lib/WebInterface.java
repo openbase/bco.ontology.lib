@@ -20,31 +20,19 @@ package org.openbase.bco.ontology.lib;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.jena.atlas.web.auth.HttpAuthenticator;
-import org.apache.jena.atlas.web.auth.SimpleAuthenticator;
-import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.DatasetAccessor;
 import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.sparql.engine.http.QueryEngineHTTP;
-import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
@@ -53,42 +41,43 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-
 
 /**
  * Created by agatting on 12.12.16.
  */
 public class WebInterface {
-
+    //CHECKSTYLE.OFF: MultipleStringLiterals
     private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
     private static final String UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
     private static final String DATA_URI = "http://localhost:3030/myAppFuseki/data";
-    String UPDATE =
+    private static final String UPDATE =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
                     + "INSERT DATA { "
                     + "NS:bla a NS:Observation . "
                     + "} ";
 
-    String QUERY =
+    private static final String QUERY =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
                     + "ASK { "
                     + "NS:o3 a NS:Observation . "
                     + "} ";
 
+    /**
+     * WebInterface.
+     */
     public WebInterface() {
 
         // ask query via remote SPARQL
         final Query query = QueryFactory.create(QUERY);
-        HttpAuthenticator authenticator = new SimpleAuthenticator("admin", "admin".toCharArray());
-        QueryEngineHTTP qEngine = QueryExecutionFactory
-                .createServiceRequest("http://localhost:3030/myAppFuseki/query", query, authenticator);
-        System.out.println(qEngine.execAsk());
-
-        try(QueryExecution qe = QueryExecutionFactory.sparqlService("http://localhost:3030/myAppFuseki/sparql",
-                "ASK { ?s a ?type }", authenticator)) {
-            System.out.println(qe.execAsk());
-        }
+//        HttpAuthenticator authenticator = new SimpleAuthenticator("admin", "admin".toCharArray());
+//        QueryEngineHTTP qEngine = QueryExecutionFactory
+//                .createServiceRequest("http://localhost:3030/myAppFuseki/query", query, authenticator);
+//        System.out.println(qEngine.execAsk());
+//
+//        try (QueryExecution qe = QueryExecutionFactory.sparqlService("http://localhost:3030/myAppFuseki/sparql",
+//                "ASK { ?s a ?type }", authenticator)) {
+//            System.out.println(qe.execAsk());
+//        }
 
 
 //            CredentialsProvider credsProvider = new BasicCredentialsProvider();
@@ -109,14 +98,14 @@ public class WebInterface {
 
     }
 
-    public OntModel getOntology() {
+    private OntModel getOntology() {
         // access to fuseki server and download ontology model
         DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(DATA_URI);
         Model model = datasetAccessor.getModel();
         return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
     }
 
-    public boolean updateSPARQL(final String updateString) {
+    private boolean updateSPARQL(final String updateString) {
         try {
             HttpClient httpclient = HttpClients.createDefault();
             HttpPost httpPost = new HttpPost(UPDATE_URI);
@@ -145,4 +134,5 @@ public class WebInterface {
 
         return false;
     }
+    //CHECKSTYLE.ON: MultipleStringLiterals
 }
