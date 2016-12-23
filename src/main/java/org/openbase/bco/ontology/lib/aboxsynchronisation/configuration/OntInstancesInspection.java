@@ -22,7 +22,7 @@ import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.ontology.lib.Constants;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.DataPool;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -40,33 +40,35 @@ import java.util.List;
 /**
  * Created by agatting on 20.12.16.
  */
-public class OntInstancesConfig {
+public class OntInstancesInspection {
     //TODO handling of units with missing data (e.g. location)
-    //TODO swap out strings (unit, providerService) + check npe
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntInstancesConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntInstancesInspection.class);
 
     /**
-     * Constructor for OntInstancesConfig.
+     * Constructor for OntInstancesInspection.
+     *
      * @param ontModel ontModel is the ontology model.
      */
-    public OntInstancesConfig(final OntModel ontModel) {
+    public OntInstancesInspection(final OntModel ontModel) {
 
         final DataPool dataPool = new DataPool();
         final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
 
-        inspectionOfUnits(ontModel, unitRegistry);
-        inspectionOfServiceTypes(ontModel);
+        final List<UnitConfig> unitConfigList = inspectionOfUnits(ontModel, unitRegistry);
+        final List<ServiceType> serviceTypeList = inspectionOfServiceTypes(ontModel);
     }
 
-    private void inspectionOfUnits(final OntModel ontModel, final UnitRegistry unitRegistry) {
+    private List<UnitConfig> inspectionOfUnits(final OntModel ontModel, final UnitRegistry unitRegistry) {
 
         final List<UnitConfig> missingUnitConfigList = new ArrayList<>();
         List<Individual> ontUnitIndList = new ArrayList<>(); //Ind: individual
 
         // preparation: get all individuals of the class "Unit" which are currently in the model
-        final OntClass ontClassUnit = ontModel.getOntClass(Constants.NS + "Unit");
-        ontUnitIndList = getIndOfOntSuperclass(ontUnitIndList, ontClassUnit);
+        final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_SUPERCLASS);
+        if (ontClassUnit != null) {
+            ontUnitIndList = getIndOfOntSuperclass(ontUnitIndList, ontClassUnit);
+        }
 
         try {
             // run through all enabled unitConfigs of the registry
@@ -84,15 +86,17 @@ public class OntInstancesConfig {
             ExceptionPrinter.printHistory("Could not perform unitRegistry in method "
                     + e.getStackTrace()[0].getMethodName(), e, LOGGER);
         }
+        return missingUnitConfigList;
     }
 
-    private void inspectionOfServiceTypes(final OntModel ontModel) {
+    private List<ServiceType> inspectionOfServiceTypes(final OntModel ontModel) {
 
         final List<ServiceType> missingServiceTypeList = new ArrayList<>();
         List<Individual> ontServiceTypeIndList = new ArrayList<>(); //Ind: individual
 
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
-        final OntClass ontClassServiceType = ontModel.getOntClass(Constants.NS + "ProviderService");
+        final OntClass ontClassServiceType = ontModel
+                .getOntClass(ConfigureSystem.NS + ConfigureSystem.PROVIDER_SERVICES_SUPERCLASS);
         ontServiceTypeIndList = getIndOfOntSuperclass(ontServiceTypeIndList, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
@@ -106,12 +110,13 @@ public class OntInstancesConfig {
                 missingServiceTypeList.add(serviceTypeElement);
             }
         }
+        return missingServiceTypeList;
     }
 
     // get a list with all individuals of a superclass via recursion
     private List<Individual> getIndOfOntSuperclass(final List<Individual> individualList, final OntClass ontClass) {
-        final ExtendedIterator instanceExIt;
 
+        final ExtendedIterator instanceExIt;
         if (ontClass.hasSubClass()) {
 
             // case: class has subclass and individuals
@@ -135,5 +140,38 @@ public class OntInstancesConfig {
             }
         }
         return individualList;
+    }
+
+    /**
+     * Method delivers all subclasses of the given superclass via recursion.
+     *
+     * @param ontClassList The (empty) list to itemize the ontClasses.
+     * @param ontSuperClass The superclass.
+     * @param inclusiveSuperclass Result list keeps superclass or not.
+     *
+     * @return The list with ontClasses.
+     */
+    public List<OntClass> getAllSubclassesOfOntSuperclass(final List<OntClass> ontClassList, final OntClass
+            ontSuperClass, final boolean inclusiveSuperclass) {
+
+        // add initial superclass
+        if (inclusiveSuperclass) {
+            ontClassList.add(ontSuperClass);
+        }
+
+        // get all subclasses of current superclass
+        final ExtendedIterator ontClassExIt;
+        ontClassExIt = ontSuperClass.listSubClasses();
+
+        // add subclass(es) and if subclass has subclass(es) goto next layer via recursion
+        while (ontClassExIt.hasNext()) {
+            final OntClass ontClass = (OntClass) ontClassExIt.next();
+            ontClassList.add(ontClass);
+
+            if (ontSuperClass.hasSubClass()) {
+                getAllSubclassesOfOntSuperclass(ontClassList, ontClass, false);
+            }
+        }
+        return ontClassList;
     }
 }

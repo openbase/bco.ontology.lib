@@ -22,12 +22,39 @@ package org.openbase.bco.ontology.lib;
 /**
  * Created by agatting on 14.11.16.
  */
-public final class Constants {
+
+import org.apache.jena.ontology.OntModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * This java class configures the ontology-system and set different elements like namespace or superclasses of the
+ * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
+ * ontology-processing-classes.
+ */
+public final class ConfigureSystem {
 
     /**
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";
+
+    /**
+     * DateTime format.
+     */
+    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
+     * Ontology superclass name of Units.
+     */
+    public static final String UNIT_SUPERCLASS = "Unit";
+
+    /**
+     * Ontology superclass name of ProviderServices.
+     */
+    public static final String PROVIDER_SERVICES_SUPERCLASS = "ProviderService";
+
+    // -------------------------------
 
     /**
      * General string pattern (lower case only).
@@ -40,11 +67,6 @@ public final class Constants {
     public static final char DOLLAR_SIGN = '$';
 
     /**
-     * dataunit String.
-     */
-    public static final String DATA_UNIT = "dataunit";
-
-    /**
      * state String.
      */
     public static final String STATE = "state";
@@ -54,10 +76,7 @@ public final class Constants {
      */
     public static final String GET = "get";
 
-    /**
-     * dateTime String.
-     */
-    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigureSystem.class);
 
     /**
      * Regular expressions for method searching.
@@ -95,6 +114,20 @@ public final class Constants {
     /**
      * Private Constructor.
      */
-    private Constants() {
+    private ConfigureSystem() {
+    }
+
+    /**
+     * Method tests configurations.
+     *
+     * @param ontModel The ontology model.
+     */
+    public void initialTestConfig(final OntModel ontModel) {
+
+        // test availability of units
+        if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
+            LOGGER.warn("OntClass " + UNIT_SUPERCLASS
+                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
+        }
     }
 }

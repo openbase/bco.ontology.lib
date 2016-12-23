@@ -18,23 +18,26 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
-import org.openbase.bco.ontology.lib.DataPool;
-import org.openbase.bco.registry.unit.lib.UnitRegistry;
+import org.apache.jena.ontology.OntModel;
 
 /**
- * Created by agatting on 21.12.16.
+ * Created by agatting on 23.12.16.
  */
-public class OntPropertiesConfig {
-
-//    private static final Logger LOGGER = LoggerFactory.getLogger(OntPropertiesConfig.class);
+public class OntInstancesMapping extends OntInstancesInspection {
 
     /**
-     * Constructor for OntPropertiesConfig.
+     * Constructor for OntInstancesInspection.
+     *
+     * @param ontModel ontModel is the ontology model.
      */
-    public OntPropertiesConfig() {
-        final DataPool dataPool = new DataPool();
-        final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
-    }
+    public OntInstancesMapping(final OntModel ontModel) {
+        super(ontModel);
 
+//        List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+
+//        tripleArrayLists.add(new TripleArrayList("a", "b", "c"));
+//        tripleArrayLists.add(new TripleArrayList("d", "e", "f"));
+
+    }
 
 }

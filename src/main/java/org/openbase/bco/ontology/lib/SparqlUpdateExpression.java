@@ -16,25 +16,19 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
+package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.DataPool;
-import org.openbase.bco.registry.unit.lib.UnitRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Created by agatting on 21.12.16.
+ * Created by agatting on 23.12.16.
  */
-public class OntPropertiesConfig {
+public class SparqlUpdateExpression {
 
-//    private static final Logger LOGGER = LoggerFactory.getLogger(OntPropertiesConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SparqlUpdateExpression.class);
 
-    /**
-     * Constructor for OntPropertiesConfig.
-     */
-    public OntPropertiesConfig() {
-        final DataPool dataPool = new DataPool();
-        final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
+    public SparqlUpdateExpression() {
     }
-
 
 }
