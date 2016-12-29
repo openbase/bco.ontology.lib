@@ -50,9 +50,29 @@ public final class ConfigureSystem {
     public static final String UNIT_SUPERCLASS = "Unit";
 
     /**
+     * Ontology superclass name of States.
+     */
+    public static final String STATE_SUPERCLASS = "State";
+
+    /**
      * Ontology superclass name of ProviderServices.
      */
-    public static final String PROVIDER_SERVICES_SUPERCLASS = "ProviderService";
+    public static final String PROVIDER_SERVICE_SUPERCLASS = "ProviderService";
+
+    /**
+     * UnitType Connection.
+     */
+    public static final String UNIT_TYPE_CONNECTION = "Connection";
+
+    /**
+     * UnitType Location.
+     */
+    public static final String UNIT_TYPE_LOCATION = "Location";
+
+    /**
+     * Pattern to remove all special signs in a string.
+     */
+    public static final String REMOVE_PATTERN = "[^\\p{Alpha}]";
 
     // -------------------------------
 
@@ -98,7 +118,7 @@ public final class ConfigureSystem {
         /**
          * Regular expression "get" + Pattern + "State".
          */
-        String GET_PATTERN_STATE = GET + STRING_PATTERN + "State";
+        String GET_PATTERN_STATE = GET + STRING_PATTERN + STATE;
         /**
          * Regular expression "getTimeStamp".
          */
@@ -124,10 +144,24 @@ public final class ConfigureSystem {
      */
     public void initialTestConfig(final OntModel ontModel) {
 
-        // test availability of units
+        //CHECKSTYLE.OFF: MultipleStringLiterals
+        // test availability of ontology unit class
         if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
             LOGGER.warn("OntClass " + UNIT_SUPERCLASS
                     + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
         }
+
+        // test availability of ontology state class
+        if (ontModel.getOntClass(NS + STATE_SUPERCLASS) == null) {
+            LOGGER.warn("OntClass " + STATE_SUPERCLASS
+                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
+        }
+
+        // test availability of ontology providerService class
+        if (ontModel.getOntClass(NS + PROVIDER_SERVICE_SUPERCLASS) == null) {
+            LOGGER.warn("OntClass " + PROVIDER_SERVICE_SUPERCLASS
+                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
+        }
+        //CHECKSTYLE.ON: MultipleStringLiterals
     }
 }
