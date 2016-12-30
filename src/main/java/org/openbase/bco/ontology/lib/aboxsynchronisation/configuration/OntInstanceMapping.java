@@ -20,10 +20,9 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.DataPool;
 import org.openbase.bco.ontology.lib.TripleArrayList;
-import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -47,10 +46,7 @@ public class OntInstanceMapping extends OntInstanceInspection {
     public OntInstanceMapping(final OntModel ontModel) {
         super(ontModel);
 
-        final DataPool dataPool = new DataPool();
-        final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
-
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, unitRegistry);
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitRegistry());
         Set<OntClass> ontClassSet = new HashSet<>();
         OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_SUPERCLASS);
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
@@ -61,7 +57,7 @@ public class OntInstanceMapping extends OntInstanceInspection {
         ontClassSet.clear();
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-        List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
+//        List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
 
 
         ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.PROVIDER_SERVICE_SUPERCLASS);
@@ -111,15 +107,26 @@ public class OntInstanceMapping extends OntInstanceInspection {
                                                        final Set<UnitConfig> unitConfigSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
-        // alternative a list of strings (IDs) as mapValue and an unique key (state)
-//        final Map<String, String> stateUnitIdMap = new HashMap<>();
 
-        // list all states and their unitIds of the unitConfigSet in a hashMap
         for (final UnitConfig unitConfig : unitConfigSet) {
-            //TODO
+
+            final String unitId = unitConfig.getId();
+            final UnitRemote unitRemote = getUnitRemoteByUnitConfig(unitConfig);
+            final Set<Object> objectSet = getMethodObjectsByUnitRemote(unitRemote,
+                    ConfigureSystem.RegEx.GET_PATTERN_STATE);
+
+
+            for (final Object object : objectSet) {
+                final String objectStateName = object.getClass().getName().toLowerCase();
+
+                //TODO test
+                for (final OntClass ontClass : ontClassSet) {
+                    if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
+                        tripleArrayLists.add(new TripleArrayList(unitId, "a", ontClass.getLocalName()));
+                    }
+                }
+            }
         }
-
-
 
         return tripleArrayLists;
     }
@@ -129,9 +136,11 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
-        // list all serviceTypes in a list
-        for (final ServiceType serviceType : serviceTypeSet) {
-            tripleArrayLists.add(new TripleArrayList(serviceType.toString(), "a", ontClass.getLocalName()));
+        if (ontClass != null) {
+            // list all serviceTypes in a list
+            for (final ServiceType serviceType : serviceTypeSet) {
+                tripleArrayLists.add(new TripleArrayList(serviceType.toString(), "a", ontClass.getLocalName()));
+            }
         }
 
         return tripleArrayLists;

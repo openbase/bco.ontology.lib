@@ -22,6 +22,7 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.DataPool;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -38,7 +39,7 @@ import java.util.Set;
 /**
  * Created by agatting on 20.12.16.
  */
-public class OntInstanceInspection {
+public class OntInstanceInspection extends DataPool{
     //TODO handling of units with missing data (e.g. location)
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceInspection.class);

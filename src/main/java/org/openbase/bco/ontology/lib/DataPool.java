@@ -18,13 +18,24 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Created by agatting on 19.12.16.
@@ -47,6 +58,58 @@ public class DataPool {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return unitRegistry;
+    }
+
+    /**
+     * Method provides the unitRemote, which is initialized by unitConfig.
+     *
+     * @param unitConfig The unitConfig.
+     *
+     * @return The unitRemote.
+     */
+    protected UnitRemote getUnitRemoteByUnitConfig(UnitConfig unitConfig) {
+
+        UnitRemote unitRemote = null;
+
+        try {
+            unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
+            unitRemote.activate();
+            unitRemote.waitForData();
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        return unitRemote;
+    }
+
+    /**
+     * Method returns a set of methodObjects from an unknown java class by reflection. The set of methodObjects is
+     * selected by matches with the delivered regular expression.
+     *
+     * @param unitRemote Source object (/class) of the methods. Based on the remote to get data class directly.
+     * @param regex Regular expression to find the method (method name). Better success if detailed.
+     *
+     * @return HashSet of objects.
+     */
+    protected Set<Object> getMethodObjectsByUnitRemote(final UnitRemote unitRemote, final String regex) {
+
+        final String regexBuf = regex.toLowerCase(Locale.ENGLISH);
+        final Method[] methodArray = unitRemote.getDataClass().getMethods();
+        final Set<Object> objectSet = new HashSet<>();
+
+        for (final Method method : methodArray) {
+            if (Pattern.matches(regexBuf, method.getName().toLowerCase())) {
+                try {
+                    @SuppressWarnings("unchecked") final Object objectMethod = unitRemote.getDataClass()
+                            .getMethod(method.getName()).invoke(unitRemote.getData());
+                    objectSet.add(objectMethod);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
+                        | NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
+            }
+        }
+        return objectSet;
     }
 
 //    public Remote getRemote() {

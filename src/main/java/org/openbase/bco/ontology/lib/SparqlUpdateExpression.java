@@ -18,17 +18,49 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by agatting on 23.12.16.
  */
 public class SparqlUpdateExpression {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SparqlUpdateExpression.class);
-
     public SparqlUpdateExpression() {
     }
 
+    /**
+     * Method creates a list with sparql update expressions. Each list element is an valid update.
+     *
+     * @param tripleArrayLists The triple information - subject, predicate, object.
+     *
+     * @return A list of strings, which are update expressions.
+     */
+    public List<String> getSparqlUpdateEx(final List<TripleArrayList> tripleArrayLists) {
+
+        final List<String> expressionList = new ArrayList<>();
+
+        for (TripleArrayList triple : tripleArrayLists) {
+
+            final String subject = "NS:" + triple.getSubject();
+            String predicate = triple.getPredicate();
+            final String object = "NS:" + triple.getObject();
+
+            // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
+            // insert an individual to a class.
+            if (!predicate.equals("a")) {
+                predicate = "NS:" + predicate;
+            }
+
+            final String updateExpression =
+                    "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    + "INSERT DATA { "
+                        + subject + " " + predicate + " " + object + " . "
+                    + "} ";
+
+            expressionList.add(updateExpression);
+        }
+
+        return expressionList;
+    }
 }

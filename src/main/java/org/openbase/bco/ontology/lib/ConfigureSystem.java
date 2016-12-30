@@ -144,6 +144,7 @@ public final class ConfigureSystem {
      */
     public void initialTestConfig(final OntModel ontModel) {
 
+        //TODO if null -> list all classes
         //CHECKSTYLE.OFF: MultipleStringLiterals
         // test availability of ontology unit class
         if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
