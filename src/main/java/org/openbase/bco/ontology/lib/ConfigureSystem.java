@@ -24,6 +24,11 @@ package org.openbase.bco.ontology.lib;
  */
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
+import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +43,6 @@ public final class ConfigureSystem {
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";
-
-    /**
-     * DateTime format.
-     */
-    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
     /**
      * Ontology superclass name of Units.
@@ -68,6 +68,11 @@ public final class ConfigureSystem {
      * UnitType Location.
      */
     public static final String UNIT_TYPE_LOCATION = "Location";
+
+    /**
+     * DateTime format.
+     */
+    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
     /**
      * Pattern to remove all special signs in a string.
@@ -134,7 +139,7 @@ public final class ConfigureSystem {
     /**
      * Private Constructor.
      */
-    private ConfigureSystem() {
+    public ConfigureSystem() {
     }
 
     /**
@@ -146,23 +151,75 @@ public final class ConfigureSystem {
 
         //TODO if null -> list all classes
         //CHECKSTYLE.OFF: MultipleStringLiterals
-        // test availability of ontology unit class
-        if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
-            LOGGER.warn("OntClass " + UNIT_SUPERCLASS
-                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
+
+        MultiException.ExceptionStack exceptionStack = null;
+
+        try {
+            try {
+                // test availability of ontology namespace
+                if (!(ontModel.getNsPrefixURI("") + "#").equals(ConfigureSystem.NS)) {
+                    throw new NotAvailableException("Namespace \"" + ConfigureSystem.NS
+                            + "\" doesn't match with ontology namespace! Wrong String or ontology!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            try {
+                // test availability of ontology unit class
+                if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
+                    throw new NotAvailableException("OntClass \"" + UNIT_SUPERCLASS
+                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            try {
+                // test availability of ontology state class
+                if (ontModel.getOntClass(NS + STATE_SUPERCLASS) == null) {
+                    throw new NotAvailableException("OntClass \"" + STATE_SUPERCLASS
+                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            try {
+                // test availability of ontology providerService class
+                if (ontModel.getOntClass(NS + PROVIDER_SERVICE_SUPERCLASS) == null) {
+                    throw new NotAvailableException("OntClass \"" + PROVIDER_SERVICE_SUPERCLASS
+                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            try {
+                // test availability of ontology location class
+                if (ontModel.getOntClass(NS + UNIT_TYPE_LOCATION) == null) {
+                    throw new NotAvailableException("OntClass \"" + UNIT_TYPE_LOCATION
+                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            try {
+                // test availability of ontology connection class
+                if (ontModel.getOntClass(NS + UNIT_TYPE_CONNECTION) == null) {
+                    throw new NotAvailableException("OntClass \"" + UNIT_TYPE_CONNECTION
+                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+
+            MultiException.checkAndThrow("Could not process all ontology correctly!", exceptionStack);
+        }  catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-        // test availability of ontology state class
-        if (ontModel.getOntClass(NS + STATE_SUPERCLASS) == null) {
-            LOGGER.warn("OntClass " + STATE_SUPERCLASS
-                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
-        }
-
-        // test availability of ontology providerService class
-        if (ontModel.getOntClass(NS + PROVIDER_SERVICE_SUPERCLASS) == null) {
-            LOGGER.warn("OntClass " + PROVIDER_SERVICE_SUPERCLASS
-                    + " doesn't exist! Wrong String or missing class in Ontology-TBox!");
-        }
         //CHECKSTYLE.ON: MultipleStringLiterals
     }
 }
