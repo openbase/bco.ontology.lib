@@ -23,17 +23,14 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.DataPool;
-import org.openbase.bco.registry.unit.lib.UnitRegistry;
-import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
-import rst.domotic.state.EnablingStateType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -46,14 +43,9 @@ public class OntInstanceInspection extends DataPool{
 
     /**
      * Constructor for OntInstanceInspection.
-     *
-     * @param ontModel ontModel is the ontology model.
      */
-    public OntInstanceInspection(final OntModel ontModel) {
+    public OntInstanceInspection() {
 
-//        final DataPool dataPool = new DataPool();
-//        final UnitRegistry unitRegistry = dataPool.getUnitRegistry();
-//
 //        final List<UnitConfig> unitConfigList = inspectionOfUnits(ontModel, unitRegistry);
 //        final List<ServiceType> serviceTypeList = inspectionOfServiceTypes(ontModel);
     }
@@ -62,11 +54,11 @@ public class OntInstanceInspection extends DataPool{
      * Method compares the units of the registry with the actual units in the ontology model. Missing units are listed.
      *
      * @param ontModel The actual ontology model.
-     * @param unitRegistry The actual registry.
+     * @param unitConfigList A list of unitConfigs.
      *
      * @return A set of missing unitConfigs (units) in the actual ontology model.
      */
-    protected Set<UnitConfig> inspectionOfUnits(final OntModel ontModel, final UnitRegistry unitRegistry) {
+    protected Set<UnitConfig> inspectionOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
 
         final Set<UnitConfig> missingUnitConfigSet = new HashSet<>();
         Set<String> ontUnitIndNameSet = new HashSet<>(); //Ind: individual
@@ -78,22 +70,15 @@ public class OntInstanceInspection extends DataPool{
             ontUnitIndNameSet = getIndNameOfOntSuperclass(ontUnitIndNameSet, ontClassUnit);
         }
 
-        try {
-            // run through all enabled unitConfigs of the registry
-            for (final UnitConfig unitConfig : unitRegistry.getUnitConfigs()) {
-                if (unitConfig.getEnablingState().getValue().equals(EnablingStateType.EnablingState.State.ENABLED)) {
-                    final String unitId = unitConfig.getId();
+        for (final UnitConfig unitConfig : unitConfigList) {
+            final String unitId = unitConfig.getId();
 
-                    if (!ontUnitIndNameSet.contains(unitId)) {
-                        // list all missing units. Means units, which aren't currently in the model
-                        missingUnitConfigSet.add(unitConfig);
-                    }
-                }
+            if (!ontUnitIndNameSet.contains(unitId)) {
+                // list all missing units. Means units, which aren't currently in the model
+                missingUnitConfigSet.add(unitConfig);
             }
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Could not perform unitRegistry in method "
-                    + e.getStackTrace()[0].getMethodName(), e, LOGGER);
         }
+
         return missingUnitConfigSet;
     }
 
@@ -128,9 +113,17 @@ public class OntInstanceInspection extends DataPool{
         return missingServiceTypeSet;
     }
 
-    // get a list with all names of individuals of a superclass via recursion. Consider: The hashSet contains the local
-    // name (string) only to aim more efficiency by compare operations (e.g. contains()) later on.
-    private Set<String> getIndNameOfOntSuperclass(final Set<String> individualSet, final OntClass ontClass) {
+    /**
+     * Method returns a set of names of individuals from a superclass via recursion. Differently to listIndividuals()
+     * of jena, the method returns all individuals (inclusive individuals of subclasses). Furthermore the set contains
+     * the local name only (without namespace) to aim more efficiency by compare operations (e.g. contains()) later on.
+     *
+     * @param individualNameSet The set of names of the individuals.
+     * @param ontClass The superclass which keeps the individuals.
+     *
+     * @return A set of strings with individual localNames.
+     */
+    protected Set<String> getIndNameOfOntSuperclass(final Set<String> individualNameSet, final OntClass ontClass) {
 
         final ExtendedIterator instanceExIt;
         if (ontClass.hasSubClass()) {
@@ -141,14 +134,14 @@ public class OntInstanceInspection extends DataPool{
                 // add local name (substring) of individual only
                 String indName = instanceExIt.next().toString();
                 indName = indName.substring(ConfigureSystem.NS.length(), indName.length());
-                individualSet.add(indName);
+                individualNameSet.add(indName);
             }
 
             // goto next (sub-)class
             final ExtendedIterator<OntClass> ontClassExIt = ontClass.listSubClasses();
             while (ontClassExIt.hasNext()) {
                 final OntClass ontSubClass = ontClassExIt.next();
-                getIndNameOfOntSuperclass(individualSet, ontSubClass);
+                getIndNameOfOntSuperclass(individualNameSet, ontSubClass);
             }
         } else {
 
@@ -158,10 +151,10 @@ public class OntInstanceInspection extends DataPool{
                 // add local name (substring) of individual only
                 String indName = instanceExIt.next().toString();
                 indName = indName.substring(ConfigureSystem.NS.length(), indName.length());
-                individualSet.add(indName);
+                individualNameSet.add(indName);
             }
         }
-        return individualSet;
+        return individualNameSet;
     }
 
     /**

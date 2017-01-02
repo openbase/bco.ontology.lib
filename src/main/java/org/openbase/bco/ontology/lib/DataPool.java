@@ -28,11 +28,15 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -49,15 +53,64 @@ public class DataPool {
      *
      * @return unitRegistry.
      */
-    public UnitRegistry getUnitRegistry() {
+    private UnitRegistry getUnitRegistry() {
+
         UnitRegistry unitRegistry = null;
+
         try {
             unitRegistry = CachedUnitRegistryRemote.getRegistry();
             CachedUnitRegistryRemote.waitForData();
         } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
+
         return unitRegistry;
+    }
+
+    /**
+     * Method returns a list of all unitConfigs, which are actual enabled.
+     *
+     * @return A list of all unitConfigs.
+     */
+    protected List<UnitConfig> getUnitConfigList() {
+
+        final List<UnitConfig> unitConfigList = new ArrayList<>();
+
+        try {
+            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs()) {
+                if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
+                    unitConfigList.add(unitConfig);
+                }
+            }
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        return unitConfigList;
+    }
+
+    /**
+     * Method returns a list of unitConfigs of a specific unitType, which are actual enabled.
+     *
+     * @param unitType The unitType to presort the list.
+     *
+     * @return A list of unitConfigs.
+     */
+    protected List<UnitConfig> getUnitConfigListByUnitType(final UnitType unitType) {
+
+        final List<UnitConfig> unitConfigList = new ArrayList<>();
+
+        try {
+            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs(unitType)) {
+                if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
+                    unitConfigList.add(unitConfig);
+                }
+            }
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        return unitConfigList;
     }
 
     /**

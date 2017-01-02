@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -49,6 +50,8 @@ public final class Ontology {
 
 //        WebInterface webInterface = new WebInterface();
         final OntInstanceMapping ontInstancesMapping = new OntInstanceMapping(ontology.getModel());
+
+        final OntPropertyMapping ontPropertyMapping = new OntPropertyMapping(ontology.getModel());
 //        RSBTest rsbTest = new RSBTest();
 
 //        ontology.cleanOntology();

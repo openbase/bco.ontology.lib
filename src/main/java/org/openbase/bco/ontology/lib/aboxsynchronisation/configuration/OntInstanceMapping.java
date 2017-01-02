@@ -23,6 +23,7 @@ import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.TripleArrayList;
+import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -44,9 +45,9 @@ public class OntInstanceMapping extends OntInstanceInspection {
      * @param ontModel The actual ontology model.
      */
     public OntInstanceMapping(final OntModel ontModel) {
-        super(ontModel);
+        super();
 
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitRegistry());
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitConfigList());
         Set<OntClass> ontClassSet = new HashSet<>();
         OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_SUPERCLASS);
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
@@ -57,8 +58,7 @@ public class OntInstanceMapping extends OntInstanceInspection {
         ontClassSet.clear();
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-//        List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
-
+        List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
 
         ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.PROVIDER_SERVICE_SUPERCLASS);
         final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
@@ -110,19 +110,20 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
         for (final UnitConfig unitConfig : unitConfigSet) {
 
-            final String unitId = unitConfig.getId();
-            final UnitRemote unitRemote = getUnitRemoteByUnitConfig(unitConfig);
-            final Set<Object> objectSet = getMethodObjectsByUnitRemote(unitRemote,
-                    ConfigureSystem.RegEx.GET_PATTERN_STATE);
+            if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
 
+                final String unitId = unitConfig.getId();
+                final UnitRemote unitRemote = getUnitRemoteByUnitConfig(unitConfig);
+                final Set<Object> objectSet = getMethodObjectsByUnitRemote(unitRemote,
+                        ConfigureSystem.RegEx.GET_PATTERN_STATE);
 
-            for (final Object object : objectSet) {
-                final String objectStateName = object.getClass().getName().toLowerCase();
+                for (final Object object : objectSet) {
+                    final String objectStateName = object.getClass().getName().toLowerCase();
 
-                //TODO test
-                for (final OntClass ontClass : ontClassSet) {
-                    if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
-                        tripleArrayLists.add(new TripleArrayList(unitId, "a", ontClass.getLocalName()));
+                    for (final OntClass ontClass : ontClassSet) {
+                        if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
+                            tripleArrayLists.add(new TripleArrayList(unitId, "a", ontClass.getLocalName()));
+                        }
                     }
                 }
             }

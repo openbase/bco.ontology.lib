@@ -18,12 +18,18 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
+import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.TripleArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,34 +39,36 @@ public class OntPropertyMapping extends OntInstanceInspection {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntPropertyMapping.class);
 
-    //TODO getUnitRegistry -> state:enabled
-
     /**
      * Constructor for OntPropertyMapping.
      */
     public OntPropertyMapping(final OntModel ontModel) {
-        super(ontModel);
+        super();
 
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_TYPE_LOCATION);
+
+        Set<String> locationIndividualsSet = new HashSet<>();
+        locationIndividualsSet = getIndNameOfOntSuperclass(locationIndividualsSet, ontClass);
+
+        for (final UnitConfig unitConfig : getUnitConfigListByUnitType(UnitType.LOCATION)) {
+            locationUnit(unitConfig, locationIndividualsSet);
+
+            //TODO implement method, which tests if unit is currently available in ontology
+        }
 
     }
 
-    private void blub(final Set<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> locationUnit(final UnitConfig unitConfig, final Set<String> locationIndividualsSet) {
 
-        for (UnitConfig unitConfig : unitConfigSet) {
+        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
-            if (unitConfig.getType().equals(UnitType.LOCATION)) {
+        for (String locationIndividual : locationIndividualsSet) {
+            if (locationIndividual.equals(unitConfig.getId())) {
 
             }
-
         }
-    }
 
-    private void locationUnit(final UnitConfig unitConfig) {
-
-        String locationTypeName = unitConfig.getLocationConfig().getType().name().toLowerCase();
-        char[] charVar = locationTypeName.toCharArray();
-        charVar[0] = Character.toUpperCase(charVar[0]);
-        locationTypeName = new String(charVar);
+        return tripleArrayLists;
     }
 
 }
