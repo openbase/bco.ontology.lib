@@ -26,9 +26,6 @@ import java.util.List;
  */
 public class SparqlUpdateExpression {
 
-    public SparqlUpdateExpression() {
-    }
-
     /**
      * Method creates a list with sparql update expressions. Each list element is an valid update.
      *
@@ -36,35 +33,39 @@ public class SparqlUpdateExpression {
      *
      * @return A list of strings, which are update expressions.
      */
+    @SuppressWarnings("PMD.UseStringBufferForStringAppends")
     public List<String> getSparqlUpdateEx(final List<TripleArrayList> tripleArrayLists) {
 
         final List<String> expressionList = new ArrayList<>();
 
-        for (TripleArrayList triple : tripleArrayLists) {
+        for (final TripleArrayList triple : tripleArrayLists) {
 
             String subject = triple.getSubject();
             String predicate = triple.getPredicate();
             String object = triple.getObject();
 
             if (!subject.startsWith(ConfigureSystem.NS)) {
-                subject = "NS:" + triple.getSubject();
+                subject = ConfigureSystem.ExprPattern.NS.getName() + triple.getSubject();
             }
 
             if (!subject.startsWith(ConfigureSystem.NS)) {
-                object = "NS:" + triple.getObject();
+                object = ConfigureSystem.ExprPattern.NS.getName() + triple.getObject();
             }
 
             // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
             // insert an individual to a class.
-            if (!predicate.equals("a") && !predicate.startsWith(ConfigureSystem.NS)) {
-                predicate = "NS:" + predicate;
+            if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
+                    && !predicate.startsWith(ConfigureSystem.NS)) {
+                predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
             }
 
+            //CHECKSTYLE.OFF: MultipleStringLiterals
             final String updateExpression =
                     "PREFIX NS: <" + ConfigureSystem.NS + "> "
                     + "INSERT DATA { "
                         + subject + " " + predicate + " " + object + " . "
                     + "} ";
+            //CHECKSTYLE.ON: MultipleStringLiterals
 
             expressionList.add(updateExpression);
         }

@@ -18,14 +18,11 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
-import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.DataPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
@@ -37,10 +34,8 @@ import java.util.Set;
 /**
  * Created by agatting on 20.12.16.
  */
-public class OntInstanceInspection extends DataPool{
+public class OntInstanceInspection extends DataPool {
     //TODO handling of units with missing data (e.g. location)
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceInspection.class);
 
     /**
      * Constructor for OntInstanceInspection.
@@ -70,7 +65,7 @@ public class OntInstanceInspection extends DataPool{
                 + ConfigureSystem.OntClass.UNIT.getName());
 
         if (ontClassUnit != null) {
-            ontUnitIndNameSet = getIndNameOfOntSuperclass(ontUnitIndNameSet, ontClassUnit);
+            ontUnitIndNameSet = listIndOfOntClass(ontUnitIndNameSet, ontClassUnit);
         }
 
         for (final UnitConfig unitConfig : unitConfigList) {
@@ -100,7 +95,7 @@ public class OntInstanceInspection extends DataPool{
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
         final OntClass ontClassServiceType = ontModel
                 .getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
-        ontServiceTypeIndNameSet = getIndNameOfOntSuperclass(ontServiceTypeIndNameSet, ontClassServiceType);
+        ontServiceTypeIndNameSet = listIndOfOntClass(ontServiceTypeIndNameSet, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
         final ServiceType[] serviceTypeArray = ServiceTemplateType.ServiceTemplate.ServiceType.values();
@@ -126,7 +121,7 @@ public class OntInstanceInspection extends DataPool{
      *
      * @return A set of strings with individual localNames.
      */
-    protected Set<String> getIndNameOfOntSuperclass(final Set<String> individualNameSet, final OntClass ontClass) {
+    protected Set<String> listIndOfOntClass(final Set<String> individualNameSet, final OntClass ontClass) {
 
         final ExtendedIterator instanceExIt;
         if (ontClass.hasSubClass()) {
@@ -144,7 +139,7 @@ public class OntInstanceInspection extends DataPool{
             final ExtendedIterator<OntClass> ontClassExIt = ontClass.listSubClasses();
             while (ontClassExIt.hasNext()) {
                 final OntClass ontSubClass = ontClassExIt.next();
-                getIndNameOfOntSuperclass(individualNameSet, ontSubClass);
+                listIndOfOntClass(individualNameSet, ontSubClass);
             }
         } else {
 
@@ -169,7 +164,7 @@ public class OntInstanceInspection extends DataPool{
      *
      * @return The list with ontClasses.
      */
-    public Set<OntClass> getAllSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
+    public Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
             ontSuperClass, final boolean inclusiveSuperclass) {
 
         // add initial superclass
@@ -187,28 +182,57 @@ public class OntInstanceInspection extends DataPool{
             ontClassSet.add(ontClass);
 
             if (ontSuperClass.hasSubClass()) {
-                getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, false);
+                listSubclassesOfOntSuperclass(ontClassSet, ontClass, false);
             }
         }
         return ontClassSet;
     }
 
+//    /**
+//     * Method inspects the availability of an individual in the ontology.
+//     *
+//     * @param ontModel The ontology model.
+//     * @param individualName The name of the individual (with or without namespace)
+//     *
+//     * @return Boolean with result true, if available and result false, if not available.
+//     */
+//    protected boolean isOntIndAvailable(final OntModel ontModel, String individualName) {
+//
+//        if (!individualName.startsWith(ConfigureSystem.NS)) {
+//            individualName = ConfigureSystem.NS + individualName;
+//        }
+//
+//        final Individual individual = ontModel.getIndividual(individualName);
+//
+//        return individual != null;
+//    }
+
     /**
-     * Method inspect the availability of an individual in the ontology.
+     * Method inspects the availability of an individual in the ontology.
      *
-     * @param ontModel The ontology model.
-     * @param individualName The name of the individual (with or without namespace)
+     * @param ontClass The ontClass, which contains the individual. Limited the search area.
+     * @param individualName The name of the individual (with or without namespace).
      *
      * @return Boolean with result true, if available and result false, if not available.
      */
-    protected boolean isOntIndAvailable(final OntModel ontModel, String individualName) {
+    @SuppressWarnings("PMD.LocalVariableCouldBeFinal")
+    protected boolean existIndInOnt(final OntClass ontClass, final String individualName) {
 
-        if (!individualName.startsWith(ConfigureSystem.NS)) {
-            individualName = ConfigureSystem.NS + individualName;
+        String bufName = individualName;
+
+        if (individualName.startsWith(ConfigureSystem.NS)) {
+            bufName = individualName.substring(ConfigureSystem.NS.length(), individualName.length());
         }
 
-        final Individual individual = ontModel.getIndividual(individualName);
+        Set<String> stringSet = new HashSet<>();
+        stringSet = listIndOfOntClass(stringSet, ontClass);
 
-        return individual != null;
+        for (String ontIndividual : stringSet) {
+             if (ontIndividual.equals(bufName)) {
+                 return true;
+             }
+        }
+
+        return false;
     }
 }

@@ -77,7 +77,7 @@ public class DataPool {
         final List<UnitConfig> unitConfigList = new ArrayList<>();
 
         try {
-            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs()) {
+            for (final UnitConfig unitConfig : getUnitRegistry().getUnitConfigs()) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
                     unitConfigList.add(unitConfig);
                 }
@@ -101,7 +101,7 @@ public class DataPool {
         final List<UnitConfig> unitConfigList = new ArrayList<>();
 
         try {
-            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs(unitType)) {
+            for (final UnitConfig unitConfig : getUnitRegistry().getUnitConfigs(unitType)) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
                     unitConfigList.add(unitConfig);
                 }
@@ -120,7 +120,7 @@ public class DataPool {
      *
      * @return The unitRemote.
      */
-    protected UnitRemote getUnitRemoteByUnitConfig(UnitConfig unitConfig) {
+    protected UnitRemote getUnitRemoteByUnitConfig(final UnitConfig unitConfig) {
 
         UnitRemote unitRemote = null;
 

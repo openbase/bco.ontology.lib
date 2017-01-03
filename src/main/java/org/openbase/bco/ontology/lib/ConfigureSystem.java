@@ -49,19 +49,43 @@ public final class ConfigureSystem {
      */
     public enum OntClass {
 
+        /**
+         * Unit (class).
+         */
         UNIT("Unit"),
+
+        /**
+         * State (class).
+         */
         STATE("State"),
+
+        /**
+         * ProviderService (class).
+         */
         PROVIDER_SERVICE("ProviderService"),
+
+        /**
+         * Connection (class).
+         */
         CONNECTION("Connection"),
+
+        /**
+         * Location (class).
+         */
         LOCATION("Location");
 
-        final private String ontClass;
+        private final String ontClass;
 
         OntClass(final String ontClass) {
             this.ontClass = ontClass;
         }
 
-        final public String getName() {
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
             return this.ontClass;
         }
     }
@@ -70,29 +94,109 @@ public final class ConfigureSystem {
      * Enumeration of ontology properties.
      */
     public enum OntProp {
+        // ### object properties of ontology ###
 
-        // object properties of ontology
+        /**
+         * hasSubLocation (object property).
+         */
         SUB_LOCATION("hasSubLocation"),
+
+        /**
+         * hasConnection (object property).
+         */
         CONNECTION("hasConnection"),
-        PROVIDER_SERVICE("hasState"),
+
+        /**
+         * hasProviderService (object property).
+         */
+        PROVIDER_SERVICE("hasProviderService"),
+
+        /**
+         * hasState (object property).
+         */
         STATE("hasState"),
+
+        /**
+         * hasStateValue (object property / dataType property).
+         */
         STATE_VALUE("hasStateValue"), // a dataType property too
+
+        /**
+         * hasUnit (object property).
+         */
         UNIT("hasUnit"),
+
+        /**
+         * hasUnitId (object property).
+         */
         UNIT_ID("hasUnitId"),
 
-        // dataType properties of ontology
+        // ### dataType properties of ontology ###
+
+        /**
+         * hasLabel (dataType property).
+         */
         LABEL("hasLabel"),
+
+        /**
+         * hasTimeStamp (dataType property).
+         */
         TIME_STAMP("hasTimeStamp"),
+
+        /**
+         * isAvailable (dataType property).
+         */
         IS_AVAILABLE("isAvailable");
 
-        final private String property;
+        private final String property;
 
         OntProp(final String property) {
             this.property = property;
         }
 
-        final public String getName() {
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
             return this.property;
+        }
+    }
+
+    /**
+     * Enumeration for string pattern.
+     */
+    public enum ExprPattern {
+
+        /**
+         * Pattern to insert an individual to a class -> "a".
+         */
+        A("a"),
+
+        /**
+         * Pattern for SPARQL namespace -> "NS:".
+         */
+        NS("NS:"),
+
+        /**
+         * Pattern to remove all special signs in a string.
+         */
+        REMOVE("[^\\p{Alpha}]");
+
+        private final String pattern;
+
+        ExprPattern(final String pattern) {
+            this.pattern = pattern;
+        }
+
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
+            return this.pattern;
         }
     }
 
@@ -100,11 +204,6 @@ public final class ConfigureSystem {
      * DateTime format.
      */
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-
-    /**
-     * Pattern to remove all special signs in a string.
-     */
-    public static final String REMOVE_PATTERN = "[^\\p{Alpha}]";
 
     // -------------------------------
 
@@ -164,30 +263,24 @@ public final class ConfigureSystem {
     }
 
     /**
-     * Private Constructor.
-     */
-    public ConfigureSystem() {
-    }
-
-    /**
      * Method tests configurations.
      *
      * @param ontModel The ontology model.
      */
+    @SuppressWarnings({"PMD.ExceptionAsFlowControl", "CHECKSTYLE.MultipleStringLiterals"})
     public void initialTestConfig(final OntModel ontModel) {
 
         //TODO if null -> list all classes
-        //CHECKSTYLE.OFF: MultipleStringLiterals
 
         MultiException.ExceptionStack exceptionStack = null;
 
         try {
             // test validity of enum property
-            for (OntProp ontProp : OntProp.values()) {
+            for (final OntProp ontProp : OntProp.values()) {
                 try {
                     if (ontModel.getOntProperty(NS + ontProp.getName()) == null) {
-                        throw new NotAvailableException("Property \"" + ontProp.getName()
-                                + "\" doesn't match with ontology property! Wrong String or doesn't exist in ontology!");
+                        throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
+                                + "with ontology property! Wrong String or doesn't exist in ontology!");
                     }
                 } catch (NotAvailableException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -195,7 +288,7 @@ public final class ConfigureSystem {
             }
 
             // test validity of enum ontClass
-            for (OntClass ontClass : OntClass.values()) {
+            for (final OntClass ontClass : OntClass.values()) {
                 try {
                     if (ontModel.getOntClass(NS + ontClass.getName()) == null) {
                         throw new NotAvailableException("OntClass \"" + ontClass.getName()
@@ -222,6 +315,5 @@ public final class ConfigureSystem {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-        //CHECKSTYLE.ON: MultipleStringLiterals
     }
 }

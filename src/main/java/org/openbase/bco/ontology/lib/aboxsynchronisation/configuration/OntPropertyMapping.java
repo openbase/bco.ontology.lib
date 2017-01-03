@@ -22,8 +22,6 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.TripleArrayList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
@@ -35,53 +33,45 @@ import java.util.List;
  */
 public class OntPropertyMapping extends OntInstanceInspection {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntPropertyMapping.class);
-
     /**
      * Constructor for OntPropertyMapping.
+     *
+     * @param ontModel The ontology model.
      */
     public OntPropertyMapping(final OntModel ontModel) {
         super();
 
         final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS
                 + ConfigureSystem.OntClass.LOCATION.getName());
-
-//        Set<String> locationIndividualsSet = new HashSet<>();
-//        locationIndividualsSet = getIndNameOfOntSuperclass(locationIndividualsSet, ontClass);
+        List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
         for (final UnitConfig unitConfig : getUnitConfigListByUnitType(UnitType.LOCATION)) {
 
             final String unitId = unitConfig.getId();
 
-            if (isOntIndAvailable(ontModel, unitId)) {
+            if (existIndInOnt(ontClass, unitId)) {
                 // unit does exist in ontology
-                locationUnit(unitConfig);
+                tripleArrayLists = getTriplePropSubLocation(tripleArrayLists, unitConfig);
             } else {
                 // unit doesn't exist in ontology
                 //TODO
             }
         }
 
-        ConfigureSystem configureSystem = new ConfigureSystem();
-        configureSystem.initialTestConfig(ontModel);
-
-
-
     }
 
-    private List<TripleArrayList> locationUnit(final UnitConfig unitConfig) {
+    private List<TripleArrayList> getTriplePropSubLocation(final List<TripleArrayList> tripleArrayLists
+            , final UnitConfig unitConfig) {
 
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        final String subject = unitConfig.getId();
+        final String predicate = ConfigureSystem.OntProp.SUB_LOCATION.getName();
+        String object;
 
-
-
-//        System.out.println(ConfigureSystem.OntProp.SUB_LOCATION.getName());
-
-//        for (String locationIndividual : locationIndividualsSet) {
-//            if (locationIndividual.equals(unitConfig.getId())) {
-//
-//            }
-//        }
+        // get all child IDs of the unit location
+        for (final String childId : unitConfig.getLocationConfig().getChildIdList()) {
+            object = childId;
+            tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+        }
 
         return tripleArrayLists;
     }

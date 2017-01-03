@@ -44,26 +44,27 @@ public class OntInstanceMapping extends OntInstanceInspection {
      *
      * @param ontModel The actual ontology model.
      */
+    @SuppressWarnings("PMD.UnusedLocalVariable")
     public OntInstanceMapping(final OntModel ontModel) {
         super();
 
         final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitConfigList());
         Set<OntClass> ontClassSet = new HashSet<>();
         OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
-        ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+        ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-        List<TripleArrayList> tripleArrayLists1 = getOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
+        final List<TripleArrayList> tripleArrayLists1 = getOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
 
         ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
         ontClassSet.clear();
-        ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+        ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-        List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
+        final List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
 
         ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
         final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
 
-        List<TripleArrayList> tripleArrayLists3 = getOntTripleOfProviderServices(ontClass, serviceTypeSet);
+        final List<TripleArrayList> tripleArrayLists3 = getOntTripleOfProviderServices(ontClass, serviceTypeSet);
     }
 
     private List<TripleArrayList> getOntTripleOfUnitTypes(final Set<OntClass> ontClassSet,
@@ -75,15 +76,15 @@ public class OntInstanceMapping extends OntInstanceInspection {
         // list all unitTypes and their unitIds of the unitConfigSet in a hashMap
         for (final UnitConfig unitConfig : unitConfigSet) {
             String unitType = unitConfig.getType().toString().toLowerCase();
-            unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
+            unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
 
             // is the current unitType a connection or location? set unitType variable with their type
             if (unitType.equals(ConfigureSystem.OntClass.CONNECTION.getName())) {
                 unitType = unitConfig.getConnectionConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
+                unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
             } else if (unitType.equals(ConfigureSystem.OntClass.LOCATION.getName())) {
                 unitType = unitConfig.getLocationConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
+                unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
             }
 
             unitTypeUnitIdMap.put(unitConfig.getId(), unitType);
@@ -96,7 +97,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
             for (final Map.Entry<String, String> entry : unitTypeUnitIdMap.entrySet()) {
                 if (entry.getValue().equals(ontClassName)) {
-                    tripleArrayLists.add(new TripleArrayList(entry.getKey(), "a", ontClass.getLocalName()));
+                    tripleArrayLists.add(new TripleArrayList(entry.getKey()
+                            , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
                 }
             }
         }
@@ -112,6 +114,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
             if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
 
+                //TODO take new method of dal service interface
+
                 final String unitId = unitConfig.getId();
                 final UnitRemote unitRemote = getUnitRemoteByUnitConfig(unitConfig);
                 final Set<Object> objectSet = getMethodObjectsByUnitRemote(unitRemote,
@@ -122,7 +126,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
                     for (final OntClass ontClass : ontClassSet) {
                         if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
-                            tripleArrayLists.add(new TripleArrayList(unitId, "a", ontClass.getLocalName()));
+                            tripleArrayLists.add(new TripleArrayList(unitId
+                                    , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
                         }
                     }
                 }
@@ -140,7 +145,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
         if (ontClass != null) {
             // list all serviceTypes in a list
             for (final ServiceType serviceType : serviceTypeSet) {
-                tripleArrayLists.add(new TripleArrayList(serviceType.toString(), "a", ontClass.getLocalName()));
+                tripleArrayLists.add(new TripleArrayList(serviceType.toString()
+                        , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
             }
         }
 
