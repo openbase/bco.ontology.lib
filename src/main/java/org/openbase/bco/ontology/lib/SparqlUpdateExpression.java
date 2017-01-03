@@ -42,18 +42,26 @@ public class SparqlUpdateExpression {
 
         for (TripleArrayList triple : tripleArrayLists) {
 
-            final String subject = "NS:" + triple.getSubject();
+            String subject = triple.getSubject();
             String predicate = triple.getPredicate();
-            final String object = "NS:" + triple.getObject();
+            String object = triple.getObject();
+
+            if (!subject.startsWith(ConfigureSystem.NS)) {
+                subject = "NS:" + triple.getSubject();
+            }
+
+            if (!subject.startsWith(ConfigureSystem.NS)) {
+                object = "NS:" + triple.getObject();
+            }
 
             // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
             // insert an individual to a class.
-            if (!predicate.equals("a")) {
+            if (!predicate.equals("a") && !predicate.startsWith(ConfigureSystem.NS)) {
                 predicate = "NS:" + predicate;
             }
 
             final String updateExpression =
-                    "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    "PREFIX NS: <" + ConfigureSystem.NS + "> "
                     + "INSERT DATA { "
                         + subject + " " + predicate + " " + object + " . "
                     + "} ";
