@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
+import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -65,7 +66,9 @@ public class OntInstanceInspection extends DataPool{
 
 
         // preparation: get all individuals of the class "Unit" which are currently in the model
-        final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_SUPERCLASS);
+        final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS
+                + ConfigureSystem.OntClass.UNIT.getName());
+
         if (ontClassUnit != null) {
             ontUnitIndNameSet = getIndNameOfOntSuperclass(ontUnitIndNameSet, ontClassUnit);
         }
@@ -96,7 +99,7 @@ public class OntInstanceInspection extends DataPool{
 
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
         final OntClass ontClassServiceType = ontModel
-                .getOntClass(ConfigureSystem.NS + ConfigureSystem.PROVIDER_SERVICE_SUPERCLASS);
+                .getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
         ontServiceTypeIndNameSet = getIndNameOfOntSuperclass(ontServiceTypeIndNameSet, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
@@ -188,5 +191,24 @@ public class OntInstanceInspection extends DataPool{
             }
         }
         return ontClassSet;
+    }
+
+    /**
+     * Method inspect the availability of an individual in the ontology.
+     *
+     * @param ontModel The ontology model.
+     * @param individualName The name of the individual (with or without namespace)
+     *
+     * @return Boolean with result true, if available and result false, if not available.
+     */
+    protected boolean isOntIndAvailable(final OntModel ontModel, String individualName) {
+
+        if (!individualName.startsWith(ConfigureSystem.NS)) {
+            individualName = ConfigureSystem.NS + individualName;
+        }
+
+        final Individual individual = ontModel.getIndividual(individualName);
+
+        return individual != null;
     }
 }

@@ -45,29 +45,56 @@ public final class ConfigureSystem {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
-     * Ontology superclass name of Units.
+     * Enumeration of ontology classes.
      */
-    public static final String UNIT_SUPERCLASS = "Unit";
+    public enum OntClass {
+
+        UNIT("Unit"),
+        STATE("State"),
+        PROVIDER_SERVICE("ProviderService"),
+        CONNECTION("Connection"),
+        LOCATION("Location");
+
+        final private String ontClass;
+
+        OntClass(final String ontClass) {
+            this.ontClass = ontClass;
+        }
+
+        final public String getName() {
+            return this.ontClass;
+        }
+    }
 
     /**
-     * Ontology superclass name of States.
+     * Enumeration of ontology properties.
      */
-    public static final String STATE_SUPERCLASS = "State";
+    public enum OntProp {
 
-    /**
-     * Ontology superclass name of ProviderServices.
-     */
-    public static final String PROVIDER_SERVICE_SUPERCLASS = "ProviderService";
+        // object properties of ontology
+        SUB_LOCATION("hasSubLocation"),
+        CONNECTION("hasConnection"),
+        PROVIDER_SERVICE("hasState"),
+        STATE("hasState"),
+        STATE_VALUE("hasStateValue"), // a dataType property too
+        UNIT("hasUnit"),
+        UNIT_ID("hasUnitId"),
 
-    /**
-     * UnitType Connection.
-     */
-    public static final String UNIT_TYPE_CONNECTION = "Connection";
+        // dataType properties of ontology
+        LABEL("hasLabel"),
+        TIME_STAMP("hasTimeStamp"),
+        IS_AVAILABLE("isAvailable");
 
-    /**
-     * UnitType Location.
-     */
-    public static final String UNIT_TYPE_LOCATION = "Location";
+        final private String property;
+
+        OntProp(final String property) {
+            this.property = property;
+        }
+
+        final public String getName() {
+            return this.property;
+        }
+    }
 
     /**
      * DateTime format.
@@ -155,6 +182,31 @@ public final class ConfigureSystem {
         MultiException.ExceptionStack exceptionStack = null;
 
         try {
+            // test validity of enum property
+            for (OntProp ontProp : OntProp.values()) {
+                try {
+                    if (ontModel.getOntProperty(NS + ontProp.getName()) == null) {
+                        throw new NotAvailableException("Property \"" + ontProp.getName()
+                                + "\" doesn't match with ontology property! Wrong String or doesn't exist in ontology!");
+                    }
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
+            }
+
+            // test validity of enum ontClass
+            for (OntClass ontClass : OntClass.values()) {
+                try {
+                    if (ontModel.getOntClass(NS + ontClass.getName()) == null) {
+                        throw new NotAvailableException("OntClass \"" + ontClass.getName()
+                                + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
+                    }
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
+            }
+
+
             try {
                 // test availability of ontology namespace
                 if (!(ontModel.getNsPrefixURI("") + "#").equals(ConfigureSystem.NS)) {
@@ -165,57 +217,7 @@ public final class ConfigureSystem {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
 
-            try {
-                // test availability of ontology unit class
-                if (ontModel.getOntClass(NS + UNIT_SUPERCLASS) == null) {
-                    throw new NotAvailableException("OntClass \"" + UNIT_SUPERCLASS
-                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
-                }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
-            }
-
-            try {
-                // test availability of ontology state class
-                if (ontModel.getOntClass(NS + STATE_SUPERCLASS) == null) {
-                    throw new NotAvailableException("OntClass \"" + STATE_SUPERCLASS
-                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
-                }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
-            }
-
-            try {
-                // test availability of ontology providerService class
-                if (ontModel.getOntClass(NS + PROVIDER_SERVICE_SUPERCLASS) == null) {
-                    throw new NotAvailableException("OntClass \"" + PROVIDER_SERVICE_SUPERCLASS
-                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
-                }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
-            }
-
-            try {
-                // test availability of ontology location class
-                if (ontModel.getOntClass(NS + UNIT_TYPE_LOCATION) == null) {
-                    throw new NotAvailableException("OntClass \"" + UNIT_TYPE_LOCATION
-                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
-                }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
-            }
-
-            try {
-                // test availability of ontology connection class
-                if (ontModel.getOntClass(NS + UNIT_TYPE_CONNECTION) == null) {
-                    throw new NotAvailableException("OntClass \"" + UNIT_TYPE_CONNECTION
-                            + "\" doesn't exist! Wrong String or missing class in Ontology-TBox!");
-                }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
-            }
-
-            MultiException.checkAndThrow("Could not process all ontology correctly!", exceptionStack);
+            MultiException.checkAndThrow("Could not process all ontology participants correctly!", exceptionStack);
         }  catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }

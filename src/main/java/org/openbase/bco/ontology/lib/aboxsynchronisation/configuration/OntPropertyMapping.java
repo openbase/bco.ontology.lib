@@ -28,9 +28,7 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by agatting on 21.12.16.
@@ -45,28 +43,45 @@ public class OntPropertyMapping extends OntInstanceInspection {
     public OntPropertyMapping(final OntModel ontModel) {
         super();
 
-        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_TYPE_LOCATION);
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS
+                + ConfigureSystem.OntClass.LOCATION.getName());
 
-        Set<String> locationIndividualsSet = new HashSet<>();
-        locationIndividualsSet = getIndNameOfOntSuperclass(locationIndividualsSet, ontClass);
+//        Set<String> locationIndividualsSet = new HashSet<>();
+//        locationIndividualsSet = getIndNameOfOntSuperclass(locationIndividualsSet, ontClass);
 
         for (final UnitConfig unitConfig : getUnitConfigListByUnitType(UnitType.LOCATION)) {
-            locationUnit(unitConfig, locationIndividualsSet);
 
-            //TODO implement method, which tests if unit is currently available in ontology
+            final String unitId = unitConfig.getId();
+
+            if (isOntIndAvailable(ontModel, unitId)) {
+                // unit does exist in ontology
+                locationUnit(unitConfig);
+            } else {
+                // unit doesn't exist in ontology
+                //TODO
+            }
         }
+
+        ConfigureSystem configureSystem = new ConfigureSystem();
+        configureSystem.initialTestConfig(ontModel);
+
+
 
     }
 
-    private List<TripleArrayList> locationUnit(final UnitConfig unitConfig, final Set<String> locationIndividualsSet) {
+    private List<TripleArrayList> locationUnit(final UnitConfig unitConfig) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
-        for (String locationIndividual : locationIndividualsSet) {
-            if (locationIndividual.equals(unitConfig.getId())) {
 
-            }
-        }
+
+//        System.out.println(ConfigureSystem.OntProp.SUB_LOCATION.getName());
+
+//        for (String locationIndividual : locationIndividualsSet) {
+//            if (locationIndividual.equals(unitConfig.getId())) {
+//
+//            }
+//        }
 
         return tripleArrayLists;
     }

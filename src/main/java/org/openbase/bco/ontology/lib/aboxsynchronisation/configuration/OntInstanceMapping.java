@@ -49,18 +49,18 @@ public class OntInstanceMapping extends OntInstanceInspection {
 
         final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitConfigList());
         Set<OntClass> ontClassSet = new HashSet<>();
-        OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.UNIT_SUPERCLASS);
+        OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         List<TripleArrayList> tripleArrayLists1 = getOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
 
-        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.STATE_SUPERCLASS);
+        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
         ontClassSet.clear();
         ontClassSet = getAllSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
 
-        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.PROVIDER_SERVICE_SUPERCLASS);
+        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
         final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
 
         List<TripleArrayList> tripleArrayLists3 = getOntTripleOfProviderServices(ontClass, serviceTypeSet);
@@ -78,10 +78,10 @@ public class OntInstanceMapping extends OntInstanceInspection {
             unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
 
             // is the current unitType a connection or location? set unitType variable with their type
-            if (unitType.equals(ConfigureSystem.UNIT_TYPE_CONNECTION)) {
+            if (unitType.equals(ConfigureSystem.OntClass.CONNECTION.getName())) {
                 unitType = unitConfig.getConnectionConfig().getType().toString().toLowerCase();
                 unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
-            } else if (unitType.equals(ConfigureSystem.UNIT_TYPE_LOCATION)) {
+            } else if (unitType.equals(ConfigureSystem.OntClass.LOCATION.getName())) {
                 unitType = unitConfig.getLocationConfig().getType().toString().toLowerCase();
                 unitType = unitType.replaceAll(ConfigureSystem.REMOVE_PATTERN, "");
             }
