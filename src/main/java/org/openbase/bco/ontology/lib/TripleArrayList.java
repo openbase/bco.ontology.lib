@@ -27,7 +27,7 @@ public class TripleArrayList {
     private final String object;
 
     /**
-     * Methods creates an array of objects.
+     * Methods creates an array of objects in form of subject, predicate, object.
      *
      * @param subject SPARQL subject.
      * @param predicate SPARQL predicate.

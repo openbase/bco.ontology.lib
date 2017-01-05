@@ -29,12 +29,12 @@ public class SparqlUpdateExpression {
     /**
      * Method creates a list with sparql update expressions. Each list element is an valid update.
      *
-     * @param tripleArrayLists The triple information - subject, predicate, object.
+     * @param tripleArrayLists The triple information - subject, predicate, object (with or without namespace).
      *
      * @return A list of strings, which are update expressions.
      */
     @SuppressWarnings("PMD.UseStringBufferForStringAppends")
-    public List<String> getSparqlUpdateEx(final List<TripleArrayList> tripleArrayLists) {
+    public List<String> getSparqlUpdateInsertEx(final List<TripleArrayList> tripleArrayLists) {
 
         final List<String> expressionList = new ArrayList<>();
 
@@ -43,12 +43,13 @@ public class SparqlUpdateExpression {
             String subject = triple.getSubject();
             String predicate = triple.getPredicate();
             String object = triple.getObject();
+            final String updateExpression;
 
             if (!subject.startsWith(ConfigureSystem.NS)) {
                 subject = ConfigureSystem.ExprPattern.NS.getName() + triple.getSubject();
             }
 
-            if (!subject.startsWith(ConfigureSystem.NS)) {
+            if (!object.startsWith(ConfigureSystem.NS)) {
                 object = ConfigureSystem.ExprPattern.NS.getName() + triple.getObject();
             }
 
@@ -60,7 +61,7 @@ public class SparqlUpdateExpression {
             }
 
             //CHECKSTYLE.OFF: MultipleStringLiterals
-            final String updateExpression =
+            updateExpression =
                     "PREFIX NS: <" + ConfigureSystem.NS + "> "
                     + "INSERT DATA { "
                         + subject + " " + predicate + " " + object + " . "
@@ -71,5 +72,32 @@ public class SparqlUpdateExpression {
         }
 
         return expressionList;
+    }
+
+    /**
+     * Method creates an update sparql string to delete a triple. The subject and predicate are selected, object is
+     * variable.
+     *
+     * @param subject The subject string (with or without namespace).
+     * @param predicate The predicate string (with or without namespace).
+     *
+     * @return A sparql update string to delete a triple.
+     */
+    public String getSparqlUpdateDeleteEx(String subject, String predicate) {
+
+        if (!subject.startsWith(ConfigureSystem.NS)) {
+            subject = ConfigureSystem.ExprPattern.NS.getName() + subject;
+        }
+
+        // if predicate isn't an "a" then it's an property with namespace needed.
+        if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
+                && !predicate.startsWith(ConfigureSystem.NS)) {
+            predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
+        }
+
+        return "PREFIX NS: <" + ConfigureSystem.NS + "> "
+        + "DELETE DATA { "
+            + subject + " " + predicate + " " + "?object . "
+        + "} ";
     }
 }
