@@ -23,7 +23,6 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.DataPool;
-import rst.domotic.service.ServiceTemplateType;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -98,7 +97,7 @@ public class OntInstanceInspection extends DataPool {
         ontServiceTypeIndNameSet = listIndOfOntClass(ontServiceTypeIndNameSet, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
-        final ServiceType[] serviceTypeArray = ServiceTemplateType.ServiceTemplate.ServiceType.values();
+        final ServiceType[] serviceTypeArray = ServiceType.values();
 
         for (final ServiceType serviceTypeElement : serviceTypeArray) {
             final String serviceType = serviceTypeElement.toString();
@@ -164,7 +163,7 @@ public class OntInstanceInspection extends DataPool {
      *
      * @return The list with ontClasses.
      */
-    public Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
+    protected Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
             ontSuperClass, final boolean inclusiveSuperclass) {
 
         // add initial superclass

@@ -49,7 +49,7 @@ public class SparqlUpdateExpression {
                 subject = ConfigureSystem.ExprPattern.NS.getName() + triple.getSubject();
             }
 
-            if (!object.startsWith(ConfigureSystem.NS)) {
+            if (!object.startsWith(ConfigureSystem.NS) && !object.startsWith("\"")) {
                 object = ConfigureSystem.ExprPattern.NS.getName() + triple.getObject();
             }
 
@@ -75,29 +75,47 @@ public class SparqlUpdateExpression {
     }
 
     /**
-     * Method creates an update sparql string to delete a triple. The subject and predicate are selected, object is
-     * variable.
+     * Method creates an update sparql string to delete a triple. Subject, predicate and object can be selected by a
+     * "name" (string) or can be placed as control variable by a "null" parameter in the tripleArrayList. The names of
+     * s, p, o keep the namespace or not.
      *
-     * @param subject The subject string (with or without namespace).
-     * @param predicate The predicate string (with or without namespace).
+     * Example in tripleArrayList: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
+     * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
+     * and means: all triples with the named subject, named predicate and any object are deleted.
      *
      * @return A sparql update string to delete a triple.
      */
-    public String getSparqlUpdateDeleteEx(String subject, String predicate) {
+    public String getSparqlUpdateDeleteEx(final TripleArrayList tripleArrayList) {
 
-        if (!subject.startsWith(ConfigureSystem.NS)) {
+        //TODO maybe special safety handling, because if s, p, o are all null => delete whole triple store
+
+        String subject = tripleArrayList.getSubject();
+        String predicate = tripleArrayList.getPredicate();
+        String object = tripleArrayList.getObject();
+
+        if (subject == null) {
+            subject = "?subject";
+        } else if (!subject.startsWith(ConfigureSystem.NS)) {
             subject = ConfigureSystem.ExprPattern.NS.getName() + subject;
         }
 
-        // if predicate isn't an "a" then it's an property with namespace needed.
-        if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
+        if (predicate == null) {
+            predicate = "?predicate";
+        } else if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
                 && !predicate.startsWith(ConfigureSystem.NS)) {
+            // if predicate isn't an "a" then it's an property with namespace needed.
             predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
+        }
+
+        if (object == null) {
+            object = "?object";
+        } else if (!object.startsWith(ConfigureSystem.NS)) {
+            object = ConfigureSystem.ExprPattern.NS.getName() + object;
         }
 
         return "PREFIX NS: <" + ConfigureSystem.NS + "> "
         + "DELETE DATA { "
-            + subject + " " + predicate + " " + "?object . "
+            + subject + " " + predicate + " " + object + " . "
         + "} ";
     }
 }
