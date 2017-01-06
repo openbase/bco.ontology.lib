@@ -22,7 +22,6 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.DataPool;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -33,17 +32,8 @@ import java.util.Set;
 /**
  * Created by agatting on 20.12.16.
  */
-public class OntInstanceInspection extends DataPool {
+public class OntInstanceInspection {
     //TODO handling of units with missing data (e.g. location)
-
-    /**
-     * Constructor for OntInstanceInspection.
-     */
-    public OntInstanceInspection() {
-
-//        final List<UnitConfig> unitConfigList = inspectionOfUnits(ontModel, unitRegistry);
-//        final List<ServiceType> serviceTypeList = inspectionOfServiceTypes(ontModel);
-    }
 
     /**
      * Method compares the units of the registry with the actual units in the ontology model. Missing units are listed.

@@ -10,7 +10,9 @@
 -->
 <module name="Checker">
   <property name="severity" value="warning"/>
+  <module name="SuppressWarningsFilter" />
   <module name="TreeWalker">
+    <module name="SuppressWarningsHolder" />
     <module name="FileContentsHolder"/>
     <module name="JavadocMethod">
       <property name="scope" value="protected"/>

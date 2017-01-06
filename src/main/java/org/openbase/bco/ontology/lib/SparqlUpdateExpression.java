@@ -33,7 +33,7 @@ public class SparqlUpdateExpression {
      *
      * @return A list of strings, which are update expressions.
      */
-    @SuppressWarnings("PMD.UseStringBufferForStringAppends")
+    @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
     public List<String> getSparqlUpdateInsertEx(final List<TripleArrayList> tripleArrayLists) {
 
         final List<String> expressionList = new ArrayList<>();
@@ -60,13 +60,11 @@ public class SparqlUpdateExpression {
                 predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
             }
 
-            //CHECKSTYLE.OFF: MultipleStringLiterals
             updateExpression =
                     "PREFIX NS: <" + ConfigureSystem.NS + "> "
                     + "INSERT DATA { "
                         + subject + " " + predicate + " " + object + " . "
                     + "} ";
-            //CHECKSTYLE.ON: MultipleStringLiterals
 
             expressionList.add(updateExpression);
         }
@@ -83,8 +81,11 @@ public class SparqlUpdateExpression {
      * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
      * and means: all triples with the named subject, named predicate and any object are deleted.
      *
+     * @param tripleArrayList The triple information - subject, predicate, object (with or without namespace).
+     *
      * @return A sparql update string to delete a triple.
      */
+    @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
     public String getSparqlUpdateDeleteEx(final TripleArrayList tripleArrayList) {
 
         //TODO maybe special safety handling, because if s, p, o are all null => delete whole triple store

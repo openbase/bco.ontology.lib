@@ -44,16 +44,19 @@ import java.util.regex.Pattern;
 /**
  * Created by agatting on 19.12.16.
  */
-public class DataPool {
+public interface DataPool  {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+    /**
+     * Logger.
+     */
+    Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
 
     /**
      * Method provides the unitRegistry.
      *
      * @return unitRegistry.
      */
-    private UnitRegistry getUnitRegistry() {
+    static UnitRegistry getUnitRegistry() {
 
         UnitRegistry unitRegistry = null;
 
@@ -70,14 +73,14 @@ public class DataPool {
     /**
      * Method returns a list of all unitConfigs, which are actual enabled.
      *
-     * @return A list of all unitConfigs.
+     * @return A list of all enabled unitConfigs.
      */
-    protected List<UnitConfig> getUnitConfigList() {
+    static List<UnitConfig> getUnitConfigList() {
 
-        final List<UnitConfig> unitConfigList = new ArrayList<>();
+        List<UnitConfig> unitConfigList = new ArrayList<>();
 
         try {
-            for (final UnitConfig unitConfig : getUnitRegistry().getUnitConfigs()) {
+            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs()) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
                     unitConfigList.add(unitConfig);
                 }
@@ -96,12 +99,12 @@ public class DataPool {
      *
      * @return A list of unitConfigs.
      */
-    protected List<UnitConfig> getUnitConfigListByUnitType(final UnitType unitType) {
+    static List<UnitConfig> getUnitConfigListByUnitType(final UnitType unitType) {
 
-        final List<UnitConfig> unitConfigList = new ArrayList<>();
+        List<UnitConfig> unitConfigList = new ArrayList<>();
 
         try {
-            for (final UnitConfig unitConfig : getUnitRegistry().getUnitConfigs(unitType)) {
+            for (UnitConfig unitConfig : getUnitRegistry().getUnitConfigs(unitType)) {
                 if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
                     unitConfigList.add(unitConfig);
                 }
@@ -120,7 +123,7 @@ public class DataPool {
      *
      * @return The unitRemote.
      */
-    protected UnitRemote getUnitRemoteByUnitConfig(final UnitConfig unitConfig) {
+    static UnitRemote getUnitRemoteByUnitConfig(final UnitConfig unitConfig) {
 
         UnitRemote unitRemote = null;
 
@@ -144,16 +147,16 @@ public class DataPool {
      *
      * @return HashSet of objects.
      */
-    protected Set<Object> getMethodObjectsByUnitRemote(final UnitRemote unitRemote, final String regex) {
+    static Set<Object> getMethodObjectsByUnitRemote(final UnitRemote unitRemote, final String regex) {
 
-        final String regexBuf = regex.toLowerCase(Locale.ENGLISH);
-        final Method[] methodArray = unitRemote.getDataClass().getMethods();
-        final Set<Object> objectSet = new HashSet<>();
+        String regexBuf = regex.toLowerCase(Locale.ENGLISH);
+        Method[] methodArray = unitRemote.getDataClass().getMethods();
+        Set<Object> objectSet = new HashSet<>();
 
-        for (final Method method : methodArray) {
+        for (Method method : methodArray) {
             if (Pattern.matches(regexBuf, method.getName().toLowerCase())) {
                 try {
-                    @SuppressWarnings("unchecked") final Object objectMethod = unitRemote.getDataClass()
+                    @SuppressWarnings("unchecked") Object objectMethod = unitRemote.getDataClass()
                             .getMethod(method.getName()).invoke(unitRemote.getData());
                     objectSet.add(objectMethod);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException

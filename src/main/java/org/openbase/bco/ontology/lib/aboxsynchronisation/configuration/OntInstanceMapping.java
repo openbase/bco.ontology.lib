@@ -22,6 +22,7 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.DataPool;
 import org.openbase.bco.ontology.lib.TripleArrayList;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
@@ -37,38 +38,64 @@ import java.util.Set;
 /**
  * Created by agatting on 23.12.16.
  */
-public class OntInstanceMapping extends OntInstanceInspection {
+public abstract class OntInstanceMapping extends OntInstanceInspection implements ABoxConfiguration {
 
     /**
-     * Constructor for OntInstanceInspection.
-     *
-     * @param ontModel The actual ontology model.
+     * {@inheritDoc}
      */
-    @SuppressWarnings("PMD.UnusedLocalVariable")
-    public OntInstanceMapping(final OntModel ontModel) {
-        super();
+    @Override
+    public List<TripleArrayList> getMissingOntTripleOfUnitTypes(final OntModel ontModel) {
 
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, getUnitConfigList());
+        // a set of unitConfigs, which are missing in the ontology
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, DataPool.getUnitConfigList());
+        // the ontSuperClass of the ontology to get all unit (sub)classes
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
+
         Set<OntClass> ontClassSet = new HashSet<>();
-        OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
+        // the set with all ontology unitType classes
         ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-        final List<TripleArrayList> tripleArrayLists1 = getOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
-
-        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
-        ontClassSet.clear();
-        ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
-
-        final List<TripleArrayList> tripleArrayLists2 = getOntTripleOfStates(ontClassSet, unitConfigSet);
-
-        ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
-        final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
-
-        final List<TripleArrayList> tripleArrayLists3 = getOntTripleOfProviderServices(ontClass, serviceTypeSet);
+        // the triples to insert the missing units into the ontology
+        return buildOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
     }
 
-    private List<TripleArrayList> getOntTripleOfUnitTypes(final Set<OntClass> ontClassSet,
-                                                          final Set<UnitConfig> unitConfigSet) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel) {
+
+        // a set of unitConfigs, which are missing in the ontology
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, DataPool.getUnitConfigList());
+
+        // the ontSuperClass of the ontology to get all state (sub)classes
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
+
+        Set<OntClass> ontClassSet = new HashSet<>();
+        // the set with all ontology state classes
+        ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+
+        return buildOntTripleOfStates(ontClassSet, unitConfigSet);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingOntTripleOfProviderServices(final OntModel ontModel) {
+
+        // the ontSuperClass of the ontology to get all state (sub)classes
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS
+                + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
+
+        // the set of serviceTypes, which are missing in the ontology
+        final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
+
+        return buildOntTripleOfProviderServices(ontClass, serviceTypeSet);
+    }
+
+    private List<TripleArrayList> buildOntTripleOfUnitTypes(final Set<OntClass> ontClassSet,
+                                                            final Set<UnitConfig> unitConfigSet) {
 
         // alternative a list of strings (IDs) as mapValue and an unique key (unitType)
         final Map<String, String> unitTypeUnitIdMap = new HashMap<>();
@@ -105,8 +132,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> getOntTripleOfStates(final Set<OntClass> ontClassSet,
-                                                       final Set<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildOntTripleOfStates(final Set<OntClass> ontClassSet,
+                                                         final Set<UnitConfig> unitConfigSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
@@ -117,8 +144,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
                 //TODO take new method of dal service interface
 
                 final String unitId = unitConfig.getId();
-                final UnitRemote unitRemote = getUnitRemoteByUnitConfig(unitConfig);
-                final Set<Object> objectSet = getMethodObjectsByUnitRemote(unitRemote,
+                final UnitRemote unitRemote = DataPool.getUnitRemoteByUnitConfig(unitConfig);
+                final Set<Object> objectSet = DataPool.getMethodObjectsByUnitRemote(unitRemote,
                         ConfigureSystem.RegEx.GET_PATTERN_STATE);
 
                 for (final Object object : objectSet) {
@@ -137,8 +164,8 @@ public class OntInstanceMapping extends OntInstanceInspection {
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> getOntTripleOfProviderServices(final OntClass ontClass,
-                                                                 final Set<ServiceType> serviceTypeSet) {
+    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass,
+                                                                   final Set<ServiceType> serviceTypeSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
