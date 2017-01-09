@@ -48,7 +48,7 @@ public final class Ontology {
 
 //        WebInterface webInterface = new WebInterface();
 
-//        final OntPropertyMapping ontPropertyMapping = new OntPropertyMapping();
+//        final OntPropertyMappingImpl ontPropertyMapping = new OntPropertyMappingImpl();
 //        RSBTest rsbTest = new RSBTest();
 
 //        ontology.cleanOntology();
