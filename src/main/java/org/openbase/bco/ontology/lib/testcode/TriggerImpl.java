@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.testcode;
 import org.openbase.jul.pattern.ObservableImpl;
 
 /**
- * Created by agatting on 21.12.16.
+ * @author agatting on 21.12.16.
  */
 public class TriggerImpl extends ObservableImpl<Boolean> implements Trigger {
 

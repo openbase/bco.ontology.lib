@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by agatting on 19.12.16.
+ * @author agatting on 19.12.16.
  */
 public interface RegistryPool {
 

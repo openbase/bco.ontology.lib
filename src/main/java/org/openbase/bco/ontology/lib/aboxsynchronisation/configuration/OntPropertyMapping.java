@@ -24,7 +24,7 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 import java.util.List;
 
 /**
- * Created by agatting on 06.01.17.
+ * @author agatting on 06.01.17.
  */
 public interface OntPropertyMapping {
 

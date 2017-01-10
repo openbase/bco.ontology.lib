@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by agatting on 21.12.16.
+ * @author agatting on 21.12.16.
  */
 public class OntPropertyMappingImpl extends OntInstanceInspection implements OntPropertyMapping {
 
@@ -41,7 +41,7 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
     @Override
     public List<TripleArrayList> getPropertyTripleOfAllUnitConfigs() {
 
-        List<TripleArrayList> tripleArrayInsertLists = new ArrayList<>();
+        final List<TripleArrayList> tripleArrayInsertLists = new ArrayList<>();
 
         for (final UnitConfig unitConfig : RegistryPool.getUnitConfigList()) {
             tripleArrayInsertLists.addAll(getPropertyTripleOfSingleUnitConfig(unitConfig));

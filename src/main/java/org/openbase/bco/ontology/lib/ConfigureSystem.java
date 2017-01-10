@@ -20,7 +20,7 @@
 package org.openbase.bco.ontology.lib;
 
 /**
- * Created by agatting on 14.11.16.
+ * @author agatting on 14.11.16.
  */
 
 import org.apache.jena.ontology.OntModel;

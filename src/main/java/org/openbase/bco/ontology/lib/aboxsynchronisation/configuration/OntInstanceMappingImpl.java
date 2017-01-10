@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by agatting on 23.12.16.
+ * @author agatting on 23.12.16.
  */
 public class OntInstanceMappingImpl extends OntInstanceInspection implements OntInstanceMapping {
 

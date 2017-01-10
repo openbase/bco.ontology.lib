@@ -41,11 +41,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by agatting on 12.12.16.
+ * @author agatting on 12.12.16.
  */
 public class WebInterface {
     //CHECKSTYLE.OFF: MultipleStringLiterals
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
     private static final int HTTP_SUCCESS_CODE = 200;
     private static final String UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
     private static final String DATA_URI = "http://localhost:3030/myAppFuseki/data";

@@ -20,35 +20,31 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateChange;
 import org.openbase.bco.ontology.lib.testcode.CreateOntology;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.JPDebugMode;
+import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.InitializationException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.iface.Launchable;
+import org.openbase.jul.iface.VoidInitializable;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 /**
- * Created by agatting on 20.10.16.
+ * @author agatting on 20.10.16.
  */
-public final class Ontology {
+public final class OntologyManagerController implements Launchable<Void>, VoidInitializable {
 
-    /**
-     * App name.
-     */
-    private static final String APP_NAME = Ontology.class.getSimpleName() + "App";
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
 
-    private Ontology() { }
-
-    /**
-     * Main Method starting ontology application.
-     *
-     * @param args Arguments from commandline.
-     */
-    public static void main(final String... args) {
-
-        LOGGER.info("Start " + APP_NAME + " ...");
+    @Override
+    public void activate() throws CouldNotPerformException, InterruptedException {
 
         final CreateOntology ontology = new CreateOntology();
         ontology.loadOntology("src/Ontology3.owl");
-        StateChange stateChange = new StateChange();
-
+        final StateChange stateChange = new StateChange();
 
 //        WebInterface webInterface = new WebInterface();
 
@@ -71,5 +67,26 @@ public final class Ontology {
 //            LOGGER.info(APP_NAME + " finished!");
 //            System.exit(0);
 //        }
+
+        try {
+            if (JPService.getProperty(JPDebugMode.class).getValue()) {
+                LOGGER.info("Debug Mode");
+            }
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+    }
+
+    @Override
+    public void deactivate() throws CouldNotPerformException, InterruptedException {
+    }
+
+    @Override
+    public boolean isActive() {
+        return false;
+    }
+
+    @Override
+    public void init() throws InitializationException, InterruptedException {
     }
 }

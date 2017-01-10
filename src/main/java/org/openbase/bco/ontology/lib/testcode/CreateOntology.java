@@ -38,7 +38,7 @@ import java.io.OutputStream;
 
 
 /**
- * Created by agatting on 24.10.16.
+ * @author agatting on 24.10.16.
  */
 public class CreateOntology {
 
@@ -74,7 +74,7 @@ public class CreateOntology {
             if (inputStream == null) {
                 throw new IllegalArgumentException("File not found!");
             } else {
-                LOGGER.info("Ontology file loaded from " + ontologyFilePath);
+                LOGGER.info("OntologyManagerController file loaded from " + ontologyFilePath);
             }
 
             ontModel.read(inputStream, null);
@@ -106,7 +106,7 @@ public class CreateOntology {
         final ExtendedIterator individualIterator = ontModel.listIndividuals();
 
         if (individualIterator.hasNext()) {
-            LOGGER.info("Ontology has some individuals");
+            LOGGER.info("OntologyManagerController has some individuals");
             Individual individual;
 
             while (individualIterator.hasNext()) {

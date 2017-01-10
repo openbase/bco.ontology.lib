@@ -28,7 +28,7 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
-import org.openbase.bco.ontology.lib.Ontology;
+import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.QueryStrings;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -37,11 +37,11 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Created by agatting on 11.11.16.
+ * @author agatting on 11.11.16.
  */
 public class QueryOntology {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Ontology.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
     private final OntModel ontModel;
 
     /**

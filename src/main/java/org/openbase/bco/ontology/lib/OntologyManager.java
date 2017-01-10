@@ -16,8 +16,10 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
+package org.openbase.bco.ontology.lib;
 
 /**
- * @author agatting on 24.10.16.
+ * @author agatting on 10.01.17.
  */
-package org.openbase.bco.ontology.lib;
+public interface OntologyManager {
+}

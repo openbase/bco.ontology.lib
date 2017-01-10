@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib;
 
 /**
- * Created by agatting on 23.12.16.
+ * @author agatting on 23.12.16.
  */
 public class TripleArrayList {
     private final String subject;

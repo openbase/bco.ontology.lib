@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Created by agatting on 09.01.17.
+ * @author agatting on 09.01.17.
  */
 public interface RemotePool {
 
@@ -79,7 +79,7 @@ public interface RemotePool {
      */
     static List<UnitRemote> getAllUnitRemotes(final List<UnitConfig> unitConfigList) {
 
-        final List<UnitRemote> unitRemoteList = new ArrayList<>();
+        List<UnitRemote> unitRemoteList = new ArrayList<>();
         UnitRemote unitRemote;
 
         try {
@@ -114,7 +114,7 @@ public interface RemotePool {
         for (Method method : methodArray) {
             if (Pattern.matches(regexBuf, method.getName().toLowerCase())) {
                 try {
-                    @SuppressWarnings("unchecked") final Object objectMethod = unitRemote.getDataClass()
+                    @SuppressWarnings("unchecked") Object objectMethod = unitRemote.getDataClass()
                             .getMethod(method.getName()).invoke(unitRemote.getData());
                     objectSet.add(objectMethod);
                 } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException
@@ -139,28 +139,29 @@ public interface RemotePool {
     static Object getMethodByClassObject(final Object object, final String regex) {
 
         String regexBuf = "";
-        MultiException.ExceptionStack exceptionStack = null;
-        final Set<Object> objectSet = new HashSet<>();
 
         try {
-            if (regex != null) {
-                regexBuf = regex.toLowerCase(Locale.ENGLISH);
-            } else {
+            if (regex == null) {
                 throw new CouldNotPerformException("Regular expression is null! Cannot perform!");
+            } else {
+                regexBuf = regex.toLowerCase(Locale.ENGLISH);
             }
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
+        MultiException.ExceptionStack exceptionStack = null;
+        Set<Object> objectSet = new HashSet<>();
+
         try {
             if (object == null) {
                 throw new ClassNotFoundException("Class object cannot be found!");
             } else {
-                final Method[] methodArray = object.getClass().getMethods();
-                for (final Method method : methodArray) {
+                Method[] methodArray = object.getClass().getMethods();
+                for (Method method : methodArray) {
                     if (Pattern.matches(regexBuf, method.getName().toLowerCase())) {
                         try {
-                            final Object objectMethod = object.getClass().getMethod(method.getName()).invoke(object);
+                            Object objectMethod = object.getClass().getMethod(method.getName()).invoke(object);
                             objectSet.add(objectMethod);
                         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                             exceptionStack = MultiException.push(null, e, exceptionStack);

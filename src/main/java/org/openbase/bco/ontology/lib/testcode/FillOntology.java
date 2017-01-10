@@ -51,8 +51,9 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * Created by agatting on 25.10.16.
+ * @author agatting on 25.10.16.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class FillOntology {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FillOntology.class);

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by agatting on 23.12.16.
+ * @author agatting on 23.12.16.
  */
 public class SparqlUpdateExpression {
 

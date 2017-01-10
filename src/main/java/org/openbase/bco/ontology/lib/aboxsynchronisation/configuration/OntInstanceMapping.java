@@ -24,7 +24,7 @@ import org.openbase.bco.ontology.lib.TripleArrayList;
 import java.util.List;
 
 /**
- * Created by agatting on 09.01.17.
+ * @author agatting on 09.01.17.
  */
 public interface OntInstanceMapping {
     /**

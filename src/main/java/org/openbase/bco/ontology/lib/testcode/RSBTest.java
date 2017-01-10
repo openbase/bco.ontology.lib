@@ -32,7 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by agatting on 22.12.16.
+ * @author agatting on 22.12.16.
  */
 public class RSBTest {
 

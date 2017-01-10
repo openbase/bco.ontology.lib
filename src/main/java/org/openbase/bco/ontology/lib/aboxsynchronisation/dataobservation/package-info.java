@@ -18,6 +18,6 @@
  */
 
 /**
- * @author agatting on 24.10.16.
+ * @author agatting on 23.12.16.
  */
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;

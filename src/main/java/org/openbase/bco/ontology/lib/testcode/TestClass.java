@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.testcode;
 
 /**
- * Created by agatting on 23.12.16.
+ * @author agatting on 23.12.16.
  */
 public class TestClass {
 

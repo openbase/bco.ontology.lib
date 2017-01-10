@@ -26,7 +26,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by agatting on 16.11.16.
+ * @author agatting on 16.11.16.
  */
 public final class QueryStrings {
 

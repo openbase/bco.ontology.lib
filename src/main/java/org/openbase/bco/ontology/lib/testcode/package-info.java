@@ -18,6 +18,6 @@
  */
 
 /**
- * Created by agatting on 23.12.16.
+ * @author agatting on 23.12.16.
  */
 package org.openbase.bco.ontology.lib.testcode;

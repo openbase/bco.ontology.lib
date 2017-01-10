@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Created by agatting on 20.12.16.
+ * @author agatting on 20.12.16.
  */
 public class OntInstanceInspection {
     //TODO handling of units with missing data (e.g. location)
