@@ -165,9 +165,9 @@ public final class ConfigureSystem {
     }
 
     /**
-     * Enumeration for string pattern.
+     * Enumeration for ontology string pattern.
      */
-    public enum ExprPattern {
+    public enum OntExpr {
 
         /**
          * Pattern to insert an individual to a class -> "a".
@@ -186,7 +186,7 @@ public final class ConfigureSystem {
 
         private final String pattern;
 
-        ExprPattern(final String pattern) {
+        OntExpr(final String pattern) {
             this.pattern = pattern;
         }
 
@@ -197,6 +197,32 @@ public final class ConfigureSystem {
          */
         public String getName() {
             return this.pattern;
+        }
+    }
+
+    /**
+     * Regular expressions for method/object searching.
+     */
+    public enum RegEx {
+
+        /**
+         * Pattern for object name: Data.
+         */
+        DATA("Data");
+
+        private final String regEx;
+
+        RegEx(final String regEx) {
+            this.regEx = regEx;
+        }
+
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
+            return this.regEx;
         }
     }
 
@@ -227,40 +253,12 @@ public final class ConfigureSystem {
      */
     public static final String GET = "get";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigureSystem.class);
-
     /**
-     * Regular expressions for method searching.
+     *
      */
-    //TODO interface not nice...
-    public interface RegEx {
-        /**
-         * Regular expression "getid".
-         */
-        String GET_ID = "getId";
-        /**
-         * Regular expression "getValue".
-         */
-        String GET_VALUE = "getValue";
-        /**
-         * Regular expression "get" + Pattern + "dataUnit".
-         */
-        String GET_PATTERN_DATA_UNIT = GET + STRING_PATTERN + "dataUnit";
-        /**
-         * Regular expression "get" + Pattern + "State".
-         */
-        String GET_PATTERN_STATE = GET + STRING_PATTERN + STATE;
-        /**
-         * Regular expression "getTimeStamp".
-         */
-        String GET_TIME_STAMP = "getTimeStamp";
+    public static final String GET_PATTERN_STATE = GET + STRING_PATTERN + STATE;
 
-        /**
-         * Empty method for pmd.
-         * @return -
-         */
-        String emptyMethod();
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigureSystem.class);
 
     /**
      * Method tests configurations.

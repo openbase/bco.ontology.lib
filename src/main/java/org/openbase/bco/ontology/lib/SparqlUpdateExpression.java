@@ -46,18 +46,18 @@ public class SparqlUpdateExpression {
             final String updateExpression;
 
             if (!subject.startsWith(ConfigureSystem.NS)) {
-                subject = ConfigureSystem.ExprPattern.NS.getName() + triple.getSubject();
+                subject = ConfigureSystem.OntExpr.NS.getName() + triple.getSubject();
             }
 
             if (!object.startsWith(ConfigureSystem.NS) && !object.startsWith("\"")) {
-                object = ConfigureSystem.ExprPattern.NS.getName() + triple.getObject();
+                object = ConfigureSystem.OntExpr.NS.getName() + triple.getObject();
             }
 
             // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
             // insert an individual to a class.
-            if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
+            if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
                     && !predicate.startsWith(ConfigureSystem.NS)) {
-                predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
+                predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
             }
 
             updateExpression =
@@ -97,21 +97,21 @@ public class SparqlUpdateExpression {
         if (subject == null) {
             subject = "?subject";
         } else if (!subject.startsWith(ConfigureSystem.NS)) {
-            subject = ConfigureSystem.ExprPattern.NS.getName() + subject;
+            subject = ConfigureSystem.OntExpr.NS.getName() + subject;
         }
 
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equals(ConfigureSystem.ExprPattern.A.getName())
+        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
                 && !predicate.startsWith(ConfigureSystem.NS)) {
             // if predicate isn't an "a" then it's an property with namespace needed.
-            predicate = ConfigureSystem.ExprPattern.NS.getName() + predicate;
+            predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
         }
 
         if (object == null) {
             object = "?object";
         } else if (!object.startsWith(ConfigureSystem.NS)) {
-            object = ConfigureSystem.ExprPattern.NS.getName() + object;
+            object = ConfigureSystem.OntExpr.NS.getName() + object;
         }
 
         return "PREFIX NS: <" + ConfigureSystem.NS + "> "

@@ -17,7 +17,7 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.testcode;
 
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntModel;

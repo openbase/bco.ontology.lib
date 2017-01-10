@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.DataPool;
+import org.openbase.bco.ontology.lib.RegistryPool;
 import org.openbase.bco.ontology.lib.TripleArrayList;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
@@ -33,6 +33,8 @@ import java.util.List;
  */
 public class OntPropertyMappingImpl extends OntInstanceInspection implements OntPropertyMapping {
 
+    //TODO exception handling
+
     /**
      * {@inheritDoc}
      */
@@ -41,7 +43,7 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
 
         List<TripleArrayList> tripleArrayInsertLists = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : DataPool.getUnitConfigList()) {
+        for (final UnitConfig unitConfig : RegistryPool.getUnitConfigList()) {
             tripleArrayInsertLists.addAll(getPropertyTripleOfSingleUnitConfig(unitConfig));
         }
 

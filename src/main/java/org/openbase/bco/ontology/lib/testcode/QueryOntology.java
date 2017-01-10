@@ -17,7 +17,7 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.testcode;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.query.Query;
@@ -28,6 +28,8 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
+import org.openbase.bco.ontology.lib.Ontology;
+import org.openbase.bco.ontology.lib.QueryStrings;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;

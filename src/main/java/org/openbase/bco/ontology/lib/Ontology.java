@@ -18,6 +18,8 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateChange;
+import org.openbase.bco.ontology.lib.testcode.CreateOntology;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -45,6 +47,8 @@ public final class Ontology {
 
         final CreateOntology ontology = new CreateOntology();
         ontology.loadOntology("src/Ontology3.owl");
+        StateChange stateChange = new StateChange();
+
 
 //        WebInterface webInterface = new WebInterface();
 
@@ -62,10 +66,10 @@ public final class Ontology {
 //        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
 //        queryOntology.queryModel();
 
-        ontology.getModel().close();
-        if (ontology.getModel().isClosed()) {
-            LOGGER.info(APP_NAME + " finished!");
-            System.exit(0);
-        }
+//        ontology.getModel().close();
+//        if (ontology.getModel().isClosed()) {
+//            LOGGER.info(APP_NAME + " finished!");
+//            System.exit(0);
+//        }
     }
 }

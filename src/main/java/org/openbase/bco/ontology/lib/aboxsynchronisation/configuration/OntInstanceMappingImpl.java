@@ -22,7 +22,8 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.DataPool;
+import org.openbase.bco.ontology.lib.RegistryPool;
+import org.openbase.bco.ontology.lib.RemotePool;
 import org.openbase.bco.ontology.lib.TripleArrayList;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
@@ -40,6 +41,8 @@ import java.util.Set;
  */
 public class OntInstanceMappingImpl extends OntInstanceInspection implements OntInstanceMapping {
 
+    //TODO exception handling
+
     /**
      * {@inheritDoc}
      */
@@ -47,7 +50,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     public List<TripleArrayList> getMissingOntTripleOfUnitTypes(final OntModel ontModel) {
 
         // a set of unitConfigs, which are missing in the ontology
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, DataPool.getUnitConfigList());
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, RegistryPool.getUnitConfigList());
         // the ontSuperClass of the ontology to get all unit (sub)classes
         final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
 
@@ -66,7 +69,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel) {
 
         // a set of unitConfigs, which are missing in the ontology
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, DataPool.getUnitConfigList());
+        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, RegistryPool.getUnitConfigList());
 
         // the ontSuperClass of the ontology to get all state (sub)classes
         final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
@@ -103,15 +106,15 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         // list all unitTypes and their unitIds of the unitConfigSet in a hashMap
         for (final UnitConfig unitConfig : unitConfigSet) {
             String unitType = unitConfig.getType().toString().toLowerCase();
-            unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
+            unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
 
             // is the current unitType a connection or location? set unitType variable with their type
             if (unitType.equals(ConfigureSystem.OntClass.CONNECTION.getName())) {
                 unitType = unitConfig.getConnectionConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
+                unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
             } else if (unitType.equals(ConfigureSystem.OntClass.LOCATION.getName())) {
                 unitType = unitConfig.getLocationConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(ConfigureSystem.ExprPattern.REMOVE.getName(), "");
+                unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
             }
 
             unitTypeUnitIdMap.put(unitConfig.getId(), unitType);
@@ -125,7 +128,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
             for (final Map.Entry<String, String> entry : unitTypeUnitIdMap.entrySet()) {
                 if (entry.getValue().equals(ontClassName)) {
                     tripleArrayLists.add(new TripleArrayList(entry.getKey()
-                            , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
+                            , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
                 }
             }
         }
@@ -144,9 +147,9 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
                 //TODO take new method of dal service interface
 
                 final String unitId = unitConfig.getId();
-                final UnitRemote unitRemote = DataPool.getUnitRemoteByUnitConfig(unitConfig);
-                final Set<Object> objectSet = DataPool.getMethodObjectsByUnitRemote(unitRemote,
-                        ConfigureSystem.RegEx.GET_PATTERN_STATE);
+                final UnitRemote unitRemote = RemotePool.getUnitRemoteByUnitConfig(unitConfig);
+                final Set<Object> objectSet = RemotePool.getMethodObjectsByUnitRemote(unitRemote,
+                        ConfigureSystem.GET_PATTERN_STATE);
 
                 for (final Object object : objectSet) {
                     final String objectStateName = object.getClass().getName().toLowerCase();
@@ -154,7 +157,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
                     for (final OntClass ontClass : ontClassSet) {
                         if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
                             tripleArrayLists.add(new TripleArrayList(unitId
-                                    , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
+                                    , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
                         }
                     }
                 }
@@ -173,7 +176,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
             // list all serviceTypes in a list
             for (final ServiceType serviceType : serviceTypeSet) {
                 tripleArrayLists.add(new TripleArrayList(serviceType.toString()
-                        , ConfigureSystem.ExprPattern.A.getName(), ontClass.getLocalName()));
+                        , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
             }
         }
 

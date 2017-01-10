@@ -17,7 +17,7 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.testcode;
 
 import org.apache.jena.ontology.DatatypeProperty;
 import org.apache.jena.ontology.Individual;
@@ -29,6 +29,7 @@ import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -343,8 +344,8 @@ public class FillOntology {
             unitRemote.activate();
             unitRemote.waitForData();
 
-            final Object objectState = findMethodByUnitRemote(unitRemote, ConfigureSystem.RegEx.GET_PATTERN_STATE);
-            final Object objectStateValue = findMethodByObject(objectState, ConfigureSystem.RegEx.GET_VALUE);
+            final Object objectState = findMethodByUnitRemote(unitRemote, ConfigureSystem.GET_PATTERN_STATE);
+            final Object objectStateValue = findMethodByObject(objectState, "getValue");
 
             objectProperty = ontModel.getObjectProperty(ConfigureSystem.NS + "hasStateValue");
 
@@ -363,7 +364,7 @@ public class FillOntology {
                     //TODO literal format: stateValue + physical dataUnit
                     //get dataUnit
                     final Object objectDataUnit = findMethodByObject(objectState
-                            , ConfigureSystem.RegEx.GET_PATTERN_DATA_UNIT);
+                            , "dataUnit");
                     if (objectDataUnit == null) {
                         LOGGER.error("No dataUnit by unit: " + unitConfig.getId() + " is unitType: "
                                 + unitConfig.getType());
@@ -384,7 +385,7 @@ public class FillOntology {
             }
 
             // create dataTypeProperty hasTimeStamp
-            final Object objectTimeStamp = findMethodByObject(objectState, ConfigureSystem.RegEx.GET_TIME_STAMP);
+            final Object objectTimeStamp = findMethodByObject(objectState, "getTimeStamp");
             final Literal literal = ontModel.createTypedLiteral(objectTimeStamp.toString());
             final DatatypeProperty datatypeProperty = ontModel.getDatatypeProperty(ConfigureSystem.NS
                     + "hasTimeStamp");
@@ -430,19 +431,19 @@ public class FillOntology {
                     unitRemote.waitForData();
 
                     final Object objectState = findMethodByUnitRemote(unitRemote,
-                            ConfigureSystem.RegEx.GET_PATTERN_STATE);
+                            ConfigureSystem.GET_PATTERN_STATE);
                     String objectStateName = objectState.getClass().getName().toLowerCase();
                     objectStateName = objectStateName.substring(objectStateName.
                             lastIndexOf(ConfigureSystem.DOLLAR_SIGN) + 1);
 
                     final Object objectStateValue = findMethodByObject(objectState
-                            , ConfigureSystem.RegEx.GET_VALUE);
+                            , "getValue");
 
                     if (objectStateValue != null) {
                         ontModel.createIndividual(ConfigureSystem.NS + objectStateValue, ontClassStateValue);
                     }
 
-                    final Object objectId = findMethodByUnitRemote(unitRemote, ConfigureSystem.RegEx.GET_ID);
+                    final Object objectId = findMethodByUnitRemote(unitRemote, "getId");
                     final ExtendedIterator classIterator = ontModel.listClasses();
 
                     while (classIterator.hasNext()) {
