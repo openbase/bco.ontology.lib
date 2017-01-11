@@ -29,7 +29,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.QueryStrings;
+import org.openbase.bco.ontology.lib.sparql.QueryStrings;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;

@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.datapool;
 
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
@@ -90,8 +90,6 @@ public interface RegistryPool {
      * @return A list of unitConfigs.
      */
     static List<UnitConfig> getUnitConfigListByUnitType(final UnitType unitType) {
-
-        //TODO exception handling
 
         List<UnitConfig> unitConfigList = new ArrayList<>();
 

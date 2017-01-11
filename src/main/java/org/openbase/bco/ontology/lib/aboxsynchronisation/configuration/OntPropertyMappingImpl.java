@@ -19,8 +19,8 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.RegistryPool;
-import org.openbase.bco.ontology.lib.TripleArrayList;
+import org.openbase.bco.ontology.lib.datapool.RegistryPool;
+import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;

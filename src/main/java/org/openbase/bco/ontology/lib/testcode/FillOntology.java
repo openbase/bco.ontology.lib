@@ -272,7 +272,7 @@ public class FillOntology {
                 final String stateIdNameReg = serviceConfig.getUnitId();
 
                 final ExtendedIterator individualIterator = ontModel.listIndividuals(ontModel
-                    .getOntClass(NAMESPACE + "State"));
+                    .getOntClass(NAMESPACE + "STATE"));
 
                 while (individualIterator.hasNext()) {
                     final Individual individual = (Individual) individualIterator.next();

@@ -16,7 +16,9 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.sparql;
+
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 
 import java.util.ArrayList;
 import java.util.List;

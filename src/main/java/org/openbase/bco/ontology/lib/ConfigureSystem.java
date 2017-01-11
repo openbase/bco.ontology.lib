@@ -55,9 +55,9 @@ public final class ConfigureSystem {
         UNIT("Unit"),
 
         /**
-         * State (class).
+         * STATE (class).
          */
-        STATE("State"),
+        STATE("STATE"),
 
         /**
          * ProviderService (class).
@@ -203,17 +203,32 @@ public final class ConfigureSystem {
     /**
      * Regular expressions for method/object searching.
      */
-    public enum RegEx {
+    public enum MethodRegEx {
 
         /**
-         * Pattern for object name: Data.
+         * Pattern for method name part.
          */
-        DATA("Data");
+        GET_VALUE("getValue"),
 
-        private final String regEx;
+        /**
+         * Pattern for method name part.
+         */
+        GET("get"),
 
-        RegEx(final String regEx) {
-            this.regEx = regEx;
+        /**
+         * Pattern for method name part.
+         */
+        STATE("STATE"),
+
+        /**
+         * Pattern for method name part.
+         */
+        GET_ID("getID");
+
+        private final String methodRegEx;
+
+        MethodRegEx(final String methodRegEx) {
+            this.methodRegEx = methodRegEx;
         }
 
         /**
@@ -222,7 +237,7 @@ public final class ConfigureSystem {
          * @return Name of an enum element as string.
          */
         public String getName() {
-            return this.regEx;
+            return this.methodRegEx;
         }
     }
 
@@ -266,7 +281,7 @@ public final class ConfigureSystem {
      * @param ontModel The ontology model.
      */
     @SuppressWarnings({"PMD.ExceptionAsFlowControl", "CHECKSTYLE.MultipleStringLiterals"})
-    public void initialTestConfig(final OntModel ontModel) {
+    public void initialTestConfig(final OntModel ontModel) throws NotAvailableException {
 
         //TODO if null -> list all classes
 

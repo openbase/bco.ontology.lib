@@ -17,9 +17,10 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

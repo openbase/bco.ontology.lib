@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.TripleArrayList;
+import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 
 import java.util.List;
 

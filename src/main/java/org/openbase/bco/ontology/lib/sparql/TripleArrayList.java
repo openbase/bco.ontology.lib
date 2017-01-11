@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.sparql;
 
 /**
  * @author agatting on 23.12.16.

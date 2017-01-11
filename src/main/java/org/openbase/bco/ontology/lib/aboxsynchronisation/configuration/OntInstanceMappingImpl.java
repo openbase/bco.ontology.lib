@@ -22,9 +22,10 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.RegistryPool;
-import org.openbase.bco.ontology.lib.RemotePool;
-import org.openbase.bco.ontology.lib.TripleArrayList;
+import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
+import org.openbase.bco.ontology.lib.datapool.RegistryPool;
+import org.openbase.bco.ontology.lib.datapool.RemotePool;
+import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
@@ -148,7 +149,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
                 final String unitId = unitConfig.getId();
                 final UnitRemote unitRemote = RemotePool.getUnitRemoteByUnitConfig(unitConfig);
-                final Set<Object> objectSet = RemotePool.getMethodObjectsByUnitRemote(unitRemote,
+                final Set<Object> objectSet = ReflectObjectPool.getMethodByClassObject(unitRemote,
                         ConfigureSystem.GET_PATTERN_STATE);
 
                 for (final Object object : objectSet) {
