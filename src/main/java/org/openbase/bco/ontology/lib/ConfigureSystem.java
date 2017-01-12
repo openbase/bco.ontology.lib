@@ -27,8 +27,6 @@ import org.apache.jena.ontology.OntModel;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
  * ontology-processing-classes.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public final class ConfigureSystem {
 
     /**
@@ -223,7 +222,17 @@ public final class ConfigureSystem {
         /**
          * Pattern for method name part.
          */
-        GET_ID("getID");
+        GET_ID("getID"),
+
+        /**
+         * Pattern for method name part.
+         */
+        GET_TIMESTAMP("getTimeStamp"),
+
+        /**
+         * Pattern for method name part.
+         */
+        DATA_UNIT("DataUnit");
 
         private final String methodRegEx;
 
@@ -279,9 +288,10 @@ public final class ConfigureSystem {
      * Method tests configurations.
      *
      * @param ontModel The ontology model.
+     * @throws CouldNotPerformException CouldNotPerformException.
      */
-    @SuppressWarnings({"PMD.ExceptionAsFlowControl", "CHECKSTYLE.MultipleStringLiterals"})
-    public void initialTestConfig(final OntModel ontModel) throws NotAvailableException {
+    @SuppressWarnings("PMD.ExceptionAsFlowControl")
+    public void initialTestConfig(final OntModel ontModel) throws CouldNotPerformException {
 
         //TODO if null -> list all classes
 
@@ -325,7 +335,7 @@ public final class ConfigureSystem {
 
             MultiException.checkAndThrow("Could not process all ontology participants correctly!", exceptionStack);
         }  catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            throw new CouldNotPerformException("Cannot perform reflection!", e);
         }
 
     }

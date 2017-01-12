@@ -27,9 +27,15 @@ import org.openbase.bco.ontology.lib.datapool.RegistryPool;
 import org.openbase.bco.ontology.lib.datapool.RemotePool;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
+import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +47,8 @@ import java.util.Set;
  * @author agatting on 23.12.16.
  */
 public class OntInstanceMappingImpl extends OntInstanceInspection implements OntInstanceMapping {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
     //TODO exception handling
 
@@ -149,18 +157,22 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
                 final String unitId = unitConfig.getId();
                 final UnitRemote unitRemote = RemotePool.getUnitRemoteByUnitConfig(unitConfig);
-                final Set<Object> objectSet = ReflectObjectPool.getMethodByClassObject(unitRemote,
-                        ConfigureSystem.GET_PATTERN_STATE);
+                final Set<Method> methodSet;
+                try {
+                    methodSet = ReflectObjectPool.getMethodSetByRegEx(unitRemote,
+                            ConfigureSystem.GET_PATTERN_STATE);
+                    for (final Method method : methodSet) {
+                        final String objectStateName = method.getClass().getName().toLowerCase();
 
-                for (final Object object : objectSet) {
-                    final String objectStateName = object.getClass().getName().toLowerCase();
-
-                    for (final OntClass ontClass : ontClassSet) {
-                        if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
-                            tripleArrayLists.add(new TripleArrayList(unitId
-                                    , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
+                        for (final OntClass ontClass : ontClassSet) {
+                            if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
+                                tripleArrayLists.add(new TripleArrayList(unitId
+                                        , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
+                            }
                         }
                     }
+                } catch (CouldNotPerformException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
             }
         }

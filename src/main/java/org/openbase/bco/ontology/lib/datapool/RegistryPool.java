@@ -50,6 +50,8 @@ public interface RegistryPool {
     static UnitRegistry getUnitRegistry() {
 
         UnitRegistry unitRegistry = null;
+//        Units.getUnit()
+//        Registries.getUnitRegistry().addDataObserver();
 
         try {
             unitRegistry = CachedUnitRegistryRemote.getRegistry();
