@@ -30,6 +30,7 @@ import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,7 +59,6 @@ public class StateChange implements Observer {
     public ColorableLightRemote test() {
         ColorableLightRemote remote = new ColorableLightRemote();
         try {
-//            remote.initById("0008d85b-8bf1-4290-8d78-4e8aebaf1c77");
             remote.initById("0b26889b-ff0a-4ba0-98ac-51a481c6b559");
             remote.activate();
             remote.waitForData();
@@ -70,22 +70,17 @@ public class StateChange implements Observer {
 
     }
 
-    private String getUnitID(final Object remoteData) throws CouldNotPerformException {
+    private ServiceType[] getServiceTypes() {
 
-        try {
-            if (remoteData == null) {
-                throw new IllegalArgumentException("Cause parameter is null!");
-            }
+        final ServiceType[] serviceTypeArray = ServiceType.values();
 
-            final Method methodGetId = ReflectObjectPool.getMethodByName(remoteData
-                    , ConfigureSystem.MethodRegEx.GET_ID.getName());
-
-            return (String) methodGetId.invoke(remoteData, (Object[]) null);
-
-        } catch (IllegalArgumentException | InvocationTargetException | IllegalAccessException e) {
-            throw new CouldNotPerformException("Cannot get unit ID!", e);
+        for (ServiceType serviceType : serviceTypeArray) {
+            //TODO
         }
+
+        return serviceTypeArray;
     }
+
 
     private String getTimeStamp(final Object remoteData) throws CouldNotPerformException {
 
@@ -124,7 +119,7 @@ public class StateChange implements Observer {
         }
     }
 
-    private boolean remoteHasDataUnit(final Object remoteData) throws CouldNotPerformException  {
+    private boolean stateTypeHasDataUnit(final Object remoteData) throws CouldNotPerformException  {
 
         try {
             if (remoteData == null) {
@@ -136,64 +131,71 @@ public class StateChange implements Observer {
 
             for (Method methodStateType : methodSetStateType) {
 
-                final Method methodDataUnit = ReflectObjectPool.getMethodByRegEx(methodStateType
+                final boolean existDataUnitMethod = ReflectObjectPool.hasMethodByRegEx(methodStateType
                         , ConfigureSystem.MethodRegEx.DATA_UNIT.getName());
-                //TODO ...
+
+                if (existDataUnitMethod) {
+                    return true;
+                }
             }
 
             return false;
 
         } catch (IllegalArgumentException | CouldNotPerformException e) {
-            throw new CouldNotPerformException("", e);
+            throw new CouldNotPerformException("Cannot check availability of dataUnit method!", e);
         }
-
     }
-
-
 
     @Override
     public void update(final Observable observable, final Object remoteData) throws java.lang.Exception {
         GlobalCachedExecutorService.submit(() -> {
 
             //TODO implement logic, that updates changed stateValues only
-            //TODO test multiple reflection...
-
-//            System.out.println(((ColorableLightDataType.ColorableLightData) remoteData).);
-//            ((TemperatureSensorDataType.TemperatureSensorData) remoteData).getTemperatureState().
-
 
             try {
-                getUnitID(remoteData);
+                // get unitID
+                final Object unitId = ReflectObjectPool.getInvokedObj(remoteData
+                        , ConfigureSystem.MethodRegEx.GET_ID.getName());
+                System.out.println(unitId);
+
+                final Set<Object> objSetStateType = ReflectObjectPool.getInvokedObjSet(unitRemote
+                        , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+
+                // foreach stateType ...
+                for (Object objStateType : objSetStateType) {
+                    // get timeStamp
+                    final Object timeStamp = ReflectObjectPool.getInvokedObj(objStateType
+                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
+
+                    // get serviceType
+
+
+                }
+
+
+                Object o = ReflectObjectPool.getInvokedObj(remoteData, "getPowerState");
+                System.out.println(ReflectObjectPool.getInvokedObj(o, "getValue"));
+
+
+
+
+
+//                Method methodState = ReflectObjectPool.getMethodByName(remoteData, "getPowerState");
+//                System.out.println(methodState.invoke(remoteData));
+//                Method subMethod = ReflectObjectPool.getMethodByName(methodState.invoke(remoteData), "getValue");
+//                System.out.println(subMethod.invoke(methodState.invoke(remoteData)));
+
+
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
 
-//            final Set<Object> objectSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData,
-//                    ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
-//            try {
-//                if (objectSetStateType.isEmpty()) {
-//                    throw new CouldNotPerformException("Cannot perform update of state value, because "
-//                            + objectSetStateType.getClass().getTypeName() + " is empty!");
-//                } else {
-//                    for (final Object objectStateType : objectSetStateType) {
-//                        final Set<Object> objectSetStateValue = ReflectObjectPool.getMethodSetByRegEx(objectStateType
-//                                , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-//                        //TODO
-//                    }
-//                }
-//            } catch (CouldNotPerformException e) {
-//                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-//            }
 
-//            try {
-//                for (Object o : objectSetStateType) {
-//                    System.out.println(Arrays.toString(o.getClass().getMethods()));
-//                    Object objectMethod = o.getClass().getMethod("getValue").invoke(o);
-//                    System.out.println(objectMethod);
-//                }
-//            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-//                e.printStackTrace();
-//            }
+
+
+//            ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().
+//            ((TemperatureSensorDataType.TemperatureSensorData) remoteData).get
+
 
         });
 

@@ -22,6 +22,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,11 +45,30 @@ public interface ReflectObjectPool {
     Logger LOGGER = LoggerFactory.getLogger(ReflectObjectPool.class);
 
     /**
-     * Method reflects a method of a class object by the matching name.
+     * Method returns an invoked method of a class object by the matching name.
      *
      * @param object The class object, which contains the method.
      * @param methodName The name of the method.
      * @return The reflecting method object.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    static Object getInvokedObj(final Object object, final String methodName) throws CouldNotPerformException {
+
+        Method method = getMethodByName(object, methodName);
+
+        try {
+            return method.invoke(object);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new CouldNotPerformException("Could not invoke method!", e);
+        }
+    }
+
+    /**
+     * Method reflects a method of a class object by the matching name.
+     *
+     * @param object The class object, which contains the method.
+     * @param methodName The name of the method.
+     * @return The reflecting method.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static Method getMethodByName(final Object object, final String methodName) throws CouldNotPerformException {
@@ -58,16 +78,14 @@ public interface ReflectObjectPool {
                 throw new IllegalArgumentException("Cause parameter is null!");
             }
 
-            String methodNameBuf = methodName.toLowerCase(Locale.ENGLISH);
             Method[] methodArray = object.getClass().getMethods();
 
             for (Method method : methodArray) {
-                if (method.getName().equalsIgnoreCase(methodNameBuf)) {
+                if (method.getName().equalsIgnoreCase(methodName)) {
                     return method;
                 }
             }
-            throw new NoSuchMethodException("Cause cannot find method with name: "
-                    + methodName);
+            throw new NoSuchMethodException("Cause cannot find method with name: " + methodName);
         } catch (NoSuchMethodException | IllegalArgumentException e) {
             throw new CouldNotPerformException("Cannot perform reflection!", e);
         }
@@ -78,7 +96,7 @@ public interface ReflectObjectPool {
      *
      * @param object The class object, which contains the method.
      * @param regExEndsWith The name of the suffix.
-     * @return The reflecting method object.
+     * @return The reflecting method.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static Method getMethodByRegEx(final Object object, final String regExEndsWith) throws CouldNotPerformException {
@@ -111,13 +129,71 @@ public interface ReflectObjectPool {
     }
 
     /**
+     * Method checks if a method with the ending regular expression is existing.
+     *
+     * @param object The class object, which contains the method.
+     * @param regExEndsWith The name of the suffix.
+     * @return True, if match successful, false otherwise.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    static boolean hasMethodByRegEx(final Object object, final String regExEndsWith) throws CouldNotPerformException {
+
+        try {
+            if (object == null || regExEndsWith == null) {
+                throw new IllegalArgumentException("Cause parameter is null!");
+            }
+
+            String methodNameBuf = regExEndsWith.toLowerCase(Locale.ENGLISH);
+            Method[] methodArray = object.getClass().getMethods();
+
+            for (Method method : methodArray) {
+                if (method.getName().toLowerCase().endsWith(methodNameBuf)) {
+                    return true;
+                }
+            }
+
+            return false;
+
+        } catch (IllegalArgumentException e) {
+            throw new CouldNotPerformException("Cannot perform reflection!", e);
+        }
+    }
+
+    /**
+     * Method returns an invoked method set, which are matching with the regular expressions.
+     *
+     * @param object The class object, which contains the method(s).
+     * @param regExStartsWith Beginning expression part of the method name.
+     * @param regExEndsWith Ending expression part of the method name.
+     * @return Set of invoked objects.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    static Set<Object> getInvokedObjSet(final Object object, final String regExStartsWith,
+                                        final String regExEndsWith) throws CouldNotPerformException {
+
+        Set<Method> methodSet = getMethodSetByRegEx(object, regExStartsWith, regExEndsWith);
+        Set<Object> objectSet = new HashSet<>();
+
+        try {
+            for (Method method : methodSet) {
+                objectSet.add(method.invoke(object));
+            }
+
+            return objectSet;
+
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new CouldNotPerformException("Could not invoke methods!", e);
+        }
+    }
+
+    /**
      * Method returns a set of method(s) of a class object (reflection). The set of methodObject(s) is
      * selected by matches with the delivered regular expressions.
      *
      * @param object The class object, which contains the method(s).
      * @param regExStartsWith Beginning expression part of the method name.
      * @param regExEndsWith Ending expression part of the method name.
-     * @return Set of objects.
+     * @return Set of methods.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static Set<Method> getMethodSetByRegEx(final Object object, final String regExStartsWith,
@@ -155,7 +231,7 @@ public interface ReflectObjectPool {
      *
      * @param object The class object, which contains the method(s).
      * @param regEx Regular expression to find the method (method name). Better success if detailed.
-     * @return Set of objects.
+     * @return Set of methods.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static Set<Method> getMethodSetByRegEx(final Object object, final String regEx)
