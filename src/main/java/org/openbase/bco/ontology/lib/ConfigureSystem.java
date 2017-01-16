@@ -227,12 +227,7 @@ public final class ConfigureSystem {
         /**
          * Pattern for method name part.
          */
-        GET_TIMESTAMP("getTimeStamp"),
-
-        /**
-         * Pattern for method name part.
-         */
-        DATA_UNIT("DataUnit");
+        GET_TIMESTAMP("getTimeStamp");
 
         private final String methodRegEx;
 

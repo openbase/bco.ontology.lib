@@ -48,7 +48,7 @@ public interface ReflectObjectPool {
      * Method returns an invoked method of a class object by the matching name.
      *
      * @param object The class object, which contains the method.
-     * @param methodName The name of the method.
+     * @param methodName The name of the method. Ignores Case.
      * @return The reflecting method object.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -67,7 +67,7 @@ public interface ReflectObjectPool {
      * Method reflects a method of a class object by the matching name.
      *
      * @param object The class object, which contains the method.
-     * @param methodName The name of the method.
+     * @param methodName The name of the method. Ignores Case.
      * @return The reflecting method.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -95,7 +95,7 @@ public interface ReflectObjectPool {
      * Method reflects a method of a class object by the suffix.
      *
      * @param object The class object, which contains the method.
-     * @param regExEndsWith The name of the suffix.
+     * @param regExEndsWith The name of the suffix.  Is set to lowercase.
      * @return The reflecting method.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -132,7 +132,7 @@ public interface ReflectObjectPool {
      * Method checks if a method with the ending regular expression is existing.
      *
      * @param object The class object, which contains the method.
-     * @param regExEndsWith The name of the suffix.
+     * @param regExEndsWith The name of the suffix. Is set to lowercase.
      * @return True, if match successful, false otherwise.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -163,8 +163,8 @@ public interface ReflectObjectPool {
      * Method returns an invoked method set, which are matching with the regular expressions.
      *
      * @param object The class object, which contains the method(s).
-     * @param regExStartsWith Beginning expression part of the method name.
-     * @param regExEndsWith Ending expression part of the method name.
+     * @param regExStartsWith Beginning expression part of the method name. Is set to lowercase.
+     * @param regExEndsWith Ending expression part of the method name. Is set to lowercase.
      * @return Set of invoked objects.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -191,8 +191,8 @@ public interface ReflectObjectPool {
      * selected by matches with the delivered regular expressions.
      *
      * @param object The class object, which contains the method(s).
-     * @param regExStartsWith Beginning expression part of the method name.
-     * @param regExEndsWith Ending expression part of the method name.
+     * @param regExStartsWith Beginning expression part of the method name. Is set to lowercase.
+     * @param regExEndsWith Ending expression part of the method name. Is set to lowercase.
      * @return Set of methods.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
@@ -230,7 +230,7 @@ public interface ReflectObjectPool {
      * selected by matches with the delivered regular expression.
      *
      * @param object The class object, which contains the method(s).
-     * @param regEx Regular expression to find the method (method name). Better success if detailed.
+     * @param regEx Regular expression to find the method (method name). Is set to lowercase.
      * @return Set of methods.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
