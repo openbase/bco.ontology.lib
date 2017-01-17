@@ -19,11 +19,13 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import com.google.protobuf.Descriptors;
-import org.openbase.bco.dal.remote.unit.BatteryRemote;
 import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
+import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
+import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Observable;
@@ -35,29 +37,51 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 /**
  * @author agatting on 09.01.17.
  */
-public class StateObserver implements Observer {
+public class StateObservation implements Observer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StateObserver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final Map<String, String> serviceTypeMap = new HashMap<>();
+    private static String remoteUnitId = "";
+    private static int obsCount = 0; //TODO find better way to set unique observer name
+    private static List<TripleArrayList> tripleArrayListBuf = new ArrayList<>();
 
-    public StateObserver() {
+    public StateObservation(UnitRemote unitRemote) {
 
-        ColorableLightRemote remote = test();
-        remote.addDataObserver(this);
+        initServiceTypeMap();
+//        ColorableLightRemote remote = test();
 
-        buildServiceTypeMap();
+        // get unitID
+        try {
+            remoteUnitId = (String) unitRemote.getId();
+            System.out.println(remoteUnitId);
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
 
+        unitRemote.addDataObserver(this);
     }
 
-    private void buildServiceTypeMap() {
+    private String getObsInstanceName() {
+
+        final String obsInstanceName = "O" + remoteUnitId + obsCount;
+        ++obsCount;
+
+        return obsInstanceName;
+    }
+
+    //TODO swap out...
+    private void initServiceTypeMap() {
         for (final ServiceType serviceType : ServiceType.values()) {
             final String serviceTypeName = serviceType.name();
             final String reducedServiceTypeName = serviceTypeName.toLowerCase()
@@ -108,11 +132,11 @@ public class StateObserver implements Observer {
                 throw new IllegalArgumentException("Cause String is null!");
             }
             // standardized string to allow comparison
-            String stateTypebuf = methodStateTypeName.toLowerCase()
+            final String stateTypeBuf = methodStateTypeName.toLowerCase()
                     .replaceFirst(ConfigureSystem.MethodRegEx.GET.getName(), "");
 
             for (final String serviceTypeName : serviceTypeMap.keySet()) {
-                if (serviceTypeName.contains(stateTypebuf)) {
+                if (serviceTypeName.contains(stateTypeBuf)) {
                     // successful compared - return correct serviceType (ontology individual name)
                     return serviceTypeMap.get(serviceTypeName);
                 }
@@ -126,22 +150,83 @@ public class StateObserver implements Observer {
 
     }
 
+    private List<TripleArrayList> addTripleHasUnitId(final List<TripleArrayList> tripleArrayLists
+            , final String subject, final String object) {
+
+        final String predicate = ConfigureSystem.OntProp.UNIT_ID.getName();
+
+        // add triple: observation - hasUnitId - unit
+        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+
+        return tripleArrayLists;
+    }
+
+    private List<TripleArrayList> addTripleHasTimeStamp(final List<TripleArrayList> tripleArrayLists
+            , final String subject, final String object) {
+
+        final String predicate = ConfigureSystem.OntProp.TIME_STAMP.getName();
+
+        // add triple: observation - hasTimeStamp - timeStamp
+        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+
+        return tripleArrayLists;
+    }
+
+    private List<TripleArrayList> addTripleHasProviderService(final List<TripleArrayList> tripleArrayLists
+            , final String subject, final String object) {
+
+        final String predicate = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
+
+        // add triple: observation - hasProviderService - providerService
+        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+
+        return tripleArrayLists;
+    }
+
+    private List<TripleArrayList> addTripleHasStateValue(final List<TripleArrayList> tripleArrayLists
+            , final String subject, final String object) {
+
+        final String predicate = ConfigureSystem.OntProp.STATE_VALUE.getName();
+
+        // add triple: observation - hasStateValue - stateValue
+        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+
+        return tripleArrayLists;
+    }
+
+    protected void setTripleArray(final List<TripleArrayList> tripleArrayLists) {
+        if (tripleArrayListBuf.isEmpty()) {
+            tripleArrayListBuf = tripleArrayLists;
+        } else {
+            tripleArrayListBuf.addAll(tripleArrayLists);
+            LOGGER.warn("List is not empty ...");
+        }
+    }
+
     @Override
     public void update(final Observable observable, final Object remoteData) throws java.lang.Exception {
-        GlobalCachedExecutorService.submit(() -> {
-
+        Future future = GlobalCachedExecutorService.submit(() -> {
+            System.out.println("test");
             //TODO implement logic, that updates changed stateValues only
 
             try {
-                // get unitID
-                final Object unitId = ReflectObjectPool.getInvokedObj(remoteData
-                        , ConfigureSystem.MethodRegEx.GET_ID.getName());
 
+                List<TripleArrayList> tripleArrayLists = new ArrayList<>();
                 final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
                         , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
 
                 // foreach stateType ...
                 for (Method methodStateType : methodSetStateType) {
+
+                    // every observation point represents an serviceType respectively stateValue
+                    final String subject = getObsInstanceName();
+
+                    //### unitID triple ###\\
+                    tripleArrayLists = addTripleHasUnitId(tripleArrayLists, subject, remoteUnitId);
+
+                    //### serviceType triple ###\\
+                    final String serviceTypeInstance = getServiceTypeMapping(methodStateType.getName());
+                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, serviceTypeInstance);
 
                     // get method as invoked object
                     Object stateTypeObj = null;
@@ -151,22 +236,24 @@ public class StateObserver implements Observer {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
 
-                    // get timeStamp
-                    final Object timeStampObj = ReflectObjectPool.getInvokedObj(stateTypeObj
+                    //### timeStamp triple ###\\
+                    final String timeStampObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
                             , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
+                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, timeStampObj);
 
-                    // get serviceType
-                    final String serviceTypeIndividual = getServiceTypeMapping(methodStateType.getName());
 
-                    // get stateValue
+                    //### stateValue triple ###\\
                     final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
 
                     if (hasDataUnit) {
                         //TODO need access to data...
                     } else {
-                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
+                        final String stateValueObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
                                 , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
+                        tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, stateValueObj);
                     }
+
+                    setTripleArray(tripleArrayLists);
                 }
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -175,5 +262,12 @@ public class StateObserver implements Observer {
 //            ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
         });
+
+        GlobalCachedExecutorService.submit(() -> {
+            if (future.isDone()) {
+                System.out.println("test fertig");
+            }
+        });
+
     }
 }

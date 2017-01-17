@@ -56,7 +56,7 @@ public final class ConfigureSystem {
         /**
          * STATE (class).
          */
-        STATE("STATE"),
+        STATE("State"),
 
         /**
          * ProviderService (class).

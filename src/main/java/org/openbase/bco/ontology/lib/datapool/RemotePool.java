@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.datapool;
 
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
+import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -30,6 +31,7 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 09.01.17.
@@ -78,11 +80,16 @@ public interface RemotePool {
         try {
             for (UnitConfig unitConfig : unitConfigList) {
                 try {
-                    unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
-                    unitRemote.activate();
-                    unitRemote.waitForData();
-
-                    unitRemoteList.add(unitRemote);
+                    if (UnitConfigProcessor.isDalUnit(unitConfig)) {
+                        unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
+                        unitRemote.activate();
+//                        unitRemote.waitForData();
+                        unitRemote.waitForData(1, TimeUnit.SECONDS);
+                        System.out.println(unitConfig.getType());
+                        if (unitRemote.isDataAvailable()) {
+                            unitRemoteList.add(unitRemote);
+                        }
+                    }
                 } catch (InterruptedException | CouldNotPerformException e) {
                     // maybe all unitRemotes fail, because of one reason -> discreet behavior by quantity constraint
                     if (MultiException.size(exceptionStack) < 10) {

@@ -20,22 +20,20 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.datapool.RegistryPool;
-import org.openbase.bco.ontology.lib.datapool.RemotePool;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -153,26 +151,18 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
             if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
 
-                //TODO take new method of dal service interface
-
                 final String unitId = unitConfig.getId();
-                final UnitRemote unitRemote = RemotePool.getUnitRemoteByUnitConfig(unitConfig);
-                final Set<Method> methodSet;
-                try {
-                    methodSet = ReflectObjectPool.getMethodSetByRegEx(unitRemote,
-                            ConfigureSystem.GET_PATTERN_STATE);
-                    for (final Method method : methodSet) {
-                        final String objectStateName = method.getClass().getName().toLowerCase();
 
-                        for (final OntClass ontClass : ontClassSet) {
-                            if (objectStateName.contains(ontClass.getLocalName().toLowerCase())) {
-                                tripleArrayLists.add(new TripleArrayList(unitId
-                                        , ConfigureSystem.OntExpr.A.getName(), ontClass.getLocalName()));
-                            }
-                        }
+                //TODO check availability (not dal only), compare with ontology
+                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                    try {
+                        final String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
+
+                        tripleArrayLists.add(new TripleArrayList(unitId
+                                , ConfigureSystem.OntExpr.A.getName(), serviceState));
+                    } catch (NotAvailableException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
-                } catch (CouldNotPerformException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
             }
         }
