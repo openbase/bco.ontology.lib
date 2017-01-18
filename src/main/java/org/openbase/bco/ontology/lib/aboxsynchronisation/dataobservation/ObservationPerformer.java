@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.datapool.RegistryPool;
 import org.openbase.bco.ontology.lib.datapool.RemotePool;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
@@ -45,8 +46,8 @@ public class ObservationPerformer {
         final List<UnitRemote> unitRemoteList = RemotePool.getAllUnitRemotes(unitConfigListBuf);
         for (UnitRemote unitRemote : unitRemoteList) {
             StateObservation stateObservation = new StateObservation(unitRemote);
-
-
         }
+
+
     }
 }

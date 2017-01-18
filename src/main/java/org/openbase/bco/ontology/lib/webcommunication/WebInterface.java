@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib;
+package org.openbase.bco.ontology.lib.webcommunication;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -31,12 +31,15 @@ import org.apache.jena.query.DatasetAccessor;
 import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.openbase.bco.ontology.lib.OntologyManagerController;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +67,7 @@ public class WebInterface {
     /**
      * WebInterface.
      */
-    public WebInterface() {
+    protected WebInterface() {
 
         // ask query via remote SPARQL
 //        final Query query = QueryFactory.create(QUERY);
@@ -98,14 +101,21 @@ public class WebInterface {
 
     }
 
-    private OntModel getOntology() {
+    protected OntModel getOntology() {
         // access to fuseki server and download ontology model
         final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(DATA_URI);
         final Model model = datasetAccessor.getModel();
         return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
     }
 
-    private boolean updateSPARQL(final String updateString) {
+    /**
+     * Method processes a sparql update and returns the response status code of the http request.
+     *
+     * @param updateString The sparql update string.
+     * @return The status code of the http request.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    protected int sparqlUpdate(final String updateString) throws CouldNotPerformException {
         try {
             final HttpClient httpclient = HttpClients.createDefault();
             final HttpPost httpPost = new HttpPost(UPDATE_URI);
@@ -115,7 +125,7 @@ public class WebInterface {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             final HttpResponse httpResponse = httpclient.execute(httpPost);
 
-            return httpResponse.getStatusLine().getStatusCode() == HTTP_SUCCESS_CODE;
+            return httpResponse.getStatusLine().getStatusCode();
 
 //            HttpEntity httpEntity = httpResponse.getEntity();
 //
@@ -129,10 +139,20 @@ public class WebInterface {
 //                }
 //            }
         } catch (IOException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            throw new CouldNotPerformException("Could not get http response!", e);
         }
-
-        return false;
     }
+
+    /**
+     * Method checks a status code of a http request.
+     *
+     * @param statusCode The status code.
+     * @return True, if success code, otherwise false.
+     */
+    protected boolean httpRequestSuccess(final int statusCode) {
+
+        return String.valueOf(statusCode).startsWith("2");
+    }
+
     //CHECKSTYLE.ON: MultipleStringLiterals
 }

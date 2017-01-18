@@ -33,7 +33,7 @@ public interface OntInstanceMapping {
      * @param ontModel The ontology model.
      * @return A list with triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfUnitTypes(final OntModel ontModel);
+    List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel);
 
     /**
      * Method returns a list of triples, which contains the missing units (at stateTypes) in the ontology.

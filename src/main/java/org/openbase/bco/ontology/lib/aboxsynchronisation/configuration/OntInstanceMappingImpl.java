@@ -54,7 +54,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfUnitTypes(final OntModel ontModel) {
+    public List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel) {
 
         // a set of unitConfigs, which are missing in the ontology
         final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, RegistryPool.getUnitConfigList());

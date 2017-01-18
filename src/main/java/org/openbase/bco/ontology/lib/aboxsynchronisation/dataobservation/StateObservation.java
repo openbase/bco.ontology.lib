@@ -23,6 +23,7 @@ import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
+import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -48,7 +49,7 @@ import java.util.concurrent.Future;
 /**
  * @author agatting on 09.01.17.
  */
-public class StateObservation implements Observer {
+public class StateObservation extends SparqlUpdateExpression implements Observer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final Map<String, String> serviceTypeMap = new HashMap<>();
@@ -64,12 +65,14 @@ public class StateObservation implements Observer {
         // get unitID
         try {
             remoteUnitId = (String) unitRemote.getId();
+//            remoteUnitId = remote.getId();
             System.out.println(remoteUnitId);
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
         unitRemote.addDataObserver(this);
+//        remote.addDataObserver(this);
     }
 
     private String getObsInstanceName() {
@@ -194,7 +197,7 @@ public class StateObservation implements Observer {
         return tripleArrayLists;
     }
 
-    protected void setTripleArray(final List<TripleArrayList> tripleArrayLists) {
+    private void setTripleArray(final List<TripleArrayList> tripleArrayLists) {
         if (tripleArrayListBuf.isEmpty()) {
             tripleArrayListBuf = tripleArrayLists;
         } else {
@@ -206,11 +209,9 @@ public class StateObservation implements Observer {
     @Override
     public void update(final Observable observable, final Object remoteData) throws java.lang.Exception {
         Future future = GlobalCachedExecutorService.submit(() -> {
-            System.out.println("test");
             //TODO implement logic, that updates changed stateValues only
 
             try {
-
                 List<TripleArrayList> tripleArrayLists = new ArrayList<>();
                 final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
                         , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
@@ -228,46 +229,57 @@ public class StateObservation implements Observer {
                     final String serviceTypeInstance = getServiceTypeMapping(methodStateType.getName());
                     tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, serviceTypeInstance);
 
-                    // get method as invoked object
                     Object stateTypeObj = null;
                     try {
+                        // get method as invoked object
                         stateTypeObj = methodStateType.invoke(remoteData);
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
 
                     //### timeStamp triple ###\\
-                    final String timeStampObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
-                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
-                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, timeStampObj);
-
+//                    final String timeStampObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
+//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
+//                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, timeStampObj);
 
                     //### stateValue triple ###\\
                     final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
-
-                    if (hasDataUnit) {
+                    if (hasDataUnit) { //physical unit
                         //TODO need access to data...
                     } else {
-                        final String stateValueObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
+                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
                                 , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-                        tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, stateValueObj);
+                        final String stateValue = stateValueObj.toString();
+                        tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, stateValue);
                     }
-
-                    setTripleArray(tripleArrayLists);
                 }
+                setTripleArray(tripleArrayLists);
+
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+
+            final List<String> updateSparqlList = getSparqlUpdateInsertEx(tripleArrayListBuf);
+            for (final String sparqlUpdate : updateSparqlList) {
+                try {
+                    final int httpResponseCode = sparqlUpdate(sparqlUpdate);
+                    final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
+
+                    if (!httpSuccess) {
+                        System.out.println("fail");
+                        //TODO Buffer...
+                    } else {
+                        System.out.println("success");
+                    }
+                } catch (CouldNotPerformException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
             }
 
 //            ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
         });
 
-        GlobalCachedExecutorService.submit(() -> {
-            if (future.isDone()) {
-                System.out.println("test fertig");
-            }
-        });
 
     }
 }

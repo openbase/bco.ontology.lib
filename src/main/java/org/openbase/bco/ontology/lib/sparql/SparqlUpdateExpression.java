@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.sparql;
 
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author agatting on 23.12.16.
  */
-public class SparqlUpdateExpression {
+public class SparqlUpdateExpression extends WebInterface {
 
     /**
      * Method creates a list with sparql update expressions. Each list element is an valid update.
@@ -36,7 +37,7 @@ public class SparqlUpdateExpression {
      * @return A list of strings, which are update expressions.
      */
     @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
-    public List<String> getSparqlUpdateInsertEx(final List<TripleArrayList> tripleArrayLists) {
+    protected List<String> getSparqlUpdateInsertEx(final List<TripleArrayList> tripleArrayLists) {
 
         final List<String> expressionList = new ArrayList<>();
 
@@ -88,7 +89,7 @@ public class SparqlUpdateExpression {
      * @return A sparql update string to delete a triple.
      */
     @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
-    public String getSparqlUpdateDeleteEx(final TripleArrayList tripleArrayList) {
+    protected String getSparqlUpdateDeleteEx(final TripleArrayList tripleArrayList) {
 
         //TODO maybe special safety handling, because if s, p, o are all null => delete whole triple store
 

@@ -48,7 +48,6 @@ public class OntInstanceInspection {
         final Set<UnitConfig> missingUnitConfigSet = new HashSet<>();
         Set<String> ontUnitIndNameSet = new HashSet<>(); //Ind: individual
 
-
         // preparation: get all individuals of the class "Unit" which are currently in the model
         final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS
                 + ConfigureSystem.OntClass.UNIT.getName());
