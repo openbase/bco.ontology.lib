@@ -49,15 +49,17 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
     //TODO exception handling
+    //TODO add constructor with reusable java instances (e.g. ontClass, ...)?
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel) {
+    public List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel
+            , final List<UnitConfig> unitConfigList) {
 
         // a set of unitConfigs, which are missing in the ontology
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, RegistryPool.getUnitConfigList());
+        final List<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, unitConfigList);
         // the ontSuperClass of the ontology to get all unit (sub)classes
         final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
 
@@ -73,10 +75,26 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel) {
+    public List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel
+            , final List<UnitConfig> unitConfigList) {
 
-        // a set of unitConfigs, which are missing in the ontology
-        final Set<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, RegistryPool.getUnitConfigList());
+        // the ontSuperClass of the ontology to get all unit (sub)classes
+        final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
+
+        Set<OntClass> ontClassSet = new HashSet<>();
+        // the set with all ontology unitType classes
+        ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+
+        // the triples to insert the missing units into the ontology
+        return buildOntTripleOfUnitTypes(ontClassSet, unitConfigList);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel
+            , final List<UnitConfig> unitConfigList) {
 
         // the ontSuperClass of the ontology to get all state (sub)classes
         final OntClass ontClass = ontModel.getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.STATE.getName());
@@ -85,7 +103,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         // the set with all ontology state classes
         ontClassSet = listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
-        return buildOntTripleOfStates(ontClassSet, unitConfigSet);
+        return buildOntTripleOfStates(ontClassSet, unitConfigList);
     }
 
     /**
@@ -104,8 +122,8 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return buildOntTripleOfProviderServices(ontClass, serviceTypeSet);
     }
 
-    private List<TripleArrayList> buildOntTripleOfUnitTypes(final Set<OntClass> ontClassSet,
-                                                            final Set<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildOntTripleOfUnitTypes(final Set<OntClass> ontClassSet
+            , final List<UnitConfig> unitConfigSet) {
 
         // alternative a list of strings (IDs) as mapValue and an unique key (unitType)
         final Map<String, String> unitTypeUnitIdMap = new HashMap<>();
@@ -142,8 +160,8 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> buildOntTripleOfStates(final Set<OntClass> ontClassSet,
-                                                         final Set<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildOntTripleOfStates(final Set<OntClass> ontClassSet
+            , final List<UnitConfig> unitConfigSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
@@ -156,6 +174,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
                 //TODO check availability (not dal only), compare with ontology
                 for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
                     try {
+                        //TODO maybe compare with ontology ontClass State
                         final String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
 
                         tripleArrayLists.add(new TripleArrayList(unitId
@@ -170,8 +189,8 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass,
-                                                                   final Set<ServiceType> serviceTypeSet) {
+    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass
+            , final Set<ServiceType> serviceTypeSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 

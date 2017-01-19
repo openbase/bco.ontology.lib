@@ -39,11 +39,11 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getPropertyTripleOfAllUnitConfigs() {
+    public List<TripleArrayList> getPropertyTripleOfUnitConfigs(final List<UnitConfig> unitConfigList) {
 
         final List<TripleArrayList> tripleArrayInsertLists = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : RegistryPool.getUnitConfigList()) {
+        for (final UnitConfig unitConfig : unitConfigList) {
             tripleArrayInsertLists.addAll(getPropertyTripleOfSingleUnitConfig(unitConfig));
         }
 

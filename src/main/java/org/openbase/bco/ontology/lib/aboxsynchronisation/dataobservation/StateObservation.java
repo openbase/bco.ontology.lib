@@ -208,7 +208,7 @@ public class StateObservation extends SparqlUpdateExpression implements Observer
 
     @Override
     public void update(final Observable observable, final Object remoteData) throws java.lang.Exception {
-        Future future = GlobalCachedExecutorService.submit(() -> {
+        GlobalCachedExecutorService.submit(() -> {
             //TODO implement logic, that updates changed stateValues only
 
             try {

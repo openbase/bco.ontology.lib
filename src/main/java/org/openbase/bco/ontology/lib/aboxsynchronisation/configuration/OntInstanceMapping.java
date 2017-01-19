@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.List;
 
@@ -28,23 +29,51 @@ import java.util.List;
  */
 public interface OntInstanceMapping {
     /**
-     * Method returns a list of triples, which contains the missing unitTypes in the ontology.
+     * Method compares the unit(Config)s with the units (OntSuperClass Unit!) in the ontology model. The missing units
+     * are convert into triples and are stored in the returned list.
      *
      * @param ontModel The ontology model.
-     * @return A list with triple information.
+     * @param unitConfigList The unit(Config)s, which are compared with the existing unit (OntSuperClass Unit!)
+     *                       instances in the ontology.
+     * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel);
+    List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel
+            , final List<UnitConfig> unitConfigList);
 
     /**
-     * Method returns a list of triples, which contains the missing units (at stateTypes) in the ontology.
+     * Method converts the unit(Config)s into triples (OntSuperClass Unit!) and returns a triple list.
      *
      * @param ontModel The ontology model.
-     * @return A list with triple information.
+     * @param unitConfigList The unit(Config)s, which are convert into triples.
+     * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel);
+    List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList);
+
+    //TODO adapt inspection of units in context 'State' -> a unit can keep multiple states
+//    /**
+//     * Method compares the unit(Config)s with the units (OntSuperClass State!) in the ontology model. The missing units
+//     * are convert into triples and are stored in the returning list.
+//     *
+//     * @param ontModel The ontology model.
+//     * @param unitConfigList The unit(Config)s, which are compared with the existing unit (OntSuperClass State!)
+//     *                       instances in the ontology.
+//     * @return A list with triple information.
+//     */
+//    List<TripleArrayList> getMissingOntTripleOfStatesAfterInspection(final OntModel ontModel
+//            , final List<UnitConfig> unitConfigList);
 
     /**
-     * Method returns a list of triples, which contains the missing providerServices in the ontology.
+     * Method converts the unit(Config)s into triples (OntSuperClass State!) and returns a triple list.
+     *
+     * @param ontModel The ontology model.
+     * @param unitConfigList The unit(Config)s, which are convert into triples.
+     * @return A list with triple information.
+     */
+    List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel, final List<UnitConfig> unitConfigList);
+
+    /**
+     * Method compares the registry providerServices with the providerServices (OntSuperClass ProviderService!) in the
+     * ontology model. The missing providerServices are convert into triples and are stored in the returned list.
      *
      * @param ontModel The ontology model.
      * @return A list with triple information.

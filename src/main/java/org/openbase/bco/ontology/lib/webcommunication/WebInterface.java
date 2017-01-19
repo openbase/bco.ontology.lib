@@ -51,7 +51,7 @@ public class WebInterface {
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
     private static final int HTTP_SUCCESS_CODE = 200;
     private static final String UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
-    private static final String DATA_URI = "http://localhost:3030/myAppFuseki/data";
+
 //    private static final String UPDATE =
 //            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
 //                    + "INSERT DATA { "
@@ -99,13 +99,6 @@ public class WebInterface {
 //        HttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 //        HttpOp.setDefaultHttpClient(httpclient);
 
-    }
-
-    protected OntModel getOntology() {
-        // access to fuseki server and download ontology model
-        final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(DATA_URI);
-        final Model model = datasetAccessor.getModel();
-        return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
     }
 
     /**

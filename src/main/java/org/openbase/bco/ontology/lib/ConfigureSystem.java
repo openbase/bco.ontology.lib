@@ -39,6 +39,16 @@ import org.slf4j.LoggerFactory;
 public final class ConfigureSystem {
 
     /**
+     * Data URI to the ontology model of the server. Contains full ontology (ABox & TBox)
+     */
+    public static final String SERVER_ONTOLOGY_URI = "http://localhost:3030/myAppFuseki/data";
+
+    /**
+     * Data URI to the ontology model of the server. Contains TBox only!
+     */
+    public static final String SERVER_ONTOLOGY_TBOX_URI = "http://localhost:3030/myAppFuseki/data";
+
+    /**
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";

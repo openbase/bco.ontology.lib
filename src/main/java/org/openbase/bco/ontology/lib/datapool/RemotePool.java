@@ -27,6 +27,7 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.state.EnablingStateType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
@@ -80,13 +81,16 @@ public interface RemotePool {
         try {
             for (UnitConfig unitConfig : unitConfigList) {
                 try {
-                    if (UnitConfigProcessor.isDalUnit(unitConfig)) {
+                    if (UnitConfigProcessor.isDalUnit(unitConfig) && (unitConfig.getEnablingState().getValue() == EnablingStateType.EnablingState.State.ENABLED)) {
                         unitRemote = UnitRemoteFactoryImpl.getInstance().newInitializedInstance(unitConfig);
                         unitRemote.activate();
 //                        unitRemote.waitForData();
-                        unitRemote.waitForData(1, TimeUnit.SECONDS);
-                        System.out.println(unitConfig.getType());
-                        if (unitRemote.isDataAvailable()) {
+                        unitRemote.waitForData(300, TimeUnit.MILLISECONDS);
+                        if (!unitRemote.isDataAvailable() || !unitRemote.isConnected()) {
+                            unitRemote.deactivate();
+                            unitRemote.shutdown();
+                        } else {
+                            System.out.println(unitConfig.getType());
                             unitRemoteList.add(unitRemote);
                         }
                     }

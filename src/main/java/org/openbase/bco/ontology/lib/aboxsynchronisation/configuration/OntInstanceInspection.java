@@ -25,6 +25,7 @@ import org.openbase.bco.ontology.lib.ConfigureSystem;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,9 +44,9 @@ public class OntInstanceInspection {
      *
      * @return A set of missing unitConfigs (units) in the actual ontology model.
      */
-    protected Set<UnitConfig> inspectionOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
+    protected List<UnitConfig> inspectionOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
 
-        final Set<UnitConfig> missingUnitConfigSet = new HashSet<>();
+        final List<UnitConfig> missingUnitConfigSet = new ArrayList<>();
         Set<String> ontUnitIndNameSet = new HashSet<>(); //Ind: individual
 
         // preparation: get all individuals of the class "Unit" which are currently in the model
@@ -69,7 +70,7 @@ public class OntInstanceInspection {
     }
 
     /**
-     * Method compares all serviceTypes with actual serviceTypes in the ontology. Missing serviceTypes are listed.
+     * Method compares all registry serviceTypes with the serviceTypes in the ontology. Missing serviceTypes are listed.
      *
      * @param ontModel The actual ontology model.
      *
@@ -175,25 +176,6 @@ public class OntInstanceInspection {
         }
         return ontClassSet;
     }
-
-//    /**
-//     * Method inspects the availability of an individual in the ontology.
-//     *
-//     * @param ontModel The ontology model.
-//     * @param individualName The name of the individual (with or without namespace)
-//     *
-//     * @return Boolean with result true, if available and result false, if not available.
-//     */
-//    protected boolean isOntIndAvailable(final OntModel ontModel, String individualName) {
-//
-//        if (!individualName.startsWith(ConfigureSystem.NS)) {
-//            individualName = ConfigureSystem.NS + individualName;
-//        }
-//
-//        final Individual individual = ontModel.getIndividual(individualName);
-//
-//        return individual != null;
-//    }
 
     /**
      * Method inspects the availability of an individual in the ontology.

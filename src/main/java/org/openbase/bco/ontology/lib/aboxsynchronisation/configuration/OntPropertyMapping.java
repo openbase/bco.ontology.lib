@@ -30,15 +30,16 @@ public interface OntPropertyMapping {
 
     /**
      * Method returns a list of triples, which contains a single delete-triple to remove old properties and multiple
-     * insert-triple to add properties to the ontology. Here, all unitConfigs are processed.
+     * insert-triple to add properties to the ontology.
      *
+     * @param unitConfigList The unitConfig list.
      * @return A list with triple information.
      */
-    List<TripleArrayList> getPropertyTripleOfAllUnitConfigs();
+    List<TripleArrayList> getPropertyTripleOfUnitConfigs(final List<UnitConfig> unitConfigList);
 
     /**
      * Method returns a list of triples, which contains a single delete-triple to remove old properties and multiple
-     * insert-triple to add properties to the ontology. Here, a single unitConfig is processed.
+     * insert-triple to add properties to the ontology.
      *
      * @param unitConfig The unitConfig, which should be synchronized.
      * @return A list with triple information.
