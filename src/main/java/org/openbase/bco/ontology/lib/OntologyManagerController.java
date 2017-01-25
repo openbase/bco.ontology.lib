@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.ObservationPerformer;
+import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.testcode.CreateOntology;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
@@ -41,6 +42,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
+
+        UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
 
         final CreateOntology ontology = new CreateOntology();
         ontology.loadOntology("src/Ontology3.owl");

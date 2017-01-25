@@ -22,11 +22,16 @@ import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.datapool.RegistryPool;
 import org.openbase.bco.ontology.lib.datapool.RemotePool;
+import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
+import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.domotic.unit.UnitTemplateType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 17.01.17.
@@ -34,8 +39,8 @@ import java.util.List;
 public class ObservationPerformer {
 
     public ObservationPerformer() {
-
-        final List<UnitConfig> unitConfigList = RegistryPool.getUnitConfigList();
+//        final List<UnitConfig> unitConfigList = RegistryPool.getUnitConfigList();
+        final List<UnitConfig> unitConfigList = RegistryPool.getUnitConfigListByUnitType(UnitTemplateType.UnitTemplate.UnitType.COLORABLE_LIGHT);
         final List<UnitConfig> unitConfigListBuf = new ArrayList<>();
 
         for (UnitConfig unitConfig : unitConfigList) {
@@ -47,7 +52,21 @@ public class ObservationPerformer {
         for (UnitRemote unitRemote : unitRemoteList) {
             StateObservation stateObservation = new StateObservation(unitRemote);
         }
-
-
     }
+
+//    private void blah(final List<UnitConfig> unitConfigList) {
+//
+//        for (final UnitConfig unitConfig : unitConfigList) {
+//            try {
+//                final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
+//                unitRemote.activate();
+//                unitRemote.waitForData(300, TimeUnit.MILLISECONDS);
+//
+//                StateObservation stateObservation = new StateObservation(unitRemote);
+//            } catch (InterruptedException | CouldNotPerformException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+
 }

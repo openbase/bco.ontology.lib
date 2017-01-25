@@ -122,6 +122,34 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return buildOntTripleOfProviderServices(ontClass, serviceTypeSet);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList) {
+
+        final List<TripleArrayList> tripleArrayDeleteLists = new ArrayList<>();
+
+        for (final UnitConfig unitConfig : unitConfigList) {
+            tripleArrayDeleteLists.add(getDeleteTripleOfUnitsAndStates(unitConfig));
+        }
+
+        return tripleArrayDeleteLists;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TripleArrayList getDeleteTripleOfUnitsAndStates(UnitConfig unitConfig) {
+
+        // s, p, o pattern
+        final String subject = unitConfig.getId();
+        final String predicate = ConfigureSystem.OntExpr.A.getName();
+
+        return new TripleArrayList(subject, predicate, null);
+    }
+
     private List<TripleArrayList> buildOntTripleOfUnitTypes(final Set<OntClass> ontClassSet
             , final List<UnitConfig> unitConfigSet) {
 

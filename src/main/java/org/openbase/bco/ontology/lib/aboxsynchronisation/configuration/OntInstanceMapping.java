@@ -79,4 +79,21 @@ public interface OntInstanceMapping {
      * @return A list with triple information.
      */
     List<TripleArrayList> getMissingOntTripleOfProviderServices(final OntModel ontModel);
+
+    /**
+     * Method returns a list of triples, which contains delete triple to remove the unitConfigs instances in the
+     * ontology.
+     *
+     * @param unitConfigList The unitConfig list.
+     * @return A list with delete triple information.
+     */
+    List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList);
+
+    /**
+     * Method returns a list of triples, which contains delete triple to remove the unitConfig instance in the ontology.
+     *
+     * @param unitConfig The unitConfig.
+     * @return A delete triple.
+     */
+    TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig);
 }

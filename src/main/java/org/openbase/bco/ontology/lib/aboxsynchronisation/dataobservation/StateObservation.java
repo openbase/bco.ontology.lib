@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
-import com.google.protobuf.Descriptors;
 import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
@@ -44,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 /**
  * @author agatting on 09.01.17.
@@ -103,8 +101,8 @@ public class StateObservation extends SparqlUpdateExpression implements Observer
             remote.activate();
             remote.waitForData();
 
-            for (Descriptors.FieldDescriptor fieldDescriptor : remote.getData().getAllFields().keySet()) {
-            }
+//            for (Descriptors.FieldDescriptor fieldDescriptor : remote.getData().getAllFields().keySet()) {
+//            }
 
         } catch (InterruptedException | CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -259,7 +257,7 @@ public class StateObservation extends SparqlUpdateExpression implements Observer
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
 
-            final List<String> updateSparqlList = getSparqlUpdateInsertEx(tripleArrayListBuf);
+            final List<String> updateSparqlList = getSparqlSingleUpdateInsertEx(tripleArrayListBuf);
             for (final String sparqlUpdate : updateSparqlList) {
                 try {
                     final int httpResponseCode = sparqlUpdate(sparqlUpdate);

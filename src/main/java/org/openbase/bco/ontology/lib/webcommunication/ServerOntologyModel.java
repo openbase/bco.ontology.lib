@@ -26,6 +26,7 @@ import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.jul.exception.CouldNotPerformException;
 
 /**
  * @author agatting on 19.01.17.
@@ -35,26 +36,36 @@ public interface ServerOntologyModel {
      * Method returns the full ontology model from the ontology server.
      *
      * @return The ontology model (ABox & TBox).
+     * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static OntModel getOntologyModel() {
-        // access to fuseki server and download ontology model
-        final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem.SERVER_ONTOLOGY_URI);
-        final Model model = datasetAccessor.getModel();
+    static OntModel getOntologyModel() throws CouldNotPerformException {
 
-        return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+        try {
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem.SERVER_ONTOLOGY_URI);
+            final Model model = datasetAccessor.getModel();
+
+            return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+        } catch (Exception e) {
+            throw new CouldNotPerformException("Could not get model from ontology server.", e);
+        }
     }
 
     /**
      * Method returns the TBox ontology model from the ontology server.
      *
      * @return The ontology model (TBox).
+     * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static OntModel getOntologyModelTBox() {
-        // access to fuseki server and download ontology model
-        final DatasetAccessor datasetAccessor = DatasetAccessorFactory
-                .createHTTP(ConfigureSystem.SERVER_ONTOLOGY_TBOX_URI);
-        final Model model = datasetAccessor.getModel();
+    static OntModel getOntologyModelTBox() throws CouldNotPerformException {
+        try {
+            // access to fuseki server and download ontology model
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory
+                    .createHTTP(ConfigureSystem.SERVER_ONTOLOGY_TBOX_URI);
+            final Model model = datasetAccessor.getModel();
 
-        return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+            return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+        } catch (Exception e) {
+            throw new CouldNotPerformException("Could not get model from ontology server.", e);
+        }
     }
 }

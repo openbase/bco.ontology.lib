@@ -87,8 +87,8 @@ public interface RemotePool {
 //                        unitRemote.waitForData();
                         unitRemote.waitForData(300, TimeUnit.MILLISECONDS);
                         if (!unitRemote.isDataAvailable() || !unitRemote.isConnected()) {
-                            unitRemote.deactivate();
                             unitRemote.shutdown();
+                            unitRemote.deactivate();
                         } else {
                             System.out.println(unitConfig.getType());
                             unitRemoteList.add(unitRemote);
