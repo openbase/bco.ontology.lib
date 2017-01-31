@@ -98,6 +98,7 @@ public class SparqlUpdateExpression extends WebInterface {
 
         String multipleUpdateExpression =
                 "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { ";
 
         for (final TripleArrayList deleteTriple : deleteTripleArrayLists) {
@@ -158,18 +159,24 @@ public class SparqlUpdateExpression extends WebInterface {
         String predicate = tripleArrayList.getPredicate();
         String object = tripleArrayList.getObject();
 
-        if (!subject.startsWith(ConfigureSystem.NS)) {
+        if (subject == null) {
+            subject = "?subject";
+        } else if (!subject.startsWith(ConfigureSystem.NS)) {
             subject = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getSubject();
         }
 
         // dataTypes starts with \" doesn't have NS
-        if (!object.startsWith(ConfigureSystem.NS) && !object.startsWith("\"")) {
+        if (object == null) {
+            object = "?object";
+        } else if (!object.startsWith(ConfigureSystem.NS) && !object.startsWith("\"")) {
             object = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getObject();
         }
 
         // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
         // insert an individual to a class.
-        if (!predicate.equals(ConfigureSystem.OntExpr.A.getName()) && !predicate.startsWith(ConfigureSystem.NS)) {
+        if (predicate == null) {
+            predicate = "?predicate";
+        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName()) && !predicate.startsWith(ConfigureSystem.NS)) {
             predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
         }
 

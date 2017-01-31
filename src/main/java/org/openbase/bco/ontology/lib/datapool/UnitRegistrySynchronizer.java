@@ -140,11 +140,11 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     private void convertToInsertExprAndUpload(final List<TripleArrayList> tripleArrayLists) {
 
         // convert triples to single sparql update expression
-        final String multiUpdateExpr = getSparqlBundleUpdateInsertEx(tripleArrayLists);
+        final String multiExprUpdate = getSparqlBundleUpdateInsertEx(tripleArrayLists);
 
         try {
             // upload to ontology server
-            final int httpResponseCode = sparqlUpdate(multiUpdateExpr);
+            final int httpResponseCode = sparqlUpdate(multiExprUpdate);
             // check response code
             final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
 
@@ -188,26 +188,23 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel = ServerOntologyModel.getOntologyModelTBox();
-
-            final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
-            final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
-            //TODO build and upload delete & insert expression
+            final List<TripleArrayList> delAndInsTripleArrayLists = new ArrayList<>();
 
             // delete unit and states instances
-            deleteTripleArrayLists.addAll(ontInstanceMapping.getDeleteTripleOfUnitsAndStates(unitConfigList));
+            delAndInsTripleArrayLists.addAll(ontInstanceMapping.getDeleteTripleOfUnitsAndStates(unitConfigList));
             // delete providerService instances
             //TODO delete providerService (?)
             // delete unit properties
-            deleteTripleArrayLists.addAll(ontPropertyMapping.getPropertyDeleteTripleOfUnitConfigs(unitConfigList));
+            delAndInsTripleArrayLists.addAll(ontPropertyMapping.getPropertyDeleteTripleOfUnitConfigs(unitConfigList));
 
             // insert instances
-            insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfUnits(ontModel, unitConfigList));
-            insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfStates(ontModel, unitConfigList));
-            insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfProviderServices(ontModel));
+            delAndInsTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfUnits(ontModel, unitConfigList));
+            delAndInsTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfStates(ontModel, unitConfigList));
+            delAndInsTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfProviderServices(ontModel));
             // insert properties
-            insertTripleArrayLists.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigList));
+            delAndInsTripleArrayLists.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigList));
 
-//            convertToInsertExprAndUpload(tripleArrayLists);
+//            convertToInsertExprAndUpload(delAndInsTripleArrayLists); //TODO delete method...
 
             //TODO result
         } catch (CouldNotPerformException e) {
@@ -249,7 +246,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         // delete unit properties
         tripleArrayLists.addAll(ontPropertyMapping.getPropertyDeleteTripleOfUnitConfigs(unitConfigList));
 
-        convertToInsertExprAndUpload(tripleArrayLists);
+//        convertToInsertExprAndUpload(tripleArrayLists); //TODO delete method...
 
         //TODO result
     }

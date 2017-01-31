@@ -18,9 +18,11 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.aboxsynchronisation.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.ObservationPerformer;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.testcode.CreateOntology;
+import org.openbase.bco.ontology.lib.testcode.QueryOntology;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -43,11 +45,13 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
 
-        UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
+//        UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
+
+        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
         final CreateOntology ontology = new CreateOntology();
         ontology.loadOntology("src/Ontology3.owl");
-        final ObservationPerformer observationPerformer = new ObservationPerformer();
+//        final ObservationPerformer observationPerformer = new ObservationPerformer();
 
 //        WebInterface webInterface = new WebInterface();
 
@@ -67,7 +71,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
 //        ontology.getModel().close();
 //        if (ontology.getModel().isClosed()) {
-//            LOGGER.info(APP_NAME + " finished!");
+////            LOGGER.info(APP_NAME + " finished!");
 //            System.exit(0);
 //        }
 

@@ -153,9 +153,24 @@ public final class ConfigureSystem {
         TIME_STAMP("hasTimeStamp"),
 
         /**
-         * isAvailable (dataType property).
+         * isEnabled (dataType property).
          */
-        IS_AVAILABLE("isAvailable");
+        IS_ENABLED("isEnabled"),
+
+        /**
+         * isConnected (dataType property).
+         */
+        IS_CONNECTED("isConnected"),
+
+        /**
+         * hasLastHeartBeat (dataType property).
+         */
+        HAS_LAST_HEARTBEAT("hasLastHeartBeat"),
+
+        /**
+         * hasNextHeartBeat (dataType property).
+         */
+        HAS_NEXT_HEARTBEAT("hasNextHeartBeat");
 
         private final String property;
 

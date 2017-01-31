@@ -240,7 +240,7 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.IS_AVAILABLE.getName();
+        final String predicate = ConfigureSystem.OntProp.IS_ENABLED.getName();
         final String object = "\"true\""; // dataTypes have quotation marks
 
         //TODO delete triple expression (s?)
