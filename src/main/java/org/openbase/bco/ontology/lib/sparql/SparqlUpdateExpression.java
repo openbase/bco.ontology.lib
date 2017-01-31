@@ -82,6 +82,7 @@ public class SparqlUpdateExpression extends WebInterface {
      * Method creates an update sparql string with delete and insert triple(s). Subject, predicate and object can be
      * selected by a "name" (string) or can be placed as control variable by a "null" parameter in the tripleArrayList.
      * The names of s, p, o keep the namespace or not. The order in the update string is first delete and then insert.
+     * The whereExpr can be used to filter the triples, which should be deleted. Otherwise the statement is set to null.
      *
      * Example in deleteTripleArrayLists: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
      * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
@@ -89,24 +90,31 @@ public class SparqlUpdateExpression extends WebInterface {
      *
      * @param deleteTripleArrayLists The delete triple information (with or without namespace).
      * @param insertTripleArrayLists The insert triple information (with or without namespace).
+     * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
      * @return A single sparql update delete & insert expression (bundle).
      */
     protected String getSparqlBundleUpdateDeleteAndInsertEx(final List<TripleArrayList> deleteTripleArrayLists
-            , final List<TripleArrayList> insertTripleArrayLists) {
+            , final List<TripleArrayList> insertTripleArrayLists, final String whereExpr) {
 
         String multipleUpdateExpression =
                 "PREFIX NS: <" + ConfigureSystem.NS + "> "
-                + "DELETE DATA { ";
+                + "DELETE { ";
 
         for (final TripleArrayList deleteTriple : deleteTripleArrayLists) {
             multipleUpdateExpression = multipleUpdateExpression + getDeleteTripleCommand(deleteTriple);
         }
 
+        multipleUpdateExpression = multipleUpdateExpression + "} INSERT { ";
+
         for (final TripleArrayList insertTriple : insertTripleArrayLists) {
             multipleUpdateExpression = multipleUpdateExpression + getInsertTripleCommand(insertTriple);
         }
 
-        multipleUpdateExpression = multipleUpdateExpression + "} ";
+        if (whereExpr == null) {
+            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { } ";
+        } else {
+            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { " + whereExpr + "} ";
+        }
 
         return multipleUpdateExpression;
     }
@@ -114,22 +122,34 @@ public class SparqlUpdateExpression extends WebInterface {
     /**
      * Method creates an update sparql string to delete triple(s). Subject, predicate and object can be selected by a
      * "name" (string) or can be placed as control variable by a "null" parameter in the tripleArrayList. The names of
-     * s, p, o keep the namespace or not.
+     * s, p, o keep the namespace or not. The whereExpr can be used to filter the triples, which should be deleted.
+     * Otherwise the statement is set to null.
      *
      * Example in deleteTripleArrayLists: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
      * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
      * and means: all triples with the named subject, named predicate and any object are deleted.
      *
      * @param deleteTripleArrayLists The delete triple information (with or without namespace).
+     * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
      *
      * @return A sparql update string to delete a triple.
      */
-    protected String getSparqlUpdateSingleDeleteEx(final TripleArrayList deleteTripleArrayLists) {
+    protected String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists
+            , final String whereExpr) {
 
-        return "PREFIX NS: <" + ConfigureSystem.NS + "> "
-        + "DELETE DATA { "
-            + getDeleteTripleCommand(deleteTripleArrayLists)
-        + "} ";
+        String singleUpdateExpression =
+                "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                + "DELETE { "
+                    + getDeleteTripleCommand(deleteTripleArrayLists)
+                + "} ";
+
+        if (whereExpr == null) {
+            singleUpdateExpression = singleUpdateExpression + "} WHERE { } ";
+        } else {
+            singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + "} ";
+        }
+
+        return singleUpdateExpression;
     }
 
     private String getInsertTripleCommand(final TripleArrayList tripleArrayList) {
