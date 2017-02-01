@@ -30,6 +30,8 @@ import java.util.List;
 @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
 public class SparqlUpdateExpression extends WebInterface {
 
+    //TODO namespace: current check => "NS:" only...not whole namespace
+
     /**
      * Method creates a list with sparql update insert expressions. Each list element is an valid update.
      *
@@ -65,6 +67,7 @@ public class SparqlUpdateExpression extends WebInterface {
         // initial part of the large expression
         String multipleUpdateExpression =
                 "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "INSERT DATA { ";
 
         for (final TripleArrayList triple : insertTripleArrayLists) {
@@ -161,14 +164,14 @@ public class SparqlUpdateExpression extends WebInterface {
 
         if (subject == null) {
             subject = "?subject";
-        } else if (!subject.startsWith(ConfigureSystem.NS)) {
+        } else if (!subject.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
             subject = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getSubject();
         }
 
         // dataTypes starts with \" doesn't have NS
         if (object == null) {
             object = "?object";
-        } else if (!object.startsWith(ConfigureSystem.NS) && !object.startsWith("\"")) {
+        } else if (!object.startsWith(ConfigureSystem.OntExpr.NS.getName()) && !object.startsWith("\"")) {
             object = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getObject();
         }
 
@@ -176,7 +179,8 @@ public class SparqlUpdateExpression extends WebInterface {
         // insert an individual to a class.
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName()) && !predicate.startsWith(ConfigureSystem.NS)) {
+        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
+                && !predicate.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
             predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
         }
 
@@ -193,21 +197,21 @@ public class SparqlUpdateExpression extends WebInterface {
 
         if (subject == null) {
             subject = "?subject";
-        } else if (!subject.startsWith(ConfigureSystem.NS)) {
+        } else if (!subject.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
             subject = ConfigureSystem.OntExpr.NS.getName() + subject;
         }
 
         if (predicate == null) {
             predicate = "?predicate";
         } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
-                && !predicate.startsWith(ConfigureSystem.NS)) {
+                && !predicate.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
             // if predicate isn't an "a" then it's an property with namespace needed.
             predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
         }
 
         if (object == null) {
             object = "?object";
-        } else if (!object.startsWith(ConfigureSystem.NS)) {
+        } else if (!object.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
             object = ConfigureSystem.OntExpr.NS.getName() + object;
         }
 

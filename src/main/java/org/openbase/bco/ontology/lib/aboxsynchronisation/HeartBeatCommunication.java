@@ -18,16 +18,16 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation;
 
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +35,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
@@ -45,127 +46,141 @@ import java.util.TimerTask;
  */
 public class HeartBeatCommunication extends SparqlUpdateExpression {
 
+    //TODO situation handling: ontologyManager active, but no connection to server (buffer?)
+    //TODO reduce to one SimpleDateFormat => sparql update doesn't accept "+" in instance name....
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
+            .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
 
-    private final static String queryHasHeartBeat =
+    private final static String queryLastTimeStampOfCurrentHeartBeat =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "ASK { "
-                + "?blackout a NS:NoHeartBeat . "
-            + "} ";
-
-
-    private final static String queryLastHeartBeat =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?lastTimeStamp { "
-                + "?blackout a NS:NoHeartBeat . "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?blackout ?lastTimeStamp { "
+                + "?blackout a NS:HeartBeatPhase . "
+                + "?blackout NS:hasFirstHeartBeat ?firstTimeStamp . "
                 + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
-                + "FILTER NOT EXISTS { "
-                    + "?blackout NS:hasNextHeartBeat ?nextTimeStamp . " //TODO maybe order and filter 1?!
-                + "} . "
-            + "} ";
-
-//    private final static String updateLastHeartBeat =
-//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-//            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-//            + "INSERT DATA { "
-//                + "?blackout a NS:NoHeartBeat . "
-//                + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
-//                + "FILTER (?lastTimeStamp >= \"" + getCurrentDateTime(-35) + "\"^^xsd:dateTime) . "
-//            + "} ";
+            + "} "
+            + "ORDER BY DESC(?lastTimeStamp) LIMIT 1";
 
     public HeartBeatCommunication() {
 
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
-
         final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
-        deleteTripleArrayLists.add(new TripleArrayList(null
-                , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName(), null));
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
-        final String whereExpr =
-                "?subject a NS:NoHeartBeat . "
-                + "?subject NS:hasLastHeartBeat ?object . "
-                + "FILTER NOT EXISTS { "
-                    + "?subject NS:hasNextHeartBeat ?nextTimeStamp . "
-                + "} . ";
 
+        //generate new heartbeat phase
+        setNewHeartBeatPhase();
+
+        //observe current heartbeat now, refresh or start new heartbeat phase
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
 
             @Override
             public void run() {
-
-                Query query = QueryFactory.create(queryLastHeartBeat) ;
-                QueryExecution qexec = QueryExecutionFactory.sparqlService("http://localhost:3030/myAppFuseki/sparql", query);
-                final ResultSet resultSet = qexec.execSelect();
-
-                final String literalString;
-
-                if (resultSet.hasNext()) {
-                    final QuerySolution querySolution = resultSet.next();
-                    literalString = querySolution.getLiteral("lastTimeStamp").getLexicalForm(); //2016-11-24T19:00:00.000+01:00
-
-                    try {
-                        Date dateLastTimeStamp = simpleDateFormat.parse(literalString);
-//                        dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, 35);
-                        final Date now = new Date();
-                        System.out.println("-----------");
-                        System.out.println(dateLastTimeStamp);
-                        System.out.println(now);
-
-//                        if (dateLastTimeStamp.compareTo(now) >= 0) {
-                        if (true) {
-
-                            // last heartbeat is within the frequency => replace last timestamp of current blackout
-                            final String dateTimeNow = simpleDateFormat.format(now);
-
-                            String test =
-                                    "PREFIX NS: <" + ConfigureSystem.NS + "> "
-                                            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
-                                            + "DELETE { "
-                                            + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
-                                            + "} INSERT { "
-                                            + "?blackout NS:hasLastHeartBeat \"" + dateTimeNow + "\"^^xsd:dateTime"
-                                            + "} WHERE { "
-                                            + "?blackout a NS:NoHeartBeat . "
-                                            + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
-                                            + "FILTER NOT EXISTS { "
-                                            + "?blackout NS:hasNextHeartBeat ?nextTimeStamp . "
-                                            + "} . "
-                                            + "} ";
-
-                            insertTripleArrayLists.clear();
-                            insertTripleArrayLists.add(new TripleArrayList(null
-                                    , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName(), "\"" + dateTimeNow + "\"^^xsd:dateTime"));
-
-                            final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists
-                                    , insertTripleArrayLists, whereExpr);
-                            System.out.println(sparqlUpdate);
-
-                            try {
-                                sparqlUpdate(sparqlUpdate);
-                            } catch (CouldNotPerformException e) {
-                                e.printStackTrace();
-                            }
-
-                        } else {
-                            // blackout => set next timeStamp of current blackout & set last timestamp of new blackout
-                        }
-
-                    } catch (ParseException e) {
-                        e.printStackTrace(); //TODO
-                    }
+                // get recent heartbeat phase instance name and lastHeartBeat timestamp
+                ResultSet resultSet = null;
+                try {
+                    resultSet = sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
+                } catch (CouldNotPerformException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
 
+                if (resultSet != null && resultSet.hasNext()) { // in this case, resultSet has one solution only
+                    final QuerySolution querySolution = resultSet.next();
+                    final Date now = new Date();
+                    final String dateTimeNow = simpleDateFormat.format(now);
+                    String dateTimeQuery = "";
+                    String heartBeatNameQuery = "";
+
+                    final Iterator<String> stringIterator = querySolution.varNames();
+
+                    while (stringIterator.hasNext()) {
+
+                        final RDFNode rdfNode = querySolution.get(stringIterator.next());
+
+                        if (rdfNode.isLiteral()) {
+                            dateTimeQuery = rdfNode.asLiteral().getLexicalForm();
+                        } else {
+                            //TODO investigate why .getLocalName() of jena doesn't work here...
+                            heartBeatNameQuery = rdfNode.asResource().toString();
+                            heartBeatNameQuery = heartBeatNameQuery.substring(ConfigureSystem.NS.length()
+                                    , heartBeatNameQuery.length());
+                        }
+                    }
+
+                    Date dateLastTimeStamp = null;
+                    try {
+                        dateLastTimeStamp = simpleDateFormat.parse(dateTimeQuery + "+01:00");
+                        dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, 35);
+                    } catch (ParseException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO
+                    }
+
+                    if (dateLastTimeStamp != null && dateLastTimeStamp.compareTo(now) >= 0) {
+
+                        // last heartbeat is within the frequency => replace last timestamp of current blackout with
+                        // refreshed timestamp
+                        deleteTripleArrayLists.clear();
+                        deleteTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery
+                                , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName(), null));
+                        insertTripleArrayLists.clear();
+                        insertTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery
+                                , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName()
+                                , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
+                        //TODO ...
+                        String test =
+                                "NS:" + heartBeatNameQuery + " NS:hasLastHeartBeat " + "?object";
+
+                        // sparql update to replace last heartbeat timestamp
+                        final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists
+                                , insertTripleArrayLists, test);
+                        System.out.println(sparqlUpdate);
+
+                        try {
+                            sparqlUpdate(sparqlUpdate);
+                            //TODO responseCode...
+                        } catch (CouldNotPerformException e) {
+                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO
+                        }
+                    } else {
+                        // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
+                        setNewHeartBeatPhase();
+                    }
+                }
             }
-        }, 0, 5000);
+        }, 3000, 5000);
     }
 
-
-    private static String getCurrentDateTime() {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+    private void setNewHeartBeatPhase() {
         final Date now = new Date();
+        final String dateTimeNowInstance = simpleDateFormatWithoutTimeZone.format(now);
+        final String dateTimeNow = simpleDateFormat.format(now);
 
-        return simpleDateFormat.format(now);
+        final String subject = "heartBeatPhase" + dateTimeNowInstance;
+
+        final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
+        // set initial current heartbeat phase with first and last timestamp (identical)
+        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntExpr.A.getName()
+                , ConfigureSystem.OntClass.HEARTBEAT_PHASE.getName()));
+        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntProp.HAS_FIRST_HEARTBEAT.getName()
+                , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
+        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName()
+                , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
+
+        final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
+        System.out.println(sparqlUpdate);
+
+        boolean httpSuccess = false;
+        try {
+            while (!httpSuccess) { //TODO maybe endless loop
+                final int responseCode = sparqlUpdate(sparqlUpdate);
+                httpSuccess = httpRequestSuccess(responseCode);
+            }
+
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO
+        }
     }
 
 }

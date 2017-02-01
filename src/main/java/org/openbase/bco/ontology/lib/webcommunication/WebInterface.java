@@ -29,8 +29,14 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.DatasetAccessor;
 import org.apache.jena.query.DatasetAccessorFactory;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.shared.JenaException;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -132,6 +138,24 @@ public class WebInterface {
 //                }
 //            }
         } catch (IOException e) {
+            throw new CouldNotPerformException("Could not get http response!", e);
+        }
+    }
+
+    /**
+     * Method processes a sparql query in select form and returns a resultSet.
+     *
+     * @param queryString The query String.
+     * @return A resultSet with potential solutions.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    protected ResultSet sparqlQuerySelect(final String queryString) throws CouldNotPerformException {
+        try {
+            Query query = QueryFactory.create(queryString) ;
+            QueryExecution queryExecution = QueryExecutionFactory
+                    .sparqlService("http://localhost:3030/myAppFuseki/sparql", query);
+            return queryExecution.execSelect();
+        } catch (Exception e) {
             throw new CouldNotPerformException("Could not get http response!", e);
         }
     }

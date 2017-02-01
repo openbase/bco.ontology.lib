@@ -81,7 +81,12 @@ public final class ConfigureSystem {
         /**
          * Location (class).
          */
-        LOCATION("Location");
+        LOCATION("Location"),
+
+        /**
+         * HeartBeatPhase (class).
+         */
+        HEARTBEAT_PHASE("HeartBeatPhase");
 
         private final String ontClass;
 
@@ -168,9 +173,9 @@ public final class ConfigureSystem {
         HAS_LAST_HEARTBEAT("hasLastHeartBeat"),
 
         /**
-         * hasNextHeartBeat (dataType property).
+         * hasFirstHeartBeat (dataType property).
          */
-        HAS_NEXT_HEARTBEAT("hasNextHeartBeat");
+        HAS_FIRST_HEARTBEAT("hasFirstHeartBeat");
 
         private final String property;
 
@@ -274,6 +279,11 @@ public final class ConfigureSystem {
      * DateTime format.
      */
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
+     * DateTime format without time zone (for ontology instance naming only!).
+     */
+    public static final String DATE_TIME_WITHOUT_TIME_ZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     // -------------------------------
 
