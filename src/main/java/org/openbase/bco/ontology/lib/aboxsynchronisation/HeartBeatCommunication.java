@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- *
+ * <p>
  * This file is part of org.openbase.bco.ontology.lib.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -53,6 +53,15 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
+
+//    prefix NS:   <http://www.openbase.org/bco/ontology#>
+//    PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+//
+//    SELECT ?heartBeatPhase ?lastTimeStamp ?firstTimeStamp {
+//  ?heartBeatPhase a NS:HeartBeatPhase .
+//                ?heartBeatPhase NS:hasFirstHeartBeat ?firstTimeStamp .
+//                ?heartBeatPhase NS:hasLastHeartBeat ?lastTimeStamp .
+//    } ORDER BY DESC(?heartBeatPhase)
 
     private final static String queryLastTimeStampOfCurrentHeartBeat =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
@@ -102,7 +111,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         if (rdfNode.isLiteral()) {
                             dateTimeQuery = rdfNode.asLiteral().getLexicalForm();
                         } else {
-                            //TODO investigate why .getLocalName() of jena doesn't work here...
+                            // get substring by own implementation: getLocalName() of jena doesn't work correctly
                             heartBeatNameQuery = rdfNode.asResource().toString();
                             heartBeatNameQuery = heartBeatNameQuery.substring(ConfigureSystem.NS.length()
                                     , heartBeatNameQuery.length());
@@ -128,21 +137,14 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         insertTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery
                                 , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName()
                                 , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
-                        //TODO ...
-                        String test =
-                                "NS:" + heartBeatNameQuery + " NS:hasLastHeartBeat " + "?object";
 
                         // sparql update to replace last heartbeat timestamp
                         final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists
-                                , insertTripleArrayLists, test);
+                                , insertTripleArrayLists, null);
                         System.out.println(sparqlUpdate);
 
-                        try {
-                            sparqlUpdate(sparqlUpdate);
-                            //TODO responseCode...
-                        } catch (CouldNotPerformException e) {
-                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO
-                        }
+                        final int responseCode = sparqlUpdate(sparqlUpdate);
+                        responseCodeHandling(responseCode); //TODO
                     } else {
                         // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                         setNewHeartBeatPhase();
@@ -171,16 +173,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
         System.out.println(sparqlUpdate);
 
-        boolean httpSuccess = false;
-        try {
-            while (!httpSuccess) { //TODO maybe endless loop
-                final int responseCode = sparqlUpdate(sparqlUpdate);
-                httpSuccess = httpRequestSuccess(responseCode);
-            }
-
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO
-        }
+        final int responseCode = sparqlUpdate(sparqlUpdate);
+        responseCodeHandling(responseCode); //TODO
     }
 
 }

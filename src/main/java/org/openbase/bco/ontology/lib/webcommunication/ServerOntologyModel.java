@@ -41,7 +41,8 @@ public interface ServerOntologyModel {
     static OntModel getOntologyModel() throws CouldNotPerformException {
 
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem.SERVER_ONTOLOGY_URI);
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem
+                    .SERVER_ONTOLOGY_URI);
             final Model model = datasetAccessor.getModel();
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);

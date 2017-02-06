@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
+import rst.domotic.state.EnablingStateType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
@@ -67,6 +68,7 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
 
         tripleArrayLists = getInsertTripleObjPropHasState(tripleArrayLists, unitConfig);
         tripleArrayLists = getInsertTripleDataTypePropHasLabel(tripleArrayLists, unitConfig);
+        tripleArrayLists = getTripleDataTypePropIsEnabled(tripleArrayLists, unitConfig);
 
         return tripleArrayLists;
     }
@@ -103,6 +105,7 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
 
         tripleArrayLists.add(getDeleteTripleObjPropHasState(unitConfig));
         tripleArrayLists.add(getDeleteTripleDataTypePropHasLabel(unitConfig));
+        tripleArrayLists.add(getDeleteTripleDataTypePropIsEnabled(unitConfig));
 
         return tripleArrayLists;
     }
@@ -235,20 +238,32 @@ public class OntPropertyMappingImpl extends OntInstanceInspection implements Ont
     }
 
     //TODO isAvailable
-    private List<TripleArrayList> getTripleDataTypePropIsAvailable(final List<TripleArrayList> tripleArrayLists
+    private List<TripleArrayList> getTripleDataTypePropIsEnabled(final List<TripleArrayList> tripleArrayLists
             , final UnitConfig unitConfig) {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
         final String predicate = ConfigureSystem.OntProp.IS_ENABLED.getName();
-        final String object = "\"true\""; // dataTypes have quotation marks
+        final String object;
 
-        //TODO delete triple expression (s?)
-        final TripleArrayList tripleArrayDeleteList = new TripleArrayList(subject, predicate, null);
+        if (unitConfig.getEnablingState().getValue().equals(EnablingStateType.EnablingState.State.ENABLED)) {
+            object = "\"true\""; // dataTypes have quotation marks
+        } else {
+            object = "\"false\""; // dataTypes have quotation marks
+        }
 
         tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
 
         return tripleArrayLists;
+    }
+
+    private TripleArrayList getDeleteTripleDataTypePropIsEnabled(final UnitConfig unitConfig) {
+
+        // s, p, o pattern
+        final String subject = unitConfig.getId();
+        final String predicate = ConfigureSystem.OntProp.IS_ENABLED.getName();
+
+        return new TripleArrayList(subject, predicate, null);
     }
 
 }

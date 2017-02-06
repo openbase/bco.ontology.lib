@@ -112,33 +112,30 @@ public class WebInterface {
      *
      * @param updateString The sparql update string.
      * @return The status code of the http request.
-     * @throws CouldNotPerformException CouldNotPerformException.
      */
-    protected int sparqlUpdate(final String updateString) throws CouldNotPerformException {
-        try {
-            final HttpClient httpclient = HttpClients.createDefault();
-            final HttpPost httpPost = new HttpPost(UPDATE_URI);
+    protected int sparqlUpdate(final String updateString) {
 
-            final List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("update", updateString));
-            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            final HttpResponse httpResponse = httpclient.execute(httpPost);
+        final HttpClient httpclient = HttpClients.createDefault();
+        final HttpPost httpPost = new HttpPost(UPDATE_URI);
 
-            return httpResponse.getStatusLine().getStatusCode();
+        final List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("update", updateString));
 
-//            HttpEntity httpEntity = httpResponse.getEntity();
-//
-//            if (httpEntity != null) {
-//                InputStream inputStream = httpEntity.getContent();
-//                try {
-//                    String output = IOUtils.toString(inputStream, "UTF-8");
-//                    System.out.println(output);
-//                } finally {
-//                    inputStream.close();
-//                }
-//            }
-        } catch (IOException e) {
-            throw new CouldNotPerformException("Could not get http response!", e);
+        while (true) {
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+                final HttpResponse httpResponse = httpclient.execute(httpPost);
+
+                return httpResponse.getStatusLine().getStatusCode();
+
+            } catch (IOException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            }
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                assert false;
+            }
         }
     }
 
@@ -169,6 +166,32 @@ public class WebInterface {
     protected boolean httpRequestSuccess(final int statusCode) {
 
         return String.valueOf(statusCode).startsWith("2");
+    }
+
+    protected void responseCodeHandling(final int responseCode) {
+
+        final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
+        //TODO
+        switch (reducedCode) {
+            case 1: // request in process
+
+                return;
+            case 2: // request successful
+
+                return;
+            case 3: // bypass ... client should do something
+
+                return;
+            case 4: // client error
+
+                return;
+            case 5: // server error
+
+                return;
+            default:
+
+                return; // abort
+        }
     }
 
     //CHECKSTYLE.ON: MultipleStringLiterals

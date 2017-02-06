@@ -288,7 +288,7 @@ public final class QueryStrings {
     public static final String REQ_8 =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
-            + "SELECT ?labelLoc (SUM(?currentValue - ?oldValue) AS ?consumption) ?physicalType WHERE { "
+            + "SELECT ?locationLabel (SUM(?currentValue - ?oldValue) AS ?consumption) ?physicalType WHERE { "
 
                 // get oldest (within 3 hours) and current timestamp of units with powerConsumption
                 + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?unit WHERE { "
@@ -301,7 +301,7 @@ public final class QueryStrings {
 
                 // get units in location "home" or "living" (or ...) only
                 + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel \"Living\", ?labelLoc FILTER (?labelLoc = \"Living\") . "
+                + "?location NS:hasLabel \"Living\", ?locationLabel FILTER (?locationLabel = \"Living\") . "
 
                 // get state value of observation with oldest timestamp
                 + "?obsOld NS:hasUnitId ?unit . "
@@ -318,7 +318,7 @@ public final class QueryStrings {
                 + "BIND (xsd:double(?currentVal) AS ?currentValue) . "
                 + "BIND (datatype(?currentVal) AS ?physicalType) . "
             + "} "
-            + "GROUP BY ?labelLoc ?consumption ?physicalType ";
+            + "GROUP BY ?locationLabel ?consumption ?physicalType ";
 
     /**
      * Wie ist die Temperaturdifferenz im Badezimmer von jetzt zu vor 3 Stunden?

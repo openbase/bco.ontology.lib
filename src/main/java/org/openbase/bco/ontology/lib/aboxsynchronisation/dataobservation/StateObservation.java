@@ -30,6 +30,7 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
+import org.openbase.jul.pattern.Remote.ConnectionState;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +38,12 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -47,38 +51,40 @@ import java.util.Set;
 /**
  * @author agatting on 09.01.17.
  */
-public class StateObservation extends SparqlUpdateExpression implements Observer {
+public class StateObservation extends SparqlUpdateExpression {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
+            .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
     private static String remoteUnitId = "";
-    private static int obsCount = 0; //TODO find better way to set unique observer name
     private static List<TripleArrayList> tripleArrayListBuf = new ArrayList<>();
+
+    private final Observer unitRemoteStateObserver; //TODO unchecked call ->generic dataClass?!
+    private final Observer<ConnectionState> unitRemoteConnectionObserver;
 
     public StateObservation(UnitRemote unitRemote) {
 
         initServiceTypeMap();
-//        ColorableLightRemote remote = test();
 
-        // get unitID
         try {
             remoteUnitId = (String) unitRemote.getId();
-//            remoteUnitId = remote.getId();
-            System.out.println(remoteUnitId);
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-        unitRemote.addDataObserver(this);
-//        remote.addDataObserver(this);
-    }
+        this.unitRemoteStateObserver = (Observable observable, Object unitRemoteObj) -> {
+            GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
+        };
 
-    private String getObsInstanceName() {
+        this.unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
+            GlobalCachedExecutorService.submit(() -> {
+                //TODO
+            });
+        };
 
-        final String obsInstanceName = "O" + remoteUnitId + obsCount;
-        ++obsCount;
-
-        return obsInstanceName;
+        unitRemote.addDataObserver(unitRemoteStateObserver);
+        unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
     }
 
     //TODO swap out...
@@ -204,80 +210,74 @@ public class StateObservation extends SparqlUpdateExpression implements Observer
         }
     }
 
-    @Override
-    public void update(final Observable observable, final Object remoteData) throws java.lang.Exception {
-        GlobalCachedExecutorService.submit(() -> {
-            //TODO implement logic, that updates changed stateValues only
+    private void stateUpdate(final Object remoteData) {
+        //TODO implement logic, that updates changed stateValues only
 
-            try {
-                List<TripleArrayList> tripleArrayLists = new ArrayList<>();
-                final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
-                        , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+        try {
+            List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+            final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
+                    , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
 
-                // foreach stateType ...
-                for (Method methodStateType : methodSetStateType) {
+            // foreach stateType ...
+            for (Method methodStateType : methodSetStateType) {
+                // every observation point represents an serviceType respectively stateValue
 
-                    // every observation point represents an serviceType respectively stateValue
-                    final String subject = getObsInstanceName();
+                final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
+                final String subject = "O" + remoteUnitId + dateTimeNow;
 
-                    //### unitID triple ###\\
-                    tripleArrayLists = addTripleHasUnitId(tripleArrayLists, subject, remoteUnitId);
+                //### unitID triple ###\\
+                tripleArrayLists = addTripleHasUnitId(tripleArrayLists, subject, remoteUnitId);
 
-                    //### serviceType triple ###\\
-                    final String serviceTypeInstance = getServiceTypeMapping(methodStateType.getName());
-                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, serviceTypeInstance);
+                //### serviceType triple ###\\
+                final String serviceTypeInstance = getServiceTypeMapping(methodStateType.getName());
+                tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, serviceTypeInstance);
 
-                    Object stateTypeObj = null;
-                    try {
-                        // get method as invoked object
-                        stateTypeObj = methodStateType.invoke(remoteData);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                    }
+                Object stateTypeObj = null;
+                try {
+                    // get method as invoked object
+                    stateTypeObj = methodStateType.invoke(remoteData);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
 
-                    //### timeStamp triple ###\\
+                //### timeStamp triple ###\\
 //                    final String timeStampObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
 //                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
 //                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, timeStampObj);
 
-                    //### stateValue triple ###\\
-                    final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
-                    if (hasDataUnit) { //physical unit
-                        //TODO need access to data...
-                    } else {
-                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
-                                , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-                        final String stateValue = stateValueObj.toString();
-                        tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, stateValue);
-                    }
-                }
-                setTripleArray(tripleArrayLists);
-
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-            }
-
-            final List<String> updateSparqlList = getSparqlSingleUpdateInsertEx(tripleArrayListBuf);
-            for (final String sparqlUpdate : updateSparqlList) {
-                try {
-                    final int httpResponseCode = sparqlUpdate(sparqlUpdate);
-                    final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
-
-                    if (!httpSuccess) {
-                        System.out.println("fail");
-                        //TODO Buffer...
-                    } else {
-                        System.out.println("success");
-                    }
-                } catch (CouldNotPerformException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                //### stateValue triple ###\\
+                final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
+                if (hasDataUnit) { //physical unit
+                    //TODO need access to data...
+                } else {
+                    final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
+                            , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
+                    final String stateValue = stateValueObj.toString();
+                    tripleArrayLists = addTripleHasProviderService(tripleArrayLists, subject, stateValue);
                 }
             }
+            setTripleArray(tripleArrayLists);
 
-//            ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
+        final List<String> updateSparqlList = getSparqlSingleUpdateInsertEx(tripleArrayListBuf);
+        for (final String sparqlUpdate : updateSparqlList) {
+            final int httpResponseCode = sparqlUpdate(sparqlUpdate);
+            final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
+
+            if (!httpSuccess) {
+                System.out.println("fail");
+                //TODO Buffer...
+            } else {
+                System.out.println("success");
+            }
+        }
+
+        //            ((ColorableLightDataType.ColorableLightData) remoteData).
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
-        });
-
 
     }
+
 }

@@ -19,6 +19,8 @@
 package org.openbase.bco.ontology.lib.sparql;
 
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
+import org.openbase.bco.ontology.lib.datapool.RegistryPool;
 import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
 
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ import java.util.List;
 public class SparqlUpdateExpression extends WebInterface {
 
     //TODO namespace: current check => "NS:" only...not whole namespace
+    //TODO as interface...
 
     /**
      * Method creates a list with sparql update insert expressions. Each list element is an valid update.
@@ -46,6 +49,7 @@ public class SparqlUpdateExpression extends WebInterface {
 
             final String updateExpression =
                     "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                    + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                     + "INSERT DATA { "
                         + getInsertTripleCommand(triple)
                     + "} ";
@@ -114,8 +118,13 @@ public class SparqlUpdateExpression extends WebInterface {
             multipleUpdateExpression = multipleUpdateExpression + getInsertTripleCommand(insertTriple);
         }
 
-        if (whereExpr == null) {
-            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { } ";
+        if (whereExpr == null) { // same triples as delete (functional reasons)
+            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
+            for (final TripleArrayList deleteTriple : deleteTripleArrayLists) {
+                multipleUpdateExpression = multipleUpdateExpression + getDeleteTripleCommand(deleteTriple);
+            }
+
+            multipleUpdateExpression = multipleUpdateExpression + "} ";
         } else {
             multipleUpdateExpression = multipleUpdateExpression + "} WHERE { " + whereExpr + "} ";
         }
@@ -143,12 +152,17 @@ public class SparqlUpdateExpression extends WebInterface {
 
         String singleUpdateExpression =
                 "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + getDeleteTripleCommand(deleteTripleArrayLists)
                 + "} ";
 
-        if (whereExpr == null) {
-            singleUpdateExpression = singleUpdateExpression + "} WHERE { } ";
+        if (whereExpr == null) { // same triples as delete (functional reasons)
+            singleUpdateExpression = singleUpdateExpression
+                    + "} WHERE { "
+                    + "DELETE { "
+                        + getDeleteTripleCommand(deleteTripleArrayLists)
+                    + "} ";
         } else {
             singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + "} ";
         }
