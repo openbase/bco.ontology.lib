@@ -79,6 +79,11 @@ public class StateObservation extends SparqlUpdateExpression {
 
         this.unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
             GlobalCachedExecutorService.submit(() -> {
+                if (connectionState.equals(ConnectionState.CONNECTED)) {
+                    System.out.println("connected!!!");
+                } else {
+                    System.out.println("disconnected!!!");
+                }
                 //TODO
             });
         };
@@ -274,6 +279,7 @@ public class StateObservation extends SparqlUpdateExpression {
                 System.out.println("success");
             }
         }
+        tripleArrayListBuf.clear();
 
         //            ((ColorableLightDataType.ColorableLightData) remoteData).
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
