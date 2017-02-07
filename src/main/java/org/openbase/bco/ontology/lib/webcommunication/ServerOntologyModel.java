@@ -32,6 +32,8 @@ import org.openbase.jul.exception.CouldNotPerformException;
  * @author agatting on 19.01.17.
  */
 public interface ServerOntologyModel {
+    //TODO get http response ...
+
     /**
      * Method returns the full ontology model from the ontology server.
      *
@@ -39,7 +41,6 @@ public interface ServerOntologyModel {
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static OntModel getOntologyModel() throws CouldNotPerformException {
-
         try {
             final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem
                     .SERVER_ONTOLOGY_URI);
@@ -48,6 +49,23 @@ public interface ServerOntologyModel {
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
         } catch (Exception e) {
             throw new CouldNotPerformException("Could not get model from ontology server.", e);
+        }
+    }
+
+    /**
+     * Method puts the ontology model to the server.
+     *
+     * @param ontModel The ontology model.
+     * @throws CouldNotPerformException CouldNotPerformException.
+     */
+    static void putOntologyModel(final OntModel ontModel) throws CouldNotPerformException {
+        try {
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem
+                    .SERVER_ONTOLOGY_URI);
+
+            datasetAccessor.putModel(ontModel);
+        } catch (Exception e) {
+            throw new CouldNotPerformException("Could not set model from ontology server.", e);
         }
     }
 

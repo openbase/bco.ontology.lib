@@ -19,8 +19,6 @@
 package org.openbase.bco.ontology.lib.sparql;
 
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
-import org.openbase.bco.ontology.lib.datapool.RegistryPool;
 import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
 
 import java.util.ArrayList;

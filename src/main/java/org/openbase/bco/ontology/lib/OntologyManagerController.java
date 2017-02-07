@@ -23,6 +23,7 @@ import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.testcode.CreateOntology;
 import org.openbase.bco.ontology.lib.testcode.QueryOntology;
+import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -45,12 +46,15 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
 
-//        UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
-
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
-//
-//        final CreateOntology ontology = new CreateOntology();
-//        ontology.loadOntology("src/Ontology3.owl");
+
+        final CreateOntology ontology = new CreateOntology();
+        ontology.loadOntology("src/Ontology.owl");
+
+        ServerOntologyModel.putOntologyModel(ontology.getModel());
+
+        final UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
+
         final UnitRemoteSynchronizer unitRemoteSynchronizer = new UnitRemoteSynchronizer();
 
 //        WebInterface webInterface = new WebInterface();
