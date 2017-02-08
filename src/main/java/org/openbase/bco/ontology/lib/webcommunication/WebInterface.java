@@ -37,6 +37,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -55,8 +56,6 @@ import java.util.List;
 public class WebInterface {
     //CHECKSTYLE.OFF: MultipleStringLiterals
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
-    private static final int HTTP_SUCCESS_CODE = 200;
-    private static final String UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
 
 //    private static final String UPDATE =
 //            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
@@ -73,7 +72,7 @@ public class WebInterface {
     /**
      * WebInterface.
      */
-    protected WebInterface() {
+    public WebInterface() {
 
         // ask query via remote SPARQL
 //        final Query query = QueryFactory.create(QUERY);
@@ -111,31 +110,25 @@ public class WebInterface {
      * Method processes a sparql update and returns the response status code of the http request.
      *
      * @param updateString The sparql update string.
+     * @throws CouldNotPerformException CouldNotPerformException.
      * @return The status code of the http request.
      */
-    protected int sparqlUpdate(final String updateString) {
+    public int sparqlUpdate(final String updateString) throws CouldNotPerformException {
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(UPDATE_URI);
+        final HttpPost httpPost = new HttpPost(ConfigureSystem.SERVER_ONTOLOGY_UPDATE_URI);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("update", updateString));
 
-        while (true) {
-            try {
-                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-                final HttpResponse httpResponse = httpclient.execute(httpPost);
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            final HttpResponse httpResponse = httpclient.execute(httpPost);
 
-                return httpResponse.getStatusLine().getStatusCode();
+            return httpResponse.getStatusLine().getStatusCode();
 
-            } catch (IOException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-            }
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                assert false;
-            }
+        } catch (IOException e) {
+            throw new CouldNotPerformException("Could not perform sparql update!", e);
         }
     }
 
@@ -146,11 +139,11 @@ public class WebInterface {
      * @return A resultSet with potential solutions.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    protected ResultSet sparqlQuerySelect(final String queryString) throws CouldNotPerformException {
+    public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotPerformException {
         try {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory
-                    .sparqlService("http://localhost:3030/myAppFuseki/sparql", query);
+                    .sparqlService(ConfigureSystem.SERVER_ONTOLOGY_SPARQL_URI, query);
             return queryExecution.execSelect();
         } catch (Exception e) {
             throw new CouldNotPerformException("Could not get http response!", e);
@@ -163,12 +156,12 @@ public class WebInterface {
      * @param statusCode The status code.
      * @return True, if success code, otherwise false.
      */
-    protected boolean httpRequestSuccess(final int statusCode) {
+    public boolean httpRequestSuccess(final int statusCode) {
 
         return String.valueOf(statusCode).startsWith("2");
     }
 
-    protected void responseCodeHandling(final int responseCode) {
+    public void responseCodeHandling(final int responseCode) {
 
         final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
         //TODO

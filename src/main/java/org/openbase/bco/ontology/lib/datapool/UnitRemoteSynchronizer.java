@@ -20,17 +20,21 @@ package org.openbase.bco.ontology.lib.datapool;
 
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateObservation;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 07.02.17.
@@ -40,24 +44,50 @@ public class UnitRemoteSynchronizer {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
 
     public UnitRemoteSynchronizer() {
-        final List<UnitConfig> unitConfigList;
 
-        try {
-            unitConfigList = Units.getUnitRegistry().getUnitConfigs(UnitType.COLORABLE_LIGHT);
+        List<UnitConfig> unitConfigList;
+        boolean retry = true;
+        MultiException.ExceptionStack exceptionStack = null;
+        final TransactionBuffer transactionBuffer = new TransactionBuffer();
+        final Stopwatch stopwatch = new Stopwatch();
 
-            for (UnitConfig unitConfig : unitConfigList) {
-                if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
+        while (retry) {
+            try {
+                unitConfigList = Units.getUnitRegistry().getUnitConfigs();
+                retry = false;
 
-                    final UnitRemote unitRemote = Units.getUnit(unitConfig, true); //TODO endless loop?
+                for (UnitConfig unitConfig : unitConfigList) {
+                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
 
-                    if (unitRemote.isDataAvailable()) {
-                        StateObservation stateObservation = new StateObservation(unitRemote);
+                        try {
+                            final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
+                            unitRemote.activate();
+                            unitRemote.waitForData(500, TimeUnit.MILLISECONDS); //TODO retry?
+
+                            if (unitRemote.isDataAvailable()) {
+                                StateObservation stateObservation
+                                        = new StateObservation(unitRemote, unitConfig, transactionBuffer);
+                            }
+                        } catch (InterruptedException | CouldNotPerformException e) {
+                            exceptionStack = MultiException.push(this, e, exceptionStack);
+                        }
                     }
                 }
-            }
 
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
+            } catch (CouldNotPerformException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            } catch (InterruptedException e) {
+                ExceptionPrinter.printHistory("Interrupted by getting unitRegistry! Retry in "
+                        + ConfigureSystem.waitTimeMilliSeconds + "milliseconds!", e, LOGGER);
+                Thread.currentThread().interrupt();
+
+                try {
+                    stopwatch.waitForStop(ConfigureSystem.waitTimeMilliSeconds);
+                } catch (InterruptedException ex) {
+                    assert false;
+                }
+            }
         }
     }
 }

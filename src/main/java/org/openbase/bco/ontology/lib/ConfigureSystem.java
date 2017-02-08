@@ -49,6 +49,16 @@ public final class ConfigureSystem {
     public static final String SERVER_ONTOLOGY_TBOX_URI = "http://localhost:3030/myAppFuseki/data";
 
     /**
+     * Update URI of the ontology server.
+     */
+    public static final String SERVER_ONTOLOGY_UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
+
+    /**
+     * SPARQL URI of the ontology server.
+     */
+    public static final String SERVER_ONTOLOGY_SPARQL_URI = "http://localhost:3030/myAppFuseki/sparql";
+
+    /**
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";
@@ -284,6 +294,11 @@ public final class ConfigureSystem {
      * DateTime format without time zone (for ontology instance naming only!).
      */
     public static final String DATE_TIME_WITHOUT_TIME_ZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+
+    /**
+     * Wait time in milliseconds.
+     */
+    public static final int waitTimeMilliSeconds = 10000;
 
     // -------------------------------
 

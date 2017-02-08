@@ -19,10 +19,12 @@
 package org.openbase.bco.ontology.lib.datapool;
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMappingImpl;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
@@ -36,11 +38,13 @@ import org.openbase.jul.extension.protobuf.ProtobufListDiff;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.state.EnablingStateType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.domotic.unit.UnitTemplateType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +72,15 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     private final OntInstanceMapping ontInstanceMapping = new OntInstanceMappingImpl();
     private final OntPropertyMapping ontPropertyMapping = new OntPropertyMappingImpl();
     private UnitRegistryRemote unitRegistryRemote;
+    private TransactionBuffer transactionBuffer;
 
     /**
      * Constructor for UnitRegistrySynchronizer.
      */
     public UnitRegistrySynchronizer() {
+
+        transactionBuffer = new TransactionBuffer();
+        final Stopwatch stopwatch = new Stopwatch();
 
         // ### INIT ###
         while (true) {
@@ -88,7 +96,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
 
                 try {
-                    Thread.sleep(5000);
+                    stopwatch.waitForStop(ConfigureSystem.waitTimeMilliSeconds);
                 } catch (InterruptedException e1) {
                     ExceptionPrinter.printHistory(e1, LOGGER, LogLevel.WARN);
                 }
@@ -150,16 +158,19 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
                     getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, insertTripleArrayLists, null);
         }
 
-        // upload to ontology server
-        final int httpResponseCode = sparqlUpdate(multiExprUpdate);
-        // check response code
-        final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
+        try {
+            // upload to ontology server
+            final int httpResponseCode = sparqlUpdate(multiExprUpdate);
+            // check response code
+            final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
 
-        if (!httpSuccess) {
-            //TODO handle missing connection. in the meantime new unitConfigs are maybe in registry...
-        } else {
-            //TODO
-            System.out.println("success");
+            if (!httpSuccess) {
+                transactionBuffer.insertData(multiExprUpdate);
+            } else {
+
+            }
+        } catch (CouldNotPerformException e) {
+            transactionBuffer.insertData(multiExprUpdate);
         }
     }
 
