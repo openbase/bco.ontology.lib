@@ -23,6 +23,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -54,6 +55,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
 
+    private TransactionBuffer transactionBuffer;
+
 //    prefix NS:   <http://www.openbase.org/bco/ontology#>
 //    PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
 //
@@ -74,6 +77,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
             + "ORDER BY DESC(?lastTimeStamp) LIMIT 1";
 
     public HeartBeatCommunication() {
+
+        transactionBuffer = new TransactionBuffer();
 
         final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
@@ -143,8 +148,12 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                                 , insertTripleArrayLists, null);
                         System.out.println(sparqlUpdate);
 
-                        final int responseCode = sparqlUpdate(sparqlUpdate);
-                        responseCodeHandling(responseCode); //TODO
+                        try {
+                            final int responseCode = sparqlUpdate(sparqlUpdate);
+                            responseCodeHandling(responseCode); //TODO
+                        } catch (CouldNotPerformException e) {
+                            transactionBuffer.insertData(sparqlUpdate);
+                        }
                     } else {
                         // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                         setNewHeartBeatPhase();
@@ -173,8 +182,12 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
         System.out.println(sparqlUpdate);
 
-        final int responseCode = sparqlUpdate(sparqlUpdate);
-        responseCodeHandling(responseCode); //TODO
+        try {
+            final int responseCode = sparqlUpdate(sparqlUpdate);
+            responseCodeHandling(responseCode); //TODO
+        } catch (CouldNotPerformException e) {
+            transactionBuffer.insertData(sparqlUpdate);
+        }
     }
 
 }
