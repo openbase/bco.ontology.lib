@@ -96,7 +96,12 @@ public final class ConfigureSystem {
         /**
          * HeartBeatPhase (class).
          */
-        HEARTBEAT_PHASE("HeartBeatPhase");
+        HEARTBEAT_PHASE("HeartBeatPhase"),
+
+        /**
+         * Observation (class).
+         */
+        Observation("Observation");
 
         private final String ontClass;
 

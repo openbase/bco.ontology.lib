@@ -161,10 +161,10 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
             unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
 
             // is the current unitType a connection or location? set unitType variable with their type
-            if (unitType.equals(ConfigureSystem.OntClass.CONNECTION.getName())) {
+            if (unitType.equals(ConfigureSystem.OntClass.CONNECTION.getName().toLowerCase())) {
                 unitType = unitConfig.getConnectionConfig().getType().toString().toLowerCase();
                 unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
-            } else if (unitType.equals(ConfigureSystem.OntClass.LOCATION.getName())) {
+            } else if (unitType.equals(ConfigureSystem.OntClass.LOCATION.getName().toLowerCase())) {
                 unitType = unitConfig.getLocationConfig().getType().toString().toLowerCase();
                 unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
             }

@@ -30,11 +30,11 @@ import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.dal.ColorableLightDataType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,6 +58,7 @@ public class StateObservation extends SparqlUpdateExpression {
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
     private static String remoteUnitId = null;
+    final Stopwatch stopwatch;
 
     private final Observer unitRemoteStateObserver; //TODO unchecked call ->generic dataClass?!
     private final Observer<ConnectionState> unitRemoteConnectionObserver;
@@ -68,6 +69,7 @@ public class StateObservation extends SparqlUpdateExpression {
             , final TransactionBuffer transactionBuffer) {
 
         this.transactionBuffer = transactionBuffer;
+        stopwatch = new Stopwatch();
 
         initServiceTypeMap();
 
@@ -187,6 +189,18 @@ public class StateObservation extends SparqlUpdateExpression {
         return tripleArrayLists;
     }
 
+    private List<TripleArrayList> addTripleAObservation(final List<TripleArrayList> tripleArrayLists
+            , final String subject) {
+
+        final String predicate = ConfigureSystem.OntExpr.A.getName();
+        final String object = ConfigureSystem.OntClass.Observation.getName(); //TODO compare with ont class...
+
+        // add triple: observation - a - Observation
+        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+
+        return tripleArrayLists;
+    }
+
     private void stateUpdate(final Object remoteData) {
         //TODO implement logic, that updates changed stateValues only
 
@@ -204,8 +218,18 @@ public class StateObservation extends SparqlUpdateExpression {
             for (Method methodStateType : methodSetStateType) {
 
                 try {
+                    // wait one millisecond to guarantee, that observation instances are unique
+                    try {
+                        stopwatch.waitForStop(1);
+                    } catch (InterruptedException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                    }
+
                     final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
-                    final String subject = "O" + remoteUnitId + dateTimeNow; //TODO wait ?
+                    final String subject = "O" + remoteUnitId + dateTimeNow;
+
+                    //### add observation instance to observation class ###\\
+                    tripleArrayListsBuf = addTripleAObservation(tripleArrayListsBuf, subject);
 
                     //### unitID triple ###\\
                     tripleArrayListsBuf = addTripleHasUnitId(tripleArrayListsBuf, subject, remoteUnitId);
@@ -235,7 +259,7 @@ public class StateObservation extends SparqlUpdateExpression {
                         final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
                                 , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
                         final String stateValue = stateValueObj.toString();
-                        tripleArrayListsBuf = addTripleHasProviderService(tripleArrayListsBuf, subject, stateValue);
+                        tripleArrayListsBuf = addTripleHasStateValue(tripleArrayListsBuf, subject, stateValue);
                     }
 
                     // no exception produced: observation individual complete. add to main list
