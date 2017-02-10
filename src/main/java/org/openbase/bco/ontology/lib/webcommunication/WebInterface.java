@@ -60,13 +60,13 @@ public class WebInterface {
 //    private static final String UPDATE =
 //            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
 //                    + "INSERT DATA { "
-//                    + "NS:bla a NS:Observation . "
+//                    + "NS:bla a NS:OBSERVATION . "
 //                    + "} ";
 
 //    private static final String QUERY =
 //            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
 //                    + "ASK { "
-//                    + "NS:o3 a NS:Observation . "
+//                    + "NS:o3 a NS:OBSERVATION . "
 //                    + "} ";
 
     /**

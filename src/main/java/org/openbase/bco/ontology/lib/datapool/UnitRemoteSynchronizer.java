@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.datapool;
 
-import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateObservation;
@@ -80,7 +80,6 @@ public class UnitRemoteSynchronizer {
             } catch (InterruptedException e) {
                 ExceptionPrinter.printHistory("Interrupted by getting unitRegistry! Retry in "
                         + ConfigureSystem.waitTimeMilliSeconds + "milliseconds!", e, LOGGER);
-                Thread.currentThread().interrupt();
 
                 try {
                     stopwatch.waitForStop(ConfigureSystem.waitTimeMilliSeconds);

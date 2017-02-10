@@ -324,7 +324,7 @@ public class FillOntology {
 
         // create observation individual
         final Individual startIndividualObservation = ontModel.createIndividual(ConfigureSystem
-                .NS + "o" + observationNumber, ontModel.getOntClass(ConfigureSystem.NS + "Observation"));
+                .NS + "o" + observationNumber, ontModel.getOntClass(ConfigureSystem.NS + "OBSERVATION"));
 
         // create objectProperty hasUnitId
         final Individual endIndividualUnit = ontModel.getIndividual(ConfigureSystem.NS + unitConfig.getId());

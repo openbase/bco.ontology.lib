@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class TransactionBuffer {
 
+    //TODO handling, if one element is "defect" and can't be send to server/accepted from server
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBuffer.class);
     private final Queue<String> queue = new ConcurrentLinkedQueue<>();
 

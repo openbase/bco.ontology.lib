@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
-import org.openbase.bco.dal.remote.unit.UnitRemote;
+import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
@@ -58,7 +58,7 @@ public class StateObservation extends SparqlUpdateExpression {
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
     private static String remoteUnitId = null;
-    final Stopwatch stopwatch;
+    private final Stopwatch stopwatch;
 
     private final Observer unitRemoteStateObserver; //TODO unchecked call ->generic dataClass?!
     private final Observer<ConnectionState> unitRemoteConnectionObserver;
@@ -76,6 +76,8 @@ public class StateObservation extends SparqlUpdateExpression {
         remoteUnitId = unitConfig.getId();
 
         this.unitRemoteStateObserver = (Observable observable, Object unitRemoteObj) -> {
+            System.out.println(observable);
+
             GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
         };
 
@@ -145,62 +147,6 @@ public class StateObservation extends SparqlUpdateExpression {
 
     }
 
-    private List<TripleArrayList> addTripleHasUnitId(final List<TripleArrayList> tripleArrayLists
-            , final String subject, final String object) {
-
-        final String predicate = ConfigureSystem.OntProp.UNIT_ID.getName();
-
-        // add triple: observation - hasUnitId - unit
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
-
-        return tripleArrayLists;
-    }
-
-    private List<TripleArrayList> addTripleHasTimeStamp(final List<TripleArrayList> tripleArrayLists
-            , final String subject, final String object) {
-
-        final String predicate = ConfigureSystem.OntProp.TIME_STAMP.getName();
-
-        // add triple: observation - hasTimeStamp - timeStamp
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
-
-        return tripleArrayLists;
-    }
-
-    private List<TripleArrayList> addTripleHasProviderService(final List<TripleArrayList> tripleArrayLists
-            , final String subject, final String object) {
-
-        final String predicate = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
-
-        // add triple: observation - hasProviderService - providerService
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
-
-        return tripleArrayLists;
-    }
-
-    private List<TripleArrayList> addTripleHasStateValue(final List<TripleArrayList> tripleArrayLists
-            , final String subject, final String object) {
-
-        final String predicate = ConfigureSystem.OntProp.STATE_VALUE.getName();
-
-        // add triple: observation - hasStateValue - stateValue
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
-
-        return tripleArrayLists;
-    }
-
-    private List<TripleArrayList> addTripleAObservation(final List<TripleArrayList> tripleArrayLists
-            , final String subject) {
-
-        final String predicate = ConfigureSystem.OntExpr.A.getName();
-        final String object = ConfigureSystem.OntClass.Observation.getName(); //TODO compare with ont class...
-
-        // add triple: observation - a - Observation
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
-
-        return tripleArrayLists;
-    }
-
     private void stateUpdate(final Object remoteData) {
         //TODO implement logic, that updates changed stateValues only
 
@@ -208,6 +154,15 @@ public class StateObservation extends SparqlUpdateExpression {
         List<TripleArrayList> tripleArrayLists = new ArrayList<>();
         // first collect all components of the individual observation, then add to main list (integrity reason)
         List<TripleArrayList> tripleArrayListsBuf = new ArrayList<>();
+
+        // declaration of predicates and objects, which are static
+        final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
+        final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName(); //TODO compare with ont class.
+        final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName(); //TODO compare with ont class.
+        final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
+        final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
+//        final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
+        final String predicateHasStateValue = ConfigureSystem.OntProp.STATE_VALUE.getName();
 
         try {
             final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
@@ -225,31 +180,33 @@ public class StateObservation extends SparqlUpdateExpression {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
                     }
 
-                    final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
-                    final String subject = "O" + remoteUnitId + dateTimeNow;
-
-                    //### add observation instance to observation class ###\\
-                    tripleArrayListsBuf = addTripleAObservation(tripleArrayListsBuf, subject);
-
-                    //### unitID triple ###\\
-                    tripleArrayListsBuf = addTripleHasUnitId(tripleArrayListsBuf, subject, remoteUnitId);
-
-                    //### serviceType triple ###\\
-                    final String serviceTypeInstance = getServiceTypeMapping(methodStateType.getName());
-                    tripleArrayListsBuf = addTripleHasProviderService(tripleArrayListsBuf, subject, serviceTypeInstance);
-
-                    Object stateTypeObj = null;
+                    // get method as invoked object
+                    Object stateTypeObj;
                     try {
-                        // get method as invoked object
                         stateTypeObj = methodStateType.invoke(remoteData);
                     } catch (IllegalAccessException | InvocationTargetException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                        throw new CouldNotPerformException(e);
                     }
 
+                    final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
+                    final String subjectObservation = "O" + remoteUnitId + dateTimeNow;
+
+                    //### add observation instance to observation class ###\\
+                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateIsA, objectObservationClass));
+
+                    //### unitID triple ###\\
+                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasUnitId, remoteUnitId));
+
+                    //### serviceType triple ###\\
+                    final String objectServiceType = getServiceTypeMapping(methodStateType.getName());
+                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasProviderService
+                            , objectServiceType));
+
                     //### timeStamp triple ###\\
-//                    final String timeStampObj = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
+//                    final String objectTimeStamp = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
 //                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
-//                    tripleArrayListsBuf = addTripleHasProviderService(tripleArrayListsBuf, subject, timeStampObj);
+//                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
+//                            , objectTimeStamp));
 
                     //### stateValue triple ###\\
                     final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
@@ -258,19 +215,22 @@ public class StateObservation extends SparqlUpdateExpression {
                     } else {
                         final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
                                 , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-                        final String stateValue = stateValueObj.toString();
-                        tripleArrayListsBuf = addTripleHasStateValue(tripleArrayListsBuf, subject, stateValue);
+                        final String objectStateValue = stateValueObj.toString();
+
+                        tripleArrayListsBuf.add(new TripleArrayList(objectStateValue, predicateIsA
+                                , objectStateValueClass)); // TODO: redundant. another possibility?
+                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue
+                                , objectStateValue));
                     }
 
                     // no exception produced: observation individual complete. add to main list
                     tripleArrayLists.addAll(tripleArrayListsBuf);
-                    tripleArrayListsBuf.clear();
 
                 } catch (CouldNotPerformException e) {
                     // Could not collect all elements of observation instance
-                    tripleArrayListsBuf.clear();
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
                 }
+                tripleArrayListsBuf.clear();
             }
 
         } catch (CouldNotPerformException e) {

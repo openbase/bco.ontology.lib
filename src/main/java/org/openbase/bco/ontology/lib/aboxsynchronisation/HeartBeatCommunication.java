@@ -27,8 +27,10 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.Transac
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +41,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 31.01.17.
@@ -87,13 +88,12 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         setNewHeartBeatPhase();
 
         //observe current heartbeat now, refresh or start new heartbeat phase
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        try {
+            GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
-            @Override
-            public void run() {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
                 ResultSet resultSet = null;
+
                 try {
                     resultSet = sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
                 } catch (CouldNotPerformException e) {
@@ -159,8 +159,10 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         setNewHeartBeatPhase();
                     }
                 }
-            }
-        }, 3000, 5000);
+            }, 3, 5, TimeUnit.SECONDS);
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 
     private void setNewHeartBeatPhase() {

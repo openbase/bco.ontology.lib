@@ -194,7 +194,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
         for (final UnitConfig unitConfig : unitConfigSet) {
 
-            if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
+//            if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
 
                 final String unitId = unitConfig.getId();
 
@@ -209,7 +209,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
                     } catch (NotAvailableException e) {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
-                }
+//                }
             }
         }
 

@@ -64,6 +64,11 @@ public final class ConfigureSystem {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
+     * The used RSB scope.
+     */
+    public static final String RSB_SCOPE = "/test/a3";
+
+    /**
      * Enumeration of ontology classes.
      */
     public enum OntClass {
@@ -99,9 +104,14 @@ public final class ConfigureSystem {
         HEARTBEAT_PHASE("HeartBeatPhase"),
 
         /**
-         * Observation (class).
+         * OBSERVATION (class).
          */
-        Observation("Observation");
+        OBSERVATION("OBSERVATION"),
+
+        /**
+         * StateValue (class).
+         */
+        STATE_VALUE("StateValue");
 
         private final String ontClass;
 
