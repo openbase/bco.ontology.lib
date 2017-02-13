@@ -25,6 +25,7 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstan
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
@@ -35,17 +36,15 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.protobuf.IdentifiableMessageMap;
 import org.openbase.jul.extension.protobuf.ProtobufListDiff;
-import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
-import rst.domotic.state.EnablingStateType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.UnitTemplateType;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,15 +71,15 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     private final OntInstanceMapping ontInstanceMapping = new OntInstanceMappingImpl();
     private final OntPropertyMapping ontPropertyMapping = new OntPropertyMappingImpl();
     private UnitRegistryRemote unitRegistryRemote;
-    private TransactionBuffer transactionBuffer;
+    private TransactionBuffer transactionBufferImpl;
 
     /**
      * Constructor for UnitRegistrySynchronizer.
      */
-    public UnitRegistrySynchronizer() {
+    public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) {
 
-        transactionBuffer = new TransactionBuffer();
-        final Stopwatch stopwatch = new Stopwatch();
+        this.transactionBufferImpl = transactionBuffer;
+        final Stopwatch stopwatch = new Stopwatch(); //TODO change to scheduled thread
 
         // ### INIT ###
         while (true) {
@@ -165,12 +164,12 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
 
             if (!httpSuccess) {
-                transactionBuffer.insertData(multiExprUpdate);
+                transactionBufferImpl.insertData(multiExprUpdate);
             } else {
 
             }
-        } catch (CouldNotPerformException e) {
-            transactionBuffer.insertData(multiExprUpdate);
+        } catch (IOException e) {
+            transactionBufferImpl.insertData(multiExprUpdate);
         }
     }
 

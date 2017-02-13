@@ -18,11 +18,11 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.aboxsynchronisation.HeartBeatCommunication;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.testcode.CreateOntology;
-import org.openbase.bco.ontology.lib.testcode.QueryOntology;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
@@ -53,9 +53,11 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
         ServerOntologyModel.putOntologyModel(ontology.getModel());
 
-        final UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer();
-
-        final UnitRemoteSynchronizer unitRemoteSynchronizer = new UnitRemoteSynchronizer();
+//        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
+        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+        transactionBuffer.createAndStartQueue();
+        final UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer(transactionBuffer);
+        final UnitRemoteSynchronizer unitRemoteSynchronizer = new UnitRemoteSynchronizer(transactionBuffer);
 
 //        WebInterface webInterface = new WebInterface();
 

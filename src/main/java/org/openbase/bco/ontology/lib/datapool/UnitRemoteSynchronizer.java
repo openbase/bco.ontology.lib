@@ -23,6 +23,7 @@ import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateObservation;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -43,12 +44,11 @@ public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
 
-    public UnitRemoteSynchronizer() {
+    public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer) {
 
         List<UnitConfig> unitConfigList;
         boolean retry = true;
         MultiException.ExceptionStack exceptionStack = null;
-        final TransactionBuffer transactionBuffer = new TransactionBuffer();
         final Stopwatch stopwatch = new Stopwatch();
 
         while (retry) {

@@ -51,26 +51,15 @@ public interface RsbInformer {
      * Method starts the notification via RSB.
      *
      * @param synchronizedInformer the RSB informer object.
-     * @throws CouldNotPerformException if the informer can't establish the notification process.
+     * @return {@code true} if publish process is successful.
      */
-    static void startInformer(final RSBInformer<String> synchronizedInformer) throws CouldNotPerformException {
-
+    static boolean startInformerNotification(final RSBInformer<String> synchronizedInformer) {
         try {
             synchronizedInformer.publish("notification");
-        } catch (InterruptedException e) {
-            throw new CouldNotPerformException("Could not publish notification via RSB informer!", e);
+            return true;
+        } catch (CouldNotPerformException | InterruptedException e) {
+            return false;
         }
     }
-}
 
-//taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-//@Override
-//public void run() {
-//        try {
-//        synchronizedInformer.publish("notification");
-//        taskFuture.cancel(true);
-//        } catch (CouldNotPerformException | InterruptedException e) {
-//        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-//        }
-//        }
-//        }, 0, 5, TimeUnit.SECONDS);
+}

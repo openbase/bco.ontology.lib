@@ -24,9 +24,10 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -34,6 +35,7 @@ import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,7 +59,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
 
-    private TransactionBuffer transactionBuffer;
+    private TransactionBuffer transactionBufferImpl;
 
 //    prefix NS:   <http://www.openbase.org/bco/ontology#>
 //    PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
@@ -77,9 +80,9 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
             + "} "
             + "ORDER BY DESC(?lastTimeStamp) LIMIT 1";
 
-    public HeartBeatCommunication() {
+    public HeartBeatCommunication(final TransactionBuffer transactionBufferImpl) {
 
-        transactionBuffer = new TransactionBuffer();
+        this.transactionBufferImpl = new TransactionBufferImpl();
 
         final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
@@ -96,7 +99,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
 
                 try {
                     resultSet = sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
-                } catch (CouldNotPerformException e) {
+                } catch (CouldNotProcessException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
 
@@ -151,8 +154,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         try {
                             final int responseCode = sparqlUpdate(sparqlUpdate);
                             responseCodeHandling(responseCode); //TODO
-                        } catch (CouldNotPerformException e) {
-                            transactionBuffer.insertData(sparqlUpdate);
+                        } catch (IOException e) {
+                            transactionBufferImpl.insertData(sparqlUpdate);
                         }
                     } else {
                         // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
@@ -187,8 +190,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         try {
             final int responseCode = sparqlUpdate(sparqlUpdate);
             responseCodeHandling(responseCode); //TODO
-        } catch (CouldNotPerformException e) {
-            transactionBuffer.insertData(sparqlUpdate);
+        } catch (IOException e) {
+            transactionBufferImpl.insertData(sparqlUpdate);
         }
     }
 

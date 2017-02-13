@@ -40,6 +40,7 @@ import org.apache.jena.shared.JenaException;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
@@ -110,10 +111,10 @@ public class WebInterface {
      * Method processes a sparql update and returns the response status code of the http request.
      *
      * @param updateString The sparql update string.
-     * @throws CouldNotPerformException CouldNotPerformException.
+     * @throws CouldNotProcessException CouldNotProcessException.
      * @return The status code of the http request.
      */
-    public int sparqlUpdate(final String updateString) throws CouldNotPerformException {
+    public int sparqlUpdate(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPost = new HttpPost(ConfigureSystem.SERVER_ONTOLOGY_UPDATE_URI);
@@ -128,7 +129,7 @@ public class WebInterface {
             return httpResponse.getStatusLine().getStatusCode();
 
         } catch (IOException e) {
-            throw new CouldNotPerformException("Could not perform sparql update!", e);
+            throw new IOException("Could not perform sparql update!", e);
         }
     }
 
@@ -137,16 +138,16 @@ public class WebInterface {
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.
-     * @throws CouldNotPerformException CouldNotPerformException.
+     * @throws CouldNotProcessException CouldNotProcessException.
      */
-    public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotPerformException {
+    public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
         try {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory
                     .sparqlService(ConfigureSystem.SERVER_ONTOLOGY_SPARQL_URI, query);
             return queryExecution.execSelect();
         } catch (Exception e) {
-            throw new CouldNotPerformException("Could not get http response!", e);
+            throw new CouldNotProcessException("Could not get http response!", e);
         }
     }
 

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -252,7 +253,7 @@ public class StateObservation extends SparqlUpdateExpression {
                 System.out.println("success");
             }
 
-        } catch (CouldNotPerformException e) {
+        } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
 //            ((ColorableLightDataType.ColorableLightData) remoteData).
