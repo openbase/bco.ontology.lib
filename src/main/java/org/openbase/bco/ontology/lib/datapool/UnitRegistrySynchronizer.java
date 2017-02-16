@@ -19,26 +19,25 @@
 package org.openbase.bco.ontology.lib.datapool;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
-import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.protobuf.IdentifiableMessageMap;
 import org.openbase.jul.extension.protobuf.ProtobufListDiff;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
-import org.openbase.jul.schedule.Stopwatch;
+import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
@@ -47,6 +46,8 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 18.01.17.
@@ -61,9 +62,9 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     //TODO approach: upload rdf file, which contains updates
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRegistrySynchronizer.class);
-    private final ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
+    private ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
 
-    private final Observer<UnitRegistryData> unitRegistryObserver;
+    private Observer<UnitRegistryData> unitRegistryObserver;
     private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMap;
     private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMap;
     private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMap;
@@ -72,6 +73,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     private final OntPropertyMapping ontPropertyMapping = new OntPropertyMappingImpl();
     private UnitRegistryRemote unitRegistryRemote;
     private TransactionBuffer transactionBufferImpl;
+    private Future taskFuture;
 
     /**
      * Constructor for UnitRegistrySynchronizer.
@@ -79,65 +81,70 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) {
 
         this.transactionBufferImpl = transactionBuffer;
-        final Stopwatch stopwatch = new Stopwatch(); //TODO change to scheduled thread
 
         // ### INIT ###
-        while (true) {
-            try {
-                unitRegistryRemote = Registries.getUnitRegistry();
-                List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
-
-                // fill ontology initial with whole registry unitConfigs
-                aBoxSynchInitUnits(unitConfigListInit);
-
-                break;
-            } catch (InterruptedException | CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-
+        try {
+            taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
                 try {
-                    stopwatch.waitForStop(ConfigureSystem.waitTimeMilliSeconds);
-                } catch (InterruptedException e1) {
-                    ExceptionPrinter.printHistory(e1, LOGGER, LogLevel.WARN);
+                    unitRegistryRemote = Registries.getUnitRegistry();
+                    Registries.getUnitRegistry().waitForData();
+                    List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
+
+                    // fill ontology initial with whole registry unitConfigs
+                    aBoxSynchInitUnits(unitConfigListInit);
+
+
+                    // ### UPDATE ###
+                    registryDiff = new ProtobufListDiff<>();
+
+                    unitRegistryObserver = (observable, unitRegistryData) -> GlobalCachedExecutorService.submit(() -> {
+
+                        final List<UnitConfig> unitConfigList = unitRegistryData.getUnitGroupUnitConfigList();
+                        List<UnitConfig> unitConfigListBuf = new ArrayList<>();
+
+                        registryDiff.diff(unitConfigList);
+
+                        identifiableNewMessageMap = registryDiff.getNewMessageMap();
+                        identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
+                        identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
+
+                        if (!identifiableNewMessageMap.isEmpty()) {
+                            unitConfigListBuf.addAll(identifiableNewMessageMap.getMessages());
+                            aBoxSynchNewUnits(unitConfigListBuf);
+                            identifiableNewMessageMap.clear();
+                        }
+
+                        if (!identifiableUpdatedMessageMap.isEmpty()) {
+                            unitConfigListBuf.addAll(identifiableUpdatedMessageMap.getMessages());
+                            aBoxSynchUpdateUnits(unitConfigListBuf);
+                            identifiableUpdatedMessageMap.clear();
+                        }
+
+                        if (!identifiableRemovedMessageMap.isEmpty()) {
+                            unitConfigListBuf.addAll(identifiableRemovedMessageMap.getMessages());
+                            aBoxSynchRemoveUnits(unitConfigListBuf);
+                            identifiableRemovedMessageMap.clear();
+                        }
+
+                        unitConfigListBuf.clear();
+                    });
+
+                    unitRegistryRemote.addDataObserver(unitRegistryObserver);
+
+
+                    taskFuture.cancel(true);
+                } catch (InterruptedException | CouldNotPerformException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                    // retry via scheduled thread
                 }
-            }
+            }, 0, 1, TimeUnit.SECONDS);
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            //TODO
         }
 
-        // ### UPDATE ###
-        this.registryDiff = new ProtobufListDiff<>();
+        //TODO start update after thread is canceled...
 
-        this.unitRegistryObserver = (observable, unitRegistryData) -> GlobalCachedExecutorService.submit(() -> {
-
-            final List<UnitConfig> unitConfigList = unitRegistryData.getUnitGroupUnitConfigList();
-            List<UnitConfig> unitConfigListBuf = new ArrayList<>();
-
-            registryDiff.diff(unitConfigList);
-
-            identifiableNewMessageMap = registryDiff.getNewMessageMap();
-            identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
-            identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
-
-            if (!identifiableNewMessageMap.isEmpty()) {
-                unitConfigListBuf.addAll(identifiableNewMessageMap.getMessages());
-                aBoxSynchNewUnits(unitConfigListBuf);
-                identifiableNewMessageMap.clear();
-            }
-
-            if (!identifiableUpdatedMessageMap.isEmpty()) {
-                unitConfigListBuf.addAll(identifiableUpdatedMessageMap.getMessages());
-                aBoxSynchUpdateUnits(unitConfigListBuf);
-                identifiableUpdatedMessageMap.clear();
-            }
-
-            if (!identifiableRemovedMessageMap.isEmpty()) {
-                unitConfigListBuf.addAll(identifiableRemovedMessageMap.getMessages());
-                aBoxSynchRemoveUnits(unitConfigListBuf);
-                identifiableRemovedMessageMap.clear();
-            }
-
-            unitConfigListBuf.clear();
-        });
-
-        unitRegistryRemote.addDataObserver(unitRegistryObserver);
     }
 
     private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTripleArrayLists

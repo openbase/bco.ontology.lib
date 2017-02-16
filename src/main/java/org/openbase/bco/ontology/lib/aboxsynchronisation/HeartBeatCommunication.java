@@ -43,7 +43,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,17 +57,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
-
     private TransactionBuffer transactionBufferImpl;
-
-//    prefix NS:   <http://www.openbase.org/bco/ontology#>
-//    PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-//
-//    SELECT ?heartBeatPhase ?lastTimeStamp ?firstTimeStamp {
-//  ?heartBeatPhase a NS:HeartBeatPhase .
-//                ?heartBeatPhase NS:hasFirstHeartBeat ?firstTimeStamp .
-//                ?heartBeatPhase NS:hasLastHeartBeat ?lastTimeStamp .
-//    } ORDER BY DESC(?heartBeatPhase)
 
     private final static String queryLastTimeStampOfCurrentHeartBeat =
             "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "

@@ -58,14 +58,17 @@ public class UnitRemoteSynchronizer {
 
                 for (UnitConfig unitConfig : unitConfigList) {
                     if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
-
                         try {
+                            System.out.println(unitConfig.getId());
+                            System.out.println(unitConfig.getType());
+                            System.out.println(unitConfig.getLabel());
                             final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
                             unitRemote.activate();
                             unitRemote.waitForData(500, TimeUnit.MILLISECONDS); //TODO retry?
 
                             if (unitRemote.isDataAvailable()) {
-                                StateObservation stateObservation
+                                System.out.println(unitRemote.isDataAvailable());
+                                final StateObservation stateObservation
                                         = new StateObservation(unitRemote, unitConfig, transactionBuffer);
                             }
                         } catch (InterruptedException | CouldNotPerformException e) {

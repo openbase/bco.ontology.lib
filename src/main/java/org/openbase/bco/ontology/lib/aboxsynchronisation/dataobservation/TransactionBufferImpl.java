@@ -54,6 +54,9 @@ public class TransactionBufferImpl implements TransactionBuffer {
         this.queue = new ConcurrentLinkedQueue<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void createAndStartQueue(final RSBInformer<String> synchronizedInformer)
             throws CouldNotPerformException {
@@ -93,6 +96,9 @@ public class TransactionBufferImpl implements TransactionBuffer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void createAndStartQueue() throws CouldNotPerformException {
 
@@ -123,6 +129,9 @@ public class TransactionBufferImpl implements TransactionBuffer {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void insertData(final String sparqlUpdateExpr) throws CouldNotProcessException {
         boolean isElementInQueue = queue.offer(sparqlUpdateExpr);

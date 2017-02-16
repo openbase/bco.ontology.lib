@@ -77,8 +77,6 @@ public class StateObservation extends SparqlUpdateExpression {
         remoteUnitId = unitConfig.getId();
 
         this.unitRemoteStateObserver = (Observable observable, Object unitRemoteObj) -> {
-            System.out.println(observable);
-
             GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
         };
 

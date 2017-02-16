@@ -22,6 +22,8 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -53,7 +55,9 @@ public class OntInstanceInspection {
         final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS
                 + ConfigureSystem.OntClass.UNIT.getName());
 
-        if (ontClassUnit != null) {
+        if (ontClassUnit == null) {
+            //TODO
+        } else {
             ontUnitIndNameSet = listIndOfOntClass(ontUnitIndNameSet, ontClassUnit);
         }
 
@@ -110,7 +114,7 @@ public class OntInstanceInspection {
      *
      * @return A set of strings with individual localNames.
      */
-    protected Set<String> listIndOfOntClass(final Set<String> individualNameSet, final OntClass ontClass) {
+    private Set<String> listIndOfOntClass(final Set<String> individualNameSet, final OntClass ontClass) {
 
         final ExtendedIterator instanceExIt;
         if (ontClass.hasSubClass()) {
@@ -142,39 +146,6 @@ public class OntInstanceInspection {
             }
         }
         return individualNameSet;
-    }
-
-    /**
-     * Method delivers all subclasses of the given superclass via recursion.
-     *
-     * @param ontClassSet The (empty) set to itemize the ontClasses.
-     * @param ontSuperClass The superclass.
-     * @param inclusiveSuperclass Result list keeps superclass or not.
-     *
-     * @return The list with ontClasses.
-     */
-    protected Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
-            ontSuperClass, final boolean inclusiveSuperclass) {
-
-        // add initial superclass
-        if (inclusiveSuperclass) {
-            ontClassSet.add(ontSuperClass);
-        }
-
-        // get all subclasses of current superclass
-        final ExtendedIterator ontClassExIt;
-        ontClassExIt = ontSuperClass.listSubClasses();
-
-        // add subclass(es) and if subclass has subclass(es) goto next layer via recursion
-        while (ontClassExIt.hasNext()) {
-            final OntClass ontClass = (OntClass) ontClassExIt.next();
-            ontClassSet.add(ontClass);
-
-            if (ontSuperClass.hasSubClass()) {
-                listSubclassesOfOntSuperclass(ontClassSet, ontClass, false);
-            }
-        }
-        return ontClassSet;
     }
 
     /**

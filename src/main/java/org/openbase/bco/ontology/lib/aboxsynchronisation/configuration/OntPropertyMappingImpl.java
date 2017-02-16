@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author agatting on 21.12.16.
  */
-public class OntPropertyMappingImpl extends OntInstanceInspection implements OntPropertyMapping {
+public class OntPropertyMappingImpl implements OntPropertyMapping {
 
     //TODO exception handling
     //TODO reduce methods params: .addAll

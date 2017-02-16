@@ -94,7 +94,7 @@
                 <configuration>
                     <programs>
                         <program>
-                            <mainClass>org.openbase.bco.ontology.lib.OntologyManagerController</mainClass>
+                            <mainClass>org.openbase.bco.ontology.lib.OntologyManagerLauncher</mainClass>
                             <id>ontology.lib</id>
                             <platforms>
                                 <platform>unix</platform>
@@ -159,15 +159,6 @@
                     <useReleaseProfile>true</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.zenjava</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>8.1.4</version>
-                <configuration>
-                    <mainClass>org.openbase.bco.ontology.lib.OntologyManagerController</mainClass>
-                    <needMenu>true</needMenu>
                 </configuration>
             </plugin>
         </plugins>
