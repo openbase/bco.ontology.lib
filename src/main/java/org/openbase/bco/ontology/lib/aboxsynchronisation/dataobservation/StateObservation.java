@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +53,7 @@ import java.util.Set;
 /**
  * @author agatting on 09.01.17.
  */
-public class StateObservation extends SparqlUpdateExpression {
+public class StateObservation<T> extends SparqlUpdateExpression {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
@@ -60,11 +61,8 @@ public class StateObservation extends SparqlUpdateExpression {
     private final Map<String, String> serviceTypeMap = new HashMap<>();
     private static String remoteUnitId = null;
     private final Stopwatch stopwatch;
-
-    private final Observer unitRemoteStateObserver; //TODO unchecked call ->generic dataClass?!
-    private final Observer<ConnectionState> unitRemoteConnectionObserver;
-
     private TransactionBuffer transactionBuffer;
+
 
     public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig
             , final TransactionBuffer transactionBuffer) {
@@ -76,11 +74,10 @@ public class StateObservation extends SparqlUpdateExpression {
 
         remoteUnitId = unitConfig.getId();
 
-        this.unitRemoteStateObserver = (Observable observable, Object unitRemoteObj) -> {
-            GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
-        };
+        Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) ->
+                GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
 
-        this.unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
+        Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
             GlobalCachedExecutorService.submit(() -> {
                 if (connectionState.equals(ConnectionState.CONNECTED)) {
                     System.out.println("connected!!!");
@@ -160,17 +157,22 @@ public class StateObservation extends SparqlUpdateExpression {
         final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName(); //TODO compare with ont class.
         final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
         final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
-//        final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
+        final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
         final String predicateHasStateValue = ConfigureSystem.OntProp.STATE_VALUE.getName();
+
+        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
+        System.out.println("--------------------");
+
+        //TODO get stateType only, which has changed...
 
         try {
             final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
                     , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
-            System.out.println(methodSetStateType);
 
             // foreach stateType ... every observation point represents an serviceType respectively stateValue
             for (Method methodStateType : methodSetStateType) {
 
+                System.out.println(methodStateType);
                 try {
                     // wait one millisecond to guarantee, that observation instances are unique
                     try {
@@ -202,10 +204,12 @@ public class StateObservation extends SparqlUpdateExpression {
                             , objectServiceType));
 
                     //### timeStamp triple ###\\
-//                    final String objectTimeStamp = (String) ReflectObjectPool.getInvokedObj(stateTypeObj
-//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()); //TODO result empty
+//                    final String objectTimeStamp = ReflectObjectPool.getInvokedObj(stateTypeObj
+//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()).toString(); //TODO result empty
 //                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
 //                            , objectTimeStamp));
+//                    System.out.println("die zeit: " + ReflectObjectPool.getInvokedObj(stateTypeObj
+//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()));
 
                     //### stateValue triple ###\\
                     final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
@@ -231,6 +235,7 @@ public class StateObservation extends SparqlUpdateExpression {
                 }
                 tripleArrayListsBuf.clear();
             }
+            System.out.println("-----------");
 
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -254,7 +259,11 @@ public class StateObservation extends SparqlUpdateExpression {
         } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
-//            ((ColorableLightDataType.ColorableLightData) remoteData).
+
+//        long time = ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getTimestamp().getTime();
+//        Timestamp timestamp = new Timestamp(time);
+//
+//        System.out.println("zeit-long: "+ time + "timestamp: " + timestamp.toString());
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 

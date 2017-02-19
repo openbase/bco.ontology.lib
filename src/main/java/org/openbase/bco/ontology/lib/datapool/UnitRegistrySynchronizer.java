@@ -93,45 +93,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
                     // fill ontology initial with whole registry unitConfigs
                     aBoxSynchInitUnits(unitConfigListInit);
 
-
-                    // ### UPDATE ###
-                    registryDiff = new ProtobufListDiff<>();
-
-                    unitRegistryObserver = (observable, unitRegistryData) -> GlobalCachedExecutorService.submit(() -> {
-
-                        final List<UnitConfig> unitConfigList = unitRegistryData.getUnitGroupUnitConfigList();
-                        List<UnitConfig> unitConfigListBuf = new ArrayList<>();
-
-                        registryDiff.diff(unitConfigList);
-
-                        identifiableNewMessageMap = registryDiff.getNewMessageMap();
-                        identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
-                        identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
-
-                        if (!identifiableNewMessageMap.isEmpty()) {
-                            unitConfigListBuf.addAll(identifiableNewMessageMap.getMessages());
-                            aBoxSynchNewUnits(unitConfigListBuf);
-                            identifiableNewMessageMap.clear();
-                        }
-
-                        if (!identifiableUpdatedMessageMap.isEmpty()) {
-                            unitConfigListBuf.addAll(identifiableUpdatedMessageMap.getMessages());
-                            aBoxSynchUpdateUnits(unitConfigListBuf);
-                            identifiableUpdatedMessageMap.clear();
-                        }
-
-                        if (!identifiableRemovedMessageMap.isEmpty()) {
-                            unitConfigListBuf.addAll(identifiableRemovedMessageMap.getMessages());
-                            aBoxSynchRemoveUnits(unitConfigListBuf);
-                            identifiableRemovedMessageMap.clear();
-                        }
-
-                        unitConfigListBuf.clear();
-                    });
-
-                    unitRegistryRemote.addDataObserver(unitRegistryObserver);
-
-
+                    setUpdateObserver();
                     taskFuture.cancel(true);
                 } catch (InterruptedException | CouldNotPerformException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
@@ -142,9 +104,45 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             //TODO
         }
+    }
 
-        //TODO start update after thread is canceled...
+    private void setUpdateObserver() {
+        // ### UPDATE ###
+        this.registryDiff = new ProtobufListDiff<>();
 
+        this.unitRegistryObserver = (observable, unitRegistryData) -> GlobalCachedExecutorService.submit(() -> {
+
+            final List<UnitConfig> unitConfigList = unitRegistryData.getUnitGroupUnitConfigList();
+            List<UnitConfig> unitConfigListBuf = new ArrayList<>();
+
+            registryDiff.diff(unitConfigList);
+
+            identifiableNewMessageMap = registryDiff.getNewMessageMap();
+            identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
+            identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
+
+            if (!identifiableNewMessageMap.isEmpty()) {
+                unitConfigListBuf.addAll(identifiableNewMessageMap.getMessages());
+                aBoxSynchNewUnits(unitConfigListBuf);
+                identifiableNewMessageMap.clear();
+            }
+
+            if (!identifiableUpdatedMessageMap.isEmpty()) {
+                unitConfigListBuf.addAll(identifiableUpdatedMessageMap.getMessages());
+                aBoxSynchUpdateUnits(unitConfigListBuf);
+                identifiableUpdatedMessageMap.clear();
+            }
+
+            if (!identifiableRemovedMessageMap.isEmpty()) {
+                unitConfigListBuf.addAll(identifiableRemovedMessageMap.getMessages());
+                aBoxSynchRemoveUnits(unitConfigListBuf);
+                identifiableRemovedMessageMap.clear();
+            }
+
+            unitConfigListBuf.clear();
+        });
+
+        this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
     }
 
     private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTripleArrayLists

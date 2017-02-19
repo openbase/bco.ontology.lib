@@ -42,8 +42,8 @@ public interface ServerOntologyModel {
      */
     static OntModel getOntologyModel() throws CouldNotPerformException {
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem
-                    .SERVER_ONTOLOGY_URI);
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem.OntPath
+                    .SERVER_URI.getName());
             final Model model = datasetAccessor.getModel();
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
@@ -60,8 +60,8 @@ public interface ServerOntologyModel {
      */
     static void putOntologyModel(final OntModel ontModel) throws CouldNotPerformException {
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem
-                    .SERVER_ONTOLOGY_URI);
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(ConfigureSystem.OntPath
+                    .SERVER_URI.getName());
 
             datasetAccessor.putModel(ontModel);
         } catch (Exception e) {
@@ -79,7 +79,7 @@ public interface ServerOntologyModel {
         try {
             // access to fuseki server and download ontology model
             final DatasetAccessor datasetAccessor = DatasetAccessorFactory
-                    .createHTTP(ConfigureSystem.SERVER_ONTOLOGY_TBOX_URI);
+                    .createHTTP(ConfigureSystem.OntPath.SERVER_TBOX_URI.getName());
             final Model model = datasetAccessor.getModel();
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);

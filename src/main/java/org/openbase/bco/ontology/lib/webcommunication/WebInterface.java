@@ -117,7 +117,7 @@ public class WebInterface {
     public int sparqlUpdate(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(ConfigureSystem.SERVER_ONTOLOGY_UPDATE_URI);
+        final HttpPost httpPost = new HttpPost(ConfigureSystem.OntPath.SERVER_UPDATE_URI.getName());
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("update", updateString));
@@ -144,7 +144,7 @@ public class WebInterface {
         try {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory
-                    .sparqlService(ConfigureSystem.SERVER_ONTOLOGY_SPARQL_URI, query);
+                    .sparqlService(ConfigureSystem.OntPath.SERVER_SPARQL_URI.getName(), query);
             return queryExecution.execSelect();
         } catch (Exception e) {
             throw new CouldNotProcessException("Could not get http response!", e);

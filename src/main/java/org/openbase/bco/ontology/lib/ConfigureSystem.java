@@ -39,26 +39,6 @@ import org.slf4j.LoggerFactory;
 public final class ConfigureSystem {
 
     /**
-     * Data URI to the ontology model of the server. Contains full ontology (ABox & TBox)
-     */
-    public static final String SERVER_ONTOLOGY_URI = "http://localhost:3030/myAppFuseki/data";
-
-    /**
-     * Data URI to the ontology model of the server. Contains TBox only!
-     */
-    public static final String SERVER_ONTOLOGY_TBOX_URI = "http://localhost:3030/myAppFuseki/data";
-
-    /**
-     * Update URI of the ontology server.
-     */
-    public static final String SERVER_ONTOLOGY_UPDATE_URI = "http://localhost:3030/myAppFuseki/update";
-
-    /**
-     * SPARQL URI of the ontology server.
-     */
-    public static final String SERVER_ONTOLOGY_SPARQL_URI = "http://localhost:3030/myAppFuseki/sparql";
-
-    /**
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";
@@ -67,6 +47,52 @@ public final class ConfigureSystem {
      * The used RSB scope.
      */
     public static final String RSB_SCOPE = "/test/a3";
+
+    /**
+     * Enumeration of paths to the ontology versions. From filesystem and server.
+     */
+    public enum OntPath {
+
+        /**
+         * Filesystem path to ontology TBox.
+         */
+        FILESYSTEM("src/Ontology.owl"),
+
+        /**
+         * Data URI to the ontology model of the server. Contains full ontology (ABox & TBox).
+         */
+        SERVER_URI("http://localhost:3030/myAppFuseki/data"),
+
+        /**
+         * Data URI to the ontology model of the server. Contains TBox only!
+         */
+        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"), //TODO TBox uri
+
+        /**
+         * Update URI of the ontology server.
+         */
+        SERVER_UPDATE_URI("http://localhost:3030/myAppFuseki/update"),
+
+        /**
+         * SPARQL URI of the ontology server.
+         */
+        SERVER_SPARQL_URI("http://localhost:3030/myAppFuseki/sparql");
+
+        private final String ontPath;
+
+        OntPath(final String ontPath) {
+            this.ontPath = ontPath;
+        }
+
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
+            return this.ontPath;
+        }
+    }
 
     /**
      * Enumeration of ontology classes.
@@ -236,7 +262,7 @@ public final class ConfigureSystem {
         /**
          * Pattern to remove all special signs in a string.
          */
-        REMOVE("[^\\p{Alpha}]");
+        REMOVE("[^\\p{Alpha}]"); //TODO "/[^A-Za-z0-9 ]/"?
 
         private final String pattern;
 
@@ -311,9 +337,9 @@ public final class ConfigureSystem {
     public static final String DATE_TIME_WITHOUT_TIME_ZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     /**
-     * Wait time in milliseconds.
+     * The retry period time in seconds.
      */
-    public static final int waitTimeMilliSeconds = 10000;
+    public static final int RETRY_PERIOD = 5;
 
     // -------------------------------
 
