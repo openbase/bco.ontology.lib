@@ -59,7 +59,9 @@ import rst.domotic.unit.dal.TemperatureSensorDataType.TemperatureSensorData;
 import rst.domotic.unit.dal.VideoDepthSourceDataType.VideoDepthSourceData;
 import rst.domotic.unit.dal.VideoRgbSourceDataType.VideoRgbSourceData;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -78,6 +80,8 @@ public class UnitRemoteSynchronizer {
 //        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
 //        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
 
+        Set<UnitRemote> missingUnitRemoteData = new HashSet<>();
+
         try {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
@@ -94,7 +98,8 @@ public class UnitRemoteSynchronizer {
                                 if (unitRemote.isDataAvailable()) {
                                     compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
                                 } else {
-                                    //TODO collect unitRemotes without data and retry...
+                                    // collect unitRemotes with missing data (wait for data timeout)
+                                    missingUnitRemoteData.add(unitRemote);
                                 }
                             } catch (InterruptedException | CouldNotPerformException e) {
                                 // unitRemotes, which could not get(Unit)
@@ -107,16 +112,56 @@ public class UnitRemoteSynchronizer {
                     MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
                 } catch (CouldNotPerformException e) {
                     // print MultiException
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
 
                 } catch (InterruptedException e) {
                     // retry via scheduled thread
                     ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                            + ConfigureSystem.RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.WARN);
+                            + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.WARN);
                 }
-            }, 0, ConfigureSystem.RETRY_PERIOD, TimeUnit.SECONDS);
+            }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
         } catch (NotAvailableException e) {
             //TODO
+        }
+
+        if (!missingUnitRemoteData.isEmpty()) {
+            exceptionStack.clear();
+
+            try {
+                taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+
+                    try {
+                        for (final UnitRemote unitRemote : missingUnitRemoteData) {
+                            unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
+
+                            if (unitRemote.isDataAvailable()) {
+                                missingUnitRemoteData.remove(unitRemote);
+                            }
+                        }
+                    } catch (CouldNotPerformException | InterruptedException e) {
+                        exceptionStack = MultiException.push(this, e, exceptionStack);
+                    }
+
+                    try {
+                        MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
+                    } catch (MultiException e) {
+                        // print MultiException
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    }
+
+                    if (missingUnitRemoteData.isEmpty()) {
+                        taskFuture.cancel(true);
+                    } else {
+                        LOGGER.warn("There are unitRemotes without data. Retry to solve in "
+                                + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+                    }
+
+                }, 0, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+            } catch (NotAvailableException e) {
+                //TODO
+            }
+        } else {
+            LOGGER.info("All unitRemotes loaded successfully.");
         }
     }
 

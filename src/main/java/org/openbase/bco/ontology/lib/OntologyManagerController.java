@@ -22,9 +22,6 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.Transac
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.CompareOntClasses;
-import org.openbase.bco.ontology.lib.testcode.CreateOntology;
-import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -34,7 +31,6 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -52,19 +48,14 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
 //        final CompareOntClasses compareOntClasses = new CompareOntClasses();
 
-        Stopwatch stopwatch = new Stopwatch();
-
-//        final CreateOntology ontology = new CreateOntology();
-//        ontology.loadOntology("src/Ontology.owl");
-//
-//        ServerOntologyModel.putOntologyModel(ontology.getModel());
+//        OntModel ontModel = OntologyPreparation.loadOntModelFromFile(null); //TODO catch
+//        ServerOntologyModel.putOntologyModel(ontModel);
 
 //        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
         final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
         transactionBuffer.createAndStartQueue();
-        final UnitRegistrySynchronizer unitRegistrySynchronizer = new UnitRegistrySynchronizer(transactionBuffer);
-        stopwatch.waitForStop(5000);
-        final UnitRemoteSynchronizer unitRemoteSynchronizer = new UnitRemoteSynchronizer(transactionBuffer);
+        new UnitRegistrySynchronizer(transactionBuffer);
+        new UnitRemoteSynchronizer(transactionBuffer);
 
 //        WebInterface webInterface = new WebInterface();
 

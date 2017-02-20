@@ -29,15 +29,38 @@ public interface OntologyEditCommands {
      *
      * @param expression The string, which should be convert.
      * @return The converted string.
+     * @throws IllegalArgumentException IllegalArgumentException.
      */
-    static String wordToNounSyntax(String expression) {
+    static String convertWordToNounSyntax(String expression) throws IllegalArgumentException {
 
         if (expression != null) {
             expression = expression.toLowerCase().replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
-            expression = expression.substring(0, 1).toUpperCase() + expression.substring(1);
+            return expression.substring(0, 1).toUpperCase() + expression.substring(1);
         }
 
-        return expression;
+        throw new IllegalArgumentException("Could not convert string to noun syntax, cause parameter is null!");
+    }
+
+    /**
+     * Method adds the ontology namespace to an ontElement string. If there is the namespace already, the string is
+     * untreated returned.
+     *
+     * @param ontElement The string, which should be extended by ontology namespace.
+     * @return The input string with starting namespace.
+     * @throws IllegalArgumentException IllegalArgumentException.
+     */
+    static String addNamespaceToOntElement(final String ontElement) throws IllegalArgumentException {
+
+        if (ontElement != null) {
+            if (!ontElement.startsWith(ConfigureSystem.NS)) {
+                 return ConfigureSystem.NS + ontElement;
+            } else {
+                // input parameter has namespace already
+                return ontElement;
+            }
+        }
+
+        throw new IllegalArgumentException("Could not convert string to noun syntax, cause parameter is null!");
     }
 
 }

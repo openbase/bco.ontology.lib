@@ -153,8 +153,8 @@ public class StateObservation<T> extends SparqlUpdateExpression {
 
         // declaration of predicates and objects, which are static
         final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
-        final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName(); //TODO compare with ont class.
-        final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName(); //TODO compare with ont class.
+        final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName();
+        final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName();
         final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
         final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
         final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
@@ -205,7 +205,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
 
                     //### timeStamp triple ###\\
 //                    final String objectTimeStamp = ReflectObjectPool.getInvokedObj(stateTypeObj
-//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()).toString(); //TODO result empty
+//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()).toString();
 //                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
 //                            , objectTimeStamp));
 //                    System.out.println("die zeit: " + ReflectObjectPool.getInvokedObj(stateTypeObj

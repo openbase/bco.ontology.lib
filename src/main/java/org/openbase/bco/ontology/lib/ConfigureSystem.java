@@ -24,6 +24,7 @@ package org.openbase.bco.ontology.lib;
  */
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.tboxsynchronisation.OntTBoxInspectionCommands;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -337,9 +338,14 @@ public final class ConfigureSystem {
     public static final String DATE_TIME_WITHOUT_TIME_ZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     /**
-     * The retry period time in seconds.
+     * A small retry period time in seconds.
      */
-    public static final int RETRY_PERIOD = 5;
+    public static final int SMALL_RETRY_PERIOD = 5;
+
+    /**
+     * A big retry period time in seconds.
+     */
+    public static final int BIG_RETRY_PERIOD = 30;
 
     // -------------------------------
 
@@ -387,11 +393,11 @@ public final class ConfigureSystem {
             // test validity of enum property
             for (final OntProp ontProp : OntProp.values()) {
                 try {
-                    if (ontModel.getOntProperty(NS + ontProp.getName()) == null) {
+                    if (!OntTBoxInspectionCommands.isOntPropertyExisting(ontProp.getName(), ontModel)) {
                         throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
                                 + "with ontology property! Wrong String or doesn't exist in ontology!");
                     }
-                } catch (NotAvailableException e) {
+                } catch (IllegalArgumentException | CouldNotPerformException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }
@@ -399,15 +405,14 @@ public final class ConfigureSystem {
             // test validity of enum ontClass
             for (final OntClass ontClass : OntClass.values()) {
                 try {
-                    if (ontModel.getOntClass(NS + ontClass.getName()) == null) {
+                    if (!OntTBoxInspectionCommands.isOntClassExisting(ontClass.getName(), ontModel)) {
                         throw new NotAvailableException("OntClass \"" + ontClass.getName()
                                 + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                     }
-                } catch (NotAvailableException e) {
+                } catch (IllegalArgumentException | CouldNotPerformException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }
-
 
             try {
                 // test availability of ontology namespace

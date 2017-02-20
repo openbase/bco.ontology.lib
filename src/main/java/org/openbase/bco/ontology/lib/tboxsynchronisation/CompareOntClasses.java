@@ -67,7 +67,7 @@ public class CompareOntClasses {
                     if (!isUnitTypePresent(unitConfig)) {
                         // ontModel doesn't contain unitType of current unitConfig
 
-                        final String unitType = OntologyEditCommands.wordToNounSyntax(unitConfig.getType().toString());
+                        final String unitType = OntologyEditCommands.convertWordToNounSyntax(unitConfig.getType().toString());
 
                         if (UnitConfigProcessor.isDalUnit(unitConfig)) {
 
@@ -105,7 +105,7 @@ public class CompareOntClasses {
                 .getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.UNIT.getName());
 
         Set<OntClass> ontClasses = new HashSet<>();
-        ontClasses = OntClassesInspection.listSubclassesOfOntSuperclass(ontClasses, ontClassUnit, true);
+        ontClasses = OntTBoxInspectionCommands.listSubclassesOfOntSuperclass(ontClasses, ontClassUnit, true);
 
         String unitType = unitConfig.getType().toString().toLowerCase();
         unitType = unitType.replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
