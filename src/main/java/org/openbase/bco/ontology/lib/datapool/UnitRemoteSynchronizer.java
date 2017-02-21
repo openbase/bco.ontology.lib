@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.datapool;
 
+import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
@@ -72,10 +73,8 @@ import java.util.concurrent.TimeUnit;
 public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
-    private MultiException.ExceptionStack firstExceptionStack = null;
-    private MultiException.ExceptionStack secondExceptionStack = null;
     private ScheduledFuture scheduledFutureTask;
-    private ScheduledFuture scheduledFutureTaskLastUnitRemotes;
+    private ScheduledFuture scheduledFutureTaskRemainingUnitRemotes;
 
     public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer) throws InstantiationException {
 
@@ -92,87 +91,115 @@ public class UnitRemoteSynchronizer {
 
     private void getAndMapUnitRemotesWithStateObservation(final TransactionBuffer transactionBuffer) throws NotAvailableException {
 
-        final Set<UnitRemote> missingUnitRemoteData = new HashSet<>();
         scheduledFutureTask = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
             try {
                 final List<UnitConfig> unitConfigList = Units.getUnitRegistry().getUnitConfigs();
+                final Set<Pair<UnitRemote, UnitConfig>> unitPairSet = getAndActivateUnitRemotes(unitConfigList, transactionBuffer);
 
-                for (UnitConfig unitConfig : unitConfigList) {
-                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
-
-                        try {
-                            final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
-                            unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
-
-                            if (unitRemote.isDataAvailable()) {
-                                compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
-                            } else {
-                                // collect unitRemotes with missing data (wait for data timeout)
-                                missingUnitRemoteData.add(unitRemote);
-                            }
-                        } catch (CouldNotPerformException e) {
-                            // unitRemotes, which could not get(Unit)
-                            firstExceptionStack = MultiException.push(this, e, firstExceptionStack);
-                        }
-                    }
-                }
-
-                if (!missingUnitRemoteData.isEmpty()) {
-                    processLastUnitRemotes(missingUnitRemoteData);
+                if (!unitPairSet.isEmpty()) {
+                    processOfRemainingUnitRemotes(unitPairSet, transactionBuffer);
                 } else {
                     LOGGER.info("All unitRemotes loaded successfully.");
                 }
 
                 scheduledFutureTask.cancel(true);
 
-            } catch (CouldNotPerformException | InterruptedException e) {
+            } catch (NotAvailableException e) {
+                //TODO
+            } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
                 ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
                         + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
+            } catch (InterruptedException e) {
+                //TODO
             }
-
-            try {
-                if (firstExceptionStack.size() != 0) {
-                    MultiException.checkAndThrow("Could not process all unitRemotes!", firstExceptionStack);
-                }
-            } catch (MultiException e) {
-                LOGGER.warn("There are " + firstExceptionStack.size() + " unitRemotes without data. Retry to solve in "
-                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
-            }
-
         }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
-    private void processLastUnitRemotes(final Set<UnitRemote> missingUnitRemoteData) throws NotAvailableException {
+    private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer) throws InterruptedException {
 
-        scheduledFutureTaskLastUnitRemotes = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+        MultiException.ExceptionStack exceptionStack = null;
+        final Set<Pair<UnitRemote, UnitConfig>> unitPairSet = new HashSet<>();
 
-            for (final UnitRemote unitRemote : missingUnitRemoteData) {
+        for (final UnitConfig unitConfig : unitConfigList) {
+            if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
+
+                UnitRemote unitRemote = null;
                 try {
-                    unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
+                    unitRemote = Units.getUnit(unitConfig, false);
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
 
-                    if (unitRemote.isDataAvailable()) {
-                        missingUnitRemoteData.remove(unitRemote);
+                if (unitRemote != null) {
+                    try {
+                        unitRemote.waitForData(1, TimeUnit.SECONDS);
+
+                        if (unitRemote.isDataAvailable()) {
+                            // unitRemote is ready. add stateObservation
+                            compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
+                        } else {
+                            unitPairSet.add(new Pair<>(unitRemote, unitConfig));
+                        }
+                    } catch (CouldNotPerformException e) {
+                        // collect unitRemotes with missing data (wait for data timeout)
+                        unitPairSet.add(new Pair<>(unitRemote, unitConfig));
                     }
-                } catch (CouldNotPerformException | InterruptedException e) {
-                    secondExceptionStack = MultiException.push(this, e, secondExceptionStack);
-                    // print and retry via scheduled thread
+                }
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
+        } catch (MultiException e) {
+            LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
+                    + " unitRemotes without data. Retry to solve in " + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+        }
+        // return a set of unitRemotes, which have no data yet
+        return unitPairSet;
+    }
+
+    private void processOfRemainingUnitRemotes(Set<Pair<UnitRemote, UnitConfig>> unitPairSet, final TransactionBuffer transactionBuffer) throws NotAvailableException {
+
+        Set<Pair<UnitRemote, UnitConfig>> unitPairSetBuf = new HashSet<>();
+
+        scheduledFutureTaskRemainingUnitRemotes = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+            MultiException.ExceptionStack exceptionStack = null;
+
+            for (final Pair<UnitRemote, UnitConfig> unitPair : unitPairSet) {
+                try {
+                    unitPair.getKey().waitForData(1, TimeUnit.SECONDS);
+
+                    if (unitPair.getKey().isDataAvailable()) {
+                        // unitRemote is ready. add stateObservation
+                        compareClassNameAndStartObs(unitPair.getKey(), unitPair.getValue(), transactionBuffer);
+                    } else {
+                        unitPairSetBuf.add(unitPair);
+                    }
+                } catch (CouldNotPerformException e) {
+                    // add to set and stack exception
+                    unitPairSetBuf.add(unitPair);
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                } catch (InterruptedException e) {
+                    //TODO
                 }
             }
 
             try {
-                if (secondExceptionStack.size() != 0) {
-                    MultiException.checkAndThrow("Could not process all unitRemotes!", secondExceptionStack);
-                }
+                MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
             } catch (MultiException e) {
-                LOGGER.warn("There are " + secondExceptionStack.size() + " unitRemotes without data. Retry to solve in "
-                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+                LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
+                        + " unitRemotes without data. Retry to solve in " + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
             }
 
-            if (missingUnitRemoteData.isEmpty()) {
-                scheduledFutureTask.cancel(true);
+            if (unitPairSetBuf.isEmpty()) {
+                scheduledFutureTaskRemainingUnitRemotes.cancel(true);
                 LOGGER.info("All unitRemotes loaded successfully.");
+            } else {
+                unitPairSet.clear();
+                unitPairSet.addAll(unitPairSetBuf);
+                unitPairSetBuf.clear();
             }
         }, ConfigureSystem.BIG_RETRY_PERIOD, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
