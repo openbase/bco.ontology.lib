@@ -39,6 +39,7 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,12 +205,17 @@ public class StateObservation<T> extends SparqlUpdateExpression {
                             , objectServiceType));
 
                     //### timeStamp triple ###\\
-//                    final String objectTimeStamp = ReflectObjectPool.getInvokedObj(stateTypeObj
-//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()).toString();
-//                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
-//                            , objectTimeStamp));
-//                    System.out.println("die zeit: " + ReflectObjectPool.getInvokedObj(stateTypeObj
-//                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName()));
+                    Object objectTimeStamp = ReflectObjectPool.getInvokedObj(stateTypeObj
+                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
+                    objectTimeStamp = ReflectObjectPool.getInvokedObj(objectTimeStamp
+                            , ConfigureSystem.MethodRegEx.GET_TIME.getName());
+
+                    if (objectTimeStamp != null && !objectTimeStamp.equals(0)) {
+                        final Timestamp timestamp = new Timestamp(((long)objectTimeStamp)/1000);
+                        final String timestampXsd = "\"" + timestamp + "\"^^xsd:dateTime";
+                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
+                                , timestampXsd));
+                    }
 
                     //### stateValue triple ###\\
                     final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
@@ -260,10 +266,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
 
-//        long time = ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getTimestamp().getTime();
-//        Timestamp timestamp = new Timestamp(time);
-//
-//        System.out.println("zeit-long: "+ time + "timestamp: " + timestamp.toString());
+//        (ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getTimestamp().getTime();
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 
