@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- *
+ * <p>
  * This file is part of org.openbase.bco.ontology.lib.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -24,6 +24,7 @@ import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateObservation;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -62,7 +63,7 @@ import rst.domotic.unit.dal.VideoRgbSourceDataType.VideoRgbSourceData;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,98 +72,109 @@ import java.util.concurrent.TimeUnit;
 public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
-    private MultiException.ExceptionStack exceptionStack = null;
-    private Future taskFuture;
+    private MultiException.ExceptionStack firstExceptionStack = null;
+    private MultiException.ExceptionStack secondExceptionStack = null;
+    private ScheduledFuture scheduledFutureTask;
+    private ScheduledFuture scheduledFutureTaskLastUnitRemotes;
 
-    public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer) {
+    public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer) throws InstantiationException {
 
-        // get classes via reflextion...
+            // get classes via reflextion...
 //        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
 //        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
 
-        Set<UnitRemote> missingUnitRemoteData = new HashSet<>();
-
         try {
-            taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-
-                try {
-                    List<UnitConfig> unitConfigList = Units.getUnitRegistry().getUnitConfigs();
-
-                    for (UnitConfig unitConfig : unitConfigList) {
-                        if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
-
-                            try {
-                                final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
-                                unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
-
-                                if (unitRemote.isDataAvailable()) {
-                                    compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
-                                } else {
-                                    // collect unitRemotes with missing data (wait for data timeout)
-                                    missingUnitRemoteData.add(unitRemote);
-                                }
-                            } catch (InterruptedException | CouldNotPerformException e) {
-                                // unitRemotes, which could not get(Unit)
-                                exceptionStack = MultiException.push(this, e, exceptionStack);
-                            }
-                        }
-                    }
-                    taskFuture.cancel(true);
-
-                    MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
-                } catch (CouldNotPerformException e) {
-                    // print MultiException
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-
-                } catch (InterruptedException e) {
-                    // retry via scheduled thread
-                    ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                            + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.WARN);
-                }
-            }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
-        } catch (NotAvailableException e) {
-            //TODO
+            getAndMapUnitRemotesWithStateObservation(transactionBuffer);
+        } catch (CouldNotPerformException e) {
+            throw new InstantiationException(this, e);
         }
+    }
 
-        if (!missingUnitRemoteData.isEmpty()) {
-            exceptionStack.clear();
+    private void getAndMapUnitRemotesWithStateObservation(final TransactionBuffer transactionBuffer) throws NotAvailableException {
+
+        final Set<UnitRemote> missingUnitRemoteData = new HashSet<>();
+        scheduledFutureTask = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
             try {
-                taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+                final List<UnitConfig> unitConfigList = Units.getUnitRegistry().getUnitConfigs();
 
-                    try {
-                        for (final UnitRemote unitRemote : missingUnitRemoteData) {
+                for (UnitConfig unitConfig : unitConfigList) {
+                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
+
+                        try {
+                            final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
                             unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
 
                             if (unitRemote.isDataAvailable()) {
-                                missingUnitRemoteData.remove(unitRemote);
+                                compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
+                            } else {
+                                // collect unitRemotes with missing data (wait for data timeout)
+                                missingUnitRemoteData.add(unitRemote);
                             }
+                        } catch (CouldNotPerformException e) {
+                            // unitRemotes, which could not get(Unit)
+                            firstExceptionStack = MultiException.push(this, e, firstExceptionStack);
                         }
-                    } catch (CouldNotPerformException | InterruptedException e) {
-                        exceptionStack = MultiException.push(this, e, exceptionStack);
                     }
+                }
 
-                    try {
-                        MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
-                    } catch (MultiException e) {
-                        // print MultiException
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                    }
+                if (!missingUnitRemoteData.isEmpty()) {
+                    processLastUnitRemotes(missingUnitRemoteData);
+                } else {
+                    LOGGER.info("All unitRemotes loaded successfully.");
+                }
 
-                    if (missingUnitRemoteData.isEmpty()) {
-                        taskFuture.cancel(true);
-                    } else {
-                        LOGGER.warn("There are unitRemotes without data. Retry to solve in "
-                                + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
-                    }
+                scheduledFutureTask.cancel(true);
 
-                }, 0, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
-            } catch (NotAvailableException e) {
-                //TODO
+            } catch (CouldNotPerformException | InterruptedException e) {
+                // retry via scheduled thread
+                ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
+                        + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
             }
-        } else {
-            LOGGER.info("All unitRemotes loaded successfully.");
-        }
+
+            try {
+                if (firstExceptionStack.size() != 0) {
+                    MultiException.checkAndThrow("Could not process all unitRemotes!", firstExceptionStack);
+                }
+            } catch (MultiException e) {
+                LOGGER.warn("There are " + firstExceptionStack.size() + " unitRemotes without data. Retry to solve in "
+                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+            }
+
+        }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
+    }
+
+    private void processLastUnitRemotes(final Set<UnitRemote> missingUnitRemoteData) throws NotAvailableException {
+
+        scheduledFutureTaskLastUnitRemotes = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+
+            for (final UnitRemote unitRemote : missingUnitRemoteData) {
+                try {
+                    unitRemote.waitForData(500, TimeUnit.MILLISECONDS);
+
+                    if (unitRemote.isDataAvailable()) {
+                        missingUnitRemoteData.remove(unitRemote);
+                    }
+                } catch (CouldNotPerformException | InterruptedException e) {
+                    secondExceptionStack = MultiException.push(this, e, secondExceptionStack);
+                    // print and retry via scheduled thread
+                }
+            }
+
+            try {
+                if (secondExceptionStack.size() != 0) {
+                    MultiException.checkAndThrow("Could not process all unitRemotes!", secondExceptionStack);
+                }
+            } catch (MultiException e) {
+                LOGGER.warn("There are " + secondExceptionStack.size() + " unitRemotes without data. Retry to solve in "
+                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+            }
+
+            if (missingUnitRemoteData.isEmpty()) {
+                scheduledFutureTask.cancel(true);
+                LOGGER.info("All unitRemotes loaded successfully.");
+            }
+        }, ConfigureSystem.BIG_RETRY_PERIOD, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
     //TODO set generic dataClass?! Following static process not nice...

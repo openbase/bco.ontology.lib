@@ -26,6 +26,7 @@ import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rst.processing.TimestampJavaTimeTransform;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.timing.TimestampType;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -144,7 +146,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
 
     }
 
-    private void stateUpdate(final Object remoteData) {
+    private void stateUpdate(final T remoteData) {
         //TODO implement logic, that updates changed stateValues only
 
         // main list, which contains complete observation instances
@@ -205,13 +207,11 @@ public class StateObservation<T> extends SparqlUpdateExpression {
                             , objectServiceType));
 
                     //### timeStamp triple ###\\
-                    Object objectTimeStamp = ReflectObjectPool.getInvokedObj(stateTypeObj
-                            , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
-                    objectTimeStamp = ReflectObjectPool.getInvokedObj(objectTimeStamp
-                            , ConfigureSystem.MethodRegEx.GET_TIME.getName());
+                    TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
+                            .getInvokedObj(stateTypeObj , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
 
-                    if (objectTimeStamp != null && !objectTimeStamp.equals(0)) {
-                        final Timestamp timestamp = new Timestamp(((long)objectTimeStamp)/1000);
+                    if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
+                        final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
                         final String timestampXsd = "\"" + timestamp + "\"^^xsd:dateTime";
                         tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
                                 , timestampXsd));

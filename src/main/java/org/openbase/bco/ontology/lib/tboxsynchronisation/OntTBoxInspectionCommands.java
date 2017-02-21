@@ -84,15 +84,16 @@ public interface OntTBoxInspectionCommands {
         // add namespace to className. Throw IllegalArgumentException if parameter is null
         final String classNameWithNS = OntologyEditCommands.addNamespaceToOntElement(className);
 
-        try {
+//        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelTBox();
+                ontModel = ServerOntologyModel
+                        .getOntologyModelFromServer(ConfigureSystem.OntPath.SERVER_TBOX_URI.getName());
             }
             return ontModel.getOntClass(classNameWithNS) != null;
 
-        } catch (CouldNotPerformException e) {
-            throw new CouldNotPerformException("Could not get ontology tbox model from server!", e);
-        }
+//        } catch (CouldNotPerformException e) {
+//            throw new CouldNotPerformException("Could not get ontology tbox model from server!", e);
+//        }
     }
 
     /**
@@ -112,15 +113,16 @@ public interface OntTBoxInspectionCommands {
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
         final String propertyNameWithNS = OntologyEditCommands.addNamespaceToOntElement(propertyName);
 
-        try {
+//        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelTBox();
+                ontModel = ServerOntologyModel
+                        .getOntologyModelFromServer(ConfigureSystem.OntPath.SERVER_TBOX_URI.getName());
             }
             return ontModel.getOntProperty(propertyNameWithNS) != null;
 
-        } catch (CouldNotPerformException e) {
-            throw new CouldNotPerformException("Could not get ontology tbox model from server!", e);
-        }
+//        } catch (CouldNotPerformException e) {
+//            throw new CouldNotPerformException("Could not get ontology tbox model from server!", e);
+//        }
     }
 
 }

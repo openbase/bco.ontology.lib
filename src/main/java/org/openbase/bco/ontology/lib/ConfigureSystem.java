@@ -64,10 +64,12 @@ public final class ConfigureSystem {
          */
         SERVER_URI("http://localhost:3030/myAppFuseki/data"),
 
+        //TODO TBox uri
+        //TODO check everywhere double update
         /**
          * Data URI to the ontology model of the server. Contains TBox only!
          */
-        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"), //TODO TBox uri
+        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"),
 
         /**
          * Update URI of the ontology server.
@@ -309,7 +311,12 @@ public final class ConfigureSystem {
         /**
          * Pattern for method name part.
          */
-        GET_TIMESTAMP("getTimeStamp");
+        GET_TIMESTAMP("getTimestamp"),
+
+        /**
+         * Pattern for method name part.
+         */
+        GET_TIME("getTime");
 
         private final String methodRegEx;
 
