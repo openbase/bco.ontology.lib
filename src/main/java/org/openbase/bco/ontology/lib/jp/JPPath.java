@@ -40,7 +40,7 @@ public class JPPath extends AbstractJPString {
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/myAppFuseki/";
+        return "http://localhost:3030/bco.ontology/";
     }
 
     @Override

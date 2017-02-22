@@ -52,17 +52,16 @@ public interface OntologyPreparation {
             ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         }
 
-        final String ontologyFilePath = ConfigureSystem.OntPath.FILESYSTEM.getName();
-        final InputStream inputStream = FileManager.get().open(ontologyFilePath);
+        final InputStream input = OntologyPreparation.class.getResourceAsStream("/Ontology.owl");
 
-        if (inputStream == null) {
-            throw new IllegalArgumentException("File not found in " + ontologyFilePath + "!");
+        if (input == null) {
+            throw new IllegalArgumentException("File not found in " + input + "!");
         } else {
-            LOGGER.info("OntologyManagerController file loaded from " + ontologyFilePath);
+            LOGGER.info("OntologyManagerController file loaded from " + input);
         }
 
         //load data into ontModel
-        ontModel.read(inputStream, null);
+        ontModel.read(input, null);
 
         return ontModel;
     }

@@ -51,13 +51,10 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
-//        final CompareOntClasses compareOntClasses = new CompareOntClasses();
-
-//        OntModel ontModel = OntologyPreparation.loadOntModelFromFile(null); //TODO catch
-//        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.OntPath.SERVER_URI.getName());
+        OntModel ontModel = OntologyPreparation.loadOntModelFromFile(null); //TODO catch
+        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getOntURIData());
 
 //        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
 //        new TBoxSynchronizer();

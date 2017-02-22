@@ -36,6 +36,8 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
@@ -79,6 +81,11 @@ public final class ConfigureSystem {
         }
         return null;
     }
+
+//    public static void getOntologyFile() {
+//        InputStream input = getClass().getResourceAsStream("/org/openbase/bco/ontology/0.1-SNAPSHOT/ontology-0.1-SNAPSHOT.jar!/Ontology.owl");
+//        System.out.println(input);
+//    }
 
     /**
      * Namespace of the ontology.

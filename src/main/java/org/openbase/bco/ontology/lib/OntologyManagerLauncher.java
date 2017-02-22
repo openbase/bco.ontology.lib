@@ -24,6 +24,7 @@ import org.openbase.jps.core.JPService;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.InstantiationException;
 
+
 /**
  * @author agatting on 10.01.17.
  */
@@ -45,6 +46,7 @@ public class OntologyManagerLauncher extends AbstractLauncher<OntologyManagerCon
     protected void loadProperties() {
         JPService.registerProperty(JPDebugMode.class);
         JPService.registerProperty(JPPath.class);
+
     }
 
     /**
