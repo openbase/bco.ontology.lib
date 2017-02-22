@@ -39,6 +39,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
+import org.openbase.bco.ontology.lib.jp.JPPath;
+import org.openbase.jps.core.JPService;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -117,7 +119,7 @@ public class WebInterface {
     public int sparqlUpdate(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(ConfigureSystem.OntPath.SERVER_UPDATE_URI.getName());
+        final HttpPost httpPost = new HttpPost(ConfigureSystem.getOntURIUpdate());
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("update", updateString));
@@ -143,8 +145,7 @@ public class WebInterface {
     public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
         try {
             Query query = QueryFactory.create(queryString) ;
-            QueryExecution queryExecution = QueryExecutionFactory
-                    .sparqlService(ConfigureSystem.OntPath.SERVER_SPARQL_URI.getName(), query);
+            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(ConfigureSystem.getOntURISparql(), query);
             return queryExecution.execSelect();
         } catch (Exception e) {
             throw new CouldNotProcessException("Could not get http response!", e);

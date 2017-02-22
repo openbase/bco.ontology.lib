@@ -86,8 +86,7 @@ public interface OntTBoxInspectionCommands {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel
-                        .getOntologyModelFromServer(ConfigureSystem.OntPath.SERVER_TBOX_URI.getName());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
             }
             return ontModel.getOntClass(classNameWithNS) != null;
 
@@ -115,8 +114,7 @@ public interface OntTBoxInspectionCommands {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel
-                        .getOntologyModelFromServer(ConfigureSystem.OntPath.SERVER_TBOX_URI.getName());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
             }
             return ontModel.getOntProperty(propertyNameWithNS) != null;
 

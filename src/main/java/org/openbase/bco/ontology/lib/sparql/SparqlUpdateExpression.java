@@ -39,7 +39,7 @@ public class SparqlUpdateExpression extends WebInterface {
      * @param insertTripleArrayLists The insert triple information (with or without namespace).
      * @return A list of strings, which are update expressions.
      */
-    protected List<String> getSparqlSingleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
+    public List<String> getSparqlSingleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
 
         final List<String> expressionList = new ArrayList<>();
 
@@ -64,7 +64,7 @@ public class SparqlUpdateExpression extends WebInterface {
      * @param insertTripleArrayLists The insert triple information (with or without namespace).
      * @return A single sparql update insert expression (bundle).
      */
-    protected String getSparqlBundleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
+    public String getSparqlBundleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
 
         // initial part of the large expression
         String multipleUpdateExpression =
@@ -98,7 +98,7 @@ public class SparqlUpdateExpression extends WebInterface {
      * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
      * @return A single sparql update delete & insert expression (bundle).
      */
-    protected String getSparqlBundleUpdateDeleteAndInsertEx(final List<TripleArrayList> deleteTripleArrayLists
+    public String getSparqlBundleUpdateDeleteAndInsertEx(final List<TripleArrayList> deleteTripleArrayLists
             , final List<TripleArrayList> insertTripleArrayLists, final String whereExpr) {
 
         String multipleUpdateExpression =
@@ -145,7 +145,7 @@ public class SparqlUpdateExpression extends WebInterface {
      *
      * @return A sparql update string to delete a triple.
      */
-    protected String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists
+    public String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists
             , final String whereExpr) {
 
         String singleUpdateExpression =

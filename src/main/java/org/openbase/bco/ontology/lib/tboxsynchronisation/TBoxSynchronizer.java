@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
 public class TBoxSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TBoxSynchronizer.class);
-    private final String tBoxUri = ConfigureSystem.OntPath.SERVER_TBOX_URI.getName();
-    private final String mainUri = ConfigureSystem.OntPath.SERVER_URI.getName();
+    private final String tBoxUri = ConfigureSystem.getTBoxURIData();
+    private final String mainUri = ConfigureSystem.getOntURIData();
     private ScheduledFuture scheduledFutureTask;
 
     public TBoxSynchronizer() throws NotAvailableException {

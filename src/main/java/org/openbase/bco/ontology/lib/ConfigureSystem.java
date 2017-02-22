@@ -24,10 +24,15 @@ package org.openbase.bco.ontology.lib;
  */
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.jp.JPPath;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.OntTBoxInspectionCommands;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +43,42 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public final class ConfigureSystem {
+
+    public static String getTBoxURIData() {
+        try {
+            return JPService.getProperty(JPPath.class).getValue() + "data";
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
+    }
+
+    public static String getOntURIData() {
+        try {
+            return JPService.getProperty(JPPath.class).getValue() + "data";
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
+    }
+
+    public static String getOntURIUpdate() {
+        try {
+            return JPService.getProperty(JPPath.class).getValue() + "update";
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
+    }
+
+    public static String getOntURISparql() {
+        try {
+            return JPService.getProperty(JPPath.class).getValue() + "sparql";
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
+    }
 
     /**
      * Namespace of the ontology.
@@ -57,29 +98,29 @@ public final class ConfigureSystem {
         /**
          * Filesystem path to ontology TBox.
          */
-        FILESYSTEM("src/Ontology.owl"),
+        FILESYSTEM("src/Ontology.owl");
 
         /**
          * Data URI to the ontology model of the server. Contains full ontology (ABox & TBox).
          */
-        SERVER_URI("http://localhost:3030/myAppFuseki/data"),
+//        SERVER_URI("http://localhost:3030/myAppFuseki/data"),
 
         //TODO TBox uri
         //TODO check everywhere double update
         /**
          * Data URI to the ontology model of the server. Contains TBox only!
          */
-        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"),
+//        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"),
 
         /**
          * Update URI of the ontology server.
          */
-        SERVER_UPDATE_URI("http://localhost:3030/myAppFuseki/update"),
+//        SERVER_UPDATE_URI("http://localhost:3030/myAppFuseki/update"),
 
         /**
          * SPARQL URI of the ontology server.
          */
-        SERVER_SPARQL_URI("http://localhost:3030/myAppFuseki/sparql");
+//        SERVER_SPARQL_URI("http://localhost:3030/myAppFuseki/sparql");
 
         private final String ontPath;
 
@@ -306,17 +347,7 @@ public final class ConfigureSystem {
         /**
          * Pattern for method name part.
          */
-        GET_ID("getID"),
-
-        /**
-         * Pattern for method name part.
-         */
-        GET_TIMESTAMP("getTimestamp"),
-
-        /**
-         * Pattern for method name part.
-         */
-        GET_TIME("getTime");
+        GET_TIMESTAMP("getTimestamp");
 
         private final String methodRegEx;
 
@@ -331,6 +362,32 @@ public final class ConfigureSystem {
          */
         public String getName() {
             return this.methodRegEx;
+        }
+    }
+
+    /**
+     * Regular expressions for stateTypes.
+     */
+    public enum StateType {
+
+        /**
+         * Pattern for powerState value.
+         */
+        GET_VALUE("getValue");
+
+        private final String stateType;
+
+        StateType(final String stateType) {
+            this.stateType = stateType;
+        }
+
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
+            return this.stateType;
         }
     }
 

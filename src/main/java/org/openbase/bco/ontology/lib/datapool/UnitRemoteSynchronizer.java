@@ -110,14 +110,15 @@ public class UnitRemoteSynchronizer {
             } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
                 ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                        + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
+                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException e) {
                 //TODO
             }
-        }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, 0, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
-    private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer) throws InterruptedException {
+    private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer)
+            throws InterruptedException {
 
         MultiException.ExceptionStack exceptionStack = null;
         final Set<Pair<UnitRemote, UnitConfig>> unitPairSet = new HashSet<>();
@@ -160,7 +161,8 @@ public class UnitRemoteSynchronizer {
         return unitPairSet;
     }
 
-    private void processOfRemainingUnitRemotes(Set<Pair<UnitRemote, UnitConfig>> unitPairSet, final TransactionBuffer transactionBuffer) throws NotAvailableException {
+    private void processOfRemainingUnitRemotes(Set<Pair<UnitRemote, UnitConfig>> unitPairSet, final TransactionBuffer transactionBuffer)
+            throws NotAvailableException {
 
         Set<Pair<UnitRemote, UnitConfig>> unitPairSetBuf = new HashSet<>();
 

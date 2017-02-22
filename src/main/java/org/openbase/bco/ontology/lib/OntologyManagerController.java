@@ -23,11 +23,14 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.Transac
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
+import org.openbase.bco.ontology.lib.jp.JPPath;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.OntologyPreparation;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxSynchronizer;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
+import org.openbase.jps.core.AbstractJavaProperty;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
@@ -57,13 +60,13 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.OntPath.SERVER_URI.getName());
 
 //        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
-        new TBoxSynchronizer();
-//        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-//        transactionBuffer.createAndStartQueue();
-//        new UnitRegistrySynchronizer(transactionBuffer);
-//        Stopwatch stopwatch = new Stopwatch();
-//        stopwatch.waitForStart(2000);
-//        new UnitRemoteSynchronizer(transactionBuffer);
+//        new TBoxSynchronizer();
+        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+        transactionBuffer.createAndStartQueue();
+        new UnitRegistrySynchronizer(transactionBuffer);
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.waitForStart(2000);
+        new UnitRemoteSynchronizer(transactionBuffer);
 
 //        WebInterface webInterface = new WebInterface();
 

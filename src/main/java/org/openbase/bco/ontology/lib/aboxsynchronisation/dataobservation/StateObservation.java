@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing.IdentifyStateType;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.domotic.unit.dal.ColorableLightDataType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -56,7 +58,7 @@ import java.util.Set;
 /**
  * @author agatting on 09.01.17.
  */
-public class StateObservation<T> extends SparqlUpdateExpression {
+public class StateObservation<T> extends IdentifyStateType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
@@ -65,10 +67,12 @@ public class StateObservation<T> extends SparqlUpdateExpression {
     private static String remoteUnitId = null;
     private final Stopwatch stopwatch;
     private TransactionBuffer transactionBuffer;
+    private SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
 
 
     public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig
             , final TransactionBuffer transactionBuffer) {
+
 
         this.transactionBuffer = transactionBuffer;
         stopwatch = new Stopwatch();
@@ -83,9 +87,9 @@ public class StateObservation<T> extends SparqlUpdateExpression {
         Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
             GlobalCachedExecutorService.submit(() -> {
                 if (connectionState.equals(ConnectionState.CONNECTED)) {
-                    System.out.println("connected!!!");
+//                    System.out.println("connected!!!");
                 } else {
-                    System.out.println("disconnected!!!");
+//                    System.out.println("disconnected!!!");
                 }
                 //TODO
             });
@@ -154,7 +158,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
         // first collect all components of the individual observation, then add to main list (integrity reason)
         List<TripleArrayList> tripleArrayListsBuf = new ArrayList<>();
 
-        // declaration of predicates and objects, which are static
+        // declaration of predicates and classes, which are static
         final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
         final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName();
         final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName();
@@ -163,8 +167,8 @@ public class StateObservation<T> extends SparqlUpdateExpression {
         final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
         final String predicateHasStateValue = ConfigureSystem.OntProp.STATE_VALUE.getName();
 
-        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
-        System.out.println("--------------------");
+//        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
+//        System.out.println("--------------------");
 
         //TODO get stateType only, which has changed...
 
@@ -175,7 +179,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
             // foreach stateType ... every observation point represents an serviceType respectively stateValue
             for (Method methodStateType : methodSetStateType) {
 
-                System.out.println(methodStateType);
+//                System.out.println(methodStateType);
                 try {
                     // wait one millisecond to guarantee, that observation instances are unique
                     try {
@@ -187,7 +191,7 @@ public class StateObservation<T> extends SparqlUpdateExpression {
                     // get method as invoked object
                     Object stateTypeObj;
                     try {
-                        stateTypeObj = methodStateType.invoke(remoteData);
+                        stateTypeObj = methodStateType.invoke(remoteData); //TODO
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         throw new CouldNotPerformException(e);
                     }
@@ -218,19 +222,23 @@ public class StateObservation<T> extends SparqlUpdateExpression {
                     }
 
                     //### stateValue triple ###\\
-                    final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
-                    if (hasDataUnit) { //physical unit
-                        //TODO need access to data...
-                    } else {
-                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
-                                , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-                        final String objectStateValue = stateValueObj.toString();
+//                    final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
+//                    if (hasDataUnit) { //physical unit
+//                        //TODO need access to data...
+//                    } else {
+//                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
+//                                , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
+//                        final String objectStateValue = stateValueObj.toString();
+//
+//                        tripleArrayListsBuf.add(new TripleArrayList(objectStateValue, predicateIsA
+//                                , objectStateValueClass)); // TODO: redundant. another possibility?
+//                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue
+//                                , objectStateValue));
+//                    }
 
-                        tripleArrayListsBuf.add(new TripleArrayList(objectStateValue, predicateIsA
-                                , objectStateValueClass)); // TODO: redundant. another possibility?
-                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue
-                                , objectStateValue));
-                    }
+                    //### Test ###\\
+                    tripleArrayListsBuf = addStateValue(objectServiceType, stateTypeObj, subjectObservation, tripleArrayListsBuf);
+
 
                     // no exception produced: observation individual complete. add to main list
                     tripleArrayLists.addAll(tripleArrayListsBuf);
@@ -241,32 +249,32 @@ public class StateObservation<T> extends SparqlUpdateExpression {
                 }
                 tripleArrayListsBuf.clear();
             }
-            System.out.println("-----------");
+//            System.out.println("-----------");
 
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-        final String sparqlUpdateExpr = getSparqlBundleUpdateInsertEx(tripleArrayLists);
+        final String sparqlUpdateExpr = sparqlUpdateExpression.getSparqlBundleUpdateInsertEx(tripleArrayLists);
         System.out.println(sparqlUpdateExpr);
         tripleArrayLists.clear();
 
         try {
-            final int httpResponseCode = sparqlUpdate(sparqlUpdateExpr);
-            final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
+            final int httpResponseCode = sparqlUpdateExpression.sparqlUpdate(sparqlUpdateExpr);
+            final boolean httpSuccess = sparqlUpdateExpression.httpRequestSuccess(httpResponseCode);
 
             if (!httpSuccess) {
                 //insert sparql update expression to buffer queue
                 transactionBuffer.insertData(sparqlUpdateExpr);
             } else {
-                System.out.println("success");
+//                System.out.println("success");
             }
 
         } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
 
-//        (ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getTimestamp().getTime();
+        ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getValue();
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 
