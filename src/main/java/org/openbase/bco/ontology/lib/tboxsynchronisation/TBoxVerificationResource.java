@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.tboxsynchronisation;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyEditCommands;
@@ -32,7 +31,7 @@ import java.util.Set;
 /**
  * @author agatting on 13.02.17.
  */
-public interface OntTBoxInspectionCommands {
+public interface TBoxVerificationResource {
 
     /**
      * Method delivers all subclasses of the given superclass via recursion.
@@ -86,7 +85,7 @@ public interface OntTBoxInspectionCommands {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
             }
             return ontModel.getOntClass(classNameWithNS) != null;
 
@@ -114,7 +113,7 @@ public interface OntTBoxInspectionCommands {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
             }
             return ontModel.getOntProperty(propertyNameWithNS) != null;
 

@@ -25,31 +25,18 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
-import org.apache.jena.query.DatasetAccessor;
-import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.shared.JenaException;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.jp.JPPath;
-import org.openbase.jps.core.JPService;
-import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,7 +106,7 @@ public class WebInterface {
     public int sparqlUpdate(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(ConfigureSystem.getOntURIUpdate());
+        final HttpPost httpPost = new HttpPost(ConfigureSystem.getOntUpdateUri());
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("update", updateString));
@@ -145,7 +132,7 @@ public class WebInterface {
     public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
         try {
             Query query = QueryFactory.create(queryString) ;
-            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(ConfigureSystem.getOntURISparql(), query);
+            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(ConfigureSystem.getOntSparqlUri(), query);
             return queryExecution.execSelect();
         } catch (Exception e) {
             throw new CouldNotProcessException("Could not get http response!", e);

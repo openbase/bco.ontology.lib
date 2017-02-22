@@ -24,28 +24,28 @@ import org.openbase.jps.preset.AbstractJPString;
 /**
  * @author agatting on 22.02.17.
  */
-public class JPPath extends AbstractJPString {
+public class JPOntologyDatabaseUri extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--path"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontologyServerUri"};
 
     /**
-     * Constructor for the JPPath class.
+     * Constructor for the JPOntologyDatabaseUri class.
      */
-    public JPPath() {
+    public JPOntologyDatabaseUri() {
         super(COMMAND_IDENTIFIERS);
     }
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/bco.ontology/";
+        return "http://localhost:3030/bco.ontology/data";
     }
 
     @Override
     public String getDescription() {
-        return "Path property is used to identify the location to the file system, which holds the ontology and the uri of thew ontology server.";
+        return "OntologyDatabaseUri property is set to set the uri to server with the main ontology database.";
     }
 
 }

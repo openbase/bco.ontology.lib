@@ -24,8 +24,9 @@ package org.openbase.bco.ontology.lib;
  */
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.jp.JPPath;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.OntTBoxInspectionCommands;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxVerificationResource;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -36,8 +37,6 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
@@ -46,46 +45,61 @@ import java.io.InputStream;
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public final class ConfigureSystem {
 
-    public static String getTBoxURIData() {
+    /**
+     * Method returns the uri to the tbox database of the server.
+     *
+     * @return The tbox database uri.
+     */
+    public static String getTBoxDatabaseUri() {
         try {
-            return JPService.getProperty(JPPath.class).getValue() + "data";
+            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue();
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return null;
     }
 
-    public static String getOntURIData() {
+    /**
+     * Method returns the uri to the ontology database of the server.
+     *
+     * @return The ontology database uri.
+     */
+    public static String getOntDatabaseUri() {
         try {
-            return JPService.getProperty(JPPath.class).getValue() + "data";
+            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "data";
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return null;
     }
 
-    public static String getOntURIUpdate() {
+    /**
+     * Method returns the uri to the ontology update of the server.
+     *
+     * @return The ontology update uri.
+     */
+    public static String getOntUpdateUri() {
         try {
-            return JPService.getProperty(JPPath.class).getValue() + "update";
+            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "update";
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return null;
     }
 
-    public static String getOntURISparql() {
+    /**
+     * Method returns the uri to the ontology sparql (query) of the server.
+     *
+     * @return The ontology sparql (query) uri.
+     */
+    public static String getOntSparqlUri() {
         try {
-            return JPService.getProperty(JPPath.class).getValue() + "sparql";
+            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql";
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
         return null;
     }
-
-//    public static void getOntologyFile() {
-//        InputStream input = getClass().getResourceAsStream("/org/openbase/bco/ontology/0.1-SNAPSHOT/ontology-0.1-SNAPSHOT.jar!/Ontology.owl");
-//        System.out.println(input);
-//    }
 
     /**
      * Namespace of the ontology.
@@ -96,54 +110,6 @@ public final class ConfigureSystem {
      * The used RSB scope.
      */
     public static final String RSB_SCOPE = "/test/a3";
-
-    /**
-     * Enumeration of paths to the ontology versions. From filesystem and server.
-     */
-    public enum OntPath {
-
-        /**
-         * Filesystem path to ontology TBox.
-         */
-        FILESYSTEM("src/Ontology.owl");
-
-        /**
-         * Data URI to the ontology model of the server. Contains full ontology (ABox & TBox).
-         */
-//        SERVER_URI("http://localhost:3030/myAppFuseki/data"),
-
-        //TODO TBox uri
-        //TODO check everywhere double update
-        /**
-         * Data URI to the ontology model of the server. Contains TBox only!
-         */
-//        SERVER_TBOX_URI("http://localhost:3030/myAppFuseki/data"),
-
-        /**
-         * Update URI of the ontology server.
-         */
-//        SERVER_UPDATE_URI("http://localhost:3030/myAppFuseki/update"),
-
-        /**
-         * SPARQL URI of the ontology server.
-         */
-//        SERVER_SPARQL_URI("http://localhost:3030/myAppFuseki/sparql");
-
-        private final String ontPath;
-
-        OntPath(final String ontPath) {
-            this.ontPath = ontPath;
-        }
-
-        /**
-         * Method returns the Name of an enum element.
-         *
-         * @return Name of an enum element as string.
-         */
-        public String getName() {
-            return this.ontPath;
-        }
-    }
 
     /**
      * Enumeration of ontology classes.
@@ -375,7 +341,7 @@ public final class ConfigureSystem {
     /**
      * Regular expressions for stateTypes.
      */
-    public enum StateType {
+    public enum StateTypeExpr {
 
         /**
          * Pattern for powerState value.
@@ -384,7 +350,7 @@ public final class ConfigureSystem {
 
         private final String stateType;
 
-        StateType(final String stateType) {
+        StateTypeExpr(final String stateType) {
             this.stateType = stateType;
         }
 
@@ -464,7 +430,7 @@ public final class ConfigureSystem {
             // test validity of enum property
             for (final OntProp ontProp : OntProp.values()) {
                 try {
-                    if (!OntTBoxInspectionCommands.isOntPropertyExisting(ontProp.getName(), ontModel)) {
+                    if (!TBoxVerificationResource.isOntPropertyExisting(ontProp.getName(), ontModel)) {
                         throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
                                 + "with ontology property! Wrong String or doesn't exist in ontology!");
                     }
@@ -476,7 +442,7 @@ public final class ConfigureSystem {
             // test validity of enum ontClass
             for (final OntClass ontClass : OntClass.values()) {
                 try {
-                    if (!OntTBoxInspectionCommands.isOntClassExisting(ontClass.getName(), ontModel)) {
+                    if (!TBoxVerificationResource.isOntClassExisting(ontClass.getName(), ontModel)) {
                         throw new NotAvailableException("OntClass \"" + ontClass.getName()
                                 + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                     }

@@ -185,7 +185,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // get whole ontology model for init phase (for comparing with individuals)
-            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getOntURIData());
+            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getOntDatabaseUri());
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
             // insert instances
@@ -209,7 +209,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
+                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
             final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
@@ -240,7 +240,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxURIData());
+                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
 
             final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
