@@ -23,14 +23,10 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.Transac
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.jp.JPPath;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.OntologyPreparation;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxSynchronizer;
+import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
-import org.openbase.jps.core.AbstractJavaProperty;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
-import org.openbase.jps.preset.AbstractJPString;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
@@ -51,13 +47,10 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
-//        final CompareOntClasses compareOntClasses = new CompareOntClasses();
-
-//        OntModel ontModel = OntologyPreparation.loadOntModelFromFile(null); //TODO catch
-//        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.OntPath.SERVER_URI.getName());
+        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
+        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getOntDatabaseUri());
 
 //        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
 //        new TBoxSynchronizer();

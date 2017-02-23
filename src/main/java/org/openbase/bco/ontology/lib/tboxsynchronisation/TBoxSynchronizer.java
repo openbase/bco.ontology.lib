@@ -38,8 +38,6 @@ import java.util.concurrent.TimeUnit;
 public class TBoxSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TBoxSynchronizer.class);
-    private final String tBoxUri = ConfigureSystem.getTBoxURIData();
-    private final String mainUri = ConfigureSystem.getOntURIData();
     private ScheduledFuture scheduledFutureTask;
 
     public TBoxSynchronizer() throws NotAvailableException {
@@ -53,15 +51,16 @@ public class TBoxSynchronizer {
         scheduledFutureTask = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
             try {
-                if (!ServerOntologyModel.isOntModelOnServer(tBoxUri)) {
+                if (!ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getTBoxDatabaseUri())) {
                     // server is empty - load and put ontology model (TBox) to first and second dataSets
-                    final OntModel ontModel = OntologyPreparation.loadOntModelFromFile(null);
-                    ServerOntologyModel.addOntologyModel(ontModel, tBoxUri);
-                    ServerOntologyModel.addOntologyModel(ontModel, mainUri);
+                    final OntModel ontModel = TBoxLoader.loadOntModelFromFile(null);
+                    ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getTBoxDatabaseUri());
+                    ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getOntDatabaseUri());
                 }
 
-                if (ServerOntologyModel.isOntModelOnServer(tBoxUri) && ServerOntologyModel.isOntModelOnServer(mainUri)) {
-                    // tbox upload successful
+                if (ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getTBoxDatabaseUri())
+                        && ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getOntDatabaseUri())) {
+                    // tbox upload was successful
                     scheduledFutureTask.cancel(true);
                 }
             } catch (CouldNotPerformException e) {

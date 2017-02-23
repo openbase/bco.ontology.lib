@@ -22,8 +22,6 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
-import org.apache.jena.util.FileManager;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +30,9 @@ import java.io.InputStream;
 /**
  * @author agatting on 16.02.17.
  */
-public interface OntologyPreparation {
+public interface TBoxLoader {
 
-    Logger LOGGER = LoggerFactory.getLogger(OntologyPreparation.class);
+    Logger LOGGER = LoggerFactory.getLogger(TBoxLoader.class);
 
     /**
      * Method loads data into a ontModel from the fileSystem. The ontModel can be given by argument or a new default
@@ -52,17 +50,16 @@ public interface OntologyPreparation {
             ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         }
 
-        final String ontologyFilePath = ConfigureSystem.OntPath.FILESYSTEM.getName();
-        final InputStream inputStream = FileManager.get().open(ontologyFilePath);
+        final InputStream input = TBoxLoader.class.getResourceAsStream("/Ontology.owl");
 
-        if (inputStream == null) {
-            throw new IllegalArgumentException("File not found in " + ontologyFilePath + "!");
+        if (input == null) {
+            throw new IllegalArgumentException("File not found in " + input + "!");
         } else {
-            LOGGER.info("OntologyManagerController file loaded from " + ontologyFilePath);
+            LOGGER.info("Ontology file loaded from " + input);
         }
 
         //load data into ontModel
-        ontModel.read(inputStream, null);
+        ontModel.read(input, null);
 
         return ontModel;
     }

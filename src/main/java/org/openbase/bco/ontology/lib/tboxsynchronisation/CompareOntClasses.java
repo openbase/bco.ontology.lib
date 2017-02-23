@@ -21,7 +21,6 @@ package org.openbase.bco.ontology.lib.tboxsynchronisation;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.OntologyEditCommands;
-import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -97,7 +96,7 @@ public class CompareOntClasses {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
                 try {
-                    ontClassExist = OntTBoxInspectionCommands.isOntClassExisting(unitName, ontModel);
+                    ontClassExist = TBoxVerificationResource.isOntClassExisting(unitName, ontModel);
                     taskFuture.cancel(true);
                 } catch (CouldNotPerformException e) {
                     //retry

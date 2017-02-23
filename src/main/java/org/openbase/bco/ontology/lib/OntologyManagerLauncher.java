@@ -18,11 +18,13 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.jp.JPPath;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.registry.lib.launch.AbstractLauncher;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.InstantiationException;
+
 
 /**
  * @author agatting on 10.01.17.
@@ -44,7 +46,8 @@ public class OntologyManagerLauncher extends AbstractLauncher<OntologyManagerCon
     @Override
     protected void loadProperties() {
         JPService.registerProperty(JPDebugMode.class);
-        JPService.registerProperty(JPPath.class);
+        JPService.registerProperty(JPOntologyDatabaseUri.class);
+        JPService.registerProperty(JPTBoxDatabaseUri.class);
     }
 
     /**

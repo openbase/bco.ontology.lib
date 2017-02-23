@@ -22,7 +22,7 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.OntTBoxInspectionCommands;
+import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxVerificationResource;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -64,7 +64,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
         Set<OntClass> ontClassSet = new HashSet<>();
         // the set with all ontology unitType classes
-        ontClassSet = OntTBoxInspectionCommands.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+        ontClassSet = TBoxVerificationResource.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         // the triples to insert the missing units into the ontology
         return buildOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
@@ -82,7 +82,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
         Set<OntClass> ontClassSet = new HashSet<>();
         // the set with all ontology unitType classes
-        ontClassSet = OntTBoxInspectionCommands.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+        ontClassSet = TBoxVerificationResource.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         // the triples to insert the missing units into the ontology
         return buildOntTripleOfUnitTypes(ontClassSet, unitConfigList);
@@ -100,7 +100,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
         Set<OntClass> ontClassSet = new HashSet<>();
         // the set with all ontology state classes
-        ontClassSet = OntTBoxInspectionCommands.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
+        ontClassSet = TBoxVerificationResource.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         return buildOntTripleOfStates(ontClassSet, unitConfigList);
     }

@@ -16,25 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing;
+package org.openbase.bco.ontology.lib.jp;
 
-import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
-import org.openbase.jul.exception.CouldNotPerformException;
-import rst.domotic.state.ColorStateType;
-import rst.domotic.state.PowerStateType.PowerState;
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 
 /**
  * @author agatting on 22.02.17.
  */
-public interface ValueOfServiceType {
+public class JPTBoxDatabaseUri extends AbstractJPString {
 
-    static PowerState.State powerStateValue(final Object stateObject) throws CouldNotPerformException {
-        return (PowerState.State) ReflectObjectPool.getInvokedObj(stateObject, ConfigureSystem.StateTypeExpr.GET_VALUE.getName());
+    /**
+     * Command line argument strings.
+     */
+    public static final String[] COMMAND_IDENTIFIERS = {"--tboxServerUri"};
+
+    /**
+     * Constructor for the JPTBoxDatabaseUri class.
+     */
+    public JPTBoxDatabaseUri() {
+        super(COMMAND_IDENTIFIERS);
     }
 
-    static void colorStateValue(final Object stateObject) {
-//        ((ColorStateType.ColorState) stateObject).getColor().getHsbColor().
+    @Override
+    protected String getPropertyDefaultValue() throws JPNotAvailableException {
+        return "http://localhost:3030/bco.ontology/data"; //TODO set correct uri
     }
 
+    @Override
+    public String getDescription() {
+        return "TBoxDatabaseUri property is set to set the uri to server with the tbox ontology database.";
+    }
 }
