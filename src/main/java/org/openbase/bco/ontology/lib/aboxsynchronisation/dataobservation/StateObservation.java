@@ -274,7 +274,7 @@ public class StateObservation<T> extends IdentifyStateType {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
 
-        ((ColorableLightDataType.ColorableLightData) remoteData).getPowerState().getValue();
+//        ((ColorableLightDataType.ColorableLightData) remoteData).getColorState().getColor().getHsbColor().getBrightness()
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 

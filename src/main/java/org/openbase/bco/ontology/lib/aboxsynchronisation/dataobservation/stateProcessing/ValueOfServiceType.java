@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateP
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.jul.exception.CouldNotPerformException;
+import rst.domotic.state.ColorStateType;
 import rst.domotic.state.PowerStateType.PowerState;
 
 /**
@@ -32,6 +33,8 @@ public interface ValueOfServiceType {
         return (PowerState.State) ReflectObjectPool.getInvokedObj(stateObject, ConfigureSystem.StateTypeExpr.GET_VALUE.getName());
     }
 
-
+    static void colorStateValue(final Object stateObject) {
+//        ((ColorStateType.ColorState) stateObject).getColor().getHsbColor().
+    }
 
 }

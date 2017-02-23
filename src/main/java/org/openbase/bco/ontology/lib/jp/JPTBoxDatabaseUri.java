@@ -40,7 +40,7 @@ public class JPTBoxDatabaseUri extends AbstractJPString {
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/bco.ontology/"; //TODO set correct uri
+        return "http://localhost:3030/bco.ontology/data"; //TODO set correct uri
     }
 
     @Override
