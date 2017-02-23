@@ -1,5 +1,5 @@
 #!/bin/bash
-APP_NAME='ontology-lib'
+APP_NAME='bco-ontology-lib'
 clear &&
 echo "=== clean ${APP_NAME} ===" &&
 mvn clean $@ &&
