@@ -41,12 +41,6 @@ public class TestClass {
 //        } catch (CouldNotPerformException e) {
 //            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
 //        }
-
-
-        Trigger t = new TriggerImpl();
-        t.addObserver((observable, aBoolean) -> {
-            System.out.println("Trigger is "+aBoolean);
-        });
 //
 //
 //        Future<Integer> taskFuture = GlobalCachedExecutorService.submit(() -> {

@@ -18,13 +18,14 @@
  */
 package org.openbase.bco.ontology.lib.testcode;
 
+import org.openbase.jul.iface.Manageable;
 import org.openbase.jul.pattern.Observer;
 import rst.domotic.state.ActivationStateType.ActivationState;
 
 /**
  * @author agatting on 21.12.16.
  */
-public interface Trigger {
+public interface Trigger extends Manageable<TriggerConfig> {
 
     /**
      * Method registers the given observer to this observable to get informed about value changes.
