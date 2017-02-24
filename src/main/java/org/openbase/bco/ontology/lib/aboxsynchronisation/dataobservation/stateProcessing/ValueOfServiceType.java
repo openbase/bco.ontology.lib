@@ -18,23 +18,62 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing;
 
-import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
-import org.openbase.jul.exception.CouldNotPerformException;
-import rst.domotic.state.ColorStateType;
+import rst.domotic.state.ColorStateType.ColorState;
 import rst.domotic.state.PowerStateType.PowerState;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
+ * The class contains methods for the individual stateTypes. Each method gets the stateValues(s) of the stateType and converts the stateValues(s) to the
+ * SPARQL codec in string form. Each method returns a set of strings independent of the number of entries, because of processing reason in class
+ * IdentifyStateType.
+ *
  * @author agatting on 22.02.17.
  */
-public interface ValueOfServiceType {
+public class ValueOfServiceType {
 
-    static PowerState.State powerStateValue(final Object stateObject) throws CouldNotPerformException {
-        return (PowerState.State) ReflectObjectPool.getInvokedObj(stateObject, ConfigureSystem.StateTypeExpr.GET_VALUE.getName());
+    protected Set<String> audioStateValue() {
+        final Set<String> stringSet = new HashSet<>();
+
+        return stringSet;
     }
 
-    static void colorStateValue(final Object stateObject) {
-//        ((ColorStateType.ColorState) stateObject).getColor().getHsbColor().
+    /**
+     * Method returns the state values of the given colorState as stringSet.
+     *
+     * @param stateType The colorState.
+     * @return Set of color state value (brightness, hue, saturation) strings.
+     */
+    protected Set<String> colorStateValue(final ColorState stateType) {
+
+        final Set<String> hsvValuesInSparqlCodec = new HashSet<>();
+
+        final double brightness = stateType.getColor().getHsbColor().getBrightness();
+        hsvValuesInSparqlCodec.add("\"" + brightness + "\"^^NS:Brightness");
+
+        final double hue = stateType.getColor().getHsbColor().getHue();
+        hsvValuesInSparqlCodec.add("\"" + hue + "\"^^NS:Hue");
+
+        final double saturation = stateType.getColor().getHsbColor().getSaturation();
+        hsvValuesInSparqlCodec.add("\"" + saturation + "\"^^NS:Saturation");
+
+        return hsvValuesInSparqlCodec;
+    }
+
+
+
+    /**
+     * Method returns the state value of the given powerState as stringSet. See class hint.
+     *
+     * @param stateType The powerState.
+     * @return Set of state value strings.
+     */
+    protected Set<String> powerStateValue(final PowerState stateType) {
+        final Set<String> stringSet = new HashSet<>();
+        stringSet.add(stateType.getValue().toString());
+
+        return stringSet;
     }
 
 }

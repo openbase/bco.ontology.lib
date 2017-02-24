@@ -262,6 +262,13 @@ public class UnitRemoteSynchronizer {
             new StateObservation<VideoDepthSourceData>(unitRemote, unitConfig, transactionBuffer);
         } else if (dataClassName.equalsIgnoreCase("videoRgbSourceData")) {
             new StateObservation<VideoRgbSourceData>(unitRemote, unitConfig, transactionBuffer);
+        } else {
+            try {
+                throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
+                        + " to method compareClassNameAndStartObs");
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            }
         }
     }
 

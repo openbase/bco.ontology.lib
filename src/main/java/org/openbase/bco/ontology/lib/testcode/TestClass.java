@@ -43,7 +43,7 @@ public class TestClass {
 //        }
 
 
-//        Trigger t = null;
+//        Trigger t = new TriggerImpl();
 //        t.addObserver((observable, aBoolean) -> {
 //            System.out.println("Trigger is "+aBoolean);
 //        });

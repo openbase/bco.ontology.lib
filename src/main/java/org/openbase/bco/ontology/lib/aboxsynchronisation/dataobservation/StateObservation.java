@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.dal.ColorableLightDataType;
+import rst.domotic.unit.dal.AudioSourceDataType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -61,30 +61,34 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
-            .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
-    private static String remoteUnitId = null;
+    private static String remoteUnitId;
     private final Stopwatch stopwatch;
-    private TransactionBuffer transactionBuffer;
-    private SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
-
+    private final TransactionBuffer transactionBuffer;
+    private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
+    private Set<Method> methodSetStateType = null;
 
     public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig
             , final TransactionBuffer transactionBuffer) {
 
-
         this.transactionBuffer = transactionBuffer;
         stopwatch = new Stopwatch();
-
+        remoteUnitId = unitConfig.getId();
         initServiceTypeMap();
 
-        remoteUnitId = unitConfig.getId();
+        final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
+            if (methodSetStateType == null) {
+                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj
+                        , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+            }
+            GlobalCachedExecutorService.submit(() -> {
+                stateUpdate(unitRemoteObj);
+            });
+        };
 
-        Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) ->
-                GlobalCachedExecutorService.submit(() -> stateUpdate(unitRemoteObj));
-
-        Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
+        final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
             GlobalCachedExecutorService.submit(() -> {
                 if (connectionState.equals(ConnectionState.CONNECTED)) {
 //                    System.out.println("connected!!!");
@@ -161,99 +165,68 @@ public class StateObservation<T> extends IdentifyStateType {
         // declaration of predicates and classes, which are static
         final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
         final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName();
-        final String objectStateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName();
         final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
         final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
         final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
-        final String predicateHasStateValue = ConfigureSystem.OntProp.STATE_VALUE.getName();
 
 //        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
 //        System.out.println("--------------------");
 
         //TODO get stateType only, which has changed...
 
-        try {
-            final Set<Method> methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(remoteData
-                    , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+        // foreach stateType ... every observation point represents an serviceType respectively stateValue
+        for (Method methodStateType : methodSetStateType) {
 
-            // foreach stateType ... every observation point represents an serviceType respectively stateValue
-            for (Method methodStateType : methodSetStateType) {
-
-//                System.out.println(methodStateType);
+//            System.out.println(methodStateType);
+            try {
+                // wait one millisecond to guarantee, that observation instances are unique
                 try {
-                    // wait one millisecond to guarantee, that observation instances are unique
-                    try {
-                        stopwatch.waitForStop(1);
-                    } catch (InterruptedException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                    }
-
-                    // get method as invoked object
-                    Object stateTypeObj;
-                    try {
-                        stateTypeObj = methodStateType.invoke(remoteData); //TODO
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new CouldNotPerformException(e);
-                    }
-
-                    final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
-                    final String subjectObservation = "O" + remoteUnitId + dateTimeNow;
-
-                    //### add observation instance to observation class ###\\
-                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateIsA, objectObservationClass));
-
-                    //### unitID triple ###\\
-                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasUnitId, remoteUnitId));
-
-                    //### serviceType triple ###\\
-                    final String objectServiceType = getServiceTypeMapping(methodStateType.getName());
-                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasProviderService
-                            , objectServiceType));
-
-                    //### timeStamp triple ###\\
-                    TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
-                            .getInvokedObj(stateTypeObj , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
-
-                    if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
-                        final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
-                        final String timestampXsd = "\"" + timestamp + "\"^^xsd:dateTime";
-                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp
-                                , timestampXsd));
-                    }
-
-                    //### stateValue triple ###\\
-//                    final boolean hasDataUnit = stateTypeHasDataUnit(stateTypeObj);
-//                    if (hasDataUnit) { //physical unit
-//                        //TODO need access to data...
-//                    } else {
-//                        final Object stateValueObj = ReflectObjectPool.getInvokedObj(stateTypeObj
-//                                , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-//                        final String objectStateValue = stateValueObj.toString();
-//
-//                        tripleArrayListsBuf.add(new TripleArrayList(objectStateValue, predicateIsA
-//                                , objectStateValueClass)); // TODO: redundant. another possibility?
-//                        tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue
-//                                , objectStateValue));
-//                    }
-
-                    //### Test ###\\
-                    tripleArrayListsBuf = addStateValue(objectServiceType, stateTypeObj, subjectObservation, tripleArrayListsBuf);
-
-
-                    // no exception produced: observation individual complete. add to main list
-                    tripleArrayLists.addAll(tripleArrayListsBuf);
-
-                } catch (CouldNotPerformException e) {
-                    // Could not collect all elements of observation instance
+                    stopwatch.waitForStop(1);
+                } catch (InterruptedException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
                 }
-                tripleArrayListsBuf.clear();
-            }
-//            System.out.println("-----------");
 
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                // get method as invoked object
+                final Object stateTypeObj = methodStateType.invoke(remoteData);
+
+                final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
+                final String subjectObservation = "O" + remoteUnitId + dateTimeNow;
+
+                //### add observation instance to observation class ###\\
+                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateIsA, objectObservationClass));
+
+                //### unitID triple ###\\
+                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasUnitId, remoteUnitId));
+
+                //### serviceType triple ###\\
+                final String objectServiceType = getServiceTypeMapping(methodStateType.getName());
+                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasProviderService, objectServiceType));
+//                System.out.println(objectServiceType);
+
+                //### timeStamp triple ###\\
+                TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
+                        .getInvokedObj(stateTypeObj , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
+
+                if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
+                    final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
+                    final String dateTime = "\"" + simpleDateFormat.format(timestamp) + "\"^^xsd:dateTime";
+                    tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasTimeStamp, dateTime));
+                }
+
+                //### stateValue triple ###\\
+                tripleArrayListsBuf = addStateValue(objectServiceType, stateTypeObj, subjectObservation, tripleArrayListsBuf);
+
+                // no exception produced: observation individual complete. add to main list
+                tripleArrayLists.addAll(tripleArrayListsBuf);
+
+            } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
+                // Could not collect all elements of observation instance
+                ExceptionPrinter.printHistory("Could not get data from serviceType " + methodStateType.getName() + " from unitRemote " + remoteUnitId
+                        + ". Dropped.", e, LOGGER, LogLevel.WARN);
+            }
+            tripleArrayListsBuf.clear();
         }
+//        System.out.println("-----------");
 
         final String sparqlUpdateExpr = sparqlUpdateExpression.getSparqlBundleUpdateInsertEx(tripleArrayLists);
         System.out.println(sparqlUpdateExpr);
@@ -274,7 +247,9 @@ public class StateObservation<T> extends IdentifyStateType {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
 
-//        ((ColorableLightDataType.ColorableLightData) remoteData).getColorState().getColor().getHsbColor().getBrightness()
+        if (remoteData.getClass().equals(AudioSourceDataType.AudioSourceData.class)) {
+//            ((AudioSourceDataType.AudioSourceData) remoteData).
+        }
 //            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 

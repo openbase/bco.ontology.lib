@@ -21,15 +21,22 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateP
 import javafx.util.Pair;
 import org.openbase.bco.ontology.lib.ConfigureSystem;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.slf4j.LoggerFactory;
+import rst.domotic.state.ColorStateType.ColorState;
 import rst.domotic.state.PowerStateType.PowerState;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author agatting on 22.02.17.
  */
-public class IdentifyStateType {
+public class IdentifyStateType extends ValueOfServiceType {
+
+    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IdentifyStateType.class);
 
     // declaration of predicates and classes, which are static
     private static final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
@@ -39,43 +46,50 @@ public class IdentifyStateType {
     protected List<TripleArrayList> addStateValue(final String serviceType, final Object stateObject, final String subjectObservation
             , final List<TripleArrayList> tripleArrayListsBuf) {
 
-        final Pair<String, Boolean> stateTypeAndIsPhysicalTypePair = compare(serviceType, stateObject);
+        final Pair<Set<String>, Boolean> stateTypeAndIsPhysicalTypePair = identifyState(serviceType, stateObject);
 
         if (stateTypeAndIsPhysicalTypePair != null) {
-            // check if stateType based on physical type. If yes = literal, if no = stateValue instance.
-            if (!stateTypeAndIsPhysicalTypePair.getValue()) {
+            for (final String stateValue : stateTypeAndIsPhysicalTypePair.getKey()) {
+                // check if stateType based on physical type. If yes = literal, if no = stateValue instance.
+                if (!stateTypeAndIsPhysicalTypePair.getValue()) { // stateValue instance
 //                System.out.println(stateTypeAndIsPhysicalTypePair.getKey());
-                tripleArrayListsBuf.add(new TripleArrayList(stateTypeAndIsPhysicalTypePair.getKey(), predicateIsA, stateValueClass));
-            } else {
+                    tripleArrayListsBuf.add(new TripleArrayList(stateValue, predicateIsA, stateValueClass)); //TODO: redundant. another possibility?
+                } else { // literal
 
+                }
+                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue, stateValue));
             }
-            tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasStateValue, stateTypeAndIsPhysicalTypePair.getKey()));
         } else {
-//            System.out.println("nuuuuull!");
+            // no matched stateService
+            try {
+                throw new NotAvailableException("Could not identify stateType. Please check implementation or rather integrate " + serviceType
+                        + " to method identifyState");
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            }
         }
 
         return tripleArrayListsBuf;
     }
 
-    private Pair<String, Boolean> compare(final String serviceType, final Object stateObject) {
-        String serviceTypeBuf = serviceType.toLowerCase().replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
-        Pair<String, Boolean> stateTypeAndIsPhysicalTypePair = null;
+    private Pair<Set<String>, Boolean> identifyState(final String serviceType, final Object stateObject) {
+        final String serviceTypeBuf = serviceType.toLowerCase().replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
+        Pair<Set<String>, Boolean> stateAndPhysicalTypePair;
+        final Set<String> setStateValues;
 
-        try {
-            if (serviceTypeBuf.equalsIgnoreCase("powerStateService")) {
-                final PowerState.State powerState = ValueOfServiceType.powerStateValue(stateObject);
-                stateTypeAndIsPhysicalTypePair = new Pair<>(powerState.toString(), false);
-                return stateTypeAndIsPhysicalTypePair;
-            } else if (serviceTypeBuf.equalsIgnoreCase("")) {
-                //TODO case literal
-            } else {
-                stateTypeAndIsPhysicalTypePair = null;
-            }
+        switch (serviceTypeBuf) {
+            case "powerstateservice":
+                setStateValues = powerStateValue((PowerState) stateObject);
+                stateAndPhysicalTypePair = new Pair<>(setStateValues, false);
 
-        } catch (CouldNotPerformException e) {
-            stateTypeAndIsPhysicalTypePair = null;
+                return stateAndPhysicalTypePair;
+            case "colorstateservice":
+                setStateValues =  colorStateValue((ColorState) stateObject);
+                stateAndPhysicalTypePair = new Pair<>(setStateValues, true);
+
+                return stateAndPhysicalTypePair;
+            default:
+                return null;
         }
-
-        return stateTypeAndIsPhysicalTypePair;
     }
 }
