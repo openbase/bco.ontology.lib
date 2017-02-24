@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing;
 
+import rst.domotic.state.BatteryStateType.BatteryState;
 import rst.domotic.state.ColorStateType.ColorState;
 import rst.domotic.state.PowerStateType.PowerState;
 
@@ -33,29 +34,40 @@ import java.util.Set;
  */
 public class ValueOfServiceType {
 
-    protected Set<String> audioStateValue() {
+    /**
+     * Method returns state values of the given audioState as stringSet.
+     *
+     * @param audioState The AudioState.
+     * @return Set of audio state value strings.
+     */
+    protected Set<String> audioStateValue(final Object audioState) {
         final Set<String> stringSet = new HashSet<>();
-
+        //TODO
         return stringSet;
+    }
+
+    protected Set<String> batteryStateValue(final BatteryState batteryState) {
+
+        return null;
     }
 
     /**
      * Method returns the state values of the given colorState as stringSet.
      *
-     * @param stateType The colorState.
+     * @param colorState The colorState.
      * @return Set of color state value (brightness, hue, saturation) strings.
      */
-    protected Set<String> colorStateValue(final ColorState stateType) {
+    protected Set<String> colorStateValue(final ColorState colorState) {
 
         final Set<String> hsvValuesInSparqlCodec = new HashSet<>();
 
-        final double brightness = stateType.getColor().getHsbColor().getBrightness();
+        final double brightness = colorState.getColor().getHsbColor().getBrightness();
         hsvValuesInSparqlCodec.add("\"" + brightness + "\"^^NS:Brightness");
 
-        final double hue = stateType.getColor().getHsbColor().getHue();
+        final double hue = colorState.getColor().getHsbColor().getHue();
         hsvValuesInSparqlCodec.add("\"" + hue + "\"^^NS:Hue");
 
-        final double saturation = stateType.getColor().getHsbColor().getSaturation();
+        final double saturation = colorState.getColor().getHsbColor().getSaturation();
         hsvValuesInSparqlCodec.add("\"" + saturation + "\"^^NS:Saturation");
 
         return hsvValuesInSparqlCodec;
@@ -66,12 +78,12 @@ public class ValueOfServiceType {
     /**
      * Method returns the state value of the given powerState as stringSet. See class hint.
      *
-     * @param stateType The powerState.
+     * @param powerState The powerState.
      * @return Set of state value strings.
      */
-    protected Set<String> powerStateValue(final PowerState stateType) {
+    protected Set<String> powerStateValue(final PowerState powerState) {
         final Set<String> stringSet = new HashSet<>();
-        stringSet.add(stateType.getValue().toString());
+        stringSet.add(powerState.getValue().toString());
 
         return stringSet;
     }

@@ -19,18 +19,32 @@
 package org.openbase.bco.ontology.lib.testcode;
 
 import org.openbase.jul.pattern.ObservableImpl;
+import org.openbase.jul.pattern.Observer;
+import rst.domotic.state.ActivationStateType.ActivationState;
 
 /**
  * @author agatting on 21.12.16.
  */
-public class TriggerImpl extends ObservableImpl<Boolean> implements Trigger {
+public class TriggerImpl implements Trigger {
+
+    private final ObservableImpl<ActivationState.State> activationObservable;
 
     /**
      * Constructor for TriggerImpl.
      */
     public TriggerImpl() {
+        activationObservable = new ObservableImpl<>();
 
 
-        //notifyObservers(true);
+
+//        notifyObservers(true);
+    }
+
+    public void addObserver(Observer<ActivationState.State> observer) {
+        
+    }
+
+    public void removeObserver(Observer<ActivationState.State> observer) {
+
     }
 }

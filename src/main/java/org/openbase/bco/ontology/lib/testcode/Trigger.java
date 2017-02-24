@@ -18,10 +18,25 @@
  */
 package org.openbase.bco.ontology.lib.testcode;
 
+import org.openbase.jul.pattern.Observer;
+import rst.domotic.state.ActivationStateType.ActivationState;
+
 /**
  * @author agatting on 21.12.16.
  */
-public interface Trigger extends org.openbase.jul.pattern.Observable<Boolean> {
+public interface Trigger {
 
+    /**
+     * Method registers the given observer to this observable to get informed about value changes.
+     *
+     * @param observer is the observer to register.
+     */
+    public void addObserver(Observer<ActivationState.State> observer);
 
+    /**
+     * Method removes the given observer from this observable to finish the observation.
+     *
+     * @param observer is the observer to remove.
+     */
+    public void removeObserver(Observer<ActivationState.State> observer);
 }

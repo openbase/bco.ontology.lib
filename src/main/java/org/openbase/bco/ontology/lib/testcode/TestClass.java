@@ -43,10 +43,10 @@ public class TestClass {
 //        }
 
 
-//        Trigger t = new TriggerImpl();
-//        t.addObserver((observable, aBoolean) -> {
-//            System.out.println("Trigger is "+aBoolean);
-//        });
+        Trigger t = new TriggerImpl();
+        t.addObserver((observable, aBoolean) -> {
+            System.out.println("Trigger is "+aBoolean);
+        });
 //
 //
 //        Future<Integer> taskFuture = GlobalCachedExecutorService.submit(() -> {
