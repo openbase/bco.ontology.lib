@@ -140,7 +140,7 @@ public class UnitRemoteSynchronizer {
 
                         if (unitRemote.isDataAvailable()) {
                             // unitRemote is ready. add stateObservation
-                            compareClassNameAndStartObs(unitRemote, unitConfig, transactionBuffer);
+                            identifyUnitRemote(unitRemote, unitConfig, transactionBuffer);
                         } else {
                             unitPairSet.add(new Pair<>(unitRemote, unitConfig));
                         }
@@ -176,7 +176,7 @@ public class UnitRemoteSynchronizer {
 
                     if (unitPair.getKey().isDataAvailable()) {
                         // unitRemote is ready. add stateObservation
-                        compareClassNameAndStartObs(unitPair.getKey(), unitPair.getValue(), transactionBuffer);
+                        identifyUnitRemote(unitPair.getKey(), unitPair.getValue(), transactionBuffer);
                     } else {
                         unitPairSetBuf.add(unitPair);
                     }
@@ -208,8 +208,7 @@ public class UnitRemoteSynchronizer {
     }
 
     //TODO set generic dataClass?! Following static process not nice...
-    private void compareClassNameAndStartObs(final UnitRemote unitRemote, final UnitConfig unitConfig
-            , final TransactionBuffer transactionBuffer) {
+    private void identifyUnitRemote(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer) {
 
         final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();
 

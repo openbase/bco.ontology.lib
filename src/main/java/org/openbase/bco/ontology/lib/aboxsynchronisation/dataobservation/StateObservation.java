@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.dal.AudioSourceDataType;
+import rst.domotic.unit.dal.BatteryDataType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -248,9 +249,12 @@ public class StateObservation<T> extends IdentifyStateType {
         }
 
         if (remoteData.getClass().equals(AudioSourceDataType.AudioSourceData.class)) {
-//            ((AudioSourceDataType.AudioSourceData) remoteData).
+
+            System.out.println(((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel());
+            System.out.println(((BatteryDataType.BatteryData) remoteData).getBatteryState().getValue());
+
         }
-//            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
+
     }
 
 }
