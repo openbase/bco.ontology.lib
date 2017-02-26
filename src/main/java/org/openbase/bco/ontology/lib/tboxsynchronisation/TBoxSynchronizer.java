@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.tboxsynchronisation;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -51,22 +51,22 @@ public class TBoxSynchronizer {
         scheduledFutureTask = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
             try {
-                if (!ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getTBoxDatabaseUri())) {
+                if (!ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())) {
                     // server is empty - load and put ontology model (TBox) to first and second dataSets
                     final OntModel ontModel = TBoxLoader.loadOntModelFromFile(null);
-                    ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getTBoxDatabaseUri());
-                    ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getOntDatabaseUri());
+                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getTBoxDatabaseUri());
+                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
                 }
 
-                if (ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getTBoxDatabaseUri())
-                        && ServerOntologyModel.isOntModelOnServer(ConfigureSystem.getOntDatabaseUri())) {
+                if (ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())
+                        && ServerOntologyModel.isOntModelOnServer(OntConfig.getOntDatabaseUri())) {
                     // tbox upload was successful
                     scheduledFutureTask.cancel(true);
                 }
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             }
-        }, 0, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, 0, OntConfig.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
 }

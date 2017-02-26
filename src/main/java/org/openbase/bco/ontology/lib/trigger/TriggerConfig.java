@@ -1,4 +1,4 @@
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.trigger;
 
 import edu.emory.mathcs.backport.java.util.Collections;
 import java.util.ArrayList;

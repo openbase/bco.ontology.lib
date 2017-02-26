@@ -18,7 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.sparql;
 
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class SparqlUpdateExpression extends WebInterface {
         for (final TripleArrayList triple : insertTripleArrayLists) {
 
             final String updateExpression =
-                    "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                    "PREFIX NS: <" + OntConfig.NS + "> "
                     + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                     + "INSERT DATA { "
                         + getInsertTripleCommand(triple)
@@ -68,7 +69,7 @@ public class SparqlUpdateExpression extends WebInterface {
 
         // initial part of the large expression
         String multipleUpdateExpression =
-                "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "INSERT DATA { ";
 
@@ -102,7 +103,7 @@ public class SparqlUpdateExpression extends WebInterface {
             , final List<TripleArrayList> insertTripleArrayLists, final String whereExpr) {
 
         String multipleUpdateExpression =
-                "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { ";
 
@@ -149,7 +150,7 @@ public class SparqlUpdateExpression extends WebInterface {
             , final String whereExpr) {
 
         String singleUpdateExpression =
-                "PREFIX NS: <" + ConfigureSystem.NS + "> "
+                "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + getDeleteTripleCommand(deleteTripleArrayLists)
@@ -176,24 +177,23 @@ public class SparqlUpdateExpression extends WebInterface {
 
         if (subject == null) {
             subject = "?subject";
-        } else if (!subject.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
-            subject = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getSubject();
+        } else if (!subject.startsWith(OntExpr.NS.getName())) {
+            subject = OntExpr.NS.getName() + tripleArrayList.getSubject();
         }
 
         // dataTypes starts with \" doesn't have NS
         if (object == null) {
             object = "?object";
-        } else if (!object.startsWith(ConfigureSystem.OntExpr.NS.getName()) && !object.startsWith("\"")) {
-            object = ConfigureSystem.OntExpr.NS.getName() + tripleArrayList.getObject();
+        } else if (!object.startsWith(OntExpr.NS.getName()) && !object.startsWith("\"")) {
+            object = OntExpr.NS.getName() + tripleArrayList.getObject();
         }
 
         // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
         // insert an individual to a class.
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
-                && !predicate.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
-            predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
+        } else if (!predicate.equals(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName())) {
+            predicate = OntExpr.NS.getName() + predicate;
         }
 
         return subject + " " + predicate + " " + object + " . ";
@@ -209,22 +209,21 @@ public class SparqlUpdateExpression extends WebInterface {
 
         if (subject == null) {
             subject = "?subject";
-        } else if (!subject.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
-            subject = ConfigureSystem.OntExpr.NS.getName() + subject;
+        } else if (!subject.startsWith(OntExpr.NS.getName())) {
+            subject = OntExpr.NS.getName() + subject;
         }
 
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equals(ConfigureSystem.OntExpr.A.getName())
-                && !predicate.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
+        } else if (!predicate.equals(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName())) {
             // if predicate isn't an "a" then it's an property with namespace needed.
-            predicate = ConfigureSystem.OntExpr.NS.getName() + predicate;
+            predicate = OntExpr.NS.getName() + predicate;
         }
 
         if (object == null) {
             object = "?object";
-        } else if (!object.startsWith(ConfigureSystem.OntExpr.NS.getName())) {
-            object = ConfigureSystem.OntExpr.NS.getName() + object;
+        } else if (!object.startsWith(OntExpr.NS.getName())) {
+            object = OntExpr.NS.getName() + object;
         }
 
         return subject + " " + predicate + " " + object + " . ";

@@ -1,5 +1,5 @@
 
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.trigger;
 
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.jul.exception.InstantiationException;

@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.trigger;
 
 import org.openbase.jul.iface.Manageable;
 import org.openbase.jul.pattern.Observer;

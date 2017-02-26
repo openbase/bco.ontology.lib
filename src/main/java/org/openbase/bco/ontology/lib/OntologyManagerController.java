@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
@@ -50,9 +51,9 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
         OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
-        ServerOntologyModel.addOntologyModel(ontModel, ConfigureSystem.getOntDatabaseUri());
+        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
 
-//        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(ConfigureSystem.RSB_SCOPE);
+//        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(OntConfig.RSB_SCOPE);
 //        new TBoxSynchronizer();
         final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
         transactionBuffer.createAndStartQueue();

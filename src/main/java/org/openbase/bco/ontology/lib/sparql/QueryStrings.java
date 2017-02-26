@@ -20,7 +20,7 @@
 package org.openbase.bco.ontology.lib.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -807,7 +807,7 @@ public final class QueryStrings {
      * @return String in format yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public static String getCurrentDateTime() {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
         final Date date = new Date();
         return simpleDateFormat.format(date);
     }
@@ -823,7 +823,7 @@ public final class QueryStrings {
      */
     public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
                                                   final int years) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
         final Date now = new Date();
 
         Date newDate = DateUtils.addHours(now, hours);

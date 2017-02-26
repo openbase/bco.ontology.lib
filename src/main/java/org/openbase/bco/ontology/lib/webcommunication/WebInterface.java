@@ -30,7 +30,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.slf4j.Logger;
@@ -106,7 +106,7 @@ public class WebInterface {
     public int sparqlUpdate(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(ConfigureSystem.getOntUpdateUri());
+        final HttpPost httpPost = new HttpPost(OntConfig.getOntUpdateUri());
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("update", updateString));
@@ -132,7 +132,7 @@ public class WebInterface {
     public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
         try {
             Query query = QueryFactory.create(queryString) ;
-            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(ConfigureSystem.getOntSparqlUri(), query);
+            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(OntConfig.getOntSparqlUri(), query);
             return queryExecution.execSelect();
         } catch (Exception e) {
             throw new CouldNotProcessException("Could not get http response!", e);

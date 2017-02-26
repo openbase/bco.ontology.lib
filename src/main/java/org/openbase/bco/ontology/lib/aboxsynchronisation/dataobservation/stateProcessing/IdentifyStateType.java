@@ -19,7 +19,9 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing;
 
 import javafx.util.Pair;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -39,9 +41,9 @@ public class IdentifyStateType extends ValueOfServiceType {
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IdentifyStateType.class);
 
     // declaration of predicates and classes, which are static
-    private static final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
-    private static final String predicateHasStateValue = ConfigureSystem.OntProp.STATE_VALUE.getName();
-    private static final String stateValueClass = ConfigureSystem.OntClass.STATE_VALUE.getName();
+    private static final String predicateIsA = OntExpr.A.getName();
+    private static final String predicateHasStateValue = OntProp.STATE_VALUE.getName();
+    private static final String stateValueClass = OntCl.STATE_VALUE.getName();
 
     protected List<TripleArrayList> addStateValue(final String serviceType, final Object stateObject, final String subjectObservation
             , final List<TripleArrayList> tripleArrayListsBuf) {
@@ -73,7 +75,7 @@ public class IdentifyStateType extends ValueOfServiceType {
     }
 
     private Pair<Set<String>, Boolean> identifyState(final String serviceType, final Object stateObject) {
-        final String serviceTypeBuf = serviceType.toLowerCase().replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
+        final String serviceTypeBuf = serviceType.toLowerCase().replaceAll(OntExpr.REMOVE.getName(), "");
         Pair<Set<String>, Boolean> stateAndPhysicalTypePair;
         final Set<String> setStateValues;
 

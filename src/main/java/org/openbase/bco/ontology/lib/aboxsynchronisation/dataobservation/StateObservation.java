@@ -19,7 +19,11 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.config.OntConfig.MethodRegEx;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing.IdentifyStateType;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
@@ -46,7 +50,6 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -61,8 +64,8 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
     private static String remoteUnitId;
     private final Stopwatch stopwatch;
@@ -80,8 +83,7 @@ public class StateObservation<T> extends IdentifyStateType {
 
         final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
             if (methodSetStateType == null) {
-                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj
-                        , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             }
             GlobalCachedExecutorService.submit(() -> {
                 stateUpdate(unitRemoteObj);
@@ -108,7 +110,7 @@ public class StateObservation<T> extends IdentifyStateType {
         for (final ServiceType serviceType : ServiceType.values()) {
             final String serviceTypeName = serviceType.name();
             final String reducedServiceTypeName = serviceTypeName.toLowerCase()
-                    .replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
+                    .replaceAll(OntExpr.REMOVE.getName(), "");
 
             serviceTypeMap.put(reducedServiceTypeName, serviceTypeName);
         }
@@ -122,8 +124,7 @@ public class StateObservation<T> extends IdentifyStateType {
             }
 
             // approach: compare with the method, which has NO dataUnit. They are standardized with "getValue"
-            return !ReflectObjectPool.hasMethodByRegEx(invokedMethod
-                    , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
+            return !ReflectObjectPool.hasMethodByRegEx(invokedMethod, MethodRegEx.GET_VALUE.getName());
         } catch (IllegalArgumentException e) {
             throw new CouldNotPerformException("Cannot check availability of dataUnit method!", e);
         }
@@ -136,8 +137,7 @@ public class StateObservation<T> extends IdentifyStateType {
                 throw new IllegalArgumentException("Cause String is null!");
             }
             // standardized string to allow comparison
-            final String stateTypeBuf = methodStateTypeName.toLowerCase()
-                    .replaceFirst(ConfigureSystem.MethodRegEx.GET.getName(), "");
+            final String stateTypeBuf = methodStateTypeName.toLowerCase().replaceFirst(MethodRegEx.GET.getName(), "");
 
             for (final String serviceTypeName : serviceTypeMap.keySet()) {
                 if (serviceTypeName.contains(stateTypeBuf)) {
@@ -163,11 +163,11 @@ public class StateObservation<T> extends IdentifyStateType {
         List<TripleArrayList> tripleArrayListsBuf = new ArrayList<>();
 
         // declaration of predicates and classes, which are static
-        final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
-        final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName();
-        final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
-        final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
-        final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
+        final String predicateIsA = OntExpr.A.getName();
+        final String objectObservationClass = OntCl.OBSERVATION.getName();
+        final String predicateHasUnitId = OntProp.UNIT_ID.getName();
+        final String predicateHasProviderService = OntProp.PROVIDER_SERVICE.getName();
+        final String predicateHasTimeStamp = OntProp.TIME_STAMP.getName();
 
 //        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
 //        System.out.println("--------------------");
@@ -205,7 +205,7 @@ public class StateObservation<T> extends IdentifyStateType {
 
                 //### timeStamp triple ###\\
                 TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
-                        .getInvokedObj(stateTypeObj , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
+                        .getInvokedObj(stateTypeObj , MethodRegEx.GET_TIMESTAMP.getName());
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));

@@ -1,8 +1,10 @@
 package org.openbase.bco.ontology.lib.testcode;
 
-import java.util.Collection;
+import org.openbase.bco.ontology.lib.trigger.TriggerConfig;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote;
+
+import java.util.Collection;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>

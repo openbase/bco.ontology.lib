@@ -21,7 +21,8 @@ package org.openbase.bco.ontology.lib.datapool;
 import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.BCOConfig.UnitDataClass;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.StateObservation;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -110,11 +111,11 @@ public class UnitRemoteSynchronizer {
             } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
                 ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                        + ConfigureSystem.BIG_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
+                        + OntConfig.BIG_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException e) {
                 //TODO
             }
-        }, 0, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, 0, OntConfig.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
     private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer)
@@ -155,7 +156,7 @@ public class UnitRemoteSynchronizer {
             MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
         } catch (MultiException e) {
             LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                    + " unitRemotes without data. Retry to solve in " + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+                    + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD + " seconds.");
         }
         // return a set of unitRemotes, which have no data yet
         return unitPairSet;
@@ -192,7 +193,7 @@ public class UnitRemoteSynchronizer {
                 MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
             } catch (MultiException e) {
                 LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                        + " unitRemotes without data. Retry to solve in " + ConfigureSystem.BIG_RETRY_PERIOD + " seconds.");
+                        + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD + " seconds.");
             }
 
             if (unitPairSetBuf.isEmpty()) {
@@ -203,72 +204,98 @@ public class UnitRemoteSynchronizer {
                 unitPairSet.addAll(unitPairSetBuf);
                 unitPairSetBuf.clear();
             }
-        }, ConfigureSystem.BIG_RETRY_PERIOD, ConfigureSystem.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, OntConfig.BIG_RETRY_PERIOD, OntConfig.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
     //TODO set generic dataClass?! Following static process not nice...
     private void compareClassNameAndStartObs(final UnitRemote unitRemote, final UnitConfig unitConfig
             , final TransactionBuffer transactionBuffer) {
 
-        final String dataClassName = unitRemote.getDataClass().getSimpleName();
+        final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();
 
-        if (dataClassName.equalsIgnoreCase("audioSourceData")) {
-            new StateObservation<AudioSourceData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("batteryData")) {
-            new StateObservation<BatteryData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("brightnessSensorData")) {
-            new StateObservation<BrightnessSensorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("buttonData")) {
-            new StateObservation<ButtonData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("colorableLightData")) {
-            new StateObservation<ColorableLightData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("dimmableLightData")) {
-            new StateObservation<DimmableLightData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("dimmerData")) {
-            new StateObservation<DimmerData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("displayData")) {
-            new StateObservation<DisplayData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("handleData")) {
-            new StateObservation<HandleData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("lightData")) {
-            new StateObservation<LightData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("monitorData")) {
-            new StateObservation<MonitorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("motionDetectorData")) {
-            new StateObservation<MotionDetectorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("powerConsumptionSensorData")) {
-            new StateObservation<PowerConsumptionSensorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("powerSwitchData")) {
-            new StateObservation<PowerSwitchData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("reedContactData")) {
-            new StateObservation<ReedContactData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("rfidData")) {
-            new StateObservation<RFIDData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("rollerShutterData")) {
-            new StateObservation<RollerShutterData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("smokeDetectorData")) {
-            new StateObservation<SmokeDetectorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("switchData")) {
-            new StateObservation<SwitchData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("tamperDetectorData")) {
-            new StateObservation<TamperDetectorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("televisionData")) {
-            new StateObservation<TelevisionData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("temperatureControllerData")) {
-            new StateObservation<TemperatureControllerData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("temperatureSensorData")) {
-            new StateObservation<TemperatureSensorData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("videoDepthSourceData")) {
-            new StateObservation<VideoDepthSourceData>(unitRemote, unitConfig, transactionBuffer);
-        } else if (dataClassName.equalsIgnoreCase("videoRgbSourceData")) {
-            new StateObservation<VideoRgbSourceData>(unitRemote, unitConfig, transactionBuffer);
-        } else {
-            try {
-                throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
-                        + " to method compareClassNameAndStartObs");
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-            }
+        switch (dataClassName) {
+            case UnitDataClass.AUDIO_SOURCE:
+                new StateObservation<AudioSourceData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.BATTERY:
+                new StateObservation<BatteryData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.BRIGHTNESS_SENSOR:
+                new StateObservation<BrightnessSensorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.BUTTON:
+                new StateObservation<ButtonData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.COLORABLE_LIGHT:
+                new StateObservation<ColorableLightData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.DIMMABLE_LIGHT:
+                new StateObservation<DimmableLightData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.DIMMER:
+                new StateObservation<DimmerData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.DISPLAY:
+                new StateObservation<DisplayData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.HANDLE:
+                new StateObservation<HandleData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.LIGHT:
+                new StateObservation<LightData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.MONITOR:
+                new StateObservation<MonitorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.MOTION_DETECTOR:
+                new StateObservation<MotionDetectorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.POWER_CONSUMPTION_SENSOR:
+                new StateObservation<PowerConsumptionSensorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.POWER_SWITCH:
+                new StateObservation<PowerSwitchData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.REED_CONTACT:
+                new StateObservation<ReedContactData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.RFID:
+                new StateObservation<RFIDData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.ROLLER_SHUTTER:
+                new StateObservation<RollerShutterData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.SMOKE_DETECTOR:
+                new StateObservation<SmokeDetectorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.SWITCH:
+                new StateObservation<SwitchData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.TAMPER_DETECTOR:
+                new StateObservation<TamperDetectorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.TELEVISION:
+                new StateObservation<TelevisionData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.TEMPERATURE_CONTROLLER:
+                new StateObservation<TemperatureControllerData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.TEMPERATURE_SENSOR:
+                new StateObservation<TemperatureSensorData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.VIDEO_DEPTH_SOURCE:
+                new StateObservation<VideoDepthSourceData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            case UnitDataClass.VIDEO_RGB_SOURCE:
+                new StateObservation<VideoRgbSourceData>(unitRemote, unitConfig, transactionBuffer);
+                break;
+            default:
+                try {
+                    throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
+                            + " to BCOConfig and call it.");
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                }
         }
     }
 

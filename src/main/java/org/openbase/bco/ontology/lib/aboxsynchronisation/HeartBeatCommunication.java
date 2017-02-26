@@ -22,7 +22,10 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
@@ -54,8 +57,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     //TODO reduce to one SimpleDateFormat => sparql update doesn't accept "+" in instance name....
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig
             .DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
     private TransactionBuffer transactionBufferImpl;
 
@@ -110,8 +113,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         } else {
                             // get substring by own implementation: getLocalName() of jena doesn't work correctly
                             heartBeatNameQuery = rdfNode.asResource().toString();
-                            heartBeatNameQuery = heartBeatNameQuery.substring(ConfigureSystem.NS.length()
-                                    , heartBeatNameQuery.length());
+                            heartBeatNameQuery = heartBeatNameQuery.substring(OntConfig.NS.length(), heartBeatNameQuery.length());
                         }
                     }
 
@@ -128,11 +130,9 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         // last heartbeat is within the frequency => replace last timestamp of current blackout with
                         // refreshed timestamp
                         deleteTripleArrayLists.clear();
-                        deleteTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery
-                                , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName(), null));
+                        deleteTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery, OntProp.HAS_LAST_HEARTBEAT.getName(), null));
                         insertTripleArrayLists.clear();
-                        insertTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery
-                                , ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName()
+                        insertTripleArrayLists.add(new TripleArrayList(heartBeatNameQuery, OntProp.HAS_LAST_HEARTBEAT.getName()
                                 , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
 
                         // sparql update to replace last heartbeat timestamp
@@ -166,12 +166,9 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
 
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
         // set initial current heartbeat phase with first and last timestamp (identical)
-        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntExpr.A.getName()
-                , ConfigureSystem.OntClass.HEARTBEAT_PHASE.getName()));
-        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntProp.HAS_FIRST_HEARTBEAT.getName()
-                , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
-        insertTripleArrayLists.add(new TripleArrayList(subject, ConfigureSystem.OntProp.HAS_LAST_HEARTBEAT.getName()
-                , "\"" + dateTimeNow + "\"^^xsd:dateTime"));
+        insertTripleArrayLists.add(new TripleArrayList(subject, OntExpr.A.getName(), OntCl.HEARTBEAT_PHASE.getName()));
+        insertTripleArrayLists.add(new TripleArrayList(subject, OntProp.HAS_FIRST_HEARTBEAT.getName(), "\"" + dateTimeNow + "\"^^xsd:dateTime"));
+        insertTripleArrayLists.add(new TripleArrayList(subject, OntProp.HAS_LAST_HEARTBEAT.getName(), "\"" + dateTimeNow + "\"^^xsd:dateTime"));
 
         final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
         System.out.println(sparqlUpdate);

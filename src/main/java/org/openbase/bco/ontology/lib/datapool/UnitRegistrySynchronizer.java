@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.datapool;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
@@ -185,7 +185,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // get whole ontology model for init phase (for comparing with individuals)
-            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getOntDatabaseUri());
+            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getOntDatabaseUri());
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
             // insert instances
@@ -209,7 +209,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
             final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
@@ -240,7 +240,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
 
             final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 

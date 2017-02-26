@@ -47,7 +47,6 @@ public class ValueOfServiceType {
     }
 
     protected Set<String> batteryStateValue(final BatteryState batteryState) {
-
         return null;
     }
 

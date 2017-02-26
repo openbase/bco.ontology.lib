@@ -16,12 +16,14 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.trigger;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.openbase.bco.ontology.lib.testcode.TriggerConfig.ChangeCategory;
+
+import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
+import org.openbase.bco.ontology.lib.trigger.TriggerConfig.ChangeCategory;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.pattern.Observable;

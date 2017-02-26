@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.tboxsynchronisation;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -85,7 +85,7 @@ public interface TBoxVerificationResource {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
             }
             return ontModel.getOntClass(classNameWithNS) != null;
 
@@ -113,7 +113,7 @@ public interface TBoxVerificationResource {
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
             }
             return ontModel.getOntProperty(propertyNameWithNS) != null;
 
