@@ -18,12 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.trigger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
-import org.openbase.bco.ontology.lib.trigger.TriggerConfig.ChangeCategory;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.pattern.Observable;
@@ -37,7 +38,7 @@ import rst.domotic.state.ActivationStateType.ActivationState;
  */
 public class TriggerImpl implements Trigger {
 
-    private static final List<ChangeCategory> UNKNOWN_CHANGE = new ArrayList<ChangeCategory>();
+    private static final List<ChangeCategory> UNKNOWN_CHANGE = new ArrayList<>();
 
     static {
         UNKNOWN_CHANGE.add(ChangeCategory.UNKNOWN);
@@ -91,14 +92,19 @@ public class TriggerImpl implements Trigger {
         try {
             init(new TriggerConfig(label, query, changeCategoryList));
             activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
-        } catch (CouldNotPerformException ex) {
-            throw new InitializationException(this, ex);
+        } catch (CouldNotPerformException e) {
+            throw new InitializationException(this, e);
         }
     }
 
     @Override
     public void init(final TriggerConfig config) throws InitializationException, InterruptedException {
-        this.config = config;
+        try {
+            this.config = config;
+            activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
+        } catch (CouldNotPerformException e) {
+            throw new InitializationException(this, e);
+        }
     }
 
     @Override
@@ -117,10 +123,14 @@ public class TriggerImpl implements Trigger {
 
     protected void notifyOntologyChange(final Collection<ChangeCategory> categoryCollection) throws CouldNotPerformException {
         if (categoryCollection.contains(ChangeCategory.UNKNOWN) || isRelatedChange(categoryCollection)) {
-            if (ontologyRemote.match(config.getQuery())) {
-                activationObservable.notifyObservers(ActivationState.State.ACTIVE);
-            } else {
-                activationObservable.notifyObservers(ActivationState.State.DEACTIVE);
+            try {
+                if (ontologyRemote.match(config.getQuery())) {
+                    activationObservable.notifyObservers(ActivationState.State.ACTIVE);
+                } else {
+                    activationObservable.notifyObservers(ActivationState.State.DEACTIVE);
+                }
+            } catch (IOException e) {
+
             }
         }
     }

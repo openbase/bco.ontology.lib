@@ -45,6 +45,6 @@ public class JPTBoxDatabaseUri extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "TBoxDatabaseUri property is set to set the uri to server with the tbox ontology database.";
+        return "TBoxDatabaseUri property is used to set the uri to server with the tbox ontology database.";
     }
 }

@@ -45,7 +45,7 @@ public class JPOntologyDatabaseUri extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "OntologyDatabaseUri property is set to set the uri to server with the main ontology database.";
+        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
     }
 
 }

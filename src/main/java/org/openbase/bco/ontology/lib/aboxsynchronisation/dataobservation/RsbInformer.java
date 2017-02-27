@@ -18,9 +18,12 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
+import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
+
+import java.util.Collection;
 
 /**
  * @author agatting on 09.02.17.
@@ -34,15 +37,15 @@ public interface RsbInformer {
      * @return the rsb informer object.
      * @throws CouldNotPerformException if the rsb informer could not create.
      */
-    static RSBInformer<String> createInformer(final String scope) throws CouldNotPerformException {
+    static RSBInformer<Collection<ChangeCategory>> createInformer(final String scope) throws CouldNotPerformException {
 
         try {
-            final RSBInformer<String> synchronizedInformer = RSBFactoryImpl.getInstance()
-                    .createSynchronizedInformer(scope, String.class);
+            final RSBInformer<Collection<ChangeCategory>> synchronizedInformer = RSBFactoryImpl.getInstance()
+                    .createSynchronizedInformer(scope, (Class<Collection<ChangeCategory>>) (Class) Collection.class); //TODO check cast
             synchronizedInformer.activate();
             return synchronizedInformer;
 
-        } catch (InterruptedException | CouldNotPerformException e) {
+        } catch (InterruptedException e) {
             throw new CouldNotPerformException("Could not create new RSB informer!", e);
         }
     }
@@ -53,9 +56,11 @@ public interface RsbInformer {
      * @param synchronizedInformer the RSB informer object.
      * @return {@code true} if publish process is successful.
      */
-    static boolean startInformerNotification(final RSBInformer<String> synchronizedInformer) {
+    static boolean startInformerNotification(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer
+            , final Collection<ChangeCategory> changeCategory) {
+
         try {
-            synchronizedInformer.publish("notification");
+            synchronizedInformer.publish(changeCategory);
             return true;
         } catch (CouldNotPerformException | InterruptedException e) {
             return false;

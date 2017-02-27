@@ -25,6 +25,8 @@ import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
+import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
+import org.openbase.bco.ontology.lib.testcode.OntologyRemoteImpl;
 import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
@@ -50,17 +52,20 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void activate() throws CouldNotPerformException, InterruptedException {
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
-        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
-        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
+        OntologyRemote ontologyRemote = new OntologyRemoteImpl();
 
-//        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(OntConfig.RSB_SCOPE);
-//        new TBoxSynchronizer();
-        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-        transactionBuffer.createAndStartQueue();
-        new UnitRegistrySynchronizer(transactionBuffer);
-        Stopwatch stopwatch = new Stopwatch();
-        stopwatch.waitForStart(2000);
-        new UnitRemoteSynchronizer(transactionBuffer);
+
+//        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
+//        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
+//
+////        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(OntConfig.RSB_SCOPE);
+////        new TBoxSynchronizer();
+//        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+//        transactionBuffer.createAndStartQueue();
+//        new UnitRegistrySynchronizer(transactionBuffer);
+//        Stopwatch stopwatch = new Stopwatch();
+//        stopwatch.waitForStart(2000);
+//        new UnitRemoteSynchronizer(transactionBuffer);
 
 //        WebInterface webInterface = new WebInterface();
 

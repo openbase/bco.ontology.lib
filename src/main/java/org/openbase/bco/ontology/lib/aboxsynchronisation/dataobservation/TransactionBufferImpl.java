@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
+import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
@@ -30,6 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -58,7 +62,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
      * {@inheritDoc}
      */
     @Override
-    public void createAndStartQueue(final RSBInformer<String> synchronizedInformer)
+    public void createAndStartQueue(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer)
             throws CouldNotPerformException {
 
         try {
@@ -142,11 +146,15 @@ public class TransactionBufferImpl implements TransactionBuffer {
         //TODO check size...
     }
 
-    private void setRSBInformerThread(final RSBInformer<String> synchronizedInformer) {
+    private void setRSBInformerThread(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer) {
+
+        final List<ChangeCategory> changeCategories = new ArrayList<>();
+        changeCategories.add(ChangeCategory.UNKNOWN);
+
         try {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
-                if (RsbInformer.startInformerNotification(synchronizedInformer)) {
+                if (RsbInformer.startInformerNotification(synchronizedInformer, changeCategories)) {
                     taskFuture.cancel(true);
                 }
 

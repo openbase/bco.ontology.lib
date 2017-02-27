@@ -16,27 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.jp;
 
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
-import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.pattern.Remote;
-
-import java.io.IOException;
-import java.util.Collection;
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
+ * @author agatting on 27.02.17.
  */
-public interface OntologyRemote {
+public class JPRsbScope extends AbstractJPString {
 
-    boolean match(final String query) throws IOException;
+    /**
+     * Command line argument strings.
+     */
+    public static final String[] COMMAND_IDENTIFIERS = {"--rsbScope"};
 
-    void addConnectionStateObserver(Observer<Remote.ConnectionState> observer);
+    /**
+     * Constructor for the JPOntologyDatabaseUri class.
+     */
+    public JPRsbScope() {
+        super(COMMAND_IDENTIFIERS);
+    }
 
-    void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer);
+    @Override
+    protected String getPropertyDefaultValue() throws JPNotAvailableException {
+        return "/ontology/rsb";
+    }
 
-    void addOntologyObserver(Observer<Collection<ChangeCategory>> observer);
-
-    void removeOntologyObserver(Observer<Collection<ChangeCategory>> observer);
+    @Override
+    public String getDescription() {
+        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
+    }
 }

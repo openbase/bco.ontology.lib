@@ -18,9 +18,12 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
+import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
+
+import java.util.Collection;
 
 /**
  * @author agatting on 10.02.17.
@@ -34,7 +37,7 @@ public interface TransactionBuffer {
      * @param synchronizedInformer The RSB Informer to notify the trigger group
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    void createAndStartQueue(final RSBInformer<String> synchronizedInformer) throws CouldNotPerformException;
+    void createAndStartQueue(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer) throws CouldNotPerformException;
 
     /**
      * Method creates an ConcurrentLinkedQueue and starts to upload the entries of the queue to the ontology server.

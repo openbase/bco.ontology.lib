@@ -107,11 +107,6 @@ public final class OntConfig {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
-     * The used RSB scope.
-     */
-    public static final String RSB_SCOPE = "/test/a3";
-
-    /**
      * Enumeration of ontology classes.
      */
     public enum OntCl {
