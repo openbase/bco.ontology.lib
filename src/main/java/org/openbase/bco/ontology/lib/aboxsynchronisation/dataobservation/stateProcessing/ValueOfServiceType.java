@@ -32,9 +32,11 @@ import rst.domotic.state.DoorStateType.DoorState;
 import rst.domotic.state.EnablingStateType.EnablingState;
 import rst.domotic.state.HandleStateType.HandleState;
 import rst.domotic.state.IntensityStateType.IntensityState;
+import rst.domotic.state.InventoryStateType.InventoryState;
+import rst.domotic.state.MotionStateType.MotionState;
+import rst.domotic.state.PassageStateType.PassageState;
 import rst.domotic.state.PowerConsumptionStateType;
 import rst.domotic.state.PowerStateType.PowerState;
-import rst.domotic.unit.dal.PowerConsumptionSensorDataType;
 
 
 import java.util.HashSet;
@@ -256,6 +258,51 @@ public class ValueOfServiceType {
 //        intensityState.getIntensityDataUnit(). //TODO dataUnit?
 
         return intensityValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given inventoryState.
+     *
+     * @param inventoryState The InventoryState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> inventoryStateValue(final InventoryState inventoryState) {
+        //TODO ID's literal or instance?
+        final Set<Pair<String, Boolean>> inventoryValuePairSet = new HashSet<>();
+        inventoryValuePairSet.add(new Pair<>(inventoryState.getValue().toString(), false));
+
+        return inventoryValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given motionState.
+     *
+     * @param motionState The MotionState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> motionStateValue(final MotionState motionState) {
+
+        final Set<Pair<String, Boolean>> motionValuePairSet = new HashSet<>();
+        motionValuePairSet.add(new Pair<>(motionState.getValue().toString(), false));
+
+        return motionValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given passageState.
+     *
+     * @param passageState The PassageState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> passageStateValue(final PassageState passageState) {
+
+        final Set<Pair<String, Boolean>> passageValuePairSet = new HashSet<>();
+//        passageValuePairSet.add(new Pair<>(passageState..., false));
+
+        return passageValuePairSet;
     }
 
     /**
