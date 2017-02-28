@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
-import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -62,7 +61,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
      * {@inheritDoc}
      */
     @Override
-    public void createAndStartQueue(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer)
+    public void createAndStartQueue(final RSBInformer<String> synchronizedInformer)
             throws CouldNotPerformException {
 
         try {
@@ -146,7 +145,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
         //TODO check size...
     }
 
-    private void setRSBInformerThread(final RSBInformer<Collection<ChangeCategory>> synchronizedInformer) {
+    private void setRSBInformerThread(final RSBInformer<String> synchronizedInformer) {
 
         final List<ChangeCategory> changeCategories = new ArrayList<>();
         changeCategories.add(ChangeCategory.UNKNOWN);
@@ -154,10 +153,12 @@ public class TransactionBufferImpl implements TransactionBuffer {
         try {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
-                if (RsbInformer.startInformerNotification(synchronizedInformer, changeCategories)) {
+                try {
+                    synchronizedInformer.publish("UNIT"); //TODO
                     taskFuture.cancel(true);
+                } catch (CouldNotPerformException | InterruptedException e) {
+                    e.printStackTrace();
                 }
-
             }, 0, 5, TimeUnit.SECONDS);
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

@@ -18,8 +18,8 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.registry.lib.launch.AbstractLauncher;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.preset.JPDebugMode;

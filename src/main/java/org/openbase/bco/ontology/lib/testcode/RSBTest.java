@@ -27,7 +27,11 @@ import org.openbase.jul.extension.rsb.iface.RSBListener;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rsb.converter.NoSuchConverterException;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -44,15 +48,19 @@ public class RSBTest {
      */
     public RSBTest() {
         try {
-            final RSBInformer<String> synchronizedInformer = RSBFactoryImpl.getInstance()
-                    .createSynchronizedInformer(SCOPE, String.class);
+            final List<String> list = new ArrayList<>();
+            list.add("string");
+
+            final RSBInformer<List<String>> synchronizedInformer = RSBFactoryImpl.getInstance()
+                    .createSynchronizedInformer(SCOPE, (Class<List<String>>) (Class) List.class);
             synchronizedInformer.activate();
 
             final Future taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        synchronizedInformer.publish("blub");
+
+                        synchronizedInformer.publish(list);
                     } catch (CouldNotPerformException | InterruptedException e) {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     }
@@ -61,12 +69,44 @@ public class RSBTest {
 
             final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(SCOPE);
             rsbListener.activate();
-            rsbListener.addHandler(event -> LOGGER.info("receive event:" + event.getData()), false);
+            rsbListener.addHandler(event -> {
+                System.out.println("receive event: ");
+                System.out.println(event.getData());
+            }, false);
 
         } catch (InterruptedException | CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
-
+//        MultiException.ExceptionStack exceptionStack = null;
+//        try {
+//            for (final UnitConfig unitConfig : unitRegistry.getUnitConfigs()) {
+//                try {
+//                    throw new NotAvailableException("unit");
+//                } catch (CouldNotPerformException e) {
+//                    exceptionStack = MultiException.push(this, e, exceptionStack);
+//                }
+//            }
+//            MultiException.checkAndThrow("Could not process all units!", exceptionStack);
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
+//
+//
+//        Future<Integer> taskFuture = GlobalCachedExecutorService.submit(() -> {
+//            System.out.println("execute");
+//            return 88;
+//        });
+//        Integer result = taskFuture.get(10, TimeUnit.MINUTES);
+//
+//    public void doSomeThing() throws CouldNotPerformException {
+//        try {
+//            LightRemote r = null;
+//
+//            r.getData();
+//        } catch (CouldNotPerformException ex) {
+//            throw new CouldNotPerformException("Could not do something.", ex);
+//        }
+//    }
 }

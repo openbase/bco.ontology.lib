@@ -16,18 +16,8 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.config;
 
 /**
- * @author agatting on 27.02.17.
+ * @author agatting on 18.01.17.
  */
-public class CategoryConfig {
-
-    public enum ChangeCategory {
-        UNKNOWN,
-        UNIT,
-        A,
-        B,
-        C
-    }
-}
+package org.openbase.bco.ontology.lib.commun.web;

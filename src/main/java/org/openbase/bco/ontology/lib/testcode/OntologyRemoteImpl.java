@@ -27,9 +27,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.trigger.RsbListener;
 import org.openbase.bco.ontology.lib.trigger.ServerConnectionObserver;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote;
@@ -96,11 +96,11 @@ public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
     public void addOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
-        RsbListener.changeCategoryObservable.addObserver(observer);
+        RsbCommunication.changeCategoryObservable.addObserver(observer);
     }
 
     @Override
     public void removeOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
-        RsbListener.changeCategoryObservable.removeObserver(observer);
+        RsbCommunication.changeCategoryObservable.removeObserver(observer);
     }
 }

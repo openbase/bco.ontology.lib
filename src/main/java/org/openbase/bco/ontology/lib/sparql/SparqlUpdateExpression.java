@@ -20,7 +20,7 @@ package org.openbase.bco.ontology.lib.sparql;
 
 import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 
 import java.util.ArrayList;
 import java.util.List;

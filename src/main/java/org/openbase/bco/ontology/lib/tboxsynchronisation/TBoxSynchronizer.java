@@ -20,7 +20,7 @@ package org.openbase.bco.ontology.lib.tboxsynchronisation;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;

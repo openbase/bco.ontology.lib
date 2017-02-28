@@ -18,16 +18,6 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
-import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
-import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
-import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
-import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
-import org.openbase.bco.ontology.lib.testcode.OntologyRemoteImpl;
-import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -37,7 +27,6 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -52,13 +41,14 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void activate() throws CouldNotPerformException, InterruptedException {
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 
-        OntologyRemote ontologyRemote = new OntologyRemoteImpl();
+//        OntologyRemote ontologyRemote = new OntologyRemoteImpl();
 
+//        new RSBTest();
 
 //        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
 //        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
 //
-////        final RSBInformer<String> synchronizedInformer = RsbInformer.createInformer(OntConfig.RSB_SCOPE);
+////        final RSBInformer<String> synchronizedInformer = RsbCommunication.createInformer(OntConfig.RSB_SCOPE);
 ////        new TBoxSynchronizer();
 //        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
 //        transactionBuffer.createAndStartQueue();
@@ -67,18 +57,10 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        stopwatch.waitForStart(2000);
 //        new UnitRemoteSynchronizer(transactionBuffer);
 
+
 //        WebInterface webInterface = new WebInterface();
 
-//        final OntPropertyMappingImpl ontPropertyMapping = new OntPropertyMappingImpl();
 //        RSBTest rsbTest = new RSBTest();
-
-//        ontology.cleanOntology();
-//        final FillOntology fillOntology = new FillOntology(ontology.getModel());
-//        fillOntology.integrateIndividualUnitTypes(true);
-//        fillOntology.integrateIndividualStateValues();
-//        fillOntology.integrateObjectProperties();
-//        fillOntology.observer();
-//        ontology.saveOntology();
 
 //        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
 //        queryOntology.queryModel();

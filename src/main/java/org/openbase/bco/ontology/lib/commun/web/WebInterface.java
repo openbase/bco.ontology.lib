@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.webcommunication;
+package org.openbase.bco.ontology.lib.commun.web;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;

@@ -27,7 +27,7 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntProper
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
-import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;

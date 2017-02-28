@@ -24,8 +24,8 @@ package org.openbase.bco.ontology.lib.config;
  */
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxVerificationResource;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
