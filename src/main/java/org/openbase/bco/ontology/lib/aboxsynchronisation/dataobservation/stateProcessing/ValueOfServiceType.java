@@ -35,9 +35,10 @@ import rst.domotic.state.IntensityStateType.IntensityState;
 import rst.domotic.state.InventoryStateType.InventoryState;
 import rst.domotic.state.MotionStateType.MotionState;
 import rst.domotic.state.PassageStateType.PassageState;
-import rst.domotic.state.PowerConsumptionStateType;
+import rst.domotic.state.PowerConsumptionStateType.PowerConsumptionState;
 import rst.domotic.state.PowerStateType.PowerState;
-
+import rst.domotic.state.PresenceStateType.PresenceState;
+import rst.domotic.state.RFIDStateType.RFIDState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -106,9 +107,8 @@ public class ValueOfServiceType {
     protected Set<Pair<String, Boolean>> batteryStateValue(final BatteryState batteryState) {
 
         final Set<Pair<String, Boolean>> batteryValuesPairSet = new HashSet<>();
-
         batteryValuesPairSet.add(new Pair<>(batteryState.getValue().toString(), false));
-        batteryValuesPairSet.add(new Pair<>(String.valueOf(batteryState.getLevel()), true));
+        batteryValuesPairSet.add(new Pair<>("\"" + String.valueOf(batteryState.getLevel()) + "\"^^NS:Percent", true));
 
         return batteryValuesPairSet;
     }
@@ -139,7 +139,7 @@ public class ValueOfServiceType {
     protected Set<Pair<String, Boolean>> brightnessStateValue(final BrightnessState brightnessState) {
 
         final Set<Pair<String, Boolean>> brightnessValuePairSet = new HashSet<>();
-        brightnessValuePairSet.add(new Pair<>(String.valueOf(brightnessState.getBrightness()), true));
+        brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
 //        brightnessValuePairSet.add(new Pair<>(brightnessState.getBrightnessDataUnit()., false)); //TODO get brightness dataUnit?
 
         return brightnessValuePairSet;
@@ -306,6 +306,23 @@ public class ValueOfServiceType {
     }
 
     /**
+     * Method returns state values of the given powerConsumptionState.
+     *
+     * @param powerConsumptionState The PowerConsumptionState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> powerConsumptionStateValue(final PowerConsumptionState powerConsumptionState) {
+
+        final Set<Pair<String, Boolean>> powerConsumptionValuePairSet = new HashSet<>();
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NS:Voltage", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:Watt-hour", true)); //TODO watt-hour?
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NS:Watt", true));
+
+        return powerConsumptionValuePairSet;
+    }
+
+    /**
      * Method returns state values of the given powerState.
      *
      * @param powerState The PowerState.
@@ -318,6 +335,36 @@ public class ValueOfServiceType {
         powerValuePairSet.add(new Pair<>(powerState.getValue().toString(), false));
 
         return powerValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given presenceState.
+     *
+     * @param presenceState The PresenceState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> presenceStateValue(final PresenceState presenceState) {
+
+        final Set<Pair<String, Boolean>> presenceValuePairSet = new HashSet<>();
+        presenceValuePairSet.add(new Pair<>(presenceState.getValue().toString(), false));
+
+        return presenceValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given rfidState.
+     *
+     * @param rfidState The RFIDState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> rfidStateValue(final RFIDState rfidState) {
+
+        final Set<Pair<String, Boolean>> rfidValuePairSet = new HashSet<>();
+        rfidValuePairSet.add(new Pair<>(rfidState.getData().toString(), true));
+
+        return rfidValuePairSet;
     }
 
 }
