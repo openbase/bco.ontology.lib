@@ -39,7 +39,6 @@ import java.util.Collection;
 public interface RsbCommunication {
 
     Logger LOGGER = LoggerFactory.getLogger(RsbCommunication.class); // make private in java 1.9
-    ObservableImpl<Collection<ChangeCategory>> changeCategoryObservable = new ObservableImpl<>();
 
     /**
      * Method creates and activates an RSB informer of type string.
@@ -65,7 +64,8 @@ public interface RsbCommunication {
      * @throws InterruptedException InterruptedException
      * @throws CouldNotPerformException CouldNotPerformException
      */
-    static void activateRsbListener(final String scope) throws InterruptedException, CouldNotPerformException {
+    static void activateRsbListener(final String scope, final ObservableImpl<Collection<ChangeCategory>> changeCategoryObservable)
+            throws InterruptedException, CouldNotPerformException {
 
         final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(scope);
 

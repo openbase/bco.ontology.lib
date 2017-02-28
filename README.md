@@ -1,1 +1,1 @@
-# bco.ontology
+# bco.ontology.lib

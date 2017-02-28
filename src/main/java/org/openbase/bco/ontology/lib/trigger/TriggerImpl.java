@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
-import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
+import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.pattern.Observable;
@@ -68,7 +68,6 @@ public class TriggerImpl implements Trigger {
                     case UNKNOWN:
                     default:
                         activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
-
                 }
             }
         };
@@ -80,10 +79,12 @@ public class TriggerImpl implements Trigger {
         };
     }
 
+    @Override
     public void addObserver(Observer<ActivationState.State> observer) {
         activationObservable.addObserver(observer);
     }
 
+    @Override
     public void removeObserver(Observer<ActivationState.State> observer) {
         activationObservable.removeObserver(observer);
     }
@@ -142,6 +143,11 @@ public class TriggerImpl implements Trigger {
             }
         }
         return false;
+    }
+
+    @Override
+    public TriggerConfig getConfig() {
+        return config;
     }
 
     @Override

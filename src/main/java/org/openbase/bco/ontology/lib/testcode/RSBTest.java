@@ -27,10 +27,8 @@ import org.openbase.jul.extension.rsb.iface.RSBListener;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rsb.converter.NoSuchConverterException;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +40,6 @@ public class RSBTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RSBTest.class);
     private static final String SCOPE = "/test/a3";
-
     /**
      * Constructor for RSBTest.
      */

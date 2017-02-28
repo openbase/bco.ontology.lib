@@ -18,51 +18,53 @@
  */
 package org.openbase.bco.ontology.lib.trigger;
 
-import javafx.util.Callback;
-import org.openbase.bco.ontology.lib.testcode.OntologyRemote;
-import org.openbase.bco.ontology.lib.testcode.OntologyRemoteImpl;
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
+import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.jp.JPRsbScope;
+import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
+import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemoteImpl;
+import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnectionObserver;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.pattern.Factory;
-import org.openbase.jul.pattern.Observable;
-import rst.domotic.state.ActivationStateType.ActivationState;
+import org.openbase.jul.pattern.ObservableImpl;
+
+import java.util.Collection;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
  */
 public class TriggerFactory implements Factory {
 
-    private Callback<ActivationState.State, ActivationState.State> callback;
+    public static final ObservableImpl<Collection<ChangeCategory>> changeCategoryObservable = new ObservableImpl<>();
 
-    public TriggerFactory(Callback<ActivationState.State, ActivationState.State> callback) {
-        this.callback = callback;
+    public TriggerFactory() throws CouldNotPerformException {
+
+        new ServerConnectionObserver();
+
+        try {
+            RsbCommunication.activateRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
+        } catch (InterruptedException | JPNotAvailableException e) {
+            throw new CouldNotPerformException("Could not activate rsb listener!", e);
+        }
     }
 
     @Override
-    public Trigger newInstance(Object config) throws InstantiationException, InterruptedException {
+    public Trigger newInstance(final Object config) throws InstantiationException, InterruptedException {
 
-//        this.callback = new Callback<ActivationState.State, ActivationState.State>() {
-//            @Override
-//            public ActivationState.State call(ActivationState.State param) {
-//                return param;
-//            }
-//        };
-
-        OntologyRemote ontologyRemote = new OntologyRemoteImpl();
-        Trigger trigger = new TriggerImpl(ontologyRemote);
+        final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
+        final Trigger trigger = new TriggerImpl(ontologyRemote);
 
         try {
             trigger.init((TriggerConfig) config);
-            trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-                // do useful stuff
-            });
             trigger.activate();
+
             return trigger;
         } catch (CouldNotPerformException e) {
-
+            throw new InstantiationException("Could not initiate trigger instance!", e);
         }
-
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

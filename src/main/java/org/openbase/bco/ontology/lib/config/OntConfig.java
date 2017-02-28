@@ -19,10 +19,6 @@
 
 package org.openbase.bco.ontology.lib.config;
 
-/**
- * @author agatting on 14.11.16.
- */
-
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.config.jp.JPOntologyDatabaseUri;
 import org.openbase.bco.ontology.lib.config.jp.JPTBoxDatabaseUri;
@@ -41,6 +37,8 @@ import org.slf4j.LoggerFactory;
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
  * ontology-processing-classes.
+ *
+ * @author agatting on 14.11.16.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public final class OntConfig {

@@ -18,6 +18,14 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
+import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
+import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
+import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
+import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -27,6 +35,7 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -43,24 +52,20 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
 //        OntologyRemote ontologyRemote = new OntologyRemoteImpl();
 
-//        new RSBTest();
+        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
+        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
 
-//        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
-//        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
-//
-////        final RSBInformer<String> synchronizedInformer = RsbCommunication.createInformer(OntConfig.RSB_SCOPE);
-////        new TBoxSynchronizer();
-//        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-//        transactionBuffer.createAndStartQueue();
-//        new UnitRegistrySynchronizer(transactionBuffer);
-//        Stopwatch stopwatch = new Stopwatch();
-//        stopwatch.waitForStart(2000);
-//        new UnitRemoteSynchronizer(transactionBuffer);
+//        final RSBInformer<String> synchronizedInformer = RsbCommunication.createInformer(OntConfig.RSB_SCOPE);
+//        new TBoxSynchronizer();
+        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+        transactionBuffer.createAndStartQueue();
+        new UnitRegistrySynchronizer(transactionBuffer);
+        Stopwatch stopwatch = new Stopwatch();
+        stopwatch.waitForStart(2000);
+        new UnitRemoteSynchronizer(transactionBuffer);
 
 
 //        WebInterface webInterface = new WebInterface();
-
-//        RSBTest rsbTest = new RSBTest();
 
 //        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
 //        queryOntology.queryModel();

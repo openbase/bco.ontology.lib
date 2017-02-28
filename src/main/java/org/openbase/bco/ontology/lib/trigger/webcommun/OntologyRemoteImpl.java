@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.testcode;
+package org.openbase.bco.ontology.lib.trigger.webcommun;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -30,7 +30,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
 import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.trigger.ServerConnectionObserver;
+import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote;
 
@@ -74,7 +74,7 @@ public class OntologyRemoteImpl implements OntologyRemote {
                 } else if (dataStream.contains("false")) {
                     queryResult = false;
                 } else {
-                    throw new IOException("Could not get query result, inputStream of http content has no valid content.");
+                    throw new IOException("Could not get query result, cause inputStream of http content has no valid content.");
                 }
             } finally {
                 inputStream.close();
@@ -96,11 +96,11 @@ public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
     public void addOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
-        RsbCommunication.changeCategoryObservable.addObserver(observer);
+        TriggerFactory.changeCategoryObservable.addObserver(observer);
     }
 
     @Override
     public void removeOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
-        RsbCommunication.changeCategoryObservable.removeObserver(observer);
+        TriggerFactory.changeCategoryObservable.removeObserver(observer);
     }
 }
