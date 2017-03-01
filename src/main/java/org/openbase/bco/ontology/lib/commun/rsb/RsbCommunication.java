@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.commun.rsb;
 
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author agatting on 09.02.17.
@@ -64,7 +65,7 @@ public interface RsbCommunication {
      * @throws InterruptedException InterruptedException
      * @throws CouldNotPerformException CouldNotPerformException
      */
-    static void activateRsbListener(final String scope, final ObservableImpl<Collection<ChangeCategory>> changeCategoryObservable)
+    static void createAndActivateRsbListener(final String scope, final ObservableImpl<Collection<Category>> changeCategoryObservable)
             throws InterruptedException, CouldNotPerformException {
 
         final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(scope);
@@ -72,11 +73,10 @@ public interface RsbCommunication {
         rsbListener.activate();
         rsbListener.addHandler(event -> {
             try {
-                final Collection<ChangeCategory> changeCategories = new ArrayList<>();
-                final ChangeCategory changeCategory = ChangeCategory.valueOf(((String) event.getData()).toUpperCase());
-
-                changeCategories.add(changeCategory);
-                changeCategoryObservable.notifyObservers(changeCategories);
+                final Category category = Category.valueOf(((String) event.getData()).toUpperCase());
+                final List<Category> categories = new ArrayList<>();
+                categories.add(category); //TODO
+                changeCategoryObservable.notifyObservers(categories);
             } catch (MultiException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             } catch (IllegalArgumentException e) {

@@ -31,6 +31,7 @@ import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.extension.rst.processing.TimestampJavaTimeTransform;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
@@ -73,10 +74,12 @@ public class StateObservation<T> extends IdentifyStateType {
     private final TransactionBuffer transactionBuffer;
     private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
     private Set<Method> methodSetStateType = null;
+    private final RSBInformer<String> rsbInformer;
 
-    public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig
-            , final TransactionBuffer transactionBuffer) {
+    public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer
+            , final RSBInformer<String> rsbInformer) {
 
+        this.rsbInformer = rsbInformer;
         this.transactionBuffer = transactionBuffer;
         stopwatch = new Stopwatch();
         remoteUnitId = unitConfig.getId();
@@ -86,9 +89,8 @@ public class StateObservation<T> extends IdentifyStateType {
             if (methodSetStateType == null) {
                 methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             }
-            GlobalCachedExecutorService.submit(() -> {
-                stateUpdate(unitRemoteObj);
-            });
+
+            stateUpdate(unitRemoteObj); //TODO catch exception?!
         };
 
         final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
@@ -117,20 +119,6 @@ public class StateObservation<T> extends IdentifyStateType {
         }
     }
 
-    private boolean stateTypeHasDataUnit(final Object invokedMethod) throws CouldNotPerformException  {
-
-        try {
-            if (invokedMethod == null) {
-                throw new IllegalArgumentException("Cause parameter object is null!");
-            }
-
-            // approach: compare with the method, which has NO dataUnit. They are standardized with "getValue"
-            return !ReflectObjectPool.hasMethodByRegEx(invokedMethod, MethodRegEx.GET_VALUE.getName());
-        } catch (IllegalArgumentException e) {
-            throw new CouldNotPerformException("Cannot check availability of dataUnit method!", e);
-        }
-    }
-
     private String getServiceTypeMapping(final String methodStateTypeName) throws CouldNotPerformException {
 
         try {
@@ -155,9 +143,7 @@ public class StateObservation<T> extends IdentifyStateType {
 
     }
 
-    private void stateUpdate(final T remoteData) {
-        //TODO implement logic, that updates changed stateValues only
-
+    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
         // main list, which contains complete observation instances
         List<TripleArrayList> tripleArrayLists = new ArrayList<>();
         // first collect all components of the individual observation, then add to main list (integrity reason)
@@ -241,20 +227,14 @@ public class StateObservation<T> extends IdentifyStateType {
                 //insert sparql update expression to buffer queue
                 transactionBuffer.insertData(sparqlUpdateExpr);
             } else {
+                // publish notification via rsb
+                rsbInformer.publish("UNIT");
 //                System.out.println("success");
             }
 
         } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
-
-        if (remoteData.getClass().equals(AudioSourceDataType.AudioSourceData.class)) {
-
-            System.out.println(((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel());
-            System.out.println(((BatteryDataType.BatteryData) remoteData).getBatteryState().getValue());
-
-        }
-
     }
 
 }

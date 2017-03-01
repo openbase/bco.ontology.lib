@@ -27,8 +27,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jul.pattern.Observer;
@@ -86,21 +85,21 @@ public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
     public void addConnectionStateObserver(Observer<Remote.ConnectionState> observer) {
-        ServerConnectionObserver.connectionStateObservable.addObserver(observer);
+        ServerConnection.connectionStateObservable.addObserver(observer);
     }
 
     @Override
     public void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer) {
-        ServerConnectionObserver.connectionStateObservable.removeObserver(observer);
+        ServerConnection.connectionStateObservable.removeObserver(observer);
     }
 
     @Override
-    public void addOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
+    public void addOntologyObserver(Observer<Collection<Category>> observer) {
         TriggerFactory.changeCategoryObservable.addObserver(observer);
     }
 
     @Override
-    public void removeOntologyObserver(Observer<Collection<ChangeCategory>> observer) {
+    public void removeOntologyObserver(Observer<Collection<Category>> observer) {
         TriggerFactory.changeCategoryObservable.removeObserver(observer);
     }
 }

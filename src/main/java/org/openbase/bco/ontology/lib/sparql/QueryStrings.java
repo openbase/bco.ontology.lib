@@ -29,6 +29,7 @@ import java.util.Locale;
 /**
  * @author agatting on 16.11.16.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public final class QueryStrings {
 
     //TODO later: get concrete object of query...
@@ -36,8 +37,6 @@ public final class QueryStrings {
     //TODO make request of unitType generic
 
     //TODO add link to providerService up to REQ_16
-
-    //CHECKSTYLE.OFF: MultipleStringLiterals
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
     // Queries based on SELECT to visualize the solutions
@@ -795,7 +794,6 @@ public final class QueryStrings {
                     + "?unit NS:hasLabel ?unitLabel . "
             + "} ";
 
-    //CHECKSTYLE.ON: MultipleStringLiterals
     /**
      * Private Constructor.
      */

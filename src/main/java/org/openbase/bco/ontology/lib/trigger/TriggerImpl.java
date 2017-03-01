@@ -23,7 +23,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
@@ -38,10 +39,10 @@ import rst.domotic.state.ActivationStateType.ActivationState;
  */
 public class TriggerImpl implements Trigger {
 
-    private static final List<ChangeCategory> UNKNOWN_CHANGE = new ArrayList<>();
+    private static final List<OntologyChange.Category> UNKNOWN_CHANGE = new ArrayList<>();
 
     static {
-        UNKNOWN_CHANGE.add(ChangeCategory.UNKNOWN);
+        UNKNOWN_CHANGE.add(OntologyChange.Category.UNKNOWN);
     }
 
     private final ObservableImpl<ActivationState.State> activationObservable;
@@ -49,14 +50,14 @@ public class TriggerImpl implements Trigger {
     private TriggerConfig config;
     private final OntologyRemote ontologyRemote;
     private final Observer<Remote.ConnectionState> connectionObserver;
-    private final Observer<Collection<ChangeCategory>> ontologyObserver;
+    private final Observer<Collection<Category>> ontologyObserver;
 
     /**
      * Constructor for TriggerImpl.
      */
     public TriggerImpl(final OntologyRemote ontologyRemote) {
         this.ontologyRemote = ontologyRemote;
-        this.activationObservable = new ObservableImpl<>(this);
+        this.activationObservable = new ObservableImpl<>(false, this);
         this.connectionObserver = new Observer<Remote.ConnectionState>() {
             @Override
             public void update(Observable<Remote.ConnectionState> source, Remote.ConnectionState data) throws Exception {
@@ -71,9 +72,9 @@ public class TriggerImpl implements Trigger {
                 }
             }
         };
-        this.ontologyObserver = new Observer<Collection<ChangeCategory>>() {
+        this.ontologyObserver = new Observer<Collection<OntologyChange.Category>>() {
             @Override
-            public void update(Observable<Collection<ChangeCategory>> source, Collection<ChangeCategory> data) throws Exception {
+            public void update(Observable<Collection<OntologyChange.Category>> source, Collection<Category> data) throws Exception {
                 notifyOntologyChange(data);
             }
         };
@@ -89,9 +90,9 @@ public class TriggerImpl implements Trigger {
         activationObservable.removeObserver(observer);
     }
 
-    public void init(String label, String query, Collection<ChangeCategory> changeCategoryList) throws InitializationException, InterruptedException {
+    public void init(String label, String query, Collection<Category> categoryList) throws InitializationException, InterruptedException {
         try {
-            init(new TriggerConfig(label, query, changeCategoryList));
+            init(new TriggerConfig(label, query, categoryList));
             activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
         } catch (CouldNotPerformException e) {
             throw new InitializationException(this, e);
@@ -122,8 +123,8 @@ public class TriggerImpl implements Trigger {
         ontologyRemote.removeOntologyObserver(ontologyObserver);
     }
 
-    protected void notifyOntologyChange(final Collection<ChangeCategory> categoryCollection) throws CouldNotPerformException {
-        if (categoryCollection.contains(ChangeCategory.UNKNOWN) || isRelatedChange(categoryCollection)) {
+    protected void notifyOntologyChange(final Collection<OntologyChange.Category> categoryCollection) throws CouldNotPerformException {
+        if (categoryCollection.contains(OntologyChange.Category.UNKNOWN) || isRelatedChange(categoryCollection)) {
             try {
                 if (ontologyRemote.match(config.getQuery())) {
                     activationObservable.notifyObservers(ActivationState.State.ACTIVE);
@@ -136,8 +137,8 @@ public class TriggerImpl implements Trigger {
         }
     }
 
-    public boolean isRelatedChange(final Collection<ChangeCategory> categoryCollection) {
-        for (final ChangeCategory category : categoryCollection) {
+    public boolean isRelatedChange(final Collection<OntologyChange.Category> categoryCollection) {
+        for (final Category category : categoryCollection) {
             if (config.getChangeCategory().contains(category)) {
                 return true;
             }

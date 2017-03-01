@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
@@ -147,8 +147,8 @@ public class TransactionBufferImpl implements TransactionBuffer {
 
     private void setRSBInformerThread(final RSBInformer<String> synchronizedInformer) {
 
-        final List<ChangeCategory> changeCategories = new ArrayList<>();
-        changeCategories.add(ChangeCategory.UNKNOWN);
+        final List<OntologyChange.Category> changeCategories = new ArrayList<>();
+        changeCategories.add(OntologyChange.Category.UNKNOWN);
 
         try {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {

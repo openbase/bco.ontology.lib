@@ -19,11 +19,11 @@
 package org.openbase.bco.ontology.lib.trigger;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.bco.ontology.lib.config.jp.JPRsbScope;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemoteImpl;
-import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnectionObserver;
+import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnection;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -38,14 +38,15 @@ import java.util.Collection;
  */
 public class TriggerFactory implements Factory {
 
-    public static final ObservableImpl<Collection<ChangeCategory>> changeCategoryObservable = new ObservableImpl<>();
+    public static ObservableImpl<Collection<Category>> changeCategoryObservable = null;
 
     public TriggerFactory() throws CouldNotPerformException {
 
-        new ServerConnectionObserver();
+        changeCategoryObservable = new ObservableImpl<>(false, this);
+        new ServerConnection();
 
         try {
-            RsbCommunication.activateRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
+            RsbCommunication.createAndActivateRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
         } catch (InterruptedException | JPNotAvailableException e) {
             throw new CouldNotPerformException("Could not activate rsb listener!", e);
         }

@@ -32,16 +32,22 @@ public class BCOConfig {
          * Empty dummy object to group static string in an enum. Reason of readability.
          */
         DUMMY;
+        public static final String APP = "appdata";
+        public static final String AGENT = "agentdata";
         public static final String AUDIO_SOURCE = "audiosourcedata";
+        public static final String AUTHORIZATION_GROUP = "authorizationgroup";
         public static final String BATTERY = "batterydata";
         public static final String BRIGHTNESS_SENSOR = "brightnesssensordata";
         public static final String BUTTON = "buttondata";
         public static final String COLORABLE_LIGHT = "colorablelightdata";
+        public static final String CONNECTION = "connectiondata";
+        public static final String DEVICE = "devicedata";
         public static final String DIMMABLE_LIGHT = "dimmablelightdata";
         public static final String DIMMER = "dimmerdata";
         public static final String DISPLAY = "displaydata";
         public static final String HANDLE = "handledata";
         public static final String LIGHT = "lightdata";
+        public static final String LOCATION = "locationdata";
         public static final String MONITOR = "monitordata";
         public static final String MOTION_DETECTOR = "motiondetectordata";
         public static final String POWER_CONSUMPTION_SENSOR = "powerconsumptionsensordata";
@@ -49,12 +55,15 @@ public class BCOConfig {
         public static final String REED_CONTACT = "reedcontactdata";
         public static final String RFID = "rfiddata";
         public static final String ROLLER_SHUTTER = "rollershutterdata";
+        public static final String SCENE = "scenedata";
         public static final String SMOKE_DETECTOR = "smokedetectordata";
         public static final String SWITCH = "switchdata";
         public static final String TAMPER_DETECTOR = "tamperdetectordata";
         public static final String TELEVISION = "televisiondata";
         public static final String TEMPERATURE_CONTROLLER = "temperaturecontrollerdata";
         public static final String TEMPERATURE_SENSOR = "temperaturesensordata";
+        public static final String UNIT_GROUP = "unitgroupdata";
+        public static final String USER = "userdata";
         public static final String VIDEO_DEPTH_SOURCE = "videodepthsourcedata";
         public static final String VIDEO_RGB_SOURCE = "videorgbsourcedata";
     }

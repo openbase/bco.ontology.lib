@@ -23,9 +23,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.openbase.bco.ontology.lib.config.CategoryConfig.ChangeCategory;
+import org.openbase.bco.ontology.lib.config.OntologyChange;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.jul.pattern.Observable;
 import rst.domotic.state.ActivationStateType.ActivationState;
+import rst.domotic.unit.dal.LightDataType;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
@@ -33,12 +35,12 @@ import rst.domotic.state.ActivationStateType.ActivationState;
 public class TriggerConfig {
 
     private final String label;
-    private final List<ChangeCategory> changeCategoryList;
+    private final List<Category> categoryList;
     private final String query;
 
-    public TriggerConfig(String label, String query, Collection<ChangeCategory> changeCategoryList) {
+    public TriggerConfig(String label, String query, Collection<Category> categoryList) {
         this.label = label;
-        this.changeCategoryList = new ArrayList(changeCategoryList);
+        this.categoryList = new ArrayList(categoryList);
         this.query = query;
     }
 
@@ -46,8 +48,8 @@ public class TriggerConfig {
         return label;
     }
 
-    public List<ChangeCategory> getChangeCategory() {
-        return Collections.unmodifiableList(changeCategoryList);
+    public List<OntologyChange.Category> getChangeCategory() {
+        return Collections.unmodifiableList(categoryList);
     }
 
     public String getQuery() {

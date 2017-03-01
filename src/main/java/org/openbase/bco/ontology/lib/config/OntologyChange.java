@@ -16,27 +16,18 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.trigger.webcommun;
-
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
-import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.pattern.Remote;
-
-import java.io.IOException;
-import java.util.Collection;
+package org.openbase.bco.ontology.lib.config;
 
 /**
- * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
+ * @author agatting on 27.02.17.
  */
-public interface OntologyRemote {
+public class OntologyChange {
 
-    boolean match(final String query) throws IOException;
-
-    void addConnectionStateObserver(Observer<Remote.ConnectionState> observer);
-
-    void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer);
-
-    void addOntologyObserver(Observer<Collection<Category>> observer);
-
-    void removeOntologyObserver(Observer<Collection<Category>> observer);
+    public enum Category {
+        UNKNOWN,
+        UNIT,
+        A,
+        B,
+        C
+    }
 }

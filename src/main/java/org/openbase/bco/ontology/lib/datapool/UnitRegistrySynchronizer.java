@@ -88,7 +88,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
                 try {
                     unitRegistryRemote = Registries.getUnitRegistry();
-                    Registries.getUnitRegistry().waitForData();
+                    unitRegistryRemote.waitForData(1, TimeUnit.SECONDS);
                     List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
 
                     // fill ontology initial with whole registry unitConfigs

@@ -74,6 +74,10 @@ public class IdentifyStateType extends ValueOfServiceType {
                 return powerStateValue((PowerState) stateObject);
             case ServiceTypes.COLOR_STATE_SERVICE:
                 return colorStateValue((ColorState) stateObject);
+            case ServiceTypes.SMOKE_STATE_SERVICE:
+                return null;
+            case ServiceTypes.MOTION_STATE_SERVICE:
+                return null;
             default:
                 // no matched stateService
                 try {
