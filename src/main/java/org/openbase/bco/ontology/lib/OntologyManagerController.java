@@ -98,7 +98,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         final TriggerFactory triggerFactory = new TriggerFactory();
         final Trigger trigger = triggerFactory.newInstance(triggerConfig);
         trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-            System.out.println(data);
+            System.out.println(trigger.getConfig().getLabel() + " is " + data);
             // do useful stuff
         });
 

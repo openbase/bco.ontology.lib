@@ -44,6 +44,7 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.dal.AudioSourceDataType;
 import rst.domotic.unit.dal.BatteryDataType;
+import rst.domotic.unit.dal.ColorableLightDataType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -69,7 +70,7 @@ public class StateObservation<T> extends IdentifyStateType {
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
-    private static String remoteUnitId;
+    private String remoteUnitId;
     private final Stopwatch stopwatch;
     private final TransactionBuffer transactionBuffer;
     private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
@@ -79,13 +80,19 @@ public class StateObservation<T> extends IdentifyStateType {
     public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer
             , final RSBInformer<String> rsbInformer) {
 
+
+
         this.rsbInformer = rsbInformer;
         this.transactionBuffer = transactionBuffer;
         stopwatch = new Stopwatch();
-        remoteUnitId = unitConfig.getId();
         initServiceTypeMap();
 
         final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
+
+            remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
+
+
+
             if (methodSetStateType == null) {
                 methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             }
@@ -191,7 +198,7 @@ public class StateObservation<T> extends IdentifyStateType {
 //                System.out.println(objectServiceType);
 
                 //### timeStamp triple ###\\
-                TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
+                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
                         .getInvokedObj(stateTypeObj , MethodRegEx.GET_TIMESTAMP.getName());
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {

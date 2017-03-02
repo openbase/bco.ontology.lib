@@ -140,9 +140,9 @@ public final class OntConfig {
         HEARTBEAT_PHASE("HeartBeatPhase"),
 
         /**
-         * OBSERVATION (class).
+         * Observation (class).
          */
-        OBSERVATION("OBSERVATION"),
+        OBSERVATION("Observation"),
 
         /**
          * StateValue (class).
@@ -299,6 +299,11 @@ public final class OntConfig {
          * Pattern for method name part.
          */
         GET_VALUE("getValue"),
+
+        /**
+         * Pattern for method name part.
+         */
+        GET_ID("getId"),
 
         /**
          * Pattern for method name part.

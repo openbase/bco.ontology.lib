@@ -25,9 +25,6 @@ import java.util.List;
 
 import org.openbase.bco.ontology.lib.config.OntologyChange;
 import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
-import org.openbase.jul.pattern.Observable;
-import rst.domotic.state.ActivationStateType.ActivationState;
-import rst.domotic.unit.dal.LightDataType;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
@@ -56,11 +53,4 @@ public class TriggerConfig {
         return query;
     }
 
-    public void testTrigger() throws Exception {
-        TriggerImpl trigger = new TriggerImpl(null);
-        trigger.init(null);
-        trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-            // do useful stuff
-        });
-    }
 }

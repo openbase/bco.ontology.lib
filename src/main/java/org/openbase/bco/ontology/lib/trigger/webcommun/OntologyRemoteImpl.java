@@ -44,12 +44,6 @@ import java.util.List;
  */
 public class OntologyRemoteImpl implements OntologyRemote {
 
-    private static final String QUERY =
-        "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-            + "ASK { "
-            + "?x a NS:Device . "
-            + "} ";
-
     @Override
     public boolean match(String query) throws IOException {
 
@@ -67,7 +61,8 @@ public class OntologyRemoteImpl implements OntologyRemote {
         if (httpEntity != null) {
             final InputStream inputStream = httpEntity.getContent();
             try {
-                String dataStream = IOUtils.toString(inputStream, "UTF-8");
+                final String dataStream = IOUtils.toString(inputStream, "UTF-8");
+
                 if (dataStream.contains("true")) {
                     queryResult =  true;
                 } else if (dataStream.contains("false")) {

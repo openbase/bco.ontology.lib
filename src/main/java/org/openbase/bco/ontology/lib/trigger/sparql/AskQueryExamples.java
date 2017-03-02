@@ -19,6 +19,8 @@
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
 import org.openbase.bco.ontology.lib.config.OntConfig;
 
 import java.text.SimpleDateFormat;
@@ -41,14 +43,16 @@ public class AskQueryExamples {
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get the single observation of a colorableLight, which was changed the last in time
-                    + "{ SELECT (MAX(?time) AS ?lastTime) ?obs WHERE { "
+                    + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
                         + "?obs a NS:Observation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:ColorableLight . "
+                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
                     + "} "
-                    + "GROUP BY ?lastTime ?obs LIMIT 1 } "
+                    + "GROUP BY ?lastTime ?unit } "
                     // refer to the observation and check if the state value is on
+                    + "?obs NS:hasUnitId ?unit . "
                     + "?obs NS:hasTimeStamp ?lastTime . "
                     + "?obs NS:hasStateValue NS:ON . "
                 + "}";
