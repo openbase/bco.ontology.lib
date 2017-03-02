@@ -80,7 +80,7 @@ public class BCOConfig {
         public static final String ACTIVATION_STATE_SERVICE = "ACTIVATION_STATE_SERVICE";
 
         /**
-         * Battery service type..
+         * Battery service type.
          */
         public static final String BATTERY_STATE_SERVICE = "BATTERY_STATE_SERVICE";
 

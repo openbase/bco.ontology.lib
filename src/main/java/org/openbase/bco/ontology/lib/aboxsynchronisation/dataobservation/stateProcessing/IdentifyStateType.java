@@ -28,9 +28,28 @@ import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.LoggerFactory;
+import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.BatteryStateType.BatteryState;
+import rst.domotic.state.BlindStateType.BlindState;
+import rst.domotic.state.BrightnessStateType.BrightnessState;
+import rst.domotic.state.ButtonStateType.ButtonState;
 import rst.domotic.state.ColorStateType.ColorState;
+import rst.domotic.state.ContactStateType.ContactState;
+import rst.domotic.state.DoorStateType.DoorState;
+import rst.domotic.state.HandleStateType.HandleState;
+import rst.domotic.state.IntensityStateType.IntensityState;
+import rst.domotic.state.MotionStateType.MotionState;
+import rst.domotic.state.PassageStateType.PassageState;
+import rst.domotic.state.PowerConsumptionStateType.PowerConsumptionState;
 import rst.domotic.state.PowerStateType.PowerState;
+import rst.domotic.state.PresenceStateType.PresenceState;
+import rst.domotic.state.RFIDStateType.RFIDState;
+import rst.domotic.state.SmokeStateType.SmokeState;
+import rst.domotic.state.StandbyStateType.StandbyState;
+import rst.domotic.state.SwitchStateType.SwitchState;
+import rst.domotic.state.TamperStateType.TamperState;
+import rst.domotic.state.TemperatureStateType.TemperatureState;
+import rst.domotic.state.WindowStateType.WindowState;
 
 import java.util.List;
 import java.util.Set;
@@ -68,16 +87,50 @@ public class IdentifyStateType extends ValueOfServiceType {
     private Set<Pair<String, Boolean>> identifyState(final String serviceType, final Object stateObject) {
 
         switch (serviceType) {
+            case ServiceTypes.ACTIVATION_STATE_SERVICE:
+                return activationStateValue((ActivationState) stateObject);
             case ServiceTypes.BATTERY_STATE_SERVICE:
                 return batteryStateValue((BatteryState) stateObject);
-            case ServiceTypes.POWER_STATE_SERVICE:
-                return powerStateValue((PowerState) stateObject);
+            case ServiceTypes.BLIND_STATE_SERVICE:
+                return blindStateValue((BlindState) stateObject);
+            case ServiceTypes.BRIGHTNESS_STATE_SERVICE:
+                return brightnessStateValue((BrightnessState) stateObject);
+            case ServiceTypes.BUTTON_STATE_SERVICE:
+                return buttonStateValue((ButtonState) stateObject);
             case ServiceTypes.COLOR_STATE_SERVICE:
                 return colorStateValue((ColorState) stateObject);
-            case ServiceTypes.SMOKE_STATE_SERVICE:
-                return null;
+            case ServiceTypes.CONTACT_STATE_SERVICE:
+                return contactStateValue((ContactState) stateObject);
+            case ServiceTypes.DOOR_STATE_SERVICE:
+                return doorStateValue((DoorState) stateObject);
+            case ServiceTypes.HANDLE_STATE_SERVICE:
+                return handleStateValue((HandleState) stateObject);
+            case ServiceTypes.INTENSITY_STATE_SERVICE:
+                return intensityStateValue((IntensityState) stateObject);
             case ServiceTypes.MOTION_STATE_SERVICE:
-                return null;
+                return motionStateValue((MotionState) stateObject);
+            case ServiceTypes.PASSAGE_STATE_SERVICE:
+                return passageStateValue((PassageState) stateObject);
+            case ServiceTypes.POWER_CONSUMPTION_STATE_SERVICE:
+                return powerConsumptionStateValue((PowerConsumptionState) stateObject);
+            case ServiceTypes.POWER_STATE_SERVICE:
+                return powerStateValue((PowerState) stateObject);
+            case ServiceTypes.PRESENCE_STATE_SERVICE:
+                return presenceStateValue((PresenceState) stateObject);
+            case ServiceTypes.RFID_STATE_SERVICE:
+                return rfidStateValue((RFIDState) stateObject);
+            case ServiceTypes.SMOKE_STATE_SERVICE:
+                return smokeStateValue((SmokeState) stateObject);
+            case ServiceTypes.STANDBY_STATE_SERVICE:
+                return standbyStateValue((StandbyState) stateObject);
+            case ServiceTypes.SWITCH_STATE_SERVICE:
+                return switchStateValue((SwitchState) stateObject);
+            case ServiceTypes.TAMPER_STATE_SERVICE:
+                return tamperStateValue((TamperState) stateObject);
+            case ServiceTypes.TEMPERATURE_STATE_SERVICE:
+                return temperatureStateValue((TemperatureState) stateObject);
+            case ServiceTypes.WINDOW_STATE_SERVICE:
+                return windowStateValue((WindowState) stateObject);
             default:
                 // no matched stateService
                 try {

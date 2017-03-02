@@ -356,6 +356,16 @@ public final class OntConfig {
      */
     public static final int BIG_RETRY_PERIOD = 30;
 
+    /**
+     * Absolute zero point of temperature (Celsius).
+     */
+    public static final double ABSOLUTE_ZERO_POINT_CELSIUS = 273.15;
+
+    /**
+     * Freezing point of temperature (Fahrenheit)
+     */
+    public static final double FREEZING_POINT_FAHRENHEIT = 32.0;
+
     // -------------------------------
 
     /**

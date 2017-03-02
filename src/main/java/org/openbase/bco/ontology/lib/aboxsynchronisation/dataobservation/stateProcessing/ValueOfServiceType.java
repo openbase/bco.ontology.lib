@@ -19,6 +19,9 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing;
 
 import javafx.util.Pair;
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rst.domotic.state.ActionStateType.ActionState;
 import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.AlarmStateType.AlarmState;
@@ -39,6 +42,14 @@ import rst.domotic.state.PowerConsumptionStateType.PowerConsumptionState;
 import rst.domotic.state.PowerStateType.PowerState;
 import rst.domotic.state.PresenceStateType.PresenceState;
 import rst.domotic.state.RFIDStateType.RFIDState;
+import rst.domotic.state.SmokeStateType.SmokeState;
+import rst.domotic.state.StandbyStateType.StandbyState;
+import rst.domotic.state.SwitchStateType.SwitchState;
+import rst.domotic.state.TamperStateType.TamperState;
+import rst.domotic.state.TemperatureStateType.TemperatureState;
+import rst.domotic.state.UserActivityStateType.UserActivityState;
+import rst.domotic.state.UserPresenceStateType.UserPresenceState;
+import rst.domotic.state.WindowStateType.WindowState;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -51,6 +62,8 @@ import java.util.Set;
  * @author agatting on 22.02.17.
  */
 public class ValueOfServiceType {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValueOfServiceType.class);
 
     /**
      * Method returns state values of the given actionState.
@@ -124,7 +137,7 @@ public class ValueOfServiceType {
 
         final Set<Pair<String, Boolean>> blindValuePairSet = new HashSet<>();
         blindValuePairSet.add(new Pair<>(blindState.getMovementState().toString(), false));
-        blindValuePairSet.add(new Pair<>(String.valueOf(blindState.getOpeningRatio()), true));
+        blindValuePairSet.add(new Pair<>("\"" + String.valueOf(blindState.getOpeningRatio()) + "\"^^xsd:double", true));
 
         return blindValuePairSet;
     }
@@ -139,8 +152,21 @@ public class ValueOfServiceType {
     protected Set<Pair<String, Boolean>> brightnessStateValue(final BrightnessState brightnessState) {
 
         final Set<Pair<String, Boolean>> brightnessValuePairSet = new HashSet<>();
-        brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
-//        brightnessValuePairSet.add(new Pair<>(brightnessState.getBrightnessDataUnit()., false)); //TODO get brightness dataUnit?
+        final BrightnessState.DataUnit dataUnit = brightnessState.getBrightnessDataUnit();
+
+        switch (dataUnit) {
+            case LUX:
+                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
+                break;
+            case PERCENT:
+                LOGGER.warn("Dropped brightness state value, cause cannot convert dataUnit Percentage to lux. Lux for query needed.");
+                break;
+            case UNKNOWN:
+                LOGGER.warn("Dropped brightness state value, cause dataUnit is UNKNOWN.");
+                break;
+            default:
+                LOGGER.warn("DataUnit of brightness state could not be detected. Please add " + dataUnit + " to ontologyManager implementation.");
+        }
 
         return brightnessValuePairSet;
     }
@@ -156,7 +182,6 @@ public class ValueOfServiceType {
 
         final Set<Pair<String, Boolean>> buttonValuePairSet = new HashSet<>();
         buttonValuePairSet.add(new Pair<>(buttonState.getValue().toString(), false));
-//        buttonState.getLastPressed() //
 
         return buttonValuePairSet;
     }
@@ -239,7 +264,7 @@ public class ValueOfServiceType {
     protected Set<Pair<String, Boolean>> handleStateValue(final HandleState handleState) {
 
         final Set<Pair<String, Boolean>> handleValuePairSet = new HashSet<>();
-        handleValuePairSet.add(new Pair<>(String.valueOf(handleState.getPosition()), true));
+        handleValuePairSet.add(new Pair<>("\"" + String.valueOf(handleState.getPosition()) + "\"^^xsd:double", true));
 
         return handleValuePairSet;
     }
@@ -254,8 +279,18 @@ public class ValueOfServiceType {
     protected Set<Pair<String, Boolean>> intensityStateValue(final IntensityState intensityState) {
 
         final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
-        intensityValuePairSet.add(new Pair<>(String.valueOf(intensityState.getIntensity()), true));
-//        intensityState.getIntensityDataUnit(). //TODO dataUnit?
+        final IntensityState.DataUnit dataUnit = intensityState.getIntensityDataUnit();
+
+        switch (dataUnit) {
+            case PERCENT:
+                intensityValuePairSet.add(new Pair<>("\"" + String.valueOf(intensityState.getIntensity()) + "\"^^NS:Percent", true));
+                break;
+            case UNKNOWN:
+                LOGGER.warn("Dropped intensity state value, cause dataUnit is UNKNOWN.");
+                break;
+            default:
+                LOGGER.warn("DataUnit of intensity state could not be detected. Please add " + dataUnit + " to ontologyManager implementation.");
+        }
 
         return intensityValuePairSet;
     }
@@ -268,9 +303,11 @@ public class ValueOfServiceType {
      * The size of the set describes the number of state values the individual state keeps.
      */
     protected Set<Pair<String, Boolean>> inventoryStateValue(final InventoryState inventoryState) {
-        //TODO ID's literal or instance?
+
         final Set<Pair<String, Boolean>> inventoryValuePairSet = new HashSet<>();
         inventoryValuePairSet.add(new Pair<>(inventoryState.getValue().toString(), false));
+        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getLocationId() + "\"^^xsd:string", true));
+        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getOwnerId() + "\"^^xsd:string", true));
 
         return inventoryValuePairSet;
     }
@@ -316,7 +353,7 @@ public class ValueOfServiceType {
 
         final Set<Pair<String, Boolean>> powerConsumptionValuePairSet = new HashSet<>();
         powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NS:Voltage", true));
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:Watt-hour", true)); //TODO watt-hour?
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:WattHour", true));
         powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NS:Watt", true));
 
         return powerConsumptionValuePairSet;
@@ -367,4 +404,146 @@ public class ValueOfServiceType {
         return rfidValuePairSet;
     }
 
+    /**
+     * Method returns state values of the given smokeState.
+     *
+     * @param smokeState The SmokeState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> smokeStateValue(final SmokeState smokeState) {
+
+        final Set<Pair<String, Boolean>> smokeValuePairSet = new HashSet<>();
+        smokeValuePairSet.add(new Pair<>(smokeState.getValue().toString(), false));
+        smokeValuePairSet.add(new Pair<>("\"" + String.valueOf(smokeState.getSmokeLevel()) + "\"^^xsd:double", true));
+
+        return smokeValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given standbyState.
+     *
+     * @param standbyState The StandbyState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> standbyStateValue(final StandbyState standbyState) {
+
+        final Set<Pair<String, Boolean>> standbyValuePairSet = new HashSet<>();
+        standbyValuePairSet.add(new Pair<>(standbyState.getValue().toString(), false));
+
+        return standbyValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given switchState.
+     *
+     * @param switchState The SwitchState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> switchStateValue(final SwitchState switchState) {
+
+        final Set<Pair<String, Boolean>> switchValuePairSet = new HashSet<>();
+        switchValuePairSet.add(new Pair<>("\"" + String.valueOf(switchState.getPosition()) + "\"^^xsd:double", true));
+
+        return switchValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given tamperState.
+     *
+     * @param tamperState The TamperState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> tamperStateValue(final TamperState tamperState) {
+
+        final Set<Pair<String, Boolean>> tamperValuePairSet = new HashSet<>();
+        tamperValuePairSet.add(new Pair<>(tamperState.getValue().toString(), false));
+
+        return tamperValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given temperatureState.
+     *
+     * @param temperatureState The TemperatureState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> temperatureStateValue(final TemperatureState temperatureState) {
+
+        final Set<Pair<String, Boolean>> temperatureValuePairSet = new HashSet<>();
+        final TemperatureState.DataUnit dataUnit = temperatureState.getTemperatureDataUnit();
+        double temperature;
+
+        switch (dataUnit) {
+            case CELSIUS:
+                temperature = temperatureState.getTemperature();
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
+                break;
+            case FAHRENHEIT:
+                temperature = ((temperatureState.getTemperature() - OntConfig.FREEZING_POINT_FAHRENHEIT) / 1.8);
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
+                break;
+            case KELVIN:
+                temperature = temperatureState.getTemperature() - OntConfig.ABSOLUTE_ZERO_POINT_CELSIUS;
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
+                break;
+            case UNKNOWN:
+                LOGGER.warn("Dropped temperature state value, cause dataUnit is UNKNOWN.");
+                break;
+            default:
+                LOGGER.warn("DataUnit of temperature state could not be detected. Please add " + dataUnit + " to ontologyManager implementation.");
+        }
+
+        return temperatureValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given userActivityState.
+     *
+     * @param userActivityState The UserActivityState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> userActivityStateValue(final UserActivityState userActivityState) {
+
+        final Set<Pair<String, Boolean>> userActivityValuePairSet = new HashSet<>();
+        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getCurrentActivity().toString() + "\"^^NS:CurrentActivity", true));
+        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getNextActivity().toString() + "\"^^NS:NextActivity", true));
+
+        return userActivityValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given userPresenceState.
+     *
+     * @param userPresenceState The UserPresenceState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> userPresenceStateValue(final UserPresenceState userPresenceState) {
+
+        final Set<Pair<String, Boolean>> userPresenceValuePairSet = new HashSet<>();
+        userPresenceValuePairSet.add(new Pair<>(userPresenceState.getValue().toString(), false));
+
+        return userPresenceValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given windowState.
+     *
+     * @param windowState The WindowState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> windowStateValue(final WindowState windowState) {
+
+        final Set<Pair<String, Boolean>> windowValuePairSet = new HashSet<>();
+        windowValuePairSet.add(new Pair<>(windowState.getValue().toString(), false));
+
+        return windowValuePairSet;
+    }
 }
