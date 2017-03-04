@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
 import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.registry.lib.BCO;
 import org.openbase.bco.registry.lib.launch.AbstractLauncher;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.preset.JPDebugMode;
@@ -57,6 +58,7 @@ public class OntologyManagerLauncher extends AbstractLauncher<OntologyManagerCon
      * @throws Throwable Throwable.
      */
     public static void main(final String... args) throws Throwable {
+        BCO.printLogo();
         main(args, OntologyManager.class, OntologyManagerLauncher.class);
     }
 
