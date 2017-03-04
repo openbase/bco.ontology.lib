@@ -18,6 +18,6 @@
  */
 
 /**
- * @author agatting on 18.01.17.
+ * @author agatting on 28.02.17.
  */
-package org.openbase.bco.ontology.lib.webcommunication;
+package org.openbase.bco.ontology.lib.trigger;

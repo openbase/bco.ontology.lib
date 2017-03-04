@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.datapool;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntInstanceMappingImpl;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntPropertyMapping;
@@ -27,7 +27,7 @@ import org.openbase.bco.ontology.lib.aboxsynchronisation.configuration.OntProper
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
-import org.openbase.bco.ontology.lib.webcommunication.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -88,7 +88,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
                 try {
                     unitRegistryRemote = Registries.getUnitRegistry();
-                    Registries.getUnitRegistry().waitForData();
+                    unitRegistryRemote.waitForData(1, TimeUnit.SECONDS);
                     List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
 
                     // fill ontology initial with whole registry unitConfigs
@@ -185,7 +185,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // get whole ontology model for init phase (for comparing with individuals)
-            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getOntDatabaseUri());
+            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getOntDatabaseUri());
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
             // insert instances
@@ -209,7 +209,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
             final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
@@ -240,7 +240,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         try {
             // get tbox of ontology (inspection doesn't necessary)
             final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(ConfigureSystem.getTBoxDatabaseUri());
+                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
 
             final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 

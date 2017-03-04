@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.jp;
+package org.openbase.bco.ontology.lib.config.jp;
 
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.AbstractJPString;
@@ -45,7 +45,7 @@ public class JPOntologyDatabaseUri extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "OntologyDatabaseUri property is set to set the uri to server with the main ontology database.";
+        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
     }
 
 }

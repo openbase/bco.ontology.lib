@@ -16,35 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.trigger;
+package org.openbase.bco.ontology.lib.config.jp;
 
-import org.openbase.jul.iface.Manageable;
-import org.openbase.jul.pattern.Observer;
-import rst.domotic.state.ActivationStateType.ActivationState;
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 21.12.16.
+ * @author agatting on 01.03.17.
  */
-public interface Trigger extends Manageable<TriggerConfig> {
+public class JPServerPingUri extends AbstractJPString {
 
     /**
-     * Method registers the given observer to this observable to get informed about value changes.
-     *
-     * @param observer is the observer to register.
+     * Command line argument strings.
      */
-    void addObserver(Observer<ActivationState.State> observer);
+    public static final String[] COMMAND_IDENTIFIERS = {"--serverPingUri", "--ontologyPingUri", "--serverPingUri"};
 
     /**
-     * Method removes the given observer from this observable to finish the observation.
-     *
-     * @param observer is the observer to remove.
+     * Constructor for the JPServerPingUri class.
      */
-    void removeObserver(Observer<ActivationState.State> observer);
+    public JPServerPingUri() {
+        super(COMMAND_IDENTIFIERS);
+    }
 
-    /**
-     * Method returns the config of the created trigger.
-     *
-     * @return The TriggerConfig of the trigger.
-     */
-    TriggerConfig getConfig();
+    @Override
+    protected String getPropertyDefaultValue() throws JPNotAvailableException {
+        return "http://localhost:3030/$/ping";
+    }
+
+    @Override
+    public String getDescription() {
+        return "ServerPingUri property is used to set the ping address of the ontology server, which has to be reached.";
+    }
 }

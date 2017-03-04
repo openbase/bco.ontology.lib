@@ -17,15 +17,11 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib;
-
-/**
- * @author agatting on 14.11.16.
- */
+package org.openbase.bco.ontology.lib.config;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.config.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxVerificationResource;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
@@ -41,9 +37,11 @@ import org.slf4j.LoggerFactory;
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
  * ontology-processing-classes.
+ *
+ * @author agatting on 14.11.16.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
-public final class ConfigureSystem {
+public final class OntConfig {
 
     /**
      * Method returns the uri to the tbox database of the server.
@@ -107,14 +105,9 @@ public final class ConfigureSystem {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
-     * The used RSB scope.
-     */
-    public static final String RSB_SCOPE = "/test/a3";
-
-    /**
      * Enumeration of ontology classes.
      */
-    public enum OntClass {
+    public enum OntCl {
 
         /**
          * Unit (class).
@@ -147,9 +140,9 @@ public final class ConfigureSystem {
         HEARTBEAT_PHASE("HeartBeatPhase"),
 
         /**
-         * OBSERVATION (class).
+         * Observation (class).
          */
-        OBSERVATION("OBSERVATION"),
+        OBSERVATION("Observation"),
 
         /**
          * StateValue (class).
@@ -158,7 +151,7 @@ public final class ConfigureSystem {
 
         private final String ontClass;
 
-        OntClass(final String ontClass) {
+        OntCl(final String ontClass) {
             this.ontClass = ontClass;
         }
 
@@ -310,6 +303,11 @@ public final class ConfigureSystem {
         /**
          * Pattern for method name part.
          */
+        GET_ID("getId"),
+
+        /**
+         * Pattern for method name part.
+         */
         GET("get"),
 
         /**
@@ -339,32 +337,6 @@ public final class ConfigureSystem {
     }
 
     /**
-     * Regular expressions for stateTypes.
-     */
-    public enum StateTypeExpr {
-
-        /**
-         * Pattern for powerState value.
-         */
-        GET_VALUE("getValue");
-
-        private final String stateType;
-
-        StateTypeExpr(final String stateType) {
-            this.stateType = stateType;
-        }
-
-        /**
-         * Method returns the Name of an enum element.
-         *
-         * @return Name of an enum element as string.
-         */
-        public String getName() {
-            return this.stateType;
-        }
-    }
-
-    /**
      * DateTime format.
      */
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
@@ -383,6 +355,16 @@ public final class ConfigureSystem {
      * A big retry period time in seconds.
      */
     public static final int BIG_RETRY_PERIOD = 30;
+
+    /**
+     * Absolute zero point of temperature (Celsius).
+     */
+    public static final double ABSOLUTE_ZERO_POINT_CELSIUS = 273.15;
+
+    /**
+     * Freezing point of temperature (Fahrenheit)
+     */
+    public static final double FREEZING_POINT_FAHRENHEIT = 32.0;
 
     // -------------------------------
 
@@ -411,7 +393,7 @@ public final class ConfigureSystem {
      */
     public static final String GET_PATTERN_STATE = GET + STRING_PATTERN + STATE;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigureSystem.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
 
     /**
      * Method tests configurations.
@@ -440,10 +422,10 @@ public final class ConfigureSystem {
             }
 
             // test validity of enum ontClass
-            for (final OntClass ontClass : OntClass.values()) {
+            for (final OntCl ontClass : OntCl.values()) {
                 try {
                     if (!TBoxVerificationResource.isOntClassExisting(ontClass.getName(), ontModel)) {
-                        throw new NotAvailableException("OntClass \"" + ontClass.getName()
+                        throw new NotAvailableException("Ontology class \"" + ontClass.getName()
                                 + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                     }
                 } catch (IllegalArgumentException | CouldNotPerformException e) {
@@ -453,8 +435,8 @@ public final class ConfigureSystem {
 
             try {
                 // test availability of ontology namespace
-                if (!(ontModel.getNsPrefixURI("") + "#").equals(ConfigureSystem.NS)) {
-                    throw new NotAvailableException("Namespace \"" + ConfigureSystem.NS
+                if (!(ontModel.getNsPrefixURI("") + "#").equals(OntConfig.NS)) {
+                    throw new NotAvailableException("Namespace \"" + OntConfig.NS
                             + "\" doesn't match with ontology namespace! Wrong String or ontology!");
                 }
             } catch (NotAvailableException e) {

@@ -18,6 +18,6 @@
  */
 
 /**
- * @author andi on 22.02.17.
+ * @author agatting on 28.02.17.
  */
-package org.openbase.bco.ontology.lib.jp;
+package org.openbase.bco.ontology.lib.commun.rsb;

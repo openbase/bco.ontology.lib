@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.state.EnablingStateType;
@@ -110,12 +110,11 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasSubLocation(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasSubLocation(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.SUB_LOCATION.getName();
+        final String predicate = OntProp.SUB_LOCATION.getName();
         String object;
 
         // get all child IDs of the unit location
@@ -131,17 +130,16 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.SUB_LOCATION.getName();
+        final String predicate = OntProp.SUB_LOCATION.getName();
 
         return new TripleArrayList(subject, predicate, null);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasUnit(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasUnit(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.UNIT.getName();
+        final String predicate = OntProp.UNIT.getName();
         String object;
 
         // get all unit IDs, which can be found in the unit location
@@ -157,17 +155,16 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.UNIT.getName();
+        final String predicate = OntProp.UNIT.getName();
 
         return new TripleArrayList(subject, predicate, null);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasConnection(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasConnection(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         String subject;
-        final String predicate = ConfigureSystem.OntProp.CONNECTION.getName();
+        final String predicate = OntProp.CONNECTION.getName();
         final String object = unitConfig.getId(); //get unit ID
 
         // get all tiles, which contains the connection unit
@@ -182,18 +179,17 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
     private TripleArrayList getDeleteTripleObjPropHasConnection(final UnitConfig unitConfig) {
 
         // s, p, o pattern
-        final String predicate = ConfigureSystem.OntProp.CONNECTION.getName();
+        final String predicate = OntProp.CONNECTION.getName();
         final String object = unitConfig.getId(); //get unit ID
 
         return new TripleArrayList(null, predicate, object);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasState(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasState(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         String subject;
-        final String predicate = ConfigureSystem.OntProp.STATE.getName();
+        final String predicate = OntProp.STATE.getName();
         final String object = unitConfig.getId();
 
         // get all serviceConfigs of the actual unit
@@ -208,19 +204,18 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
     private TripleArrayList getDeleteTripleObjPropHasState(final UnitConfig unitConfig) {
 
         // s, p, o pattern
-        final String predicate = ConfigureSystem.OntProp.STATE.getName();
+        final String predicate = OntProp.STATE.getName();
         final String object = unitConfig.getId();
 
         return new TripleArrayList(null, predicate, object);
     }
 
     @SuppressWarnings("checkstyle:multiplestringliterals")
-    private List<TripleArrayList> getInsertTripleDataTypePropHasLabel(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleDataTypePropHasLabel(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.LABEL.getName();
+        final String predicate = OntProp.LABEL.getName();
         final String object = "\"" + unitConfig.getLabel() + "\""; // dataTypes have quotation marks
 
         tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
@@ -232,18 +227,17 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.LABEL.getName();
+        final String predicate = OntProp.LABEL.getName();
 
         return new TripleArrayList(subject, predicate, null);
     }
 
     //TODO isAvailable
-    private List<TripleArrayList> getTripleDataTypePropIsEnabled(final List<TripleArrayList> tripleArrayLists
-            , final UnitConfig unitConfig) {
+    private List<TripleArrayList> getTripleDataTypePropIsEnabled(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.IS_ENABLED.getName();
+        final String predicate = OntProp.IS_ENABLED.getName();
         final String object;
 
         if (unitConfig.getEnablingState().getValue().equals(EnablingStateType.EnablingState.State.ENABLED)) {
@@ -261,7 +255,7 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
 
         // s, p, o pattern
         final String subject = unitConfig.getId();
-        final String predicate = ConfigureSystem.OntProp.IS_ENABLED.getName();
+        final String predicate = OntProp.IS_ENABLED.getName();
 
         return new TripleArrayList(subject, predicate, null);
     }

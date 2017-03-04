@@ -19,7 +19,11 @@
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.config.OntConfig.MethodRegEx;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.stateProcessing.IdentifyStateType;
 import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
@@ -27,6 +31,7 @@ import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.extension.rst.processing.TimestampJavaTimeTransform;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
@@ -38,6 +43,8 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.dal.AudioSourceDataType;
+import rst.domotic.unit.dal.BatteryDataType;
+import rst.domotic.unit.dal.ColorableLightDataType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -46,7 +53,6 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -61,31 +67,37 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(ConfigureSystem.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH); //TODO
     private final Map<String, String> serviceTypeMap = new HashMap<>();
-    private static String remoteUnitId;
+    private String remoteUnitId;
     private final Stopwatch stopwatch;
     private final TransactionBuffer transactionBuffer;
     private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
     private Set<Method> methodSetStateType = null;
+    private final RSBInformer<String> rsbInformer;
 
-    public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig
-            , final TransactionBuffer transactionBuffer) {
+    public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer
+            , final RSBInformer<String> rsbInformer) {
 
+
+
+        this.rsbInformer = rsbInformer;
         this.transactionBuffer = transactionBuffer;
         stopwatch = new Stopwatch();
-        remoteUnitId = unitConfig.getId();
         initServiceTypeMap();
 
         final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
+
+            remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
+
+
+
             if (methodSetStateType == null) {
-                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj
-                        , ConfigureSystem.MethodRegEx.GET.getName(), ConfigureSystem.MethodRegEx.STATE.getName());
+                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             }
-            GlobalCachedExecutorService.submit(() -> {
-                stateUpdate(unitRemoteObj);
-            });
+
+            stateUpdate(unitRemoteObj); //TODO catch exception?!
         };
 
         final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
@@ -108,24 +120,9 @@ public class StateObservation<T> extends IdentifyStateType {
         for (final ServiceType serviceType : ServiceType.values()) {
             final String serviceTypeName = serviceType.name();
             final String reducedServiceTypeName = serviceTypeName.toLowerCase()
-                    .replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
+                    .replaceAll(OntExpr.REMOVE.getName(), "");
 
             serviceTypeMap.put(reducedServiceTypeName, serviceTypeName);
-        }
-    }
-
-    private boolean stateTypeHasDataUnit(final Object invokedMethod) throws CouldNotPerformException  {
-
-        try {
-            if (invokedMethod == null) {
-                throw new IllegalArgumentException("Cause parameter object is null!");
-            }
-
-            // approach: compare with the method, which has NO dataUnit. They are standardized with "getValue"
-            return !ReflectObjectPool.hasMethodByRegEx(invokedMethod
-                    , ConfigureSystem.MethodRegEx.GET_VALUE.getName());
-        } catch (IllegalArgumentException e) {
-            throw new CouldNotPerformException("Cannot check availability of dataUnit method!", e);
         }
     }
 
@@ -136,8 +133,7 @@ public class StateObservation<T> extends IdentifyStateType {
                 throw new IllegalArgumentException("Cause String is null!");
             }
             // standardized string to allow comparison
-            final String stateTypeBuf = methodStateTypeName.toLowerCase()
-                    .replaceFirst(ConfigureSystem.MethodRegEx.GET.getName(), "");
+            final String stateTypeBuf = methodStateTypeName.toLowerCase().replaceFirst(MethodRegEx.GET.getName(), "");
 
             for (final String serviceTypeName : serviceTypeMap.keySet()) {
                 if (serviceTypeName.contains(stateTypeBuf)) {
@@ -154,20 +150,18 @@ public class StateObservation<T> extends IdentifyStateType {
 
     }
 
-    private void stateUpdate(final T remoteData) {
-        //TODO implement logic, that updates changed stateValues only
-
+    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
         // main list, which contains complete observation instances
         List<TripleArrayList> tripleArrayLists = new ArrayList<>();
         // first collect all components of the individual observation, then add to main list (integrity reason)
         List<TripleArrayList> tripleArrayListsBuf = new ArrayList<>();
 
         // declaration of predicates and classes, which are static
-        final String predicateIsA = ConfigureSystem.OntExpr.A.getName();
-        final String objectObservationClass = ConfigureSystem.OntClass.OBSERVATION.getName();
-        final String predicateHasUnitId = ConfigureSystem.OntProp.UNIT_ID.getName();
-        final String predicateHasProviderService = ConfigureSystem.OntProp.PROVIDER_SERVICE.getName();
-        final String predicateHasTimeStamp = ConfigureSystem.OntProp.TIME_STAMP.getName();
+        final String predicateIsA = OntExpr.A.getName();
+        final String objectObservationClass = OntCl.OBSERVATION.getName();
+        final String predicateHasUnitId = OntProp.UNIT_ID.getName();
+        final String predicateHasProviderService = OntProp.PROVIDER_SERVICE.getName();
+        final String predicateHasTimeStamp = OntProp.TIME_STAMP.getName();
 
 //        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
 //        System.out.println("--------------------");
@@ -204,8 +198,8 @@ public class StateObservation<T> extends IdentifyStateType {
 //                System.out.println(objectServiceType);
 
                 //### timeStamp triple ###\\
-                TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
-                        .getInvokedObj(stateTypeObj , ConfigureSystem.MethodRegEx.GET_TIMESTAMP.getName());
+                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
+                        .getInvokedObj(stateTypeObj , MethodRegEx.GET_TIMESTAMP.getName());
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
@@ -240,17 +234,14 @@ public class StateObservation<T> extends IdentifyStateType {
                 //insert sparql update expression to buffer queue
                 transactionBuffer.insertData(sparqlUpdateExpr);
             } else {
+                // publish notification via rsb
+                rsbInformer.publish("UNIT");
 //                System.out.println("success");
             }
 
         } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
         }
-
-        if (remoteData.getClass().equals(AudioSourceDataType.AudioSourceData.class)) {
-//            ((AudioSourceDataType.AudioSourceData) remoteData).
-        }
-//            ((BatteryDataType.BatteryData) remoteData).getBatteryState().getLevel()
     }
 
 }

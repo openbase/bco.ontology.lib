@@ -21,9 +21,8 @@ package org.openbase.bco.ontology.lib.aboxsynchronisation.configuration;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntCl;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -52,8 +51,7 @@ public class OntInstanceInspection {
         Set<String> ontUnitIndNameSet = new HashSet<>(); //Ind: individual
 
         // preparation: get all individuals of the class "Unit" which are currently in the model
-        final OntClass ontClassUnit = ontModel.getOntClass(ConfigureSystem.NS
-                + ConfigureSystem.OntClass.UNIT.getName());
+        final OntClass ontClassUnit = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
 
         if (ontClassUnit == null) {
             //TODO
@@ -87,7 +85,7 @@ public class OntInstanceInspection {
 
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
         final OntClass ontClassServiceType = ontModel
-                .getOntClass(ConfigureSystem.NS + ConfigureSystem.OntClass.PROVIDER_SERVICE.getName());
+                .getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
         ontServiceTypeIndNameSet = listIndOfOntClass(ontServiceTypeIndNameSet, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
@@ -124,7 +122,7 @@ public class OntInstanceInspection {
             while (instanceExIt.hasNext()) {
                 // add local name (substring) of individual only
                 String indName = instanceExIt.next().toString();
-                indName = indName.substring(ConfigureSystem.NS.length(), indName.length());
+                indName = indName.substring(OntConfig.NS.length(), indName.length());
                 individualNameSet.add(indName);
             }
 
@@ -141,7 +139,7 @@ public class OntInstanceInspection {
             while (instanceExIt.hasNext()) {
                 // add local name (substring) of individual only
                 String indName = instanceExIt.next().toString();
-                indName = indName.substring(ConfigureSystem.NS.length(), indName.length());
+                indName = indName.substring(OntConfig.NS.length(), indName.length());
                 individualNameSet.add(indName);
             }
         }
@@ -161,8 +159,8 @@ public class OntInstanceInspection {
 
         String bufName = individualName;
 
-        if (individualName.startsWith(ConfigureSystem.NS)) {
-            bufName = individualName.substring(ConfigureSystem.NS.length(), individualName.length());
+        if (individualName.startsWith(OntConfig.NS)) {
+            bufName = individualName.substring(OntConfig.NS.length(), individualName.length());
         }
 
         Set<String> stringSet = new HashSet<>();

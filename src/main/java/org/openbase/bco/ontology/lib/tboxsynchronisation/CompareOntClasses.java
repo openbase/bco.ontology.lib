@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.tboxsynchronisation;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyEditCommands;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -101,13 +101,13 @@ public class CompareOntClasses {
                 } catch (CouldNotPerformException e) {
                     //retry
                     ExceptionPrinter.printHistory("Could not compare unitType with ontology. Retry in "
-                            + ConfigureSystem.SMALL_RETRY_PERIOD + " seconds.", e, LOGGER, LogLevel.WARN);
+                            + OntConfig.SMALL_RETRY_PERIOD + " seconds.", e, LOGGER, LogLevel.WARN);
                 } catch (IllegalArgumentException e) {
                     // could not compare, cause string is null. Reject comparing and upload unitType to ontology, as
                     // well ontClass is already existing in ontology
                     ontClassExist = false;
                 }
-            }, 0, ConfigureSystem.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
+            }, 0, OntConfig.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
         } catch (NotAvailableException e) {
             //TODO
         }

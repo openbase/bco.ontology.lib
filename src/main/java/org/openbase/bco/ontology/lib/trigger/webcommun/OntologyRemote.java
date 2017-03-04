@@ -16,35 +16,27 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.trigger;
+package org.openbase.bco.ontology.lib.trigger.webcommun;
 
-import org.openbase.jul.iface.Manageable;
+import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.jul.pattern.Observer;
-import rst.domotic.state.ActivationStateType.ActivationState;
+import org.openbase.jul.pattern.Remote;
+
+import java.io.IOException;
+import java.util.Collection;
 
 /**
- * @author agatting on 21.12.16.
+ * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
  */
-public interface Trigger extends Manageable<TriggerConfig> {
+public interface OntologyRemote {
 
-    /**
-     * Method registers the given observer to this observable to get informed about value changes.
-     *
-     * @param observer is the observer to register.
-     */
-    void addObserver(Observer<ActivationState.State> observer);
+    boolean match(final String query) throws IOException;
 
-    /**
-     * Method removes the given observer from this observable to finish the observation.
-     *
-     * @param observer is the observer to remove.
-     */
-    void removeObserver(Observer<ActivationState.State> observer);
+    void addConnectionStateObserver(Observer<Remote.ConnectionState> observer);
 
-    /**
-     * Method returns the config of the created trigger.
-     *
-     * @return The TriggerConfig of the trigger.
-     */
-    TriggerConfig getConfig();
+    void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer);
+
+    void addOntologyObserver(Observer<Collection<Category>> observer);
+
+    void removeOntologyObserver(Observer<Collection<Category>> observer);
 }

@@ -16,35 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.trigger;
+package org.openbase.bco.ontology.lib.config.jp;
 
-import org.openbase.jul.iface.Manageable;
-import org.openbase.jul.pattern.Observer;
-import rst.domotic.state.ActivationStateType.ActivationState;
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 21.12.16.
+ * @author agatting on 27.02.17.
  */
-public interface Trigger extends Manageable<TriggerConfig> {
+public class JPRsbScope extends AbstractJPString {
 
     /**
-     * Method registers the given observer to this observable to get informed about value changes.
-     *
-     * @param observer is the observer to register.
+     * Command line argument strings.
      */
-    void addObserver(Observer<ActivationState.State> observer);
+    public static final String[] COMMAND_IDENTIFIERS = {"--rsbScope"};
 
     /**
-     * Method removes the given observer from this observable to finish the observation.
-     *
-     * @param observer is the observer to remove.
+     * Constructor for the JPOntologyDatabaseUri class.
      */
-    void removeObserver(Observer<ActivationState.State> observer);
+    public JPRsbScope() {
+        super(COMMAND_IDENTIFIERS);
+    }
 
-    /**
-     * Method returns the config of the created trigger.
-     *
-     * @return The TriggerConfig of the trigger.
-     */
-    TriggerConfig getConfig();
+    @Override
+    protected String getPropertyDefaultValue() throws JPNotAvailableException {
+        return "/ontology/rsb";
+    }
+
+    @Override
+    public String getDescription() {
+        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
+    }
 }

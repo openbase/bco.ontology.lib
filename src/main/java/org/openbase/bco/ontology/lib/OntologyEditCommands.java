@@ -18,6 +18,9 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.config.OntConfig.OntExpr;
+
 /**
  * @author agatting on 17.02.17.
  */
@@ -34,7 +37,7 @@ public interface OntologyEditCommands {
     static String convertWordToNounSyntax(String expression) throws IllegalArgumentException {
 
         if (expression != null) {
-            expression = expression.toLowerCase().replaceAll(ConfigureSystem.OntExpr.REMOVE.getName(), "");
+            expression = expression.toLowerCase().replaceAll(OntExpr.REMOVE.getName(), "");
             return expression.substring(0, 1).toUpperCase() + expression.substring(1);
         }
 
@@ -52,8 +55,8 @@ public interface OntologyEditCommands {
     static String addNamespaceToOntElement(final String ontElement) throws IllegalArgumentException {
 
         if (ontElement != null) {
-            if (!ontElement.startsWith(ConfigureSystem.NS)) {
-                 return ConfigureSystem.NS + ontElement;
+            if (!ontElement.startsWith(OntConfig.NS)) {
+                 return OntConfig.NS + ontElement;
             } else {
                 // input parameter has namespace already
                 return ontElement;

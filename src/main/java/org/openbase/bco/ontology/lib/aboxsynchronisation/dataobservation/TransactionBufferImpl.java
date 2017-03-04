@@ -18,7 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
-import org.openbase.bco.ontology.lib.webcommunication.WebInterface;
+import org.openbase.bco.ontology.lib.config.OntologyChange;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -143,13 +146,19 @@ public class TransactionBufferImpl implements TransactionBuffer {
     }
 
     private void setRSBInformerThread(final RSBInformer<String> synchronizedInformer) {
+
+        final List<OntologyChange.Category> changeCategories = new ArrayList<>();
+        changeCategories.add(OntologyChange.Category.UNKNOWN);
+
         try {
             taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
-                if (RsbInformer.startInformerNotification(synchronizedInformer)) {
+                try {
+                    synchronizedInformer.publish("UNIT"); //TODO
                     taskFuture.cancel(true);
+                } catch (CouldNotPerformException | InterruptedException e) {
+                    e.printStackTrace();
                 }
-
             }, 0, 5, TimeUnit.SECONDS);
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

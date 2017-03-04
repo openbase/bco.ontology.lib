@@ -20,7 +20,7 @@
 package org.openbase.bco.ontology.lib.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.openbase.bco.ontology.lib.ConfigureSystem;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,6 +29,7 @@ import java.util.Locale;
 /**
  * @author agatting on 16.11.16.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public final class QueryStrings {
 
     //TODO later: get concrete object of query...
@@ -36,8 +37,6 @@ public final class QueryStrings {
     //TODO make request of unitType generic
 
     //TODO add link to providerService up to REQ_16
-
-    //CHECKSTYLE.OFF: MultipleStringLiterals
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
     // Queries based on SELECT to visualize the solutions
@@ -795,7 +794,6 @@ public final class QueryStrings {
                     + "?unit NS:hasLabel ?unitLabel . "
             + "} ";
 
-    //CHECKSTYLE.ON: MultipleStringLiterals
     /**
      * Private Constructor.
      */
@@ -807,7 +805,7 @@ public final class QueryStrings {
      * @return String in format yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public static String getCurrentDateTime() {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
         final Date date = new Date();
         return simpleDateFormat.format(date);
     }
@@ -823,7 +821,7 @@ public final class QueryStrings {
      */
     public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
                                                   final int years) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ConfigureSystem.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
         final Date now = new Date();
 
         Date newDate = DateUtils.addHours(now, hours);
