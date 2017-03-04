@@ -16,9 +16,8 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.commun.rsb;
+package org.openbase.bco.ontology.lib.commun;
 
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -29,17 +28,20 @@ import org.openbase.jul.extension.rsb.iface.RSBListener;
 import org.openbase.jul.pattern.ObservableImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import rsb.converter.DefaultConverterRepository;
+import rsb.converter.ProtocolBufferConverter;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 /**
  * @author agatting on 09.02.17.
  */
-public interface RsbCommunication {
+public class RsbCommunication {
 
-    Logger LOGGER = LoggerFactory.getLogger(RsbCommunication.class); // make private in java 1.9
+    private static final Logger LOGGER = LoggerFactory.getLogger(RsbCommunication.class);
+
+    static {
+        DefaultConverterRepository.getDefaultConverterRepository().addConverter(new ProtocolBufferConverter<>(OntologyChange.newBuilder().build()));
+    }
 
     /**
      * Method creates and activates an RSB informer of type string.
@@ -49,55 +51,35 @@ public interface RsbCommunication {
      * @throws InterruptedException InterruptedException
      * @throws CouldNotPerformException CouldNotPerformException
      */
-    static RSBInformer<String> createInformer(final String scope) throws InterruptedException, CouldNotPerformException {
+    public static RSBInformer<OntologyChange> createRsbInformer(final String scope) throws InterruptedException, CouldNotPerformException {
 
-        final RSBInformer<String> synchronizedInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(scope, String.class);
+        final RSBInformer<OntologyChange> synchronizedInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(scope, OntologyChange.class);
         synchronizedInformer.activate();
 
         return synchronizedInformer;
     }
 
     /**
-     * Method creates and activates a rsb listener. Each received message triggers a notification to all registered observers of the changeCategoryObservable
-     * with the received message (changeCategory).
+     * Method creates and activates a rsb listener. Each received message of type OntologyChange is taken by the Observable and notified the registered
+     * observer.
      *
      * @param scope The rsb scope.
+     * @param changeCategoryObservable The Observable, which notifies the registered observer with the incoming OntologyChange data.
      * @throws InterruptedException InterruptedException
      * @throws CouldNotPerformException CouldNotPerformException
      */
-    static void createAndActivateRsbListener(final String scope, final ObservableImpl<Collection<Category>> changeCategoryObservable)
-            throws InterruptedException, CouldNotPerformException {
+    public static void startRsbListener(final String scope, final ObservableImpl<OntologyChange> changeCategoryObservable)
+            throws CouldNotPerformException, InterruptedException {
 
         final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(scope);
 
         rsbListener.activate();
         rsbListener.addHandler(event -> {
             try {
-                final Category category = Category.valueOf(((String) event.getData()).toUpperCase());
-                final List<Category> categories = new ArrayList<>();
-                categories.add(category); //TODO
-                changeCategoryObservable.notifyObservers(categories);
+                changeCategoryObservable.notifyObservers((OntologyChange) event.getData());
             } catch (MultiException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-            } catch (IllegalArgumentException e) {
-                // no valid changeCategory -> no change. ignore
             }
         }, false);
-    }
-
-    /**
-     * Method creates and activates a rsb listener, which is returned.
-     *
-     * @param scope The rsb scope.
-     * @return The activated rsb listener.
-     * @throws InterruptedException InterruptedException
-     * @throws CouldNotPerformException CouldNotPerformException
-     */
-    static RSBListener createRsbListener(final String scope) throws InterruptedException, CouldNotPerformException {
-
-        final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(scope);
-        rsbListener.activate();
-
-        return rsbListener;
     }
 }

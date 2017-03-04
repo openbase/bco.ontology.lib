@@ -18,35 +18,34 @@
  */
 package org.openbase.bco.ontology.lib.trigger;
 
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
+import org.openbase.bco.ontology.lib.commun.RsbCommunication;
 import org.openbase.bco.ontology.lib.config.jp.JPRsbScope;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemoteImpl;
-import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnection;
+import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnectionMonitor;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.pattern.Factory;
 import org.openbase.jul.pattern.ObservableImpl;
-
-import java.util.Collection;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
  */
 public class TriggerFactory implements Factory {
 
-    public static ObservableImpl<Collection<Category>> changeCategoryObservable = null;
+    public static ObservableImpl<OntologyChange> changeCategoryObservable = null;
 
     public TriggerFactory() throws CouldNotPerformException {
 
         changeCategoryObservable = new ObservableImpl<>(false, this);
-        new ServerConnection();
+        new ServerConnectionMonitor();
 
         try {
-            RsbCommunication.createAndActivateRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
+            RsbCommunication.startRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
         } catch (InterruptedException | JPNotAvailableException e) {
             throw new CouldNotPerformException("Could not activate rsb listener!", e);
         }

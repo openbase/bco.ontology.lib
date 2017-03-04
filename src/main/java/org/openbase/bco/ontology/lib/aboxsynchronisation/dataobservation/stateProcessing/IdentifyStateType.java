@@ -28,6 +28,7 @@ import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.BatteryStateType.BatteryState;
 import rst.domotic.state.BlindStateType.BlindState;
@@ -59,7 +60,7 @@ import java.util.Set;
  */
 public class IdentifyStateType extends ValueOfServiceType {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IdentifyStateType.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IdentifyStateType.class);
 
     // declaration of predicates and classes, which are static
     private static final String predicateIsA = OntExpr.A.getName();

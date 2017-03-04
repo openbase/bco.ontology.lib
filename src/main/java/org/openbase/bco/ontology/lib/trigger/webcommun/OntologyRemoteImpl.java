@@ -27,16 +27,15 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.pattern.Remote;
+import org.openbase.jul.pattern.Remote.ConnectionState;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -79,22 +78,22 @@ public class OntologyRemoteImpl implements OntologyRemote {
     }
 
     @Override
-    public void addConnectionStateObserver(Observer<Remote.ConnectionState> observer) {
-        ServerConnection.connectionStateObservable.addObserver(observer);
+    public void addConnectionStateObserver(Observer<ConnectionState> observer) {
+        ServerConnectionMonitor.connectionStateObservable.addObserver(observer);
     }
 
     @Override
-    public void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer) {
-        ServerConnection.connectionStateObservable.removeObserver(observer);
+    public void removeConnectionStateObserver(Observer<ConnectionState> observer) {
+        ServerConnectionMonitor.connectionStateObservable.removeObserver(observer);
     }
 
     @Override
-    public void addOntologyObserver(Observer<Collection<Category>> observer) {
+    public void addOntologyObserver(Observer<OntologyChange> observer) {
         TriggerFactory.changeCategoryObservable.addObserver(observer);
     }
 
     @Override
-    public void removeOntologyObserver(Observer<Collection<Category>> observer) {
+    public void removeOntologyObserver(Observer<OntologyChange> observer) {
         TriggerFactory.changeCategoryObservable.removeObserver(observer);
     }
 }

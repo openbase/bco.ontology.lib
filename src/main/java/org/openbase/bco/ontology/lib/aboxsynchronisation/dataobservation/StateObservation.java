@@ -29,6 +29,7 @@ import org.openbase.bco.ontology.lib.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
@@ -40,11 +41,9 @@ import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
-import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.dal.AudioSourceDataType;
-import rst.domotic.unit.dal.BatteryDataType;
-import rst.domotic.unit.dal.ColorableLightDataType;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 import rst.timing.TimestampType;
 
 import java.io.IOException;
@@ -69,32 +68,35 @@ public class StateObservation<T> extends IdentifyStateType {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH); //TODO
-    private final Map<String, String> serviceTypeMap = new HashMap<>();
+    private Map<String, ServiceType> serviceTypeMap;
     private String remoteUnitId;
     private final Stopwatch stopwatch;
     private final TransactionBuffer transactionBuffer;
     private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
-    private Set<Method> methodSetStateType = null;
-    private final RSBInformer<String> rsbInformer;
+    private Set<Method> methodSetStateType;
+    private final RSBInformer<OntologyChange> rsbInformer;
+    private final UnitType unitType;
+    private final OntologyChange.Category category;
+    private final List<ServiceType> serviceList;
+    private boolean isInit = true;
 
-    public StateObservation(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer
-            , final RSBInformer<String> rsbInformer) {
+    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
+            throws NotAvailableException {
 
-
-
+        this.serviceList = new ArrayList<>();
+        this.category = OntologyChange.Category.UNKNOWN; //TODO
+        this.unitType = unitRemote.getType();
         this.rsbInformer = rsbInformer;
         this.transactionBuffer = transactionBuffer;
-        stopwatch = new Stopwatch();
+        this.stopwatch = new Stopwatch();
+
         initServiceTypeMap();
 
         final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
-
-            remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
-
-
-
-            if (methodSetStateType == null) {
+            if (isInit) {
+                remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
                 methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
+                isInit = false;
             }
 
             stateUpdate(unitRemoteObj); //TODO catch exception?!
@@ -115,41 +117,6 @@ public class StateObservation<T> extends IdentifyStateType {
         unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
     }
 
-    //TODO swap out...
-    private void initServiceTypeMap() {
-        for (final ServiceType serviceType : ServiceType.values()) {
-            final String serviceTypeName = serviceType.name();
-            final String reducedServiceTypeName = serviceTypeName.toLowerCase()
-                    .replaceAll(OntExpr.REMOVE.getName(), "");
-
-            serviceTypeMap.put(reducedServiceTypeName, serviceTypeName);
-        }
-    }
-
-    private String getServiceTypeMapping(final String methodStateTypeName) throws CouldNotPerformException {
-
-        try {
-            if (methodStateTypeName == null) {
-                throw new IllegalArgumentException("Cause String is null!");
-            }
-            // standardized string to allow comparison
-            final String stateTypeBuf = methodStateTypeName.toLowerCase().replaceFirst(MethodRegEx.GET.getName(), "");
-
-            for (final String serviceTypeName : serviceTypeMap.keySet()) {
-                if (serviceTypeName.contains(stateTypeBuf)) {
-                    // successful compared - return correct serviceType (ontology individual name)
-                    return serviceTypeMap.get(serviceTypeName);
-                }
-            }
-
-            throw new NoSuchElementException("Cause there is no element, which contains " + methodStateTypeName);
-
-        } catch (IllegalArgumentException | NoSuchElementException e) {
-            throw new CouldNotPerformException("Cannot perform reflection!", e);
-        }
-
-    }
-
     private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
         // main list, which contains complete observation instances
         List<TripleArrayList> tripleArrayLists = new ArrayList<>();
@@ -163,15 +130,10 @@ public class StateObservation<T> extends IdentifyStateType {
         final String predicateHasProviderService = OntProp.PROVIDER_SERVICE.getName();
         final String predicateHasTimeStamp = OntProp.TIME_STAMP.getName();
 
-//        System.out.println(Arrays.toString(remoteData.getClass().getMethods()));
-//        System.out.println("--------------------");
-
         //TODO get stateType only, which has changed...
 
         // foreach stateType ... every observation point represents an serviceType respectively stateValue
         for (Method methodStateType : methodSetStateType) {
-
-//            System.out.println(methodStateType);
             try {
                 // wait one millisecond to guarantee, that observation instances are unique
                 try {
@@ -193,9 +155,9 @@ public class StateObservation<T> extends IdentifyStateType {
                 tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasUnitId, remoteUnitId));
 
                 //### serviceType triple ###\\
-                final String objectServiceType = getServiceTypeMapping(methodStateType.getName());
-                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasProviderService, objectServiceType));
-//                System.out.println(objectServiceType);
+                final String serviceTypeObj = getServiceType(methodStateType.getName());
+                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, predicateHasProviderService, serviceTypeObj));
+//                System.out.println(serviceTypeObj);
 
                 //### timeStamp triple ###\\
                 final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
@@ -208,40 +170,71 @@ public class StateObservation<T> extends IdentifyStateType {
                 }
 
                 //### stateValue triple ###\\
-                tripleArrayListsBuf = addStateValue(objectServiceType, stateTypeObj, subjectObservation, tripleArrayListsBuf);
+                tripleArrayListsBuf = addStateValue(serviceTypeObj, stateTypeObj, subjectObservation, tripleArrayListsBuf);
 
                 // no exception produced: observation individual complete. add to main list
                 tripleArrayLists.addAll(tripleArrayListsBuf);
 
             } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
                 // Could not collect all elements of observation instance
-                ExceptionPrinter.printHistory("Could not get data from serviceType " + methodStateType.getName() + " from unitRemote " + remoteUnitId
+                ExceptionPrinter.printHistory("Could not get data from stateType " + methodStateType.getName() + " from unitRemote " + remoteUnitId
                         + ". Dropped.", e, LOGGER, LogLevel.WARN);
             }
             tripleArrayListsBuf.clear();
         }
-//        System.out.println("-----------");
 
         final String sparqlUpdateExpr = sparqlUpdateExpression.getSparqlBundleUpdateInsertEx(tripleArrayLists);
         System.out.println(sparqlUpdateExpr);
         tripleArrayLists.clear();
 
+        sendToServer(sparqlUpdateExpr);
+    }
+
+    private void sendToServer(final String sparqlUpdateExpr) {
         try {
             final int httpResponseCode = sparqlUpdateExpression.sparqlUpdate(sparqlUpdateExpr);
             final boolean httpSuccess = sparqlUpdateExpression.httpRequestSuccess(httpResponseCode);
 
-            if (!httpSuccess) {
-                //insert sparql update expression to buffer queue
-                transactionBuffer.insertData(sparqlUpdateExpr);
-            } else {
-                // publish notification via rsb
-                rsbInformer.publish("UNIT");
-//                System.out.println("success");
-            }
+            if (httpSuccess) {
+                final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).addUnitType(unitType)
+                        .addAllServiceType(serviceList).build();
 
+                // publish notification via rsb
+                rsbInformer.publish(ontologyChange);
+            } else {
+                // could not send to server - insert sparql update expression to buffer queue
+                transactionBuffer.insertData(sparqlUpdateExpr);
+            }
         } catch (IOException e) {
             transactionBuffer.insertData(sparqlUpdateExpr);
+        } catch (InterruptedException | CouldNotPerformException e) {
+            ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
+        }
+        serviceList.clear();
+    }
+
+    private void initServiceTypeMap() {
+        serviceTypeMap  = new HashMap<>();
+
+        for (final ServiceType serviceType : ServiceType.values()) {
+            final String reducedServiceTypeName = serviceType.name().toLowerCase().replaceAll(OntExpr.REMOVE.getName(), "");
+
+            serviceTypeMap.put(reducedServiceTypeName, serviceType);
         }
     }
 
+    private String getServiceType(final String methodStateType) throws NoSuchElementException {
+
+        // standardized string to allow comparison
+        final String stateTypeBuf = methodStateType.toLowerCase().replaceFirst(MethodRegEx.GET.getName(), "");
+
+        for (final String serviceType : serviceTypeMap.keySet()) {
+            if (serviceType.contains(stateTypeBuf)) {
+                // successful compared - return correct serviceType (ontology individual name)
+                serviceList.add(serviceTypeMap.get(serviceType));
+                return serviceTypeMap.get(serviceType).name();
+            }
+        }
+        throw new NoSuchElementException("Could not identify methodState, cause there is no element, which contains " + methodStateType);
+    }
 }

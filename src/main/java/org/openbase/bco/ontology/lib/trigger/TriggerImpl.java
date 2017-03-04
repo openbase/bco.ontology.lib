@@ -20,19 +20,24 @@ package org.openbase.bco.ontology.lib.trigger;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import org.openbase.bco.ontology.lib.config.OntologyChange;
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.pattern.Remote;
+import org.openbase.jul.pattern.Remote.ConnectionState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 /**
  * @author agatting on 21.12.16.
@@ -40,6 +45,7 @@ import rst.domotic.state.ActivationStateType.ActivationState;
 public class TriggerImpl implements Trigger {
 
     private static final List<OntologyChange.Category> UNKNOWN_CHANGE = new ArrayList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(TriggerImpl.class);
 
     static {
         UNKNOWN_CHANGE.add(OntologyChange.Category.UNKNOWN);
@@ -47,34 +53,41 @@ public class TriggerImpl implements Trigger {
 
     private final ObservableImpl<ActivationState.State> activationObservable;
     private boolean active;
-    private TriggerConfig config;
+    private TriggerConfig triggerConfig;
     private final OntologyRemote ontologyRemote;
-    private final Observer<Remote.ConnectionState> connectionObserver;
-    private final Observer<Collection<Category>> ontologyObserver;
+    private final Observer<ConnectionState> connectionObserver;
+    private final Observer<OntologyChange> ontologyObserver;
+    private ConnectionState hasConnection;
+    private final OntologyChange.Category category;
 
     /**
      * Constructor for TriggerImpl.
      */
     public TriggerImpl(final OntologyRemote ontologyRemote) {
+        this.category = OntologyChange.Category.UNKNOWN; //TODO
+        this.hasConnection = ConnectionState.UNKNOWN;
         this.ontologyRemote = ontologyRemote;
         this.activationObservable = new ObservableImpl<>(false, this);
-        this.connectionObserver = new Observer<Remote.ConnectionState>() {
-            @Override
-            public void update(Observable<Remote.ConnectionState> source, Remote.ConnectionState data) throws Exception {
-                switch (data) {
-                    case CONNECTED:
-                        notifyOntologyChange(UNKNOWN_CHANGE);
-                        break;
-                    case DISCONNECTED:
-                    case UNKNOWN:
-                    default:
-                        activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
-                }
+
+        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).build();
+
+        this.connectionObserver = (source, data) -> {
+            switch (data) {
+                case CONNECTED:
+                    hasConnection = ConnectionState.CONNECTED;
+                    notifyOntologyChange(ontologyChange);
+                    break;
+                case DISCONNECTED:
+                    hasConnection = ConnectionState.DISCONNECTED;
+                    activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
+                case UNKNOWN:
+                    hasConnection = ConnectionState.UNKNOWN;
+                    activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
+                default:
             }
         };
-        this.ontologyObserver = new Observer<Collection<OntologyChange.Category>>() {
-            @Override
-            public void update(Observable<Collection<OntologyChange.Category>> source, Collection<Category> data) throws Exception {
+        this.ontologyObserver = (Observable<OntologyChange> source, OntologyChange data) -> {
+            if (!hasConnection.equals(ConnectionState.DISCONNECTED)) {
                 notifyOntologyChange(data);
             }
         };
@@ -90,19 +103,10 @@ public class TriggerImpl implements Trigger {
         activationObservable.removeObserver(observer);
     }
 
-    public void init(String label, String query, Collection<Category> categoryList) throws InitializationException, InterruptedException {
-        try {
-            init(new TriggerConfig(label, query, categoryList));
-            activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
-        } catch (CouldNotPerformException e) {
-            throw new InitializationException(this, e);
-        }
-    }
-
     @Override
-    public void init(final TriggerConfig config) throws InitializationException, InterruptedException {
+    public void init(final TriggerConfig triggerConfig) throws InitializationException, InterruptedException {
         try {
-            this.config = config;
+            this.triggerConfig = triggerConfig;
             activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
         } catch (CouldNotPerformException e) {
             throw new InitializationException(this, e);
@@ -123,32 +127,48 @@ public class TriggerImpl implements Trigger {
         ontologyRemote.removeOntologyObserver(ontologyObserver);
     }
 
-    protected void notifyOntologyChange(final Collection<OntologyChange.Category> categoryCollection) throws CouldNotPerformException {
-        if (categoryCollection.contains(OntologyChange.Category.UNKNOWN) || isRelatedChange(categoryCollection)) {
+    private void notifyOntologyChange(final OntologyChange ontologyChange) throws CouldNotPerformException {
+        if (isRelatedChange(ontologyChange)) {
             try {
-                if (ontologyRemote.match(config.getQuery())) {
+                if (ontologyRemote.match(triggerConfig.getQuery())) {
                     activationObservable.notifyObservers(ActivationState.State.ACTIVE);
                 } else {
                     activationObservable.notifyObservers(ActivationState.State.DEACTIVE);
                 }
             } catch (IOException e) {
-
+                ExceptionPrinter.printHistory("Could not send query to server. Waiting of notification from ServerConnectionMonitor", e, LOGGER, LogLevel.WARN);
             }
         }
     }
 
-    public boolean isRelatedChange(final Collection<OntologyChange.Category> categoryCollection) {
-        for (final Category category : categoryCollection) {
-            if (config.getChangeCategory().contains(category)) {
+    private boolean isRelatedChange(final OntologyChange ontologyChange) {
+
+        final List<OntologyChange.Category> categories = ontologyChange.getCategoryList();
+        final List<UnitType> unitTypes = ontologyChange.getUnitTypeList();
+        final List<ServiceType> serviceTypes = ontologyChange.getServiceTypeList();
+
+        for (final OntologyChange.Category category : categories) {
+            if (triggerConfig.getDependingOntologyChange().getCategoryList().contains(category)) {
+                return true;
+            }
+        }
+
+        for (final UnitType unitType : unitTypes) {
+            if (triggerConfig.getDependingOntologyChange().getUnitTypeList().contains(unitType)) {
+                return true;
+            }
+        }
+
+        for (final ServiceType serviceType : serviceTypes) {
+            if (triggerConfig.getDependingOntologyChange().getServiceTypeList().contains(serviceType)) {
                 return true;
             }
         }
         return false;
     }
 
-    @Override
-    public TriggerConfig getConfig() {
-        return config;
+    public TriggerConfig getTriggerConfig() {
+        return triggerConfig;
     }
 
     @Override

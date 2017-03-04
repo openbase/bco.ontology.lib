@@ -18,12 +18,11 @@
  */
 package org.openbase.bco.ontology.lib.trigger.webcommun;
 
-import org.openbase.bco.ontology.lib.config.OntologyChange.Category;
 import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.pattern.Remote;
+import org.openbase.jul.pattern.Remote.ConnectionState;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * @author <a href="mailto:divine@openbase.org">Divine Threepwood</a>
@@ -32,11 +31,11 @@ public interface OntologyRemote {
 
     boolean match(final String query) throws IOException;
 
-    void addConnectionStateObserver(Observer<Remote.ConnectionState> observer);
+    void addConnectionStateObserver(Observer<ConnectionState> observer);
 
-    void removeConnectionStateObserver(Observer<Remote.ConnectionState> observer);
+    void removeConnectionStateObserver(Observer<ConnectionState> observer);
 
-    void addOntologyObserver(Observer<Collection<Category>> observer);
+    void addOntologyObserver(Observer<OntologyChange> observer);
 
-    void removeOntologyObserver(Observer<Collection<Category>> observer);
+    void removeOntologyObserver(Observer<OntologyChange> observer);
 }

@@ -18,8 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation;
 
-import org.openbase.bco.ontology.lib.config.OntologyChange;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -29,10 +29,9 @@ import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -48,24 +47,25 @@ public class TransactionBufferImpl implements TransactionBuffer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBufferImpl.class);
     private Future taskFuture;
-    private boolean isTaskFutureInit = true;
+    private boolean isTaskFutureInit = false;
     private final WebInterface webInterface;
     private final Queue<String> queue;
+    private final OntologyChange.Category category;
 
     public TransactionBufferImpl() {
         this.webInterface = new WebInterface();
         this.queue = new ConcurrentLinkedQueue<>();
+        this.category = OntologyChange.Category.UNKNOWN; //TODO
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void createAndStartQueue(final RSBInformer<String> synchronizedInformer)
-            throws CouldNotPerformException {
+    public void createAndStartQueue(final RSBInformer<OntologyChange> synchronizedInformer) throws CouldNotPerformException {
 
         try {
-            GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+            GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
 
                 while (queue.peek() != null) {
                     final String sparqlUpdateExpr = queue.peek();
@@ -78,18 +78,19 @@ public class TransactionBufferImpl implements TransactionBuffer {
                             queue.poll();
 
                             if (isTaskFutureInit) {
-                                isTaskFutureInit = false;
+                                isTaskFutureInit = true;
                                 setRSBInformerThread(synchronizedInformer);
                             } else if (!isTaskFutureInit && taskFuture.isCancelled()) {
                                 setRSBInformerThread(synchronizedInformer);
                             }
                         } else {
-                            throw new CouldNotProcessException("Could not upload sparql expression" +
-                                    ", cause response code is bad!");
+                            throw new CouldNotProcessException("Cause response code is bad!");
                         }
 
-                    } catch (IOException e) {
-                        throw new CouldNotProcessException("Could not upload sparql expression!", e);
+                    } catch (CouldNotProcessException | IOException e) {
+                        ExceptionPrinter.printHistory("Could not upload sparql expression!", e, LOGGER, LogLevel.WARN);
+                    } catch (NotAvailableException e) {
+
                     }
                 }
             }, 0, 1, TimeUnit.SECONDS);
@@ -117,8 +118,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
 
                         if (!httpSuccess) {
                             queue.poll();
-                            LOGGER.warn("Could not upload queue entry, because response code is bad." +
-                                    " Dropped to avoid endless loop.");
+                            LOGGER.warn("Could not upload queue entry, because response code is bad. Dropped to avoid endless loop.");
                         }
 
                     } catch (IOException e) {
@@ -145,24 +145,18 @@ public class TransactionBufferImpl implements TransactionBuffer {
         //TODO check size...
     }
 
-    private void setRSBInformerThread(final RSBInformer<String> synchronizedInformer) {
+    private void setRSBInformerThread(final RSBInformer<OntologyChange> synchronizedInformer) throws NotAvailableException {
 
-        final List<OntologyChange.Category> changeCategories = new ArrayList<>();
-        changeCategories.add(OntologyChange.Category.UNKNOWN);
+        taskFuture = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
+            try {
+                final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).build();
 
-        try {
-            taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-
-                try {
-                    synchronizedInformer.publish("UNIT"); //TODO
-                    taskFuture.cancel(true);
-                } catch (CouldNotPerformException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }, 0, 5, TimeUnit.SECONDS);
-        } catch (NotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
+                synchronizedInformer.publish(ontologyChange);
+                taskFuture.cancel(true);
+            } catch (CouldNotPerformException | InterruptedException e) {
+                ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
+            }
+        }, 0, OntConfig.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
     }
 
 }

@@ -41,13 +41,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 27.02.17.
  */
-public class ServerConnection {
+public class ServerConnectionMonitor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerConnection.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerConnectionMonitor.class);
     public static final ObservableImpl<ConnectionState> connectionStateObservable = new ObservableImpl<>();
     private ConnectionState lastConnectionState;
 
-    public ServerConnection() throws NotAvailableException {
+    public ServerConnectionMonitor() throws NotAvailableException {
 
         this.lastConnectionState = ConnectionState.DISCONNECTED;
 

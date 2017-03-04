@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.trigger;
 import org.openbase.jul.iface.Manageable;
 import org.openbase.jul.pattern.Observer;
 import rst.domotic.state.ActivationStateType.ActivationState;
+import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 
 /**
  * @author agatting on 21.12.16.
@@ -46,5 +47,5 @@ public interface Trigger extends Manageable<TriggerConfig> {
      *
      * @return The TriggerConfig of the trigger.
      */
-    TriggerConfig getConfig();
+    TriggerConfig getTriggerConfig();
 }

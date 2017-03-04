@@ -21,16 +21,12 @@ package org.openbase.bco.ontology.lib;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBuffer;
 import org.openbase.bco.ontology.lib.aboxsynchronisation.dataobservation.TransactionBufferImpl;
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
-import org.openbase.bco.ontology.lib.config.OntologyChange;
 import org.openbase.bco.ontology.lib.config.OntConfig;
-import org.openbase.bco.ontology.lib.config.jp.JPRsbScope;
 import org.openbase.bco.ontology.lib.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.tboxsynchronisation.TBoxLoader;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
-import org.openbase.bco.ontology.lib.trigger.TriggerConfig;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.bco.ontology.lib.trigger.sparql.AskQueryExamples;
 import org.openbase.jps.core.JPService;
@@ -40,17 +36,15 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
-import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 import rst.domotic.state.ActivationStateType.ActivationState;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author agatting on 20.10.16.
@@ -73,32 +67,26 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
         ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
         Stopwatch stopwatch = new Stopwatch();
-        try {
 
-//        LightDataType.LightData lightData = LightDataType.LightData.newBuilder().setId("").build(); //TODO
+        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+        transactionBuffer.createAndStartQueue();
+        new UnitRegistrySynchronizer(transactionBuffer);
 
-            final RSBInformer<String> rsbInformer = RsbCommunication.createInformer(JPService.getProperty(JPRsbScope.class).getValue());
-            final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-            transactionBuffer.createAndStartQueue();
-            new UnitRegistrySynchronizer(transactionBuffer);
-
-            stopwatch.waitForStart(2000);
-            new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
-        } catch (JPNotAvailableException e) {
-            throw new CouldNotPerformException("Could not get rsb scope from jp service.", e);
-        }
+        stopwatch.waitForStart(2000);
+        new UnitRemoteSynchronizer(transactionBuffer);
 
         stopwatch.waitForStart(10000);
         System.out.println("Erstelle Trigger...");
-        final List<OntologyChange.Category> changeCategories = new ArrayList<>();
-        changeCategories.add(OntologyChange.Category.UNIT);
 
-        final TriggerConfig triggerConfig = new TriggerConfig("trigger0", AskQueryExamples.QUERY_0, changeCategories);
+
+        OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
+        final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(AskQueryExamples.QUERY_0)
+                .setDependingOntologyChange(ontologyChange).build();
 
         final TriggerFactory triggerFactory = new TriggerFactory();
         final Trigger trigger = triggerFactory.newInstance(triggerConfig);
         trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-            System.out.println(trigger.getConfig().getLabel() + " is " + data);
+            System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
             // do useful stuff
         });
 
