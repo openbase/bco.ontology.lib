@@ -18,11 +18,11 @@
  */
 package org.openbase.bco.ontology.lib.trigger;
 
-import org.openbase.bco.ontology.lib.commun.RsbCommunication;
-import org.openbase.bco.ontology.lib.config.jp.JPRsbScope;
-import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
-import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemoteImpl;
-import org.openbase.bco.ontology.lib.trigger.webcommun.ServerConnectionMonitor;
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
+import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
+import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
+import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemoteImpl;
+import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -42,7 +42,7 @@ public class TriggerFactory implements Factory {
     public TriggerFactory() throws CouldNotPerformException {
 
         changeCategoryObservable = new ObservableImpl<>(false, this);
-        new ServerConnectionMonitor();
+        new ServerConnection();
 
         try {
             RsbCommunication.startRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);

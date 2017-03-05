@@ -29,7 +29,7 @@ import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.dal.remote.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.UnitRemoteFactoryImpl;
-import org.openbase.bco.ontology.lib.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.registry.unit.lib.UnitRegistry;
 import org.openbase.bco.registry.unit.remote.CachedUnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -519,7 +519,7 @@ public class FillOntology {
 
     /**
      * Integration of the individual providerServices into the ontology.
-     * @param unitConfig the config list of the units.
+     * @param unitConfig the system list of the units.
      */
     protected void integrateIndividualProviderServices(final UnitConfig unitConfig) {
         //LOGGER.info("Start integrate ontology with individual providerServices...");

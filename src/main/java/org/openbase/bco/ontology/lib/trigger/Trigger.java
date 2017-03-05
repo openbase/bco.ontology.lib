@@ -43,7 +43,7 @@ public interface Trigger extends Manageable<TriggerConfig> {
     void removeObserver(Observer<ActivationState.State> observer);
 
     /**
-     * Method returns the config of the created trigger.
+     * Method returns the system of the created trigger.
      *
      * @return The TriggerConfig of the trigger.
      */

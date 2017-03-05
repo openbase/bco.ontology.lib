@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.openbase.bco.ontology.lib.trigger.webcommun.OntologyRemote;
+import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -136,7 +136,7 @@ public class TriggerImpl implements Trigger {
                     activationObservable.notifyObservers(ActivationState.State.DEACTIVE);
                 }
             } catch (IOException e) {
-                ExceptionPrinter.printHistory("Could not send query to server. Waiting of notification from ServerConnectionMonitor", e, LOGGER, LogLevel.WARN);
+                ExceptionPrinter.printHistory("Could not send query to server. Waiting of notification from ServerConnection", e, LOGGER, LogLevel.WARN);
             }
         }
     }
