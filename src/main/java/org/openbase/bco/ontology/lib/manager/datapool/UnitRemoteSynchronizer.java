@@ -130,11 +130,11 @@ public class UnitRemoteSynchronizer {
             } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
                 ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                        + OntConfig.BIG_RETRY_PERIOD + " seconds!", e, LOGGER, LogLevel.ERROR);
+                        + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException e) {
                 //TODO
             }
-        }, 0, OntConfig.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
     private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer
@@ -175,7 +175,7 @@ public class UnitRemoteSynchronizer {
             MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
         } catch (MultiException e) {
             LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                    + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD + " seconds.");
+                    + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
         }
         // return a set of unitRemotes, which have no data yet
         return unitPairSet;
@@ -212,7 +212,7 @@ public class UnitRemoteSynchronizer {
                 MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
             } catch (MultiException e) {
                 LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                        + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD + " seconds.");
+                        + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
             }
 
             if (unitPairSetBuf.isEmpty()) {
@@ -223,7 +223,7 @@ public class UnitRemoteSynchronizer {
                 unitPairSet.addAll(unitPairSetBuf);
                 unitPairSetBuf.clear();
             }
-        }, OntConfig.BIG_RETRY_PERIOD, OntConfig.BIG_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, OntConfig.BIG_RETRY_PERIOD_SECONDS, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
     //TODO set generic dataClass?! Following static process not nice...

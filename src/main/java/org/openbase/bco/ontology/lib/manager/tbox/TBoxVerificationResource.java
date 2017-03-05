@@ -26,6 +26,7 @@ import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
 import org.openbase.jul.exception.CouldNotPerformException;
 
+import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -42,8 +43,7 @@ public interface TBoxVerificationResource {
      *
      * @return The list with ontClasses.
      */
-    static Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass
-            ontSuperClass, final boolean inclusiveSuperclass) {
+    static Set<OntClass> listSubclassesOfOntSuperclass(final Set<OntClass> ontClassSet, final OntClass ontSuperClass, final boolean inclusiveSuperclass) {
 
         // add initial superclass
         if (inclusiveSuperclass) {
@@ -77,8 +77,7 @@ public interface TBoxVerificationResource {
      * @throws IllegalArgumentException IllegalArgumentException.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static boolean isOntClassExisting(final String className, OntModel ontModel) throws IllegalArgumentException
-            , CouldNotPerformException {
+    static boolean isOntClassExisting(final String className, OntModel ontModel) throws IllegalArgumentException, IOException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
         final String classNameWithNS = OntologyEditCommands.addNamespaceToOntElement(className);
@@ -105,8 +104,7 @@ public interface TBoxVerificationResource {
      * @throws IllegalArgumentException IllegalArgumentException.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException
-            , CouldNotPerformException {
+    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException, IOException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
         final String propertyNameWithNS = OntologyEditCommands.addNamespaceToOntElement(propertyName);

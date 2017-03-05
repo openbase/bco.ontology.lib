@@ -79,32 +79,27 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
     /**
      * Constructor for UnitRegistrySynchronizer.
      */
-    public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) {
+    public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) throws NotAvailableException {
 
         this.transactionBufferImpl = transactionBuffer;
 
         // ### INIT ###
-        try {
-            taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-                try {
-                    unitRegistryRemote = Registries.getUnitRegistry();
-                    unitRegistryRemote.waitForData(1, TimeUnit.SECONDS);
-                    List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
+        taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                unitRegistryRemote = Registries.getUnitRegistry();
+                unitRegistryRemote.waitForData(1, TimeUnit.SECONDS);
+                List<UnitConfig> unitConfigListInit = unitRegistryRemote.getUnitConfigs();
 
-                    // fill ontology initial with whole registry unitConfigs
-                    aBoxSynchInitUnits(unitConfigListInit);
+                // fill ontology initial with whole registry unitConfigs
+                aBoxSynchInitUnits(unitConfigListInit);
 
-                    setUpdateObserver();
-                    taskFuture.cancel(true);
-                } catch (InterruptedException | CouldNotPerformException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                    // retry via scheduled thread
-                }
-            }, 0, 1, TimeUnit.SECONDS);
-        } catch (NotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-            //TODO
-        }
+                setUpdateObserver();
+                taskFuture.cancel(true);
+            } catch (InterruptedException | CouldNotPerformException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                // retry via scheduled thread
+            }
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     private void setUpdateObserver() {
@@ -159,8 +154,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, null, null);
         } else {
             // convert triples to single sparql update expression (delete and insert)
-            multiExprUpdate =
-                    getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, insertTripleArrayLists, null);
+            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, insertTripleArrayLists, null);
         }
 
         try {
@@ -199,7 +193,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             convertToSparqlExprAndUpload(null, insertTripleArrayLists);
 
             //TODO result
-        } catch (CouldNotPerformException e) {
+        } catch (IOException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
@@ -208,8 +202,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // get tbox of ontology (inspection doesn't necessary)
-            final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
+            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
             final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
@@ -230,7 +223,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             convertToSparqlExprAndUpload(deleteTripleArrayLists, insertTripleArrayLists);
 
             //TODO result
-        } catch (CouldNotPerformException e) {
+        } catch (IOException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
@@ -239,8 +232,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // get tbox of ontology (inspection doesn't necessary)
-            final OntModel ontModel
-                    = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
+            final OntModel ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
 
             final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
@@ -254,7 +246,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             convertToSparqlExprAndUpload(null, tripleArrayLists);
 
             //TODO result
-        } catch (CouldNotPerformException e) {
+        } catch (IOException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }

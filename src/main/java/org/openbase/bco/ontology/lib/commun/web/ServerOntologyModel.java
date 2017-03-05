@@ -26,10 +26,14 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.jul.exception.CouldNotPerformException;
 
+import java.io.IOException;
+
 /**
  * @author agatting on 19.01.17.
  */
 public interface ServerOntologyModel {
+
+    //TODO @addOntologyModel...every time a model is added, it should be added to all databases (consistency)
 
     /**
      * Method returns the ontology model from the ontology server. Consider correct uri.
@@ -38,7 +42,7 @@ public interface ServerOntologyModel {
      * @return The ontology model or null, if ontology model not available or rather empty.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static OntModel getOntologyModelFromServer(final String uri) throws CouldNotPerformException {
+    static OntModel getOntologyModelFromServer(final String uri) throws IOException {
 
         try {
             final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(uri);
@@ -46,7 +50,7 @@ public interface ServerOntologyModel {
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
         } catch (Exception e) {
-            throw new CouldNotPerformException("Could not get model from ontology server!", e);
+            throw new IOException("Could not get model from ontology server!", e);
         }
     }
 

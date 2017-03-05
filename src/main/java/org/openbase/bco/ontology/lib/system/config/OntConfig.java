@@ -33,6 +33,8 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the
  * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
@@ -147,7 +149,22 @@ public final class OntConfig {
         /**
          * StateValue (class).
          */
-        STATE_VALUE("StateValue");
+        STATE_VALUE("StateValue"),
+
+        /**
+         * BaseUnit (class).
+         */
+        BASE_UNIT("BaseUnit"),
+
+        /**
+         * HostUnit (class).
+         */
+        HOST_UNIT("HostUnit"),
+
+        /**
+         * DalUnit (class).
+         */
+        DAL_UNIT("DalUnit");
 
         private final String ontClass;
 
@@ -349,12 +366,17 @@ public final class OntConfig {
     /**
      * A small retry period time in seconds.
      */
-    public static final int SMALL_RETRY_PERIOD = 5;
+    public static final int SMALL_RETRY_PERIOD_SECONDS = 5;
+
+    /**
+     * A small retry period time in milliseconds.
+     */
+    public static final int SMALL_RETRY_PERIOD_MILLISECONDS = 5000;
 
     /**
      * A big retry period time in seconds.
      */
-    public static final int BIG_RETRY_PERIOD = 30;
+    public static final int BIG_RETRY_PERIOD_SECONDS = 30;
 
     /**
      * Absolute zero point of temperature (Celsius).
@@ -416,7 +438,7 @@ public final class OntConfig {
                         throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
                                 + "with ontology property! Wrong String or doesn't exist in ontology!");
                     }
-                } catch (IllegalArgumentException | CouldNotPerformException e) {
+                } catch (IllegalArgumentException | IOException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }
@@ -428,7 +450,7 @@ public final class OntConfig {
                         throw new NotAvailableException("Ontology class \"" + ontClass.getName()
                                 + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                     }
-                } catch (IllegalArgumentException | CouldNotPerformException e) {
+                } catch (IllegalArgumentException | IOException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }

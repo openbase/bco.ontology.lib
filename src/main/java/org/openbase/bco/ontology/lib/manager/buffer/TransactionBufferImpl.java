@@ -156,7 +156,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
             } catch (CouldNotPerformException | InterruptedException e) {
                 ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
             }
-        }, 0, OntConfig.SMALL_RETRY_PERIOD, TimeUnit.SECONDS);
+        }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
 }
