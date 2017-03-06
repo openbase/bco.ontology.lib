@@ -94,7 +94,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
+    public List<TripleArrayList> getMissingOntTripleOfStates(final List<UnitConfig> unitConfigList) {
 
         return buildOntTripleOfStates(unitConfigList);
     }

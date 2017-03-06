@@ -84,8 +84,7 @@ public class OntInstanceInspection {
         Set<String> ontServiceTypeIndNameSet = new HashSet<>(); //Ind: individual
 
         // preparation: get all individuals of the class "ProviderService" which are currently in the model
-        final OntClass ontClassServiceType = ontModel
-                .getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
+        final OntClass ontClassServiceType = ontModel.getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
         ontServiceTypeIndNameSet = listIndOfOntClass(ontServiceTypeIndNameSet, ontClassServiceType);
 
         // get all serviceTypes (ProviderService) of the registry
@@ -146,32 +145,4 @@ public class OntInstanceInspection {
         return individualNameSet;
     }
 
-    /**
-     * Method inspects the availability of an individual in the ontology.
-     *
-     * @param ontClass The ontClass, which contains the individual. Limited the search area.
-     * @param individualName The name of the individual (with or without namespace).
-     *
-     * @return Boolean with result true, if available and result false, if not available.
-     */
-    @SuppressWarnings("PMD.LocalVariableCouldBeFinal")
-    protected boolean existIndInOnt(final OntClass ontClass, final String individualName) {
-
-        String bufName = individualName;
-
-        if (individualName.startsWith(OntConfig.NS)) {
-            bufName = individualName.substring(OntConfig.NS.length(), individualName.length());
-        }
-
-        Set<String> stringSet = new HashSet<>();
-        stringSet = listIndOfOntClass(stringSet, ontClass);
-
-        for (String ontIndividual : stringSet) {
-             if (ontIndividual.equals(bufName)) {
-                 return true;
-             }
-        }
-
-        return false;
-    }
 }

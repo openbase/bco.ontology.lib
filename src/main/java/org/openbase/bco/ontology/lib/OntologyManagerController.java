@@ -18,14 +18,10 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
-import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.manager.tbox.TBoxLoader;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -57,8 +53,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 //        new TBoxSynchronizer();
 
-        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
-        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
         Stopwatch stopwatch = new Stopwatch();
 
         final TransactionBuffer transactionBuffer = new TransactionBufferImpl();

@@ -60,6 +60,20 @@ public final class OntConfig {
     }
 
     /**
+     * Method returns the uri to the tbox ontology update.
+     *
+     * @return The tbox update uri.
+     */
+    public static String getTBoxUpdateUri() {
+        try {
+            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + "update";
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return null;
+    }
+
+    /**
      * Method returns the uri to the ontology database of the server.
      *
      * @return The ontology database uri.

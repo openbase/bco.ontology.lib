@@ -41,6 +41,9 @@ public interface OntologyEditCommands {
         if (expression == null) {
             throw new IllegalArgumentException("Could not convert string to noun syntax, cause string is null!");
         }
+        if (!expression.contains("_")) { //TODO...
+            return expression;
+        }
 
         String convertString = "";
         final String[] stringParts = expression.toLowerCase().split("_");

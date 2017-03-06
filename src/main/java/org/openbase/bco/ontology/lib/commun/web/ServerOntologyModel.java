@@ -58,17 +58,18 @@ public interface ServerOntologyModel {
      * @param ontModel The ontModel, which should be uploaded to the ontology databases.
      * @param mainUri The main uri to the main ontology database.
      * @param tboxUri The tbox uri to the tbox ontology database.
+     * @throws IOException IOException.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static void addOntologyModel(final OntModel ontModel, final String mainUri, final String tboxUri) throws CouldNotPerformException {
+    static void addOntologyModel(final OntModel ontModel, final String mainUri, final String tboxUri) throws IOException, CouldNotPerformException {
 
         try {
             if (ontModel == null) {
-                throw new CouldNotPerformException("Cause main ontModel is null!");
+                throw new IllegalArgumentException("Cause main ontModel is null!");
             } else if (mainUri == null) {
-                throw new CouldNotPerformException("Cause main uri is null!");
-            } else if (tboxUri == null){
-                throw new CouldNotPerformException("Cause tbox uri is null!");
+                throw new IllegalArgumentException("Cause main uri is null!");
+            } else if (tboxUri == null) {
+                throw new IllegalArgumentException("Cause tbox uri is null!");
             }
 
             DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri);
@@ -77,8 +78,10 @@ public interface ServerOntologyModel {
             datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri);
             datasetAccessor.add(ontModel);
 
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             throw new CouldNotPerformException("Could not add model to ontology server!", e);
+        } catch (Exception e) {
+            throw new IOException("Could not add model to ontology server!", e);
         }
     }
 

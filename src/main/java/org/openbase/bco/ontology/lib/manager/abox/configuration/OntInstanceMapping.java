@@ -37,8 +37,7 @@ public interface OntInstanceMapping {
      *                       instances in the ontology.
      * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel
-            , final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel, final List<UnitConfig> unitConfigList);
 
     /**
      * Method converts the unit(Config)s into triples (OntSuperClass Unit!) and returns a triple list.
@@ -65,11 +64,10 @@ public interface OntInstanceMapping {
     /**
      * Method converts the unit(Config)s into triples (OntSuperClass State!) and returns a triple list.
      *
-     * @param ontModel The ontology model.
      * @param unitConfigList The unit(Config)s, which are convert into triples.
      * @return A list with triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel, final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingOntTripleOfStates(final List<UnitConfig> unitConfigList);
 
     /**
      * Method compares the registry providerServices with the providerServices (OntSuperClass ProviderService!) in the
