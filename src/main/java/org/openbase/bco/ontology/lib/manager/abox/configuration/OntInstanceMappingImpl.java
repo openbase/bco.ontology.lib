@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.manager.abox.configuration;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
+import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
@@ -51,6 +52,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
     //TODO exception handling
     //TODO add constructor with reusable java instances (e.g. ontClass, ...)?
+    //TODO add method, which calls all methods and checks if unitConfigs are initialized
 
     /**
      * {@inheritDoc}
@@ -92,17 +94,9 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel
-            , final List<UnitConfig> unitConfigList) {
+    public List<TripleArrayList> getMissingOntTripleOfStates(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
 
-        // the ontSuperClass of the ontology to get all state (sub)classes
-        final OntClass ontClass = ontModel.getOntClass(OntConfig.NS + OntCl.STATE.getName());
-
-        Set<OntClass> ontClassSet = new HashSet<>();
-        // the set with all ontology state classes
-        ontClassSet = TBoxVerificationResource.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
-
-        return buildOntTripleOfStates(ontClassSet, unitConfigList);
+        return buildOntTripleOfStates(unitConfigList);
     }
 
     /**
@@ -184,35 +178,30 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> buildOntTripleOfStates(final Set<OntClass> ontClassSet, final List<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildOntTripleOfStates(final List<UnitConfig> unitConfigSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 
         for (final UnitConfig unitConfig : unitConfigSet) {
+            final String unitId = unitConfig.getId();
 
-//            if (UnitConfigProcessor.isDalUnit(unitConfig.getType())) {
+            for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                try {
+                    String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
+                    serviceState = OntologyEditCommands.convertToNounSyntax(serviceState);
 
-                final String unitId = unitConfig.getId();
-
-                //TODO check availability (not dal only), compare with ontology
-                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-                    try {
-                        //TODO maybe compare with ontology ontClass State
-                        final String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
-
-                        tripleArrayLists.add(new TripleArrayList(unitId, OntExpr.A.getName(), serviceState));
-                    } catch (NotAvailableException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                    }
-//                }
+                    tripleArrayLists.add(new TripleArrayList(unitId, OntExpr.A.getName(), serviceState));
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
+                            , e, LOGGER, LogLevel.WARN);
+                }
             }
         }
 
         return tripleArrayLists;
     }
 
-    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass
-            , final Set<ServiceType> serviceTypeSet) {
+    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass, final Set<ServiceType> serviceTypeSet) {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
 

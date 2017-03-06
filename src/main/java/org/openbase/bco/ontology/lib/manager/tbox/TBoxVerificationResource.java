@@ -80,7 +80,7 @@ public interface TBoxVerificationResource {
     static boolean isOntClassExisting(final String className, OntModel ontModel) throws IllegalArgumentException, IOException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
-        final String classNameWithNS = OntologyEditCommands.addNamespaceToOntElement(className);
+        final String classNameWithNS = OntologyEditCommands.addNamespace(className);
 
 //        try {
             if (ontModel == null) {
@@ -107,7 +107,7 @@ public interface TBoxVerificationResource {
     static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException, IOException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
-        final String propertyNameWithNS = OntologyEditCommands.addNamespaceToOntElement(propertyName);
+        final String propertyNameWithNS = OntologyEditCommands.addNamespace(propertyName);
 
 //        try {
             if (ontModel == null) {

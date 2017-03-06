@@ -33,8 +33,6 @@ import java.io.IOException;
  */
 public interface ServerOntologyModel {
 
-    //TODO @addOntologyModel...every time a model is added, it should be added to all databases (consistency)
-
     /**
      * Method returns the ontology model from the ontology server. Consider correct uri.
      *
@@ -55,17 +53,30 @@ public interface ServerOntologyModel {
     }
 
     /**
-     * Method puts the ontology model to the server. Consider correct uri!
+     * Method adds (NOT replaces) the ontology model to the server databases. Normally both databases are extended with the same ontModel to ensure consistency.
      *
-     * @param ontModel The ontology model.
-     * @param uri The uri to the ontology server. Consider the different uri's to the services and dataSets!
+     * @param ontModel The ontModel, which should be uploaded to the ontology databases.
+     * @param mainUri The main uri to the main ontology database.
+     * @param tboxUri The tbox uri to the tbox ontology database.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static void addOntologyModel(final OntModel ontModel, final String uri) throws CouldNotPerformException {
+    static void addOntologyModel(final OntModel ontModel, final String mainUri, final String tboxUri) throws CouldNotPerformException {
 
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(uri);
+            if (ontModel == null) {
+                throw new CouldNotPerformException("Cause main ontModel is null!");
+            } else if (mainUri == null) {
+                throw new CouldNotPerformException("Cause main uri is null!");
+            } else if (tboxUri == null){
+                throw new CouldNotPerformException("Cause tbox uri is null!");
+            }
+
+            DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri);
             datasetAccessor.add(ontModel);
+
+            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri);
+            datasetAccessor.add(ontModel);
+
         } catch (Exception e) {
             throw new CouldNotPerformException("Could not add model to ontology server!", e);
         }
@@ -75,8 +86,7 @@ public interface ServerOntologyModel {
      * Method verifies, if the server contains an ontology model.
      *
      * @param uri The uri to the server and dataSet.
-     * @return {@code True} if the server contains an ontology model based on the uri parameter. Otherwise
-     * {@code false}.
+     * @return {@code True} if the server contains an ontology model based on the uri parameter. Otherwise {@code false}.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     static boolean isOntModelOnServer(final String uri) throws CouldNotPerformException {
@@ -87,8 +97,7 @@ public interface ServerOntologyModel {
 
             return !model.isEmpty();
         } catch (Exception e) {
-            throw new CouldNotPerformException("Could not verify, if server has an ontology. " +
-                    "Maybe no http connection or wrong uri?", e);
+            throw new CouldNotPerformException("Could not verify, if server has an ontology. Maybe no http connection or wrong uri?", e);
         }
     }
 }

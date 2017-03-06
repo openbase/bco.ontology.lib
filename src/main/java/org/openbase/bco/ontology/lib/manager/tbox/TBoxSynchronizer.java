@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.manager.tbox;
 
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
@@ -32,6 +33,7 @@ import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
@@ -56,58 +58,105 @@ public class TBoxSynchronizer {
         stopwatch = new Stopwatch();
 
         // ### Init ###
-        final OntModel ontModel = getTBox();
+        OntModel ontModel = getTBox();
 
         // add missing unitTypes to ontModel
-        compareUnitsWithOntClasses(unitConfigList, ontModel);
+        ontModel = compareUnitsWithOntClasses(unitConfigList, ontModel);
+        // add missing stateTypes to ontModel
+        ontModel = compareStatesWithOntology(unitConfigList, ontModel);
+
     }
 
-    private void compareUnitsWithOntClasses(final List<UnitConfig> unitConfigList, final OntModel ontModel) {
+    private OntModel compareUnitsWithOntClasses(final List<UnitConfig> unitConfigList, final OntModel ontModel) {
 
-        final OntClass unitOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespaceToOntElement(OntConfig.OntCl.UNIT.getName()));
+        final OntClass unitOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.UNIT.getName()));
         final Set<UnitType> missingUnitTypes = new HashSet<>();
-        Set<OntClass> ontClasses = new HashSet<>();
+        Set<OntClass> unitSubOntClasses = new HashSet<>();
 
-        ontClasses = TBoxVerificationResource.listSubclassesOfOntSuperclass(ontClasses, unitOntClass, false);
+        unitSubOntClasses = TBoxVerificationResource.listSubclassesOfOntSuperclass(unitSubOntClasses, unitOntClass, false);
 
         for (final UnitConfig unitConfig : unitConfigList) {
-            if (!isUnitTypePresent(unitConfig, ontClasses)) {
+            if (!isUnitTypePresent(unitConfig, unitSubOntClasses)) {
                 missingUnitTypes.add(unitConfig.getType());
             }
         }
 
-        addMissingOntUnit(ontModel, missingUnitTypes);
+        addMissingOntUnits(ontModel, missingUnitTypes);
+
+        return ontModel;
     }
 
-    private void addMissingOntUnit(final OntModel ontModel, final Set<UnitType> missingUnitTypes) {
+    private OntModel compareStatesWithOntology(final List<UnitConfig> unitConfigList, final OntModel ontModel) {
 
-        final OntClass dalOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespaceToOntElement(OntConfig.OntCl.DAL_UNIT.getName()));
-        final OntClass baseOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespaceToOntElement(OntConfig.OntCl.BASE_UNIT.getName()));
-        final OntClass hostOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespaceToOntElement(OntConfig.OntCl.HOST_UNIT.getName()));
+        final OntClass stateOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.STATE.getName()));
+        final Set<String> missingServiceStateTypes = new HashSet<>();
+        Set<OntClass> stateSubOntClasses = new HashSet<>();
 
-        for (final UnitType unitType : missingUnitTypes) {
-            String newOntClassUnitType = OntologyEditCommands.convertWordToNounSyntax(unitType.name());
-            newOntClassUnitType = OntologyEditCommands.addNamespaceToOntElement(newOntClassUnitType);
-            final OntClass missingUnitType = ontModel.createClass(newOntClassUnitType);
+        stateSubOntClasses = TBoxVerificationResource.listSubclassesOfOntSuperclass(stateSubOntClasses, stateOntClass, false);
 
-            // find correct subclass of unit (e.g. baseUnit, DalUnit)
-            if (UnitConfigProcessor.isDalUnit(unitType)) {
-                ontModel.getOntClass(dalOntClass.getURI()).addSubClass(missingUnitType);
-            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
-                if (UnitConfigProcessor.isHostUnit(unitType)) {
-                    ontModel.getOntClass(hostOntClass.getURI()).addSubClass(missingUnitType);
-                } else {
-                    ontModel.getOntClass(baseOntClass.getURI()).addSubClass(missingUnitType);
+        for (final UnitConfig unitConfig : unitConfigList) {
+            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                try {
+                    final String serviceStateName = Service.getServiceStateName(serviceConfig.getServiceTemplate());
+
+                    if (!isStateTypePresent(serviceStateName, stateSubOntClasses)) {
+                        missingServiceStateTypes.add(serviceStateName);
+                    }
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
+                            , e, LOGGER, LogLevel.WARN);
                 }
             }
         }
+        addMissingOntStates(ontModel, missingServiceStateTypes);
+
+        return ontModel;
     }
 
-    private boolean isUnitTypePresent(final UnitConfig unitConfig, final Set<OntClass> ontClasses) {
+    private OntModel addMissingOntUnits(final OntModel ontModel, final Set<UnitType> missingUnitTypes) {
+
+        final OntClass dalOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.DAL_UNIT.getName()));
+        final OntClass baseOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.BASE_UNIT.getName()));
+        final OntClass hostOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.HOST_UNIT.getName()));
+
+        for (final UnitType unitType : missingUnitTypes) {
+
+            final String missingUnitType = OntologyEditCommands.convertToNounAndAddNS(unitType.name());
+            final OntClass newOntClassUnitType = ontModel.createClass(missingUnitType);
+
+            // find correct subclass of unit (e.g. baseUnit, DalUnit)
+            if (UnitConfigProcessor.isDalUnit(unitType)) {
+                ontModel.getOntClass(dalOntClass.getURI()).addSubClass(newOntClassUnitType);
+            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
+                if (UnitConfigProcessor.isHostUnit(unitType)) {
+                    ontModel.getOntClass(hostOntClass.getURI()).addSubClass(newOntClassUnitType);
+                } else {
+                    ontModel.getOntClass(baseOntClass.getURI()).addSubClass(newOntClassUnitType);
+                }
+            }
+        }
+        return ontModel;
+    }
+
+    private OntModel addMissingOntStates(final OntModel ontModel, final Set<String> missingStateTypes) {
+
+        final OntClass stateOntClass = ontModel.getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.STATE.getName()));
+
+        for (final String missingState : missingStateTypes) {
+
+            final String missingStateType = OntologyEditCommands.convertToNounAndAddNS(missingState);
+            final OntClass newOntClassStateType = ontModel.createClass(missingStateType);
+
+            ontModel.getOntClass(stateOntClass.getURI()).addSubClass(newOntClassStateType);
+        }
+        return ontModel;
+    }
+
+    private boolean isUnitTypePresent(final UnitConfig unitConfig, final Set<OntClass> unitSubOntClasses) {
 
         final String unitTypeName = unitConfig.getType().name();
 
-        for (final OntClass ontClass : ontClasses) {
+        for (final OntClass ontClass : unitSubOntClasses) {
             if (ontClass.getLocalName().equalsIgnoreCase(unitTypeName)) {
                 return true;
             }
@@ -115,6 +164,15 @@ public class TBoxSynchronizer {
         return false;
     }
 
+    private boolean isStateTypePresent(final String serviceStateName, final Set<OntClass> stateSubOntClasses) {
+
+        for (final OntClass ontClass : stateSubOntClasses) {
+            if (ontClass.getLocalName().equalsIgnoreCase(serviceStateName)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private OntModel getTBox() throws InterruptedException {
 
@@ -134,19 +192,26 @@ public class TBoxSynchronizer {
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             }
         }
-
         return ontModel;
     }
 
+    private void uploadTBox(final OntModel ontModel) {
+
+        try {
+            ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
+        } catch (CouldNotPerformException e) {
+
+        }
+    }
+
     private void initTBox() throws NotAvailableException {
-        scheduledFutureTask = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+        scheduledFutureTask = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
 
             try {
                 if (!ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())) {
                     // server is empty - load and put ontology model (TBox) to first and second dataSets
                     final OntModel ontModel = TBoxLoader.loadOntModelFromFile(null);
-                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getTBoxDatabaseUri());
-                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
+                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
                 }
 
                 if (ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())
@@ -157,7 +222,7 @@ public class TBoxSynchronizer {
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             }
-        }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
+        }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
 }

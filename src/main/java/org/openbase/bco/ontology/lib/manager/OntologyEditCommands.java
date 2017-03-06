@@ -21,38 +21,45 @@ package org.openbase.bco.ontology.lib.manager;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 
+import java.util.Arrays;
+
 /**
  * @author agatting on 17.02.17.
  */
 public interface OntologyEditCommands {
 
     /**
-     * Method converts a given string to a string with noun syntax. Furthermore it replaces all signs, which aren't
-     * alphabetic letters and numbers.
+     * Method converts a given string to a string with noun syntax. Thereby are all string parts, which are separate by "_", an independent word/noun. For
+     * example 'ACTION_STATE' => 'ActionState'.
      *
-     * @param expression The string, which should be convert.
+     * @param expression The string, which should be converted.
      * @return The converted string.
      * @throws IllegalArgumentException IllegalArgumentException.
      */
-    static String convertWordToNounSyntax(String expression) throws IllegalArgumentException {
+    static String convertToNounSyntax(final String expression) throws IllegalArgumentException {
 
-        if (expression != null) {
-            expression = expression.toLowerCase().replaceAll(OntExpr.REMOVE.getName(), "");
-            return expression.substring(0, 1).toUpperCase() + expression.substring(1);
+        if (expression == null) {
+            throw new IllegalArgumentException("Could not convert string to noun syntax, cause string is null!");
         }
 
-        throw new IllegalArgumentException("Could not convert string to noun syntax, cause parameter is null!");
+        String convertString = "";
+        final String[] stringParts = expression.toLowerCase().split("_");
+
+        for (final String buf : stringParts) {
+            convertString = convertString + buf.substring(0, 1).toUpperCase() + buf.substring(1);
+        }
+
+        return convertString;
     }
 
     /**
-     * Method adds the ontology namespace to an ontElement string. If there is the namespace already, the string is
-     * untreated returned.
+     * Method adds the ontology namespace to an ontElement string. If there is the namespace already, the string is untreated returned.
      *
      * @param ontElement The string, which should be extended by ontology namespace.
      * @return The input string with starting namespace.
      * @throws IllegalArgumentException IllegalArgumentException.
      */
-    static String addNamespaceToOntElement(final String ontElement) throws IllegalArgumentException {
+    static String addNamespace(final String ontElement) throws IllegalArgumentException {
 
         if (ontElement != null) {
             if (!ontElement.startsWith(OntConfig.NS)) {
@@ -64,6 +71,19 @@ public interface OntologyEditCommands {
         }
 
         throw new IllegalArgumentException("Could not convert string to noun syntax, cause parameter is null!");
+    }
+
+    /**
+     * Method converts a string to noun syntax and add the ontology namespace. See {@link #convertToNounSyntax(String)} and {@link #addNamespace(String)} methods.
+     *
+     * @param ontElementExpr The string, which should be converted to noun syntax and the namespace is added.
+     * @return The converted and namespace added string.
+     * @throws IllegalArgumentException IllegalArgumentException.
+     */
+    static String convertToNounAndAddNS(final String ontElementExpr) throws IllegalArgumentException {
+
+        final String newExpr = convertToNounSyntax(ontElementExpr);
+        return addNamespace(newExpr);
     }
 
 }

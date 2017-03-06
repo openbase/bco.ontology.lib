@@ -84,7 +84,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         this.transactionBufferImpl = transactionBuffer;
 
         // ### INIT ###
-        taskFuture = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+        taskFuture = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
                 unitRegistryRemote = Registries.getUnitRegistry();
                 unitRegistryRemote.waitForData(1, TimeUnit.SECONDS);
