@@ -276,11 +276,9 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // upload to ontology server
-            final int httpResponseCode = sparqlUpdate(multiExprUpdate);
-            // check response code
-            final boolean httpSuccess = httpRequestSuccess(httpResponseCode);
+            final boolean isHttpSuccess = sparqlUpdateToAllDataBases(multiExprUpdate);
 
-            if (!httpSuccess) {
+            if (!isHttpSuccess) {
                 transactionBufferImpl.insertData(multiExprUpdate);
             } else {
 

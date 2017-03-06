@@ -33,6 +33,7 @@ import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotProcessException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,23 +45,11 @@ import java.util.List;
  * @author agatting on 12.12.16.
  */
 public class WebInterface {
-    //CHECKSTYLE.OFF: MultipleStringLiterals
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
 
-//    private static final String UPDATE =
-//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-//                    + "INSERT DATA { "
-//                    + "NS:bla a NS:OBSERVATION . "
-//                    + "} ";
-
-//    private static final String QUERY =
-//            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-//                    + "ASK { "
-//                    + "NS:o3 a NS:OBSERVATION . "
-//                    + "} ";
-
     /**
-     * WebInterface.
+     * Constructor for WebInterface.
      */
     public WebInterface() {
 
@@ -97,13 +86,13 @@ public class WebInterface {
     }
 
     /**
-     * Method processes a sparql update and returns the response status code of the http request.
+     * Method processes a sparql update (update string) to the main database of the ontology server.
      *
      * @param updateString The sparql update string.
-     * @throws CouldNotProcessException CouldNotProcessException.
-     * @return The status code of the http request.
+     * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
+     * @throws IOException IOException.
      */
-    public int sparqlUpdate(final String updateString) throws IOException {
+    public boolean sparqlUpdateToMainOntology(final String updateString) throws IOException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPost = new HttpPost(OntConfig.getOntUpdateUri());
@@ -114,12 +103,45 @@ public class WebInterface {
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             final HttpResponse httpResponse = httpclient.execute(httpPost);
+            final int responseCode = httpResponse.getStatusLine().getStatusCode();
 
-            return httpResponse.getStatusLine().getStatusCode();
-
+            return isHttpRequestSuccess(responseCode);
         } catch (IOException e) {
-            throw new IOException("Could not perform sparql update!", e);
+            throw new IOException("Could not perform sparql update via http communication!", e);
         }
+    }
+
+    /**
+     * Method processes a sparql update (update string) to all databases of the ontology server (main and tbox databases).
+     *
+     * @param updateString The sparql update string.
+     * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
+     * @throws IOException IOException.
+     */
+    public boolean sparqlUpdateToAllDataBases(final String updateString) throws IOException {
+
+        final HttpClient httpclient = HttpClients.createDefault();
+        final HttpPost httpPostMain = new HttpPost(OntConfig.getOntUpdateUri());
+        final HttpPost httpPostTBox = new HttpPost(OntConfig.getTBoxDatabaseUri());
+
+        final List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("update", updateString));
+
+        try {
+            httpPostMain.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            final HttpResponse httpResponseMain = httpclient.execute(httpPostMain);
+            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
+
+            final int codeMain = httpResponseMain.getStatusLine().getStatusCode();
+            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
+
+            return isHttpRequestSuccess(codeMain) && isHttpRequestSuccess(codeTBox);
+        } catch (IOException e) {
+            throw new IOException("Could not perform sparql update via http communication!", e);
+        }
+
+
     }
 
     /**
@@ -150,31 +172,22 @@ public class WebInterface {
         return String.valueOf(statusCode).startsWith("2");
     }
 
-    public void responseCodeHandling(final int responseCode) {
+    public boolean isHttpRequestSuccess(final int responseCode) {
 
         final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
-        //TODO
+
         switch (reducedCode) {
-            case 1: // request in process
-
-                return;
             case 2: // request successful
-
-                return;
-            case 3: // bypass ... client should do something
-
-                return;
+                return true;
             case 4: // client error
-
-                return;
+                LOGGER.error("Response code is bad, cause update string is wrong! Check sparql update!");
+                return false;
             case 5: // server error
-
-                return;
+                LOGGER.error("Response code is bad, cause of server error! Maybe no connection?");
+                return false;
             default:
-
-                return; // abort
+                LOGGER.error("No valid response code of http communication. Check reason.");
+                return false; // abort
         }
     }
-
-    //CHECKSTYLE.ON: MultipleStringLiterals
 }

@@ -141,8 +141,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         System.out.println(sparqlUpdate);
 
                         try {
-                            final int responseCode = sparqlUpdate(sparqlUpdate);
-                            responseCodeHandling(responseCode); //TODO
+                            final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
+                            //TODO
                         } catch (IOException e) {
                             transactionBufferImpl.insertData(sparqlUpdate);
                         }
@@ -174,8 +174,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         System.out.println(sparqlUpdate);
 
         try {
-            final int responseCode = sparqlUpdate(sparqlUpdate);
-            responseCodeHandling(responseCode); //TODO
+            final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
+            //TODO
         } catch (IOException e) {
             transactionBufferImpl.insertData(sparqlUpdate);
         }

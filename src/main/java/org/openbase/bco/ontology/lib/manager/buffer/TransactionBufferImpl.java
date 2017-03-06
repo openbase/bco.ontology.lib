@@ -71,12 +71,14 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     final String sparqlUpdateExpr = queue.peek();
 
                     try {
+                        //TODO need info, if upload to all or single database
                         final int httpResponseCode = webInterface.sparqlUpdate(sparqlUpdateExpr);
                         final boolean httpSuccess = webInterface.httpRequestSuccess(httpResponseCode);
 
                         if (httpSuccess) {
                             queue.poll();
 
+                            //TODO send rsb message, if queue is empty...
                             if (isTaskFutureInit) {
                                 isTaskFutureInit = true;
                                 setRSBInformerThread(synchronizedInformer);

@@ -230,25 +230,4 @@ public class TBoxSynchronizer {
         return ontModel;
     }
 
-//    private void initTBox() throws NotAvailableException {
-//        scheduledFutureTask = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-//
-//            try {
-//                if (!ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())) {
-//                    // server is empty - load and put ontology model (TBox) to first and second dataSets
-//                    final OntModel ontModel = TBoxLoader.loadOntModelFromFile(null);
-//                    ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
-//                }
-//
-//                if (ServerOntologyModel.isOntModelOnServer(OntConfig.getTBoxDatabaseUri())
-//                        && ServerOntologyModel.isOntModelOnServer(OntConfig.getOntDatabaseUri())) {
-//                    // tbox upload was successful
-//                    scheduledFutureTask.cancel(true);
-//                }
-//            } catch (CouldNotPerformException e) {
-//                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-//            }
-//        }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
-//    }
-
 }

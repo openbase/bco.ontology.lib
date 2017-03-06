@@ -192,10 +192,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private void sendToServer(final String sparqlUpdateExpr) {
         try {
-            final int httpResponseCode = sparqlUpdateExpression.sparqlUpdate(sparqlUpdateExpr);
-            final boolean httpSuccess = sparqlUpdateExpression.httpRequestSuccess(httpResponseCode);
+            final boolean isHttpSuccess = sparqlUpdateExpression.sparqlUpdateToMainOntology(sparqlUpdateExpr);
 
-            if (httpSuccess) {
+            if (isHttpSuccess) {
                 final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).addUnitType(unitType)
                         .addAllServiceType(serviceList).build();
 
