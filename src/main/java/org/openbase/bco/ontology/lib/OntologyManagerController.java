@@ -19,7 +19,6 @@
 package org.openbase.bco.ontology.lib;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
@@ -58,18 +57,16 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 //        new TBoxSynchronizer();
 
-        System.out.println(OntologyEditCommands.convertToNounSyntax("HASTE_BISTE_TOLL"));
+        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
+        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
+        Stopwatch stopwatch = new Stopwatch();
 
-//        OntModel ontModel = TBoxLoader.loadOntModelFromFile(null); //TODO catch
-//        ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri());
-//        Stopwatch stopwatch = new Stopwatch();
-//
-//        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-//        transactionBuffer.createAndStartQueue();
-//        new UnitRegistrySynchronizer(transactionBuffer);
-//
-//        stopwatch.waitForStart(2000);
-//        new UnitRemoteSynchronizer(transactionBuffer);
+        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+        transactionBuffer.createAndStartQueue();
+        new UnitRegistrySynchronizer(transactionBuffer);
+
+        stopwatch.waitForStart(2000);
+        new UnitRemoteSynchronizer(transactionBuffer);
 
 //        stopwatch.waitForStart(10000);
 //        System.out.println("Erstelle Trigger...");
