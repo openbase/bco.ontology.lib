@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.manager.datapool;
 
 import javafx.util.Pair;
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMapping;
@@ -100,9 +101,6 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             try {
                 // init: synchronize tbox based on server ontModel
                 final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair = tBoxSynchronizer.extendTBox(unitConfigList);
-                for (TripleArrayList tripleArrayList : ontModelTriplePair.getValue()) {
-                    System.out.println(tripleArrayList.getSubject() + ", " + tripleArrayList.getPredicate() + ", " + tripleArrayList.getObject());
-                }
                 // upload ontModel
                 tBoxSynchronizer.uploadOntModel(ontModelTriplePair.getKey());
 
@@ -274,7 +272,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         try {
             // upload to ontology server
-            final boolean isHttpSuccess = sparqlUpdateToAllDataBases(multiExprUpdate);
+            final boolean isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(multiExprUpdate);
 
             if (!isHttpSuccess) {
                 transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));

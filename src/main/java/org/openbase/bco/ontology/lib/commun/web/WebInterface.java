@@ -46,14 +46,14 @@ import java.util.List;
 /**
  * @author agatting on 12.12.16.
  */
-public class WebInterface {
+public interface WebInterface {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
+    Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
 
-    /**
-     * Constructor for WebInterface.
-     */
-    public WebInterface() {
+//    /**
+//     * Constructor for WebInterface.
+//     */
+//    public WebInterface() {
 
         // ask query via remote SPARQL
 //        final Query query = QueryFactory.create(QUERY);
@@ -84,8 +84,7 @@ public class WebInterface {
 //        credsProvider.setCredentials(authscope, scopedCredentials);
 //        HttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
 //        HttpOp.setDefaultHttpClient(httpclient);
-
-    }
+//    }
 
     /**
      * Method processes a sparql update (update string) to the main database of the ontology server.
@@ -93,7 +92,7 @@ public class WebInterface {
      * @param updateString The sparql update string.
      * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
      */
-    public boolean sparqlUpdateToMainOntology(final String updateString) throws CouldNotPerformException {
+    static boolean sparqlUpdateToMainOntology(final String updateString) throws CouldNotPerformException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPost = new HttpPost(OntConfig.getOntUpdateUri());
@@ -120,7 +119,7 @@ public class WebInterface {
      * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
      * @throws CouldNotPerformException CouldNotPerformException is thrown if request was not successful, because of e.g. update string is broken.
      */
-    public boolean sparqlUpdateToAllDataBases(final String updateString) throws CouldNotPerformException {
+    static boolean sparqlUpdateToAllDataBases(final String updateString) throws CouldNotPerformException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPostMain = new HttpPost(OntConfig.getOntUpdateUri());
@@ -152,7 +151,7 @@ public class WebInterface {
      * @return A resultSet with potential solutions.
      * @throws CouldNotProcessException CouldNotProcessException.
      */
-    public ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
+    static ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException {
         try {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory.sparqlService(OntConfig.getOntSparqlUri(), query);
@@ -160,16 +159,6 @@ public class WebInterface {
         } catch (Exception e) {
             throw new CouldNotProcessException("Could not get http response!", e);
         }
-    }
-
-    /**
-     * Method checks a status code of a http request.
-     *
-     * @param statusCode The status code.
-     * @return True, if success code, otherwise false.
-     */
-    public boolean httpRequestSuccess(final int statusCode) {
-        return String.valueOf(statusCode).startsWith("2");
     }
 
     /**
@@ -182,7 +171,7 @@ public class WebInterface {
      * @return {@code true} if request was successfully. {@code false} if request was not successfully, cause of server error (e.g. server down).
      * @throws CouldNotPerformException CouldNotPerformException is thrown, if the request was not successful, cause of another error.
      */
-    public boolean isHttpRequestSuccess(final int responseCode) throws CouldNotPerformException {
+    static boolean isHttpRequestSuccess(final int responseCode) throws CouldNotPerformException {
 
         final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
 

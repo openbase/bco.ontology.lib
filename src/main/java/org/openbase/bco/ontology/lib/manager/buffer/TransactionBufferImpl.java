@@ -35,6 +35,7 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -44,13 +45,12 @@ import java.util.concurrent.TimeUnit;
 public class TransactionBufferImpl implements TransactionBuffer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBufferImpl.class);
-    private final WebInterface webInterface;
     private final Queue<Pair<String, Boolean>> queue;
     private final OntologyChange.Category category;
     private final Stopwatch stopwatch;
+    private Future future;
 
     public TransactionBufferImpl() {
-        this.webInterface = new WebInterface();
         this.queue = new ConcurrentLinkedQueue<>();
         this.category = OntologyChange.Category.UNKNOWN; //TODO
         this.stopwatch = new Stopwatch();
@@ -63,7 +63,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
     public void createAndStartQueue(final RSBInformer<OntologyChange> synchronizedInformer) throws CouldNotPerformException {
 
         try {
-            GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
+            future = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
 
                 while (!queue.isEmpty()) {
                     final Pair<String, Boolean> pair = queue.peek();
@@ -73,10 +73,10 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     try {
                         if (pair.getValue()) {
                             // send to all databases
-                            isHttpSuccess = webInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr);
+                            isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr);
                         } else {
                             // send to main database only
-                            isHttpSuccess = webInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
+                            isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
                         }
 
                         if (isHttpSuccess) {
@@ -85,6 +85,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
                             stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                         }
                     } catch (InterruptedException e) {
+                        future.cancel(true);
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     } catch (CouldNotPerformException e) {
                         queue.poll();

@@ -23,6 +23,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
@@ -91,7 +92,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                 ResultSet resultSet = null;
 
                 try {
-                    resultSet = sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
+                    resultSet = WebInterface.sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
                 } catch (CouldNotProcessException e) {
                     ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
@@ -142,7 +143,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         System.out.println(sparqlUpdate);
 
                         try {
-                            final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
+                            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate);
                             //TODO
                         } catch (CouldNotPerformException e) {
                             transactionBufferImpl.insertData(new Pair<>(sparqlUpdate, false));
@@ -175,7 +176,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         System.out.println(sparqlUpdate);
 
         try {
-            final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
+            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate);
             //TODO
         } catch (CouldNotPerformException e) {
             transactionBufferImpl.insertData(new Pair<>(sparqlUpdate, false));

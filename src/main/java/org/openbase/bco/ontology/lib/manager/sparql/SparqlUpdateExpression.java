@@ -29,7 +29,7 @@ import java.util.List;
  * @author agatting on 23.12.16.
  */
 @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
-public class SparqlUpdateExpression extends WebInterface {
+public class SparqlUpdateExpression {
 
     //TODO namespace: current check => "NS:" only...not whole namespace
     //TODO as interface...

@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
+import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
@@ -138,11 +139,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         for (Method methodStateType : methodSetStateType) {
             try {
                 // wait one millisecond to guarantee, that observation instances are unique
-                try {
-                    stopwatch.waitForStop(1);
-                } catch (InterruptedException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                }
+                stopwatch.waitForStop(1);
 
                 // get method as invoked object
                 final Object stateTypeObj = methodStateType.invoke(remoteData);
@@ -181,6 +178,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 // Could not collect all elements of observation instance
                 ExceptionPrinter.printHistory("Could not get data from stateType " + methodStateType.getName() + " from unitRemote " + remoteUnitId
                         + ". Dropped.", e, LOGGER, LogLevel.WARN);
+            } catch (InterruptedException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             }
             tripleArrayListsBuf.clear();
         }
@@ -194,7 +193,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private void sendToServer(final String sparqlUpdateExpr) {
         try {
-            final boolean isHttpSuccess = sparqlUpdateExpression.sparqlUpdateToMainOntology(sparqlUpdateExpr);
+            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
 
             if (isHttpSuccess) {
                 final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).addUnitType(unitType)
