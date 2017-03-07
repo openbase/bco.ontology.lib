@@ -24,6 +24,7 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
+import org.openbase.bco.ontology.lib.trigger.sparql.QueryParser;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -46,17 +47,11 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
 
-    private static final String QUERY =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-                + "ASK { "
-                + "?x a NS:Device . "
-                + "} ";
-
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
 //        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
 //        new TBoxSynchronizer();
-
+        
         Stopwatch stopwatch = new Stopwatch();
 
         try {
@@ -71,7 +66,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         } catch (JPNotAvailableException e) {
             throw new InitializationException(this, e);
         }
-
 
 //        stopwatch.waitForStart(10000);
 //        System.out.println("Erstelle Trigger...");

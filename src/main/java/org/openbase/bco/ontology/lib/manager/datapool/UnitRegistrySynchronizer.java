@@ -183,7 +183,6 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
         // insert instances
-        //TODO current situation: ontModel is tbox... needed abox...add config abox to tbox database
         insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfUnitsAfterInspection(ontModel, unitConfigList));
         insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfStates(unitConfigList));
         insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfProviderServices(ontModel));
