@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.commun.monitor;
 
+import javafx.util.Pair;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
@@ -30,6 +31,7 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -38,7 +40,6 @@ import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -143,8 +144,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                         try {
                             final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
                             //TODO
-                        } catch (IOException e) {
-                            transactionBufferImpl.insertData(sparqlUpdate);
+                        } catch (CouldNotPerformException e) {
+                            transactionBufferImpl.insertData(new Pair<>(sparqlUpdate, false));
                         }
                     } else {
                         // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
@@ -176,8 +177,8 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
         try {
             final boolean isHttpSuccess = sparqlUpdateToMainOntology(sparqlUpdate);
             //TODO
-        } catch (IOException e) {
-            transactionBufferImpl.insertData(sparqlUpdate);
+        } catch (CouldNotPerformException e) {
+            transactionBufferImpl.insertData(new Pair<>(sparqlUpdate, false));
         }
     }
 

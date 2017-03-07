@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.buffer;
 
+import javafx.util.Pair;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
@@ -29,27 +30,22 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 public interface TransactionBuffer {
 
     /**
-     * Method creates an ConcurrentLinkedQueue and starts to upload the entries of the queue to the ontology server.
-     * After successful upload, the informer is used to push a notification.
+     * Method creates an ConcurrentLinkedQueue and starts to upload the entries of the queue to the ontology server. After successful upload, the informer
+     * is used to push a notification, if the synchronizedInformer is not null.
      *
-     * @param synchronizedInformer The RSB Informer to notify the trigger group
+     * @param synchronizedInformer The RSB Informer to notify the trigger group. If {@code null}, than no notification via rsb (create and start queue only).
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     void createAndStartQueue(final RSBInformer<OntologyChange> synchronizedInformer) throws CouldNotPerformException;
 
     /**
-     * Method creates an ConcurrentLinkedQueue and starts to upload the entries of the queue to the ontology server.
+     * Method inserts data in the queue. The data is a pair, which contains the sparql update string and a boolean, if the update should be send to all
+     * databases or send to the main database only.
      *
-     * @throws CouldNotPerformException CouldNotPerformException.
-     */
-    void createAndStartQueue() throws CouldNotPerformException;
-
-    /**
-     * Method inserts data in the queue.
-     *
-     * @param sparqlUpdateExpr The string that should be insert.
+     * @param sparqlUpdateAndToAllDataBasesPair Pair with the sparql update and a boolean, which means {@code true} send the sparql update to all databases.
+     *                                          Otherwise {@code false} the sparql update is send to the main database only.
      * @throws CouldNotProcessException If the string can't be insert into the queue.
      */
-    void insertData(final String sparqlUpdateExpr) throws CouldNotProcessException;
+    void insertData(final Pair<String, Boolean> sparqlUpdateAndToAllDataBasesPair) throws CouldNotProcessException;
 
 }

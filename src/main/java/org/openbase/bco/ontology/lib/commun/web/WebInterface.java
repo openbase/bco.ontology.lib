@@ -32,8 +32,10 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,9 +92,8 @@ public class WebInterface {
      *
      * @param updateString The sparql update string.
      * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
-     * @throws IOException IOException.
      */
-    public boolean sparqlUpdateToMainOntology(final String updateString) throws IOException {
+    public boolean sparqlUpdateToMainOntology(final String updateString) throws CouldNotPerformException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPost = new HttpPost(OntConfig.getOntUpdateUri());
@@ -107,7 +108,8 @@ public class WebInterface {
 
             return isHttpRequestSuccess(responseCode);
         } catch (IOException e) {
-            throw new IOException("Could not perform sparql update via http communication!", e);
+            ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
+            return false;
         }
     }
 
@@ -116,9 +118,9 @@ public class WebInterface {
      *
      * @param updateString The sparql update string.
      * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
-     * @throws IOException IOException.
+     * @throws CouldNotPerformException CouldNotPerformException is thrown if request was not successful, because of e.g. update string is broken.
      */
-    public boolean sparqlUpdateToAllDataBases(final String updateString) throws IOException {
+    public boolean sparqlUpdateToAllDataBases(final String updateString) throws CouldNotPerformException {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPostMain = new HttpPost(OntConfig.getOntUpdateUri());
@@ -138,10 +140,9 @@ public class WebInterface {
 
             return isHttpRequestSuccess(codeMain) && isHttpRequestSuccess(codeTBox);
         } catch (IOException e) {
-            throw new IOException("Could not perform sparql update via http communication!", e);
+            ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
+            return false;
         }
-
-
     }
 
     /**
@@ -168,26 +169,35 @@ public class WebInterface {
      * @return True, if success code, otherwise false.
      */
     public boolean httpRequestSuccess(final int statusCode) {
-
         return String.valueOf(statusCode).startsWith("2");
     }
 
-    public boolean isHttpRequestSuccess(final int responseCode) {
+    /**
+     * Method verifies the http response code. There are three returned answers to plan next steps to handle the http communication situation. First
+     * boolean true, if the request was successfully. Than boolean false, if the request was not successfully, because of a server error (e.g. server down).
+     * The third possibility is the thrown CouldNotPerformException to signal another error (e.g. client error). In the thrown error case, the data should be
+     * dropped (ontologyManager: sparql update is broken) and the developer should be analyse the reason of it...
+     *
+     * @param responseCode The http response code.
+     * @return {@code true} if request was successfully. {@code false} if request was not successfully, cause of server error (e.g. server down).
+     * @throws CouldNotPerformException CouldNotPerformException is thrown, if the request was not successful, cause of another error.
+     */
+    public boolean isHttpRequestSuccess(final int responseCode) throws CouldNotPerformException {
 
         final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
 
         switch (reducedCode) {
             case 2: // request successful
                 return true;
+            case 3: // request successful
+                throw new CouldNotPerformException("Http bypass code. Client must do something for successfully process of request...");
             case 4: // client error
-                LOGGER.error("Response code is bad, cause update string is wrong! Check sparql update!");
-                return false;
+                throw new CouldNotPerformException("Client error by sending sparql update. String maybe wrong!");
             case 5: // server error
                 LOGGER.error("Response code is bad, cause of server error! Maybe no connection?");
                 return false;
             default:
-                LOGGER.error("No valid response code of http communication. Check reason.");
-                return false; // abort
+                throw new CouldNotPerformException("Unknown response code. Check communication!");
         }
     }
 }

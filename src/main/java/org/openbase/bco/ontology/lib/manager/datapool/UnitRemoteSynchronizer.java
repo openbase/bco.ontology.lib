@@ -91,18 +91,15 @@ public class UnitRemoteSynchronizer {
     private ScheduledFuture scheduledFutureTask;
     private ScheduledFuture scheduledFutureTaskRemainingUnitRemotes;
 
-    public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer) throws InstantiationException, InitializationException {
+    public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
+            throws InstantiationException, InitializationException {
 
             // get classes via reflextion...
 //        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
 //        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
 
         try {
-            final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
-
             getAndMapUnitRemotesWithStateObservation(transactionBuffer, rsbInformer);
-        } catch (JPServiceException | InterruptedException e) {
-            throw new InitializationException(this, e);
         } catch (CouldNotPerformException e) {
             throw new InstantiationException(this, e);
         }

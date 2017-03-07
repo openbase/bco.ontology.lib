@@ -18,23 +18,23 @@
  */
 package org.openbase.bco.ontology.lib.manager.buffer;
 
+import javafx.util.Pair;
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
-import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
-import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -43,19 +43,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class TransactionBufferImpl implements TransactionBuffer {
 
-    //TODO handling, if one element is "defect" and can't be send to server/accepted from server
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBufferImpl.class);
-    private Future taskFuture;
-    private boolean isTaskFutureInit = false;
     private final WebInterface webInterface;
-    private final Queue<String> queue;
+    private final Queue<Pair<String, Boolean>> queue;
     private final OntologyChange.Category category;
+    private final Stopwatch stopwatch;
 
     public TransactionBufferImpl() {
         this.webInterface = new WebInterface();
         this.queue = new ConcurrentLinkedQueue<>();
         this.category = OntologyChange.Category.UNKNOWN; //TODO
+        this.stopwatch = new Stopwatch();
     }
 
     /**
@@ -67,64 +65,36 @@ public class TransactionBufferImpl implements TransactionBuffer {
         try {
             GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
 
-                while (queue.peek() != null) {
-                    final String sparqlUpdateExpr = queue.peek();
+                while (!queue.isEmpty()) {
+                    final Pair<String, Boolean> pair = queue.peek();
+                    final String sparqlUpdateExpr = pair.getKey();
+                    final boolean isHttpSuccess;
 
                     try {
-                        //TODO need info, if upload to all or single database
-                        final int httpResponseCode = webInterface.sparqlUpdate(sparqlUpdateExpr);
-                        final boolean httpSuccess = webInterface.httpRequestSuccess(httpResponseCode);
-
-                        if (httpSuccess) {
-                            queue.poll();
-
-                            //TODO send rsb message, if queue is empty...
-                            if (isTaskFutureInit) {
-                                isTaskFutureInit = true;
-                                setRSBInformerThread(synchronizedInformer);
-                            } else if (!isTaskFutureInit && taskFuture.isCancelled()) {
-                                setRSBInformerThread(synchronizedInformer);
-                            }
+                        if (pair.getValue()) {
+                            // send to all databases
+                            isHttpSuccess = webInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr);
                         } else {
-                            throw new CouldNotProcessException("Cause response code is bad!");
+                            // send to main database only
+                            isHttpSuccess = webInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
                         }
 
-                    } catch (CouldNotProcessException | IOException e) {
-                        ExceptionPrinter.printHistory("Could not upload sparql expression!", e, LOGGER, LogLevel.WARN);
-                    } catch (NotAvailableException e) {
-
-                    }
-                }
-            }, 0, 1, TimeUnit.SECONDS);
-
-        } catch (RejectedExecutionException | IllegalArgumentException | CouldNotPerformException e) {
-            throw new CouldNotProcessException("Could not process transactionBuffer thread!", e);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void createAndStartQueue() throws CouldNotPerformException {
-
-        try {
-            GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-
-                while (queue.peek() != null) {
-                    final String sparqlUpdateExpr = queue.peek();
-
-                    try {
-                        final int httpResponseCode = webInterface.sparqlUpdate(sparqlUpdateExpr);
-                        final boolean httpSuccess = webInterface.httpRequestSuccess(httpResponseCode);
-
-                        if (!httpSuccess) {
+                        if (isHttpSuccess) {
                             queue.poll();
-                            LOGGER.warn("Could not upload queue entry, because response code is bad. Dropped to avoid endless loop.");
+                        } else {
+                            stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                         }
+                    } catch (InterruptedException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    } catch (CouldNotPerformException e) {
+                        queue.poll();
+                        ExceptionPrinter.printHistory("Dropped broken queue entry. Check reason!", e, LOGGER, LogLevel.ERROR);
+                    }
 
-                    } catch (IOException e) {
-                        throw new CouldNotProcessException("Could not upload sparql expression!", e);
+                    if (queue.isEmpty() && synchronizedInformer != null) {
+                        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).build();
+
+                        RsbCommunication.startNotification(synchronizedInformer, ontologyChange);
                     }
                 }
             }, 0, 1, TimeUnit.SECONDS);
@@ -138,27 +108,13 @@ public class TransactionBufferImpl implements TransactionBuffer {
      * {@inheritDoc}
      */
     @Override
-    public void insertData(final String sparqlUpdateExpr) throws CouldNotProcessException {
-        boolean isElementInQueue = queue.offer(sparqlUpdateExpr);
+    public void insertData(final Pair<String, Boolean> stringBooleanPair) throws CouldNotProcessException {
+        boolean isElementInQueue = queue.offer(stringBooleanPair);
 
         if (!isElementInQueue) {
             throw new CouldNotProcessException("Could not add element to queue!");
         }
         //TODO check size...
-    }
-
-    private void setRSBInformerThread(final RSBInformer<OntologyChange> synchronizedInformer) throws NotAvailableException {
-
-        taskFuture = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-            try {
-                final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).build();
-
-                synchronizedInformer.publish(ontologyChange);
-                taskFuture.cancel(true);
-            } catch (CouldNotPerformException | InterruptedException e) {
-                ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
-            }
-        }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
 }

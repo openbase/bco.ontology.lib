@@ -82,4 +82,19 @@ public class RsbCommunication {
             }
         }, false);
     }
+
+    /**
+     * Methods publishes the ontologyChange via given rsb informer.
+     *
+     * @param synchronizedInformer The synchronized rsb informer.
+     * @param ontologyChange The ontology change terms.
+     */
+    public static void startNotification(final RSBInformer<OntologyChange> synchronizedInformer, final OntologyChange ontologyChange) {
+
+        try {
+            synchronizedInformer.publish(ontologyChange);
+        } catch (CouldNotPerformException | InterruptedException e) {
+            ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
+        }
+    }
 }

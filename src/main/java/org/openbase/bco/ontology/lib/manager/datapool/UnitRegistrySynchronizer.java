@@ -29,7 +29,6 @@ import org.openbase.bco.ontology.lib.manager.abox.configuration.OntPropertyMappi
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
-import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -279,12 +277,12 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             final boolean isHttpSuccess = sparqlUpdateToAllDataBases(multiExprUpdate);
 
             if (!isHttpSuccess) {
-                transactionBufferImpl.insertData(multiExprUpdate);
+                transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
             } else {
-
+                //TODO rsb notification
             }
-        } catch (IOException e) {
-            transactionBufferImpl.insertData(multiExprUpdate);
+        } catch (CouldNotPerformException e) {
+            transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
         }
     }
 

@@ -18,10 +18,12 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
+import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -29,11 +31,13 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import rst.domotic.ontology.OntologyChangeType;
 
 /**
  * @author agatting on 20.10.16.
@@ -55,12 +59,19 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
         Stopwatch stopwatch = new Stopwatch();
 
-        final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
-        transactionBuffer.createAndStartQueue();
-        new UnitRegistrySynchronizer(transactionBuffer);
+        try {
+            final RSBInformer<OntologyChangeType.OntologyChange> rsbInformer = RsbCommunication
+                    .createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
+            final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
+            transactionBuffer.createAndStartQueue(rsbInformer);
+            new UnitRegistrySynchronizer(transactionBuffer);
 
-        stopwatch.waitForStart(2000);
-        new UnitRemoteSynchronizer(transactionBuffer);
+            stopwatch.waitForStart(2000);
+            new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
+        } catch (JPNotAvailableException e) {
+            throw new InitializationException(this, e);
+        }
+
 
 //        stopwatch.waitForStart(10000);
 //        System.out.println("Erstelle Trigger...");

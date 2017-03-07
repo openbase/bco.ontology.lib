@@ -18,7 +18,9 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
+import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
+import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
@@ -199,15 +201,14 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                         .addAllServiceType(serviceList).build();
 
                 // publish notification via rsb
-                rsbInformer.publish(ontologyChange);
+                RsbCommunication.startNotification(rsbInformer, ontologyChange);
             } else {
                 // could not send to server - insert sparql update expression to buffer queue
-                transactionBuffer.insertData(sparqlUpdateExpr);
+                transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
             }
-        } catch (IOException e) {
-            transactionBuffer.insertData(sparqlUpdateExpr);
-        } catch (InterruptedException | CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException e) {
+            // could not send to server - insert sparql update expression to buffer queue
+            transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
         }
         serviceList.clear();
     }
