@@ -155,9 +155,10 @@ public class StateTypeValue {
         final BrightnessState.DataUnit dataUnit = brightnessState.getBrightnessDataUnit();
 
         switch (dataUnit) {
-            case LUX:
-                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
-                break;
+            //TODO LUX is not unqualified...
+//            case LUX:
+//                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
+//                break;
             case PERCENT:
                 LOGGER.warn("Dropped brightness state value, cause cannot convert dataUnit Percentage to lux. Lux for query needed.");
                 break;
@@ -280,6 +281,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
         final IntensityState.DataUnit dataUnit = intensityState.getIntensityDataUnit();
+        intensityState.getIntensityDataUnit();
 
         switch (dataUnit) {
             case PERCENT:

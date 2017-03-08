@@ -23,6 +23,7 @@ import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemoteImpl;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
+import org.openbase.bco.ontology.lib.trigger.sparql.QueryParser;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -54,11 +55,64 @@ public class TriggerFactory implements Factory {
     @Override
     public Trigger newInstance(final Object config) throws InstantiationException, InterruptedException {
 
+        if (config == null) {
+            throw new IllegalArgumentException("TriggerConfig is null!");
+        }
+
+        final TriggerConfig triggerConfig = ((TriggerConfig) config);
+
+        if (triggerConfig.getLabel() == null || triggerConfig.getQuery() == null || triggerConfig.getDependingOntologyChange() == null) {
+            throw new IllegalArgumentException("At least one element of the triggerConfig is null!");
+        }
+
         final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
         final Trigger trigger = new TriggerImpl(ontologyRemote);
 
+        return initTrigger(trigger, triggerConfig);
+    }
+
+    public Trigger newInstance(final String label, final String query) throws InstantiationException, InterruptedException
+            , IllegalArgumentException {
+
+        if (label == null || query == null) {
+            throw new IllegalArgumentException("Trigger label or trigger query is null!");
+        }
+
+        final OntologyChange ontologyChange = getOntologyChange(label, query);
+
+        final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
+        final Trigger trigger = new TriggerImpl(ontologyRemote);
+        final TriggerConfig triggerConfig
+                = TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
+
+        return initTrigger(trigger, triggerConfig);
+    }
+
+    public OntologyChange getOntologyChange(final String label, final String query) throws IllegalArgumentException {
+
+        if (label == null || query == null) {
+            throw new IllegalArgumentException("Trigger label or trigger query is null!");
+        }
+
+        final QueryParser queryParser = new QueryParser(label, query);
+        return queryParser.getOntologyChange();
+    }
+
+    public TriggerConfig buildTriggerConfig(final String label, final String query) throws IllegalArgumentException {
+
+        if (label == null || query == null) {
+            throw new IllegalArgumentException("Trigger label or trigger query is null!");
+        }
+
+        final QueryParser queryParser = new QueryParser(label, query);
+        final OntologyChange ontologyChange = queryParser.getOntologyChange();
+
+        return TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
+    }
+
+    private Trigger initTrigger(final Trigger trigger, final TriggerConfig config) throws InterruptedException, InstantiationException {
         try {
-            trigger.init((TriggerConfig) config);
+            trigger.init(config);
             trigger.activate();
 
             return trigger;
