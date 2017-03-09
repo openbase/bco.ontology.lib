@@ -31,6 +31,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.manager.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -92,8 +93,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         this.rsbInformer = rsbInformer;
         this.transactionBuffer = transactionBuffer;
         this.stopwatch = new Stopwatch();
-
-        initServiceTypeMap();
+        this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
 
         final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
             if (isInit) {
@@ -210,16 +210,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
         }
         serviceList.clear();
-    }
-
-    private void initServiceTypeMap() {
-        serviceTypeMap  = new HashMap<>();
-
-        for (final ServiceType serviceType : ServiceType.values()) {
-            final String reducedServiceTypeName = serviceType.name().toLowerCase().replaceAll(OntExpr.REMOVE.getName(), "");
-
-            serviceTypeMap.put(reducedServiceTypeName, serviceType);
-        }
     }
 
     private String getServiceType(final String methodStateType) throws NoSuchElementException {

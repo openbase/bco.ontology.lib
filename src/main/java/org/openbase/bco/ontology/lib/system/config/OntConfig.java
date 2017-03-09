@@ -303,7 +303,7 @@ public final class OntConfig {
         /**
          * Pattern to remove all special signs in a string.
          */
-        REMOVE("[^\\p{Alpha}]"); //TODO "/[^A-Za-z0-9 ]/"?
+        REMOVE("[^\\p{Alpha}\\p{Digit}]+");
 
         private final String pattern;
 
