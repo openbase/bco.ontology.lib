@@ -402,6 +402,11 @@ public final class OntConfig {
      */
     public static final double FREEZING_POINT_FAHRENHEIT = 32.0;
 
+    /**
+     * Tolerance of heartbeat communication.
+     */
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 5;
+
     // -------------------------------
 
     /**

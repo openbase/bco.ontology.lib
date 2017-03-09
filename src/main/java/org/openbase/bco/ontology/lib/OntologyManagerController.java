@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
@@ -48,10 +49,9 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-//        HeartBeatCommunication heartBeatCommunication = new HeartBeatCommunication();
-//        new TBoxSynchronizer();
 
         Stopwatch stopwatch = new Stopwatch();
+        new HeartBeatCommunication();
 
         try {
             final RSBInformer<OntologyChangeType.OntologyChange> rsbInformer = RsbCommunication

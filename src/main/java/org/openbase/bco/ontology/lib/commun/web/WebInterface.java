@@ -23,6 +23,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.jena.query.Query;
@@ -30,6 +31,7 @@ import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -40,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -156,8 +159,8 @@ public interface WebInterface {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory.sparqlService(OntConfig.getOntSparqlUri(), query);
             return queryExecution.execSelect();
-        } catch (Exception e) {
-            throw new CouldNotProcessException("Could not get http response!", e);
+        } catch (QueryExceptionHTTP e) {
+            throw new CouldNotProcessException("Connect to " + OntConfig.getOntSparqlUri() + " failed. Connection establishment refused. Server offline?");
         }
     }
 
