@@ -43,7 +43,7 @@ public interface ServerOntologyModel {
     static OntModel getOntologyModelFromServer(final String uri) throws IOException {
 
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(uri);
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(uri + "data");
             final Model model = datasetAccessor.getModel();
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
@@ -72,10 +72,10 @@ public interface ServerOntologyModel {
                 throw new IllegalArgumentException("Cause tbox uri is null!");
             }
 
-            DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri);
+            DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri + "data");
             datasetAccessor.add(ontModel);
 
-            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri);
+            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
             datasetAccessor.add(ontModel);
 
         } catch (IllegalArgumentException e) {

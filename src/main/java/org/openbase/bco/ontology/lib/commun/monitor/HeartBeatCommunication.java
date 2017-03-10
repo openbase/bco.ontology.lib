@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.commun.monitor;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
@@ -29,8 +30,10 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
+import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -62,29 +65,39 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private final String pred_FirstHeartBeat;
     private final String pred_LastHeartBeat;
 
-    public HeartBeatCommunication() throws NotAvailableException, InterruptedException {
+    public HeartBeatCommunication() throws InitializationException {
 
-        this.stopwatch = new Stopwatch();
-        this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
-        this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
+        try {
+            this.stopwatch = new Stopwatch();
+            this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
+            this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
 
-        // first "repair" old connectionPhases
-        identifyIncompleteConnectionPhases();
+            // first "repair" old connectionPhases
+            identifyIncompleteConnectionPhases();
 
-        //generate new heartbeat phase
-        setNewHeartBeatPhase();
-        startHeartBeatThread();
+            //generate new heartbeat phase
+            setNewHeartBeatPhase();
+            startHeartBeatThread();
+        } catch (NotAvailableException | InterruptedException | JPServiceException e) {
+            throw new InitializationException(this, e);
+        }
     }
 
-    private void identifyIncompleteConnectionPhases() throws InterruptedException {
+    private void identifyIncompleteConnectionPhases() throws InterruptedException, JPServiceException {
         try {
+            final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+
+            if (resultSet == null || !resultSet.hasNext()) {
+                throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
+            }
+
+            final QuerySolution querySolution = resultSet.next();
+            final String lastTimeStamp = "\"" + querySolution.getLiteral("lastTime").getLexicalForm() + "\"^^xsd:dateTime";
             boolean isHttpSuccess = false;
 
             while (!isHttpSuccess) {
-                final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
-                final String lastTimeStamp = getLastTimestamp(resultSet);
-
-                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp));
+                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
+                        , OntConfig.ServerServiceForm.UPDATE);
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
@@ -102,11 +115,16 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
                 final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
-                final String subj_HeartBeatPhase = getResourceName(resultSet);
-                final String lastTimeStamp = getLastTimestamp(resultSet);
+                if (resultSet == null || !resultSet.hasNext()) {
+                    throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
+                }
+                final QuerySolution querySolution = resultSet.next();
+
+                final String subj_HeartBeatPhase = OntologyEditCommands.getLocalName(querySolution.getResource("blackout").toString());
+                final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
                 final Date now = new Date();
 
-                Date dateLastTimeStamp = simpleDateFormat.parse(lastTimeStamp + "+01:00");
+                Date dateLastTimeStamp = simpleDateFormat.parse(lastTimeStamp);
                 dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
 
                 if (dateLastTimeStamp.compareTo(now) >= 0) {
@@ -121,7 +139,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
 
-                    if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate)) {
+                    if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
                         throw new CouldNotProcessException("Could not update. Server offline?");
                     }
                 } else {
@@ -132,13 +150,13 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                 ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
             } catch (ParseException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | JPServiceException e) {
                 future.cancel(true);
             }
         }, 3, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void setNewHeartBeatPhase() throws InterruptedException {
+    private void setNewHeartBeatPhase() throws InterruptedException, JPServiceException {
 
         boolean isHttpSuccess = false;
 
@@ -162,7 +180,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
             final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
 
             try {
-                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate);
+                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
@@ -172,22 +190,6 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                 return;
             }
         }
-    }
-
-    private String getLastTimestamp(final ResultSet resultSet) throws CouldNotPerformException {
-
-        if (resultSet == null || !resultSet.hasNext()) {
-            throw new CouldNotPerformException("Could not identify last timestamp of heartbeat, cause query result is invalid! Query wrong?");
-        }
-        return resultSet.next().getLiteral("lastTimeStamp").getLexicalForm();
-    }
-
-    private String getResourceName(final ResultSet resultSet) throws CouldNotPerformException {
-
-        if (resultSet == null || !resultSet.hasNext()) {
-            throw new CouldNotPerformException("Could not identify heartbeat instance name, cause query result is invalid! Query wrong?");
-        }
-        return OntologyEditCommands.getLocalName(resultSet.next().getResource("blackout").toString());
     }
 
 }

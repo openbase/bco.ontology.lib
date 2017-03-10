@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.commun.trigger;
 
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
@@ -29,7 +30,7 @@ import java.io.IOException;
  */
 public interface OntologyRemote {
 
-    boolean match(final String query) throws IOException;
+    boolean match(final String query) throws IOException, JPServiceException;
 
     void addConnectionStateObserver(Observer<ConnectionState> observer);
 

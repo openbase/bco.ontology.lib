@@ -24,6 +24,9 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 
 import java.io.IOException;
@@ -77,14 +80,14 @@ public interface TBoxVerificationResource {
      * @throws IllegalArgumentException IllegalArgumentException.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static boolean isOntClassExisting(final String className, OntModel ontModel) throws IllegalArgumentException, IOException {
+    static boolean isOntClassExisting(final String className, OntModel ontModel) throws IllegalArgumentException, IOException, JPServiceException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
         final String classNameWithNS = OntologyEditCommands.addNamespace(className);
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
             }
             return ontModel.getOntClass(classNameWithNS) != null;
 
@@ -104,14 +107,14 @@ public interface TBoxVerificationResource {
      * @throws IllegalArgumentException IllegalArgumentException.
      * @throws CouldNotPerformException CouldNotPerformException.
      */
-    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException, IOException {
+    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException, IOException, JPServiceException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
         final String propertyNameWithNS = OntologyEditCommands.addNamespace(propertyName);
 
 //        try {
             if (ontModel == null) {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
             }
             return ontModel.getOntProperty(propertyNameWithNS) != null;
 

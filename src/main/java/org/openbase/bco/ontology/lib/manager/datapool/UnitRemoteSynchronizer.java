@@ -24,6 +24,7 @@ import org.openbase.bco.ontology.lib.system.config.BCOConfig.UnitDataClass;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
@@ -220,7 +221,7 @@ public class UnitRemoteSynchronizer {
 
     //TODO set generic dataClass?! Following static process not nice...
     private void identifyUnitRemote(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer
-            , final RSBInformer<OntologyChange> rsbInformer) throws NotAvailableException {
+            , final RSBInformer<OntologyChange> rsbInformer) throws InstantiationException {
 
         final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();
 

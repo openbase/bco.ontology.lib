@@ -32,7 +32,9 @@ import org.openbase.bco.ontology.lib.manager.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -83,50 +85,60 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private boolean wasConnected;
     private boolean isInit;
 
-    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer) //TODO final T classType
-            throws NotAvailableException {
+    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
+            throws InstantiationException {
 
-        this.unitType = unitRemote.getType();
-        this.rsbInformer = rsbInformer;
-        this.transactionBuffer = transactionBuffer;
-        this.stopwatch = new Stopwatch();
-        this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
-        this.unitRemote = unitRemote;
-        this.isInit = true;
+        try {
+            this.unitType = unitRemote.getType();
+            this.rsbInformer = rsbInformer;
+            this.transactionBuffer = transactionBuffer;
+            this.stopwatch = new Stopwatch();
+            this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
+            this.unitRemote = unitRemote;
+            this.isInit = true;
 
-        initConnectionState();
+            initConnectionState();
+//            init(classType);
 
-        final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
+            final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
             if (isInit) {
                 remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
                 methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
                 isInit = false;
             }
+                stateUpdate(unitRemoteObj); //TODO catch exception?!
+            };
 
-            stateUpdate(unitRemoteObj); //TODO catch exception?!
-        };
+            final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
+                if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
+                    // was NOT connected and now is connected - start connection phase
+                    updateConnectionPhase(State.ACTIVE);
+                    wasConnected = !wasConnected;
+                } else if (!connectionState.equals(ConnectionState.CONNECTED) && wasConnected){
+                    // was connected and now is NOT connected - close connection phase
+                    updateConnectionPhase(State.DEACTIVE);
+                    wasConnected = !wasConnected;
+                }
+            };
 
-        final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
-            if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
-                // was NOT connected and now is connected - start connection phase
-                updateConnectionPhase(State.ACTIVE);
-                wasConnected = !wasConnected;
-            } else if (!connectionState.equals(ConnectionState.CONNECTED) && wasConnected){
-                // was connected and now is NOT connected - close connection phase
-                updateConnectionPhase(State.DEACTIVE);
-                wasConnected = !wasConnected;
-            }
-        };
-
-        unitRemote.addDataObserver(unitRemoteStateObserver);
-        unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
+            unitRemote.addDataObserver(unitRemoteStateObserver);
+            unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
+        } catch (NotAvailableException | JPServiceException e) {
+            throw new InstantiationException(this, e);
+        }
     }
 
-//    private void bla(T blub) {
-//        remoteUnitId = (String) ReflectObjectPool.getInvokedObj(blub, MethodRegEx.GET_ID.getName());
+//    private void init(final T classType) {
+//        try {
+//            remoteUnitId = (String) ReflectObjectPool.getInvokedObj(classType, MethodRegEx.GET_ID.getName());
+//            System.out.println("unitid: " + remoteUnitId);
+//            methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(classType, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
+//        } catch (CouldNotPerformException e) {
+//            System.out.println("testerror"); //TODO
+//        }
 //    }
 
-    private void updateConnectionPhase(final State activationState) {
+    private void updateConnectionPhase(final State activationState) throws JPServiceException {
 
         // s: subject, p: predicate, o: object
         final String pred_IsA = OntExpr.A.getName();
@@ -161,7 +173,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         sendToServer(sparqlUpdate);
     }
 
-    private void initConnectionState() {
+    private void initConnectionState() throws JPServiceException {
         // reduce connectionState to binary classification - connected and not connected
         if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
             wasConnected = true;
@@ -171,7 +183,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     }
 
-    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
+    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException, JPServiceException {
         
         final List<ServiceType> serviceList = new ArrayList<>();
         // main list, which contains complete observation instances
@@ -246,9 +258,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     }
 
-    private boolean sendToServer(final String sparqlUpdateExpr) {
+    private boolean sendToServer(final String sparqlUpdateExpr) throws JPServiceException {
         try {
-            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
+            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
                 // could not send to server - insert sparql update expression to buffer queue

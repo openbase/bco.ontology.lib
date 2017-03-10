@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.system.config;
 
 /**
- * This class contains static sparql expressions, which are important for the ontology update and ontology query. Please do not touch!
+ * This class contains static sparql expressions, which are important for the ontology update and ontology query. Please do not modify!
  *
  * @author agatting on 10.03.17.
  */
@@ -28,7 +28,7 @@ public class StaticSparqlExpression {
     /**
      * Method returns a sparql update string, which identifies and fill the latest connectionPhase instance of each unit. If a connectionPhase is incomplete,
      * means the property 'hasLastConnection' is missing, the sparql update extends the connectionPhase with the 'hasLastConnection' and the given last
-     * heartBeat timestamp.
+     * heartBeat timestamp. Please do not modify!
      *
      * @param lastHeartBeatTimestamp The latest heartBeat timestamp.
      * @return A sparql update string to repair incomplete connectionPhases.
@@ -58,15 +58,15 @@ public class StaticSparqlExpression {
     }
 
     /**
-     * Select query to get the last timestamp of the latest heartbeat phase.
+     * Select query to get the last timestamp of the latest heartbeat phase. Please do not modify!
      */
     public final static String getLastTimestampOfHeartBeat =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?blackout ?lastTimeStamp { "
+            + "SELECT ?blackout ?lastTime { "
                 + "?blackout a NS:HeartBeatPhase . "
-                + "?blackout NS:hasFirstHeartBeat ?firstTimeStamp . "
-                + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
+                + "?blackout NS:hasFirstHeartBeat ?firstTime . "
+                + "?blackout NS:hasLastHeartBeat ?lastTime . "
             + "} "
-            + "ORDER BY DESC(?lastTimeStamp) LIMIT 1";
+            + "ORDER BY DESC(?lastTime) LIMIT 1";
 
 }

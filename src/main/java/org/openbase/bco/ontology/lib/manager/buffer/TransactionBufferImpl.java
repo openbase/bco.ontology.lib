@@ -22,6 +22,7 @@ import javafx.util.Pair;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -52,7 +53,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
 
     public TransactionBufferImpl() {
         this.queue = new ConcurrentLinkedQueue<>();
-        this.category = OntologyChange.Category.UNKNOWN; //TODO
+        this.category = OntologyChange.Category.UNKNOWN;
         this.stopwatch = new Stopwatch();
     }
 
@@ -73,10 +74,10 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     try {
                         if (pair.getValue()) {
                             // send to all databases
-                            isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr);
+                            isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
                         } else {
                             // send to main database only
-                            isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr);
+                            isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
                         }
 
                         if (isHttpSuccess) {
@@ -84,12 +85,13 @@ public class TransactionBufferImpl implements TransactionBuffer {
                         } else {
                             stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                         }
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException | JPServiceException e) {
                         future.cancel(true);
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     } catch (CouldNotPerformException e) {
                         queue.poll();
-                        ExceptionPrinter.printHistory("Dropped broken queue entry. Check reason!", e, LOGGER, LogLevel.ERROR);
+                        ExceptionPrinter.printHistory("Dropped broken queue entry. Server could not perform, cause of client error... wrong update?" +
+                                " Queue entry is: " + sparqlUpdateExpr, e, LOGGER, LogLevel.ERROR);
                     }
 
                     if (queue.isEmpty() && synchronizedInformer != null) {

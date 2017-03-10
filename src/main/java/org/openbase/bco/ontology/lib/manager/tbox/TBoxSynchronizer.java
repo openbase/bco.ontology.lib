@@ -26,7 +26,11 @@ import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -58,7 +62,7 @@ public class TBoxSynchronizer {
         this.stopwatch = new Stopwatch();
     }
 
-    public Pair<OntModel, List<TripleArrayList>> extendTBox(final List<UnitConfig> unitConfigList) throws InterruptedException {
+    public Pair<OntModel, List<TripleArrayList>> extendTBox(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
 
         // get tbox from server. if no available: create new from dependency.
         final OntModel ontModel = getTBox();
@@ -72,13 +76,14 @@ public class TBoxSynchronizer {
         return compareStatesWithOntology(unitConfigList, ontModelTriplePair);
     }
 
-    public void uploadOntModel(final OntModel ontModel) throws InterruptedException, CouldNotPerformException {
+    public void uploadOntModel(final OntModel ontModel) throws InterruptedException, CouldNotPerformException, JPServiceException {
 
         boolean isUploaded = false;
 
         while (!isUploaded) {
             try {
-                ServerOntologyModel.addOntologyModel(ontModel, OntConfig.getOntDatabaseUri(), OntConfig.getTBoxDatabaseUri());
+                ServerOntologyModel.addOntologyModel(ontModel, JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+                        , JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
                 isUploaded = true;
             } catch (IOException e) {
                 //retry
@@ -209,13 +214,13 @@ public class TBoxSynchronizer {
         return false;
     }
 
-    private OntModel getTBox() throws InterruptedException {
+    private OntModel getTBox() throws InterruptedException, JPServiceException {
 
         OntModel ontModel = null;
 
         while (ontModel == null) {
             try {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(OntConfig.getTBoxDatabaseUri());
+                ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
 
                 if (ontModel.isEmpty()) {
                     ontModel = TBoxLoader.loadOntModelFromFile(null);

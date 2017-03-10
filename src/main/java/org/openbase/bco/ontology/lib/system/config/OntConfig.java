@@ -25,6 +25,7 @@ import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerificationResource;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -50,7 +51,7 @@ public final class OntConfig {
      *
      * @return The tbox database uri.
      */
-    public static String getTBoxDatabaseUri() {
+    public static String getTBoxBaseUri() {
         try {
             return JPService.getProperty(JPTBoxDatabaseUri.class).getValue();
         } catch (JPNotAvailableException e) {
@@ -64,23 +65,23 @@ public final class OntConfig {
      *
      * @return The tbox update uri.
      */
-    public static String getTBoxUpdateUri() {
-        try {
-            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + "update";
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-        return null;
-    }
+//    public static String getTBoxUpdateUri() {
+//        try {
+//            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + "update";
+//        } catch (JPNotAvailableException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
+//        return null;
+//    }
 
     /**
      * Method returns the uri to the ontology database of the server.
      *
      * @return The ontology database uri.
      */
-    public static String getOntDatabaseUri() {
+    public static String getOntBaseUri() {
         try {
-            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "data";
+            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue();
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -92,27 +93,33 @@ public final class OntConfig {
      *
      * @return The ontology update uri.
      */
-    public static String getOntUpdateUri() {
-        try {
-            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "update";
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-        return null;
-    }
+//    public static String getOntUpdateUri() {
+//        try {
+//            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "update";
+//        } catch (JPNotAvailableException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
+//        return null;
+//    }
 
     /**
      * Method returns the uri to the ontology sparql (query) of the server.
      *
      * @return The ontology sparql (query) uri.
      */
-    public static String getOntSparqlUri() {
-        try {
-            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql";
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-        return null;
+//    public static String getOntSparqlUri() {
+//        try {
+//            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql";
+//        } catch (JPNotAvailableException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
+//        return null;
+//    }
+
+    public enum ServerServiceForm {
+        DATA,
+        UPDATE,
+        SPARQL
     }
 
     /**
@@ -458,9 +465,10 @@ public final class OntConfig {
      * @throws CouldNotPerformException CouldNotPerformException.
      */
     @SuppressWarnings("PMD.ExceptionAsFlowControl")
-    public void initialTestConfig(final OntModel ontModel) throws CouldNotPerformException {
+    public void initialTestConfig(final OntModel ontModel) throws CouldNotPerformException, JPServiceException {
 
         //TODO if null -> list all classes
+        //TODO check TBoxVerificationResource.isOntPropertyExisting and class if necessary...
 
         MultiException.ExceptionStack exceptionStack = null;
 

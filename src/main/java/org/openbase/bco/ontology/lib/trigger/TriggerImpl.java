@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -127,7 +128,7 @@ public class TriggerImpl implements Trigger {
         ontologyRemote.removeOntologyObserver(ontologyObserver);
     }
 
-    private void notifyOntologyChange(final OntologyChange ontologyChange) throws CouldNotPerformException {
+    private void notifyOntologyChange(final OntologyChange ontologyChange) throws CouldNotPerformException, JPServiceException {
         if (isRelatedChange(ontologyChange)) {
             try {
                 if (ontologyRemote.match(triggerConfig.getQuery())) {

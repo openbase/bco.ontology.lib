@@ -28,7 +28,10 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
@@ -44,7 +47,7 @@ import java.util.List;
 public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
-    public boolean match(String query) throws IOException {
+    public boolean match(String query) throws IOException, JPServiceException {
 
         boolean queryResult;
         final HttpEntity httpEntity = getHttpEntity(query);
@@ -86,13 +89,13 @@ public class OntologyRemoteImpl implements OntologyRemote {
         TriggerFactory.changeCategoryObservable.removeObserver(observer);
     }
 
-    private HttpEntity getHttpEntity(final String query) throws IOException {
+    private HttpEntity getHttpEntity(final String query) throws IOException, JPServiceException {
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair("query", query));
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpGet httpGet = new HttpGet(OntConfig.getOntSparqlUri() + "?" + URLEncodedUtils.format(params, "UTF-8"));
+        final HttpGet httpGet = new HttpGet(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql?" + URLEncodedUtils.format(params, "UTF-8"));
 
         final HttpEntity httpEntity = httpclient.execute(httpGet).getEntity();
 

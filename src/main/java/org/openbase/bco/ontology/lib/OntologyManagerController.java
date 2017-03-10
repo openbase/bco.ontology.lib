@@ -57,10 +57,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
             new UnitRegistrySynchronizer(transactionBuffer);
-
             new HeartBeatCommunication();
-
-            stopwatch.waitForStart(2000);
+            stopwatch.waitForStart(5000);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
         } catch (JPNotAvailableException e) {
             throw new InitializationException(this, e);

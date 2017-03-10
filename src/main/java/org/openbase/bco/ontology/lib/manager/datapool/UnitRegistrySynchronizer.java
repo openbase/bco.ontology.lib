@@ -32,6 +32,7 @@ import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -87,10 +88,8 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 
         // for init get the whole unitConfigList
         final List<UnitConfig> unitConfigList = getUnitConfigList();
-
         // start thread to synch tbox and abox initial
         startInitialization(unitConfigList);
-
         // start thread to synch tbox and abox changes by observer
         startUpdateObserver();
     }
@@ -166,6 +165,8 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
                 }
             } catch (InterruptedException e) {
                 //TODO
+            } catch (JPServiceException e) {
+                //TODO
             }
 //            if (!identifiableRemovedMessageMap.isEmpty()) {
 //                unitConfigListBuf.addAll(identifiableRemovedMessageMap.getMessages());
@@ -178,7 +179,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
     }
 
-    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigList, final OntModel ontModel) {
+    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigList, final OntModel ontModel) throws JPServiceException {
 
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
 
@@ -193,7 +194,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         convertToSparqlExprAndUpload(null, insertTripleArrayLists);
     }
 
-    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigList) throws InterruptedException {
+    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
 
         final List<TripleArrayList> deleteTripleArrayLists = new ArrayList<>();
         final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
@@ -220,7 +221,7 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
         convertToSparqlExprAndUpload(deleteTripleArrayLists, insertTripleArrayLists);
     }
 
-    private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigList) throws InterruptedException {
+    private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
 
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
         // get tbox of ontology (inspection doesn't necessary)
@@ -254,24 +255,24 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 //        convertToSparqlExprAndUpload(tripleArrayLists, null);
 //    }
 
-    private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTripleArrayLists, final List<TripleArrayList> insertTripleArrayLists) {
+    private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTriple, final List<TripleArrayList> insertTriple) throws JPServiceException {
 
         String multiExprUpdate;
 
-        if (deleteTripleArrayLists == null) {
+        if (deleteTriple == null) {
             // convert triples to single sparql update expression (insert)
-            multiExprUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
-        } else if (insertTripleArrayLists == null) {
+            multiExprUpdate = getSparqlBundleUpdateInsertEx(insertTriple);
+        } else if (insertTriple == null) {
             // convert triples to single sparql update expression (delete)
-            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, null, null);
+            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, null, null);
         } else {
             // convert triples to single sparql update expression (delete and insert)
-            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTripleArrayLists, insertTripleArrayLists, null);
+            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
         }
 
         try {
             // upload to ontology server
-            final boolean isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(multiExprUpdate);
+            final boolean isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
                 transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
