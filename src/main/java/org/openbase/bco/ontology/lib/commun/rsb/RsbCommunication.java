@@ -94,7 +94,7 @@ public class RsbCommunication {
         try {
             synchronizedInformer.publish(ontologyChange);
         } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Could not notify trigger via rsb!", e, LOGGER, LogLevel.ERROR);
+            ExceptionPrinter.printHistory("Could not notify trigger via rsb! Notification dropped!", e, LOGGER, LogLevel.ERROR);
         }
     }
 }

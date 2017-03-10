@@ -19,22 +19,23 @@
 package org.openbase.bco.ontology.lib.commun.monitor;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,9 +43,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,117 +56,138 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
     private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
+    private final Stopwatch stopwatch;
+    private Future future;
 
-    private final String predicateFirstHeartBeat;
-    private final String predicateLastHeartBeat;
+    private final String pred_FirstHeartBeat;
+    private final String pred_LastHeartBeat;
 
-    private final static String queryLastTimeStampOfCurrentHeartBeat =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
-                    + "SELECT ?blackout ?lastTimeStamp { "
-                    + "?blackout a NS:HeartBeatPhase . "
-                    + "?blackout NS:hasFirstHeartBeat ?firstTimeStamp . "
-                    + "?blackout NS:hasLastHeartBeat ?lastTimeStamp . "
-                    + "} "
-                    + "ORDER BY DESC(?lastTimeStamp) LIMIT 1";
+    public HeartBeatCommunication() throws NotAvailableException, InterruptedException {
 
-    public HeartBeatCommunication() throws NotAvailableException {
+        this.stopwatch = new Stopwatch();
+        this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
+        this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
 
-        this.predicateFirstHeartBeat = OntProp.HAS_FIRST_HEARTBEAT.getName();
-        this.predicateLastHeartBeat = OntProp.HAS_LAST_HEARTBEAT.getName();
+        // first "repair" old connectionPhases
+        identifyIncompleteConnectionPhases();
 
         //generate new heartbeat phase
         setNewHeartBeatPhase();
         startHeartBeatThread();
     }
 
+    private void identifyIncompleteConnectionPhases() throws InterruptedException {
+        try {
+            boolean isHttpSuccess = false;
+
+            while (!isHttpSuccess) {
+                final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+                final String lastTimeStamp = getLastTimestamp(resultSet);
+
+                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp));
+                if (!isHttpSuccess) {
+                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                }
+            }
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory("Could not identify incomplete connectionPhases!", e, LOGGER, LogLevel.ERROR);
+        }
+    }
+
     private void startHeartBeatThread() throws NotAvailableException {
         //observe current heartbeat now, refresh or start new heartbeat phase
-        GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
+        future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
 
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = WebInterface.sparqlQuerySelect(queryLastTimeStampOfCurrentHeartBeat);
+                final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
-                if (resultSet != null && resultSet.hasNext()) { // in this case, resultSet has one solution only
-                    final QuerySolution querySolution = resultSet.next();
-                    final Date now = new Date();
+                final String subj_HeartBeatPhase = getResourceName(resultSet);
+                final String lastTimeStamp = getLastTimestamp(resultSet);
+                final Date now = new Date();
+
+                Date dateLastTimeStamp = simpleDateFormat.parse(lastTimeStamp + "+01:00");
+                dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
+
+                if (dateLastTimeStamp.compareTo(now) >= 0) {
+                    // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
+                    final List<TripleArrayList> deleteTriple = new ArrayList<>();
+                    final List<TripleArrayList> insertTriple = new ArrayList<>();
                     final String objectDateTimeNow = "\"" + simpleDateFormat.format(now) + "\"^^xsd:dateTime";
-                    String lastTimeStamp = "";
-                    String heartBeatPhase = "";
 
-                    final Iterator<String> stringIterator = querySolution.varNames();
+                    deleteTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, null));
+                    insertTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
 
-                    while (stringIterator.hasNext()) {
-                        final RDFNode rdfNode = querySolution.get(stringIterator.next());
+                    // sparql update to replace last heartbeat timestamp
+                    final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
 
-                        if (rdfNode.isLiteral()) {
-                            lastTimeStamp = rdfNode.asLiteral().getLexicalForm();
-                        } else {
-                            // get substring by own implementation: getLocalName() of jena doesn't work correctly
-                            heartBeatPhase = rdfNode.asResource().toString();
-                            heartBeatPhase = heartBeatPhase.substring(OntConfig.NS.length(), heartBeatPhase.length());
-                        }
+                    if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate)) {
+                        throw new CouldNotProcessException("Could not update. Server offline?");
                     }
-
-                    Date dateLastTimeStamp = simpleDateFormat.parse(lastTimeStamp + "+01:00");
-                    dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
-
-                    if (dateLastTimeStamp.compareTo(now) >= 0) {
-                        // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
-                        final List<TripleArrayList> deleteTriple = new ArrayList<>();
-                        final List<TripleArrayList> insertTriple = new ArrayList<>();
-                        deleteTriple.add(new TripleArrayList(heartBeatPhase, predicateLastHeartBeat, null));
-                        insertTriple.add(new TripleArrayList(heartBeatPhase, predicateLastHeartBeat, objectDateTimeNow));
-
-                        // sparql update to replace last heartbeat timestamp
-                        final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
-//                        System.out.println(sparqlUpdate);
-
-                        sendHeartBeat(sparqlUpdate);
-                    } else {
-                        // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
-                        setNewHeartBeatPhase();
-                    }
+                } else {
+                    // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
+                    setNewHeartBeatPhase();
                 }
-            } catch (CouldNotProcessException e) {
-                ExceptionPrinter.printHistory("Dropped Heartbeat!", e, LOGGER, LogLevel.ERROR);
+            } catch (CouldNotProcessException | CouldNotPerformException e) {
+                ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
             } catch (ParseException e) {
-                ExceptionPrinter.printHistory("Dropped Heartbeat, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
+                ExceptionPrinter.printHistory("Dropped heartbeat update, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
+            } catch (InterruptedException e) {
+                future.cancel(true);
             }
         }, 3, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void setNewHeartBeatPhase() {
-        final Date now = new Date();
-        final String timeStampWithoutZoneNow = simpleDateFormatWithoutTimeZone.format(now);
-        final String timeStampNow = simpleDateFormat.format(now);
+    private void setNewHeartBeatPhase() throws InterruptedException {
 
-        final String subject = "heartBeatPhase" + timeStampWithoutZoneNow;
-        final String predicateA = OntExpr.A.getName();
+        boolean isHttpSuccess = false;
 
-        final String objectHeartBeat = OntCl.HEARTBEAT_PHASE.getName();
-        final String objectTimeStampLiteral = "\"" + timeStampNow + "\"^^xsd:dateTime";
+        while (!isHttpSuccess) {
+            // both timestamp strings must contain the SAME date
+            final Date now = new Date();
+            final String timestampWithoutZoneNow = simpleDateFormatWithoutTimeZone.format(now);
 
-        final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
-        // set initial current heartbeat phase with first and last timestamp (identical)
-        insertTripleArrayLists.add(new TripleArrayList(subject, predicateA, objectHeartBeat));
-        insertTripleArrayLists.add(new TripleArrayList(subject, predicateFirstHeartBeat, objectTimeStampLiteral));
-        insertTripleArrayLists.add(new TripleArrayList(subject, predicateLastHeartBeat, objectTimeStampLiteral));
+            final String subj_HeartBeatPhase = "heartBeatPhase" + timestampWithoutZoneNow;
+            final String pred_isA = OntExpr.A.getName();
 
-        final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
-//        System.out.println(sparqlUpdate);
+            final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
+            final String obj_TimeStamp = "\"" + simpleDateFormat.format(now) + "\"^^xsd:dateTime";
 
-        sendHeartBeat(sparqlUpdate);
+            final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
+            // set initial current heartbeat phase with first and last timestamp (identical)
+            insertTripleArrayLists.add(new TripleArrayList(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
+            insertTripleArrayLists.add(new TripleArrayList(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
+            insertTripleArrayLists.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
+
+            final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
+
+            try {
+                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate);
+                if (!isHttpSuccess) {
+                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                }
+            } catch (CouldNotPerformException e) {
+                ExceptionPrinter.printHistory("HeartBeat update is bad and could not be performed by ontology server. Please check implementation.", e, LOGGER
+                        , LogLevel.ERROR);
+                return;
+            }
+        }
     }
 
-    private void sendHeartBeat(final String sparqlUpdate) {
-        try {
-            if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate)) {
-                LOGGER.warn("Server could not reached! Offline?");
-            }
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Dropped HeartBeat update.", e, LOGGER, LogLevel.ERROR);
+    private String getLastTimestamp(final ResultSet resultSet) throws CouldNotPerformException {
+
+        if (resultSet == null || !resultSet.hasNext()) {
+            throw new CouldNotPerformException("Could not identify last timestamp of heartbeat, cause query result is invalid! Query wrong?");
         }
+        return resultSet.next().getLiteral("lastTimeStamp").getLexicalForm();
+    }
+
+    private String getResourceName(final ResultSet resultSet) throws CouldNotPerformException {
+
+        if (resultSet == null || !resultSet.hasNext()) {
+            throw new CouldNotPerformException("Could not identify heartbeat instance name, cause query result is invalid! Query wrong?");
+        }
+        return OntologyEditCommands.getLocalName(resultSet.next().getResource("blackout").toString());
     }
 
 }

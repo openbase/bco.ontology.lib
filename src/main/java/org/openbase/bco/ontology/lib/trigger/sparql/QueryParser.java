@@ -202,7 +202,7 @@ public class QueryParser {
     private boolean containsNegation(final String askQuery) {
 
         // official w3c sparql negation forms
-        final String[] negationForms = new String[] {"not exists", "!exists", "minus", "not in"};
+        final String[] negationForms = new String[] {"not exists", "!exists", "minus", "not in", "not bound"};
 
         for (final String negationForm : negationForms) {
             if (askQuery.toLowerCase().contains(negationForm)) {

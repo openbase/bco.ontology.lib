@@ -156,6 +156,11 @@ public final class OntConfig {
         HEARTBEAT_PHASE("HeartBeatPhase"),
 
         /**
+         * ConnectionPhase (class).
+         */
+        CONNECTION_PHASE("ConnectionPhase"),
+
+        /**
          * Observation (class).
          */
         OBSERVATION("Observation"),
@@ -237,6 +242,11 @@ public final class OntConfig {
          */
         UNIT_ID("hasUnitId"),
 
+        /**
+         * hasConnectionPhase (object property).
+         */
+        CONNECTION_PHASE("hasConnectionPhase"),
+
         // ### dataType properties of ontology ###
 
         /**
@@ -262,12 +272,22 @@ public final class OntConfig {
         /**
          * hasLastHeartBeat (dataType property).
          */
-        HAS_LAST_HEARTBEAT("hasLastHeartBeat"),
+        LAST_HEARTBEAT("hasLastHeartBeat"),
 
         /**
          * hasFirstHeartBeat (dataType property).
          */
-        HAS_FIRST_HEARTBEAT("hasFirstHeartBeat");
+        FIRST_HEARTBEAT("hasFirstHeartBeat"),
+
+        /**
+         * hasFirstConnection (dataType property).
+         */
+        FIRST_CONNECTION("hasFirstConnection"),
+
+        /**
+         * hasLastConnection (dataType property).
+         */
+        LAST_CONNECTION("hasLastConnection");
 
         private final String property;
 
@@ -325,11 +345,6 @@ public final class OntConfig {
      * Regular expressions for method/object searching.
      */
     public enum MethodRegEx {
-
-        /**
-         * Pattern for method name part.
-         */
-        GET_VALUE("getValue"),
 
         /**
          * Pattern for method name part.

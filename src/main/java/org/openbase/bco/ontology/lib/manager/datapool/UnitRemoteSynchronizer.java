@@ -18,17 +18,12 @@
  */
 package org.openbase.bco.ontology.lib.manager.datapool;
 
-import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.system.config.BCOConfig.UnitDataClass;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
@@ -94,7 +89,7 @@ public class UnitRemoteSynchronizer {
     public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
             throws InstantiationException, InitializationException {
 
-            // get classes via reflextion...
+            // get classes via reflection...
 //        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
 //        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
 
@@ -112,10 +107,10 @@ public class UnitRemoteSynchronizer {
 
             try {
                 final List<UnitConfig> unitConfigList = Units.getUnitRegistry().getUnitConfigs();
-                final Set<Pair<UnitRemote, UnitConfig>> unitPairSet = getAndActivateUnitRemotes(unitConfigList, transactionBuffer, rsbInformer);
+                final Set<UnitRemote> unitRemoteSet = getAndActivateUnitRemotes(unitConfigList, transactionBuffer, rsbInformer);
 
-                if (!unitPairSet.isEmpty()) {
-                    processOfRemainingUnitRemotes(unitPairSet, transactionBuffer, rsbInformer);
+                if (!unitRemoteSet.isEmpty()) {
+                    processOfRemainingUnitRemotes(unitRemoteSet, transactionBuffer, rsbInformer);
                 } else {
                     LOGGER.info("All unitRemotes loaded successfully.");
                 }
@@ -134,11 +129,11 @@ public class UnitRemoteSynchronizer {
         }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private Set<Pair<UnitRemote, UnitConfig>> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer
+    private Set<UnitRemote> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer
             , final RSBInformer<OntologyChange> rsbInformer) throws InterruptedException {
 
         MultiException.ExceptionStack exceptionStack = null;
-        final Set<Pair<UnitRemote, UnitConfig>> unitPairSet = new HashSet<>();
+        final Set<UnitRemote> unitRemoteSet = new HashSet<>();
 
         for (final UnitConfig unitConfig : unitConfigList) {
             if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
@@ -156,13 +151,13 @@ public class UnitRemoteSynchronizer {
 
                         if (unitRemote.isDataAvailable()) {
                             // unitRemote is ready. add stateObservation
-                            identifyUnitRemote(unitRemote, unitConfig, transactionBuffer, rsbInformer);
+                            identifyUnitRemote(unitRemote, transactionBuffer, rsbInformer);
                         } else {
-                            unitPairSet.add(new Pair<>(unitRemote, unitConfig));
+                            unitRemoteSet.add(unitRemote);
                         }
                     } catch (CouldNotPerformException e) {
                         // collect unitRemotes with missing data (wait for data timeout)
-                        unitPairSet.add(new Pair<>(unitRemote, unitConfig));
+                        unitRemoteSet.add(unitRemote);
                     }
                 }
             }
@@ -175,30 +170,30 @@ public class UnitRemoteSynchronizer {
                     + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
         }
         // return a set of unitRemotes, which have no data yet
-        return unitPairSet;
+        return unitRemoteSet;
     }
 
-    private void processOfRemainingUnitRemotes(Set<Pair<UnitRemote, UnitConfig>> unitPairSet, final TransactionBuffer transactionBuffer
+    private void processOfRemainingUnitRemotes(Set<UnitRemote> unitRemoteSet, final TransactionBuffer transactionBuffer
             , final RSBInformer<OntologyChange> rsbInformer) throws NotAvailableException {
 
-        Set<Pair<UnitRemote, UnitConfig>> unitPairSetBuf = new HashSet<>();
+        Set<UnitRemote> unitRemoteSetBuf = new HashSet<>();
 
         scheduledFutureTaskRemainingUnitRemotes = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
             MultiException.ExceptionStack exceptionStack = null;
 
-            for (final Pair<UnitRemote, UnitConfig> unitPair : unitPairSet) {
+            for (final UnitRemote unitRemote : unitRemoteSet) {
                 try {
-                    unitPair.getKey().waitForData(1, TimeUnit.SECONDS);
+                    unitRemote.waitForData(1, TimeUnit.SECONDS);
 
-                    if (unitPair.getKey().isDataAvailable()) {
+                    if (unitRemote.isDataAvailable()) {
                         // unitRemote is ready. add stateObservation
-                        identifyUnitRemote(unitPair.getKey(), unitPair.getValue(), transactionBuffer, rsbInformer);
+                        identifyUnitRemote(unitRemote, transactionBuffer, rsbInformer);
                     } else {
-                        unitPairSetBuf.add(unitPair);
+                        unitRemoteSetBuf.add(unitRemote);
                     }
                 } catch (CouldNotPerformException e) {
                     // add to set and stack exception
-                    unitPairSetBuf.add(unitPair);
+                    unitRemoteSetBuf.add(unitRemote);
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 } catch (InterruptedException e) {
                     //TODO
@@ -212,19 +207,19 @@ public class UnitRemoteSynchronizer {
                         + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
             }
 
-            if (unitPairSetBuf.isEmpty()) {
+            if (unitRemoteSetBuf.isEmpty()) {
                 scheduledFutureTaskRemainingUnitRemotes.cancel(true);
                 LOGGER.info("All unitRemotes loaded successfully.");
             } else {
-                unitPairSet.clear();
-                unitPairSet.addAll(unitPairSetBuf);
-                unitPairSetBuf.clear();
+                unitRemoteSetBuf.clear();
+                unitRemoteSet.addAll(unitRemoteSetBuf);
+                unitRemoteSetBuf.clear();
             }
         }, OntConfig.BIG_RETRY_PERIOD_SECONDS, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
     //TODO set generic dataClass?! Following static process not nice...
-    private void identifyUnitRemote(final UnitRemote unitRemote, final UnitConfig unitConfig, final TransactionBuffer transactionBuffer
+    private void identifyUnitRemote(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer
             , final RSBInformer<OntologyChange> rsbInformer) throws NotAvailableException {
 
         final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();

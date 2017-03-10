@@ -146,8 +146,7 @@ public class SparqlUpdateExpression {
      *
      * @return A sparql update string to delete a triple.
      */
-    public String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists
-            , final String whereExpr) {
+    public String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists, final String whereExpr) {
 
         String singleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "

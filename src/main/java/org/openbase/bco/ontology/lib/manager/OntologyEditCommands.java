@@ -89,4 +89,21 @@ public interface OntologyEditCommands {
         return addNamespace(newExpr);
     }
 
+    /**
+     * Method takes the local name of the input ontology element. If the element contains no namespace, the string is unmodified returned. Hint: the jena
+     * method getLocalName() doesn't work correctly by all names, cause of rdf historical reasons...
+     *
+     * @param ontElementExpr The ontology element, which contains a local name.
+     * @return The local name of the ontology element.
+     * @throws IllegalArgumentException If the input string is null.
+     */
+    static String getLocalName(final String ontElementExpr) throws IllegalArgumentException {
+
+        if (ontElementExpr == null) {
+            throw new IllegalArgumentException("Could not get local name of ontology element, cause parameter is null!");
+        }
+
+        return ontElementExpr.substring(OntConfig.NS.length(), ontElementExpr.length());
+    }
+
 }

@@ -38,7 +38,7 @@ import org.openbase.jul.iface.VoidInitializable;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import rst.domotic.ontology.OntologyChangeType;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
 /**
  * @author agatting on 20.10.16.
@@ -51,14 +51,14 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void activate() throws CouldNotPerformException, InterruptedException {
 
         Stopwatch stopwatch = new Stopwatch();
-        new HeartBeatCommunication();
 
         try {
-            final RSBInformer<OntologyChangeType.OntologyChange> rsbInformer = RsbCommunication
-                    .createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
+            final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
             new UnitRegistrySynchronizer(transactionBuffer);
+
+            new HeartBeatCommunication();
 
             stopwatch.waitForStart(2000);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
