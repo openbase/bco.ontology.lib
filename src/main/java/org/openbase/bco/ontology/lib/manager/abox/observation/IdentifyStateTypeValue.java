@@ -95,7 +95,8 @@ public class IdentifyStateTypeValue extends StateTypeValue {
             case ServiceTypes.BLIND_STATE_SERVICE:
                 return blindStateValue((BlindState) stateObject);
             case ServiceTypes.BRIGHTNESS_STATE_SERVICE:
-                return brightnessStateValue((BrightnessState) stateObject);
+//                return brightnessStateValue((BrightnessState) stateObject);
+                return null;
             case ServiceTypes.BUTTON_STATE_SERVICE:
                 return buttonStateValue((ButtonState) stateObject);
             case ServiceTypes.COLOR_STATE_SERVICE:

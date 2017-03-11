@@ -226,118 +226,118 @@ public class UnitRemoteSynchronizer {
         final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();
 
         switch (dataClassName) {
-            case UnitDataClass.APP:
-                new StateObservation<AppData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.AGENT:
-                new StateObservation<AgentData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.AUDIO_SOURCE:
-                new StateObservation<AudioSourceData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.AUTHORIZATION_GROUP:
-                new StateObservation<AuthorizationGroupData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.BATTERY:
-                new StateObservation<BatteryData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.BRIGHTNESS_SENSOR:
-                new StateObservation<BrightnessSensorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.BUTTON:
-                new StateObservation<ButtonData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
+//            case UnitDataClass.APP:
+//                new StateObservation<AppData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.AGENT:
+//                new StateObservation<AgentData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.AUDIO_SOURCE:
+//                new StateObservation<AudioSourceData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.AUTHORIZATION_GROUP:
+//                new StateObservation<AuthorizationGroupData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.BATTERY:
+//                new StateObservation<BatteryData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.BRIGHTNESS_SENSOR:
+//                new StateObservation<BrightnessSensorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.BUTTON:
+//                new StateObservation<ButtonData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
             case UnitDataClass.COLORABLE_LIGHT:
-                new StateObservation<ColorableLightData>(unitRemote, transactionBuffer, rsbInformer);
+                new StateObservation<ColorableLightData>(unitRemote, transactionBuffer, rsbInformer, ColorableLightData.class);
                 break;
 //            case UnitDataClass.CONNECTION:
 //                new StateObservation<ConnectionData>(unitRemote, transactionBuffer, rsbInformer);
 //                break;
-            case UnitDataClass.DEVICE:
-                new StateObservation<DeviceData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.DIMMABLE_LIGHT:
-                new StateObservation<DimmableLightData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.DIMMER:
-                new StateObservation<DimmerData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.DISPLAY:
-                new StateObservation<DisplayData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.HANDLE:
-                new StateObservation<HandleData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.LIGHT:
-                new StateObservation<LightData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
+//            case UnitDataClass.DEVICE:
+//                new StateObservation<DeviceData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.DIMMABLE_LIGHT:
+//                new StateObservation<DimmableLightData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.DIMMER:
+//                new StateObservation<DimmerData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.DISPLAY:
+//                new StateObservation<DisplayData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.HANDLE:
+//                new StateObservation<HandleData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.LIGHT:
+//                new StateObservation<LightData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
 //            case UnitDataClass.LOCATION:
 //                new StateObservation<LocationData>(unitRemote, transactionBuffer, rsbInformer);
 //                break;
-            case UnitDataClass.MONITOR:
-                new StateObservation<MonitorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.MOTION_DETECTOR:
-                new StateObservation<MotionDetectorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.POWER_CONSUMPTION_SENSOR:
-                new StateObservation<PowerConsumptionSensorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.POWER_SWITCH:
-                new StateObservation<PowerSwitchData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.REED_CONTACT:
-                new StateObservation<ReedContactData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.RFID:
-                new StateObservation<RFIDData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.ROLLER_SHUTTER:
-                new StateObservation<RollerShutterData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.SCENE:
-                new StateObservation<SceneData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.SMOKE_DETECTOR:
-                new StateObservation<SmokeDetectorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.SWITCH:
-                new StateObservation<SwitchData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.TAMPER_DETECTOR:
-                new StateObservation<TamperDetectorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.TELEVISION:
-                new StateObservation<TelevisionData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.TEMPERATURE_CONTROLLER:
-                new StateObservation<TemperatureControllerData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.TEMPERATURE_SENSOR:
-                new StateObservation<TemperatureSensorData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.UNIT_GROUP:
-                new StateObservation<UnitGroupData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.USER:
-                new StateObservation<UserData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.VIDEO_DEPTH_SOURCE:
-                new StateObservation<VideoDepthSourceData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
-            case UnitDataClass.VIDEO_RGB_SOURCE:
-                new StateObservation<VideoRgbSourceData>(unitRemote, transactionBuffer, rsbInformer);
-                break;
+//            case UnitDataClass.MONITOR:
+//                new StateObservation<MonitorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.MOTION_DETECTOR:
+//                new StateObservation<MotionDetectorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.POWER_CONSUMPTION_SENSOR:
+//                new StateObservation<PowerConsumptionSensorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.POWER_SWITCH:
+//                new StateObservation<PowerSwitchData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.REED_CONTACT:
+//                new StateObservation<ReedContactData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.RFID:
+//                new StateObservation<RFIDData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.ROLLER_SHUTTER:
+//                new StateObservation<RollerShutterData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.SCENE:
+//                new StateObservation<SceneData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.SMOKE_DETECTOR:
+//                new StateObservation<SmokeDetectorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.SWITCH:
+//                new StateObservation<SwitchData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.TAMPER_DETECTOR:
+//                new StateObservation<TamperDetectorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.TELEVISION:
+//                new StateObservation<TelevisionData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.TEMPERATURE_CONTROLLER:
+//                new StateObservation<TemperatureControllerData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.TEMPERATURE_SENSOR:
+//                new StateObservation<TemperatureSensorData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.UNIT_GROUP:
+//                new StateObservation<UnitGroupData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.USER:
+//                new StateObservation<UserData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.VIDEO_DEPTH_SOURCE:
+//                new StateObservation<VideoDepthSourceData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
+//            case UnitDataClass.VIDEO_RGB_SOURCE:
+//                new StateObservation<VideoRgbSourceData>(unitRemote, transactionBuffer, rsbInformer);
+//                break;
             default:
                 if (UnitDataClass.CONNECTION.equalsIgnoreCase(dataClassName) || UnitDataClass.LOCATION.equalsIgnoreCase(dataClassName)) {
                     // ignore both to avoid exceptions...
                 } else {
-                    try {
-                        throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
-                                + " to BCOConfig and call it.");
-                    } catch (NotAvailableException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                    }
+//                    try {
+//                        throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
+//                                + " to BCOConfig and call it.");
+//                    } catch (NotAvailableException e) {
+//                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+//                    }
                 }
         }
     }

@@ -23,19 +23,18 @@ import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
+import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
-import org.openbase.bco.ontology.lib.manager.datapool.ReflectObjectPool;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
-import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
@@ -70,8 +69,7 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat dateFormat;
     private Map<String, ServiceType> serviceTypeMap;
     private String remoteUnitId;
     private final Stopwatch stopwatch;
@@ -80,33 +78,26 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private Set<Method> methodSetStateType;
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
-    private final UnitRemote unitRemote;
     private String s_CurConnectionPhase;
     private boolean wasConnected;
-    private boolean isInit;
 
-    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
+    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer, Class<T> data)
             throws InstantiationException {
 
         try {
+            this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
+            this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
             this.unitType = unitRemote.getType();
             this.rsbInformer = rsbInformer;
             this.transactionBuffer = transactionBuffer;
             this.stopwatch = new Stopwatch();
             this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
-            this.unitRemote = unitRemote;
-            this.isInit = true;
+            this.remoteUnitId = unitRemote.getId().toString();
 
-            initConnectionState();
-//            init(classType);
+            initConnectionState(unitRemote);
 
-            final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T unitRemoteObj) -> {
-            if (isInit) {
-                remoteUnitId = (String) ReflectObjectPool.getInvokedObj(unitRemoteObj, MethodRegEx.GET_ID.getName());
-                methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(unitRemoteObj, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
-                isInit = false;
-            }
-                stateUpdate(unitRemoteObj); //TODO catch exception?!
+            final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T remoteData) -> {
+                stateUpdate(remoteData); //TODO catch exception?!
             };
 
             final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
@@ -123,24 +114,13 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
-        } catch (NotAvailableException | JPServiceException e) {
+        } catch (JPServiceException | CouldNotPerformException e) {
             throw new InstantiationException(this, e);
         }
     }
 
-//    private void init(final T classType) {
-//        try {
-//            remoteUnitId = (String) ReflectObjectPool.getInvokedObj(classType, MethodRegEx.GET_ID.getName());
-//            System.out.println("unitid: " + remoteUnitId);
-//            methodSetStateType = ReflectObjectPool.getMethodSetByRegEx(classType, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
-//        } catch (CouldNotPerformException e) {
-//            System.out.println("testerror"); //TODO
-//        }
-//    }
-
     private void updateConnectionPhase(final State activationState) throws JPServiceException {
 
-        // s: subject, p: predicate, o: object
         final String pred_IsA = OntExpr.A.getName();
         final String pred_HasFirstConnection = OntProp.FIRST_CONNECTION.getName();
         final String pred_HasLastConnection = OntProp.LAST_CONNECTION.getName();
@@ -151,8 +131,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
         if (activationState.equals(State.ACTIVE)) {
             final Date now = new Date();
-            s_CurConnectionPhase = "connectionPhase" + simpleDateFormatWithoutTimeZone.format(now) + remoteUnitId; // must be the same at start and close!
-            final String obj_Timestamp = "\"" + simpleDateFormat.format(now) + "\"^^xsd:dateTime";
+            final String dateTime = dateFormat.format(now);
+            s_CurConnectionPhase = "connectionPhase" + remoteUnitId + dateTime.substring(0, dateTime.indexOf("+")); // must be the same at start and close!
+            final String obj_Timestamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
 
             insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
             insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, s_CurConnectionPhase));
@@ -160,7 +141,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
         } else if (activationState.equals(State.DEACTIVE)) {
 
-            final String obj_Timestamp = "\"" + simpleDateFormat.format(new Date()) + "\"^^xsd:dateTime";
+            final String obj_Timestamp = "\"" + dateFormat.format(new Date()) + "\"^^xsd:dateTime";
             insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
             insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, s_CurConnectionPhase));
             insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
@@ -173,7 +154,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         sendToServer(sparqlUpdate);
     }
 
-    private void initConnectionState() throws JPServiceException {
+    private void initConnectionState(final UnitRemote unitRemote) throws JPServiceException {
         // reduce connectionState to binary classification - connected and not connected
         if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
             wasConnected = true;
@@ -208,8 +189,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 // get method as invoked object
                 final Object obj_stateType = methodStateType.invoke(remoteData);
 
-                final String dateTimeNow = simpleDateFormatWithoutTimeZone.format(new Date());
-                final String subj_Observation = "O" + remoteUnitId + dateTimeNow;
+                final String dateTimeNow = dateFormat.format(new Date());
+                final String subj_Observation = "O" + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
 
                 //### add observation instance to observation class ###\\
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_IsA, obj_Observation));
@@ -224,17 +205,23 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
 
                 //### timeStamp triple ###\\
-                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectObjectPool
-                        .getInvokedObj(obj_stateType , MethodRegEx.GET_TIMESTAMP.getName());
+                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ObjectReflection
+                        .getInvokedObject(obj_stateType , MethodRegEx.GET_TIMESTAMP.getName());
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
-                    final String obj_dateTime = "\"" + simpleDateFormat.format(timestamp) + "\"^^xsd:dateTime";
+                    final String obj_dateTime = "\"" + dateFormat.format(timestamp) + "\"^^xsd:dateTime";
                     tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasTimeStamp, obj_dateTime));
                 }
 
                 //### stateValue triple ###\\
+                final int sizeBuf = tripleArrayListsBuf.size();
                 tripleArrayListsBuf = addStateValue(obj_serviceType, obj_stateType, subj_Observation, tripleArrayListsBuf);
+
+                if (tripleArrayListsBuf.size() == sizeBuf) {
+                    // incomplete observation instance. dropped...
+                    tripleArrayListsBuf.clear();
+                }
 
                 // no exception produced: observation individual complete. add to main list
                 tripleArrayLists.addAll(tripleArrayListsBuf);
