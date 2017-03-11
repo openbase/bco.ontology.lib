@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState.State;
+import rst.domotic.state.IlluminanceStateType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 import rst.timing.TimestampType;
 

@@ -56,9 +56,9 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
-//            new UnitRegistrySynchronizer(transactionBuffer);
-//            new HeartBeatCommunication();
-//            stopwatch.waitForStart(5000);
+            new UnitRegistrySynchronizer(transactionBuffer);
+            new HeartBeatCommunication();
+            stopwatch.waitForStart(5000);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
         } catch (JPNotAvailableException e) {
             throw new InitializationException(this, e);
@@ -77,17 +77,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //            System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
 //            // do useful stuff
 //        });
-
-//        WebInterface webInterface = new WebInterface();
-
-//        final QueryOntology queryOntology = new QueryOntology(ontology.getModel());
-//        queryOntology.queryModel();
-
-//        ontology.getModel().close();
-//        if (ontology.getModel().isClosed()) {
-////            LOGGER.info(APP_NAME + " finished!");
-//            System.exit(0);
-//        }
 
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
