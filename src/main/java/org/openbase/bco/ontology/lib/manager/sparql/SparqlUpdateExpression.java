@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.manager.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,28 +28,25 @@ import java.util.List;
  * @author agatting on 23.12.16.
  */
 @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
-public class SparqlUpdateExpression {
-
-    //TODO namespace: current check => "NS:" only...not whole namespace
-    //TODO as interface...
+public interface SparqlUpdateExpression {
 
     /**
      * Method creates a list with sparql update insert expressions. Each list element is an valid update.
      *
-     * @param insertTripleArrayLists The insert triple information (with or without namespace).
-     * @return A list of strings, which are update expressions.
+     * @param insertTriples The insert triple information (with or without namespace).
+     * @return A list of strings, which are insert update expressions.
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    public List<String> getSparqlSingleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
+    static List<String> getSparqlUpdateInsertSingleExpr(final List<TripleArrayList> insertTriples) throws IllegalArgumentException {
 
         final List<String> expressionList = new ArrayList<>();
 
-        for (final TripleArrayList triple : insertTripleArrayLists) {
-
+        for (final TripleArrayList triple : insertTriples) {
             final String updateExpression =
                     "PREFIX NS: <" + OntConfig.NS + "> "
                     + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                     + "INSERT DATA { "
-                        + getInsertTripleCommand(triple)
+                        + getTripleCommand(triple)
                     + "} ";
 
             expressionList.add(updateExpression);
@@ -62,65 +58,64 @@ public class SparqlUpdateExpression {
     /**
      * Method creates a single sparql update insert expression, which contains multiple triple commands. Atomicity.
      *
-     * @param insertTripleArrayLists The insert triple information (with or without namespace).
+     * @param insertTriples The insert triple information (with or without namespace).
      * @return A single sparql update insert expression (bundle).
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    public String getSparqlBundleUpdateInsertEx(final List<TripleArrayList> insertTripleArrayLists) {
+    static String getSparqlUpdateInsertBundleExpr(final List<TripleArrayList> insertTriples) throws IllegalArgumentException {
 
         // initial part of the large expression
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
-                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "INSERT DATA { ";
 
-        for (final TripleArrayList triple : insertTripleArrayLists) {
+        for (final TripleArrayList triple : insertTriples) {
             // add triples to the large expression
-            multipleUpdateExpression = multipleUpdateExpression + getInsertTripleCommand(triple);
+            multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
         }
 
         // close the large expression
-        multipleUpdateExpression = multipleUpdateExpression + "} ";
-
-        return multipleUpdateExpression;
+        return multipleUpdateExpression + "} ";
     }
 
     /**
-     * Method creates an update sparql string with delete and insert triple(s). Subject, predicate and object can be
-     * selected by a "name" (string) or can be placed as control variable by a "null" parameter in the tripleArrayList.
-     * The names of s, p, o keep the namespace or not. The order in the update string is first delete and then insert.
-     * The whereExpr can be used to filter the triples, which should be deleted. Otherwise the statement is set to null.
+     * Method creates an update sparql string with delete and insert triple(s). Subject, predicate and object can be selected by a "name" (string) or can be
+     * placed as control variable by a "null" parameter in the tripleArrayList. The names of s, p, o keep the namespace or not. The order in the update string
+     * is first delete and then insert. The whereExpr can be used to filter the triples, which should be deleted. Otherwise the statement is set to null.
      *
-     * Example in deleteTripleArrayLists: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
+     * Example in deleteTriples: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
      * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
      * and means: all triples with the named subject, named predicate and any object are deleted.
      *
-     * @param deleteTripleArrayLists The delete triple information (with or without namespace).
-     * @param insertTripleArrayLists The insert triple information (with or without namespace).
+     * @param deleteTriples The delete triple information (with or without namespace).
+     * @param insertTriples The insert triple information (with or without namespace).
      * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
      * @return A single sparql update delete & insert expression (bundle).
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    public String getSparqlBundleUpdateDeleteAndInsertEx(final List<TripleArrayList> deleteTripleArrayLists
-            , final List<TripleArrayList> insertTripleArrayLists, final String whereExpr) {
+    static String getSparqlUpdateDeleteAndInsertBundleExpr(final List<TripleArrayList> deleteTriples, final List<TripleArrayList> insertTriples
+            , final String whereExpr) throws IllegalAccessException {
 
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
-                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { ";
 
-        for (final TripleArrayList deleteTriple : deleteTripleArrayLists) {
-            multipleUpdateExpression = multipleUpdateExpression + getDeleteTripleCommand(deleteTriple);
+        for (final TripleArrayList deleteTriple : deleteTriples) {
+            multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(deleteTriple);
         }
 
         multipleUpdateExpression = multipleUpdateExpression + "} INSERT { ";
 
-        for (final TripleArrayList insertTriple : insertTripleArrayLists) {
-            multipleUpdateExpression = multipleUpdateExpression + getInsertTripleCommand(insertTriple);
+        for (final TripleArrayList insertTriple : insertTriples) {
+            multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(insertTriple);
         }
 
         if (whereExpr == null) { // same triples as delete (functional reasons)
             multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
-            for (final TripleArrayList deleteTriple : deleteTripleArrayLists) {
-                multipleUpdateExpression = multipleUpdateExpression + getDeleteTripleCommand(deleteTriple);
+            for (final TripleArrayList deleteTriple : deleteTriples) {
+                multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(deleteTriple);
             }
 
             multipleUpdateExpression = multipleUpdateExpression + "} ";
@@ -132,34 +127,33 @@ public class SparqlUpdateExpression {
     }
 
     /**
-     * Method creates an update sparql string to delete triple(s). Subject, predicate and object can be selected by a
-     * "name" (string) or can be placed as control variable by a "null" parameter in the tripleArrayList. The names of
-     * s, p, o keep the namespace or not. The whereExpr can be used to filter the triples, which should be deleted.
-     * Otherwise the statement is set to null.
+     * Method creates an update sparql string to delete triple(s). Subject, predicate and object can be selected by a "name" (string) or can be placed as
+     * control variable by a "null" parameter in the tripleArrayList. The names of s, p, o keep the namespace or not. The whereExpr can be used to filter the
+     * triples, which should be deleted. Otherwise the statement is set to null.
      *
-     * Example in deleteTripleArrayLists: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null
-     * leads to delete string: NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
+     * Example in deleteTriple: d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null leads to delete string:
+     * NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object
      * and means: all triples with the named subject, named predicate and any object are deleted.
      *
-     * @param deleteTripleArrayLists The delete triple information (with or without namespace).
+     * @param deleteTriple The delete triple information (with or without namespace).
      * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
-     *
      * @return A sparql update string to delete a triple.
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    public String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTripleArrayLists, final String whereExpr) {
+    static String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTriple, final String whereExpr) throws IllegalAccessException {
 
         String singleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
-                + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
-                    + getDeleteTripleCommand(deleteTripleArrayLists)
+                    + getTripleCommand(deleteTriple)
                 + "} ";
 
         if (whereExpr == null) { // same triples as delete (functional reasons)
             singleUpdateExpression = singleUpdateExpression
                     + "} WHERE { "
                     + "DELETE { "
-                        + getDeleteTripleCommand(deleteTripleArrayLists)
+                        + getTripleCommand(deleteTriple)
                     + "} ";
         } else {
             singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + "} ";
@@ -168,60 +162,45 @@ public class SparqlUpdateExpression {
         return singleUpdateExpression;
     }
 
-    private String getInsertTripleCommand(final TripleArrayList tripleArrayList) {
+    /**
+     * Method builds a connected command of the input triple. In this case the sparql update frame is missing. If elements are null, they are sparql variables.
+     * Otherwise the namespace is added, if necessary.
+     *
+     * @param triple The triple information: subject, predicate, object. If elements are null, then it is a sparql variable.
+     * @return A triple command without sparql update frame.
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
+     */
+    static String getTripleCommand(final TripleArrayList triple) throws IllegalArgumentException {
 
-        String subject = tripleArrayList.getSubject();
-        String predicate = tripleArrayList.getPredicate();
-        String object = tripleArrayList.getObject();
+        if (triple == null) {
+            throw new IllegalArgumentException("Could not build delete triple command, cause input triple is null!");
+        }
+
+        String subject = triple.getSubject();
+        String predicate = triple.getPredicate();
+        String object = triple.getObject();
+
+        if (subject == null && predicate == null && object == null) {
+            throw new IllegalArgumentException("Subject, predicate and object are null! Does not build delete command, cause command deletes whole ontology!");
+        }
 
         if (subject == null) {
             subject = "?subject";
-        } else if (!subject.startsWith(OntExpr.NS.getName())) {
-            subject = OntExpr.NS.getName() + tripleArrayList.getSubject();
-        }
-
-        // dataTypes starts with \" doesn't have NS
-        if (object == null) {
-            object = "?object";
-        } else if (!object.startsWith(OntExpr.NS.getName()) && !object.startsWith("\"")) {
-            object = OntExpr.NS.getName() + tripleArrayList.getObject();
-        }
-
-        // if predicate isn't an "a" then it's an property with namespace needed. Info: predicate "a" is used to
-        // insert an individual to a class.
-        if (predicate == null) {
-            predicate = "?predicate";
-        } else if (!predicate.equals(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName())) {
-            predicate = OntExpr.NS.getName() + predicate;
-        }
-
-        return subject + " " + predicate + " " + object + " . ";
-    }
-
-    private String getDeleteTripleCommand(final TripleArrayList tripleArrayList) {
-
-        //TODO maybe special safety handling, because if s, p, o are all null => delete whole triple store
-
-        String subject = tripleArrayList.getSubject();
-        String predicate = tripleArrayList.getPredicate();
-        String object = tripleArrayList.getObject();
-
-        if (subject == null) {
-            subject = "?subject";
-        } else if (!subject.startsWith(OntExpr.NS.getName())) {
+        } else if (!subject.startsWith(OntExpr.NS.getName()) || !subject.startsWith(OntConfig.NS)) {
             subject = OntExpr.NS.getName() + subject;
         }
 
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equals(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName())) {
+        } else if (!predicate.equalsIgnoreCase(OntExpr.A.getName()) && (!predicate.startsWith(OntExpr.NS.getName()) || !predicate.startsWith(OntConfig.NS))) {
             // if predicate isn't an "a" then it's an property with namespace needed.
             predicate = OntExpr.NS.getName() + predicate;
         }
 
+        // dataTypes starts with \" doesn't have NS
         if (object == null) {
             object = "?object";
-        } else if (!object.startsWith(OntExpr.NS.getName())) {
+        } else if ((!object.startsWith(OntExpr.NS.getName()) || !object.startsWith(OntConfig.NS)) && !object.startsWith("\"")) {
             object = OntExpr.NS.getName() + object;
         }
 

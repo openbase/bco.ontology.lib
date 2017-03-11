@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.manager.datapool;
 import javafx.util.Pair;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMapping;
@@ -28,7 +29,6 @@ import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMappi
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntPropertyMapping;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntPropertyMappingImpl;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 18.01.17.
  */
-public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
+public class UnitRegistrySynchronizer {
 
     //TODO if new unit type available: wait for tbox synch and confirmation to state observation
     //TODO set and list...standardize!
@@ -256,21 +256,20 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
 //    }
 
     private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTriple, final List<TripleArrayList> insertTriple) throws JPServiceException {
-
-        String multiExprUpdate;
-
-        if (deleteTriple == null) {
-            // convert triples to single sparql update expression (insert)
-            multiExprUpdate = getSparqlBundleUpdateInsertEx(insertTriple);
-        } else if (insertTriple == null) {
-            // convert triples to single sparql update expression (delete)
-            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, null, null);
-        } else {
-            // convert triples to single sparql update expression (delete and insert)
-            multiExprUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
-        }
+        String multiExprUpdate = "";
 
         try {
+            if (deleteTriple == null) {
+                // convert triples to single sparql update expression (insert)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriple);
+            } else if (insertTriple == null) {
+                // convert triples to single sparql update expression (delete)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, null, null);
+            } else {
+                // convert triples to single sparql update expression (delete and insert)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
+            }
+
             // upload to ontology server
             final boolean isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
 
@@ -281,6 +280,8 @@ public class UnitRegistrySynchronizer extends SparqlUpdateExpression {
             }
         } catch (CouldNotPerformException e) {
             transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
+        } catch (IllegalAccessException e) {
+            ExceptionPrinter.printHistory("Defect sparql update expression!", e, LOGGER, LogLevel.ERROR);
         }
     }
 

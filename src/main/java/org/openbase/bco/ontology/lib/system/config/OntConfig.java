@@ -272,11 +272,6 @@ public final class OntConfig {
         IS_ENABLED("isEnabled"),
 
         /**
-         * isConnected (dataType property).
-         */
-        IS_CONNECTED("isConnected"),
-
-        /**
          * hasLastHeartBeat (dataType property).
          */
         LAST_HEARTBEAT("hasLastHeartBeat"),
@@ -352,11 +347,6 @@ public final class OntConfig {
      * Regular expressions for method/object searching.
      */
     public enum MethodRegEx {
-
-        /**
-         * Pattern for method name part.
-         */
-        GET_ID("getId"),
 
         /**
          * Pattern for method name part.

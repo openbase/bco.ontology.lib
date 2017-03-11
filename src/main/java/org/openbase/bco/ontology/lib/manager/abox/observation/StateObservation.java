@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState.State;
-import rst.domotic.state.IlluminanceStateType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 import rst.timing.TimestampType;
 
@@ -75,15 +74,14 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private String remoteUnitId;
     private final Stopwatch stopwatch;
     private final TransactionBuffer transactionBuffer;
-    private final SparqlUpdateExpression sparqlUpdateExpression = new SparqlUpdateExpression();
     private Set<Method> methodSetStateType;
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
     private String s_CurConnectionPhase;
     private boolean wasConnected;
 
-    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer, Class<T> data)
-            throws InstantiationException {
+    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer
+            , final Class<T> data) throws InstantiationException {
 
         try {
             this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
@@ -151,7 +149,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             LOGGER.warn("Method updateConnectionPhase is called with wrong ActivationState parameter.");
         }
 
-        final String sparqlUpdate = sparqlUpdateExpression.getSparqlBundleUpdateInsertEx(insertTriple);
+        final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriple);
         sendToServer(sparqlUpdate);
     }
 
@@ -237,7 +235,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             tripleArrayListsBuf.clear();
         }
 
-        final String sparqlUpdateExpr = sparqlUpdateExpression.getSparqlBundleUpdateInsertEx(tripleArrayLists);
+        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(tripleArrayLists);
         System.out.println(sparqlUpdateExpr);
 
         final boolean isHttpSuccess = sendToServer(sparqlUpdateExpr);

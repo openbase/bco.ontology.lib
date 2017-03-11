@@ -23,11 +23,11 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
 import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
+import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
@@ -54,11 +54,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 31.01.17.
  */
-public class HeartBeatCommunication extends SparqlUpdateExpression {
+public class HeartBeatCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
     private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH);
+    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
     private final Stopwatch stopwatch;
     private Future future;
 
@@ -137,7 +137,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                     insertTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
 
                     // sparql update to replace last heartbeat timestamp
-                    final String sparqlUpdate = getSparqlBundleUpdateDeleteAndInsertEx(deleteTriple, insertTriple, null);
+                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
 
                     if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
                         throw new CouldNotProcessException("Could not update. Server offline?");
@@ -146,7 +146,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
                 }
-            } catch (CouldNotProcessException | CouldNotPerformException e) {
+            } catch (CouldNotProcessException | CouldNotPerformException | IllegalAccessException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
             } catch (ParseException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
@@ -177,7 +177,7 @@ public class HeartBeatCommunication extends SparqlUpdateExpression {
             insertTripleArrayLists.add(new TripleArrayList(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
             insertTripleArrayLists.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
 
-            final String sparqlUpdate = getSparqlBundleUpdateInsertEx(insertTripleArrayLists);
+            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTripleArrayLists);
 
             try {
                 isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);
