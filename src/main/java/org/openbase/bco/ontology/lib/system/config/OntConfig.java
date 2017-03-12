@@ -22,7 +22,7 @@ package org.openbase.bco.ontology.lib.system.config;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
 import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
-import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerificationResource;
+import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.exception.JPServiceException;
@@ -458,7 +458,7 @@ public final class OntConfig {
     public void initialTestConfig(final OntModel ontModel) throws CouldNotPerformException, JPServiceException {
 
         //TODO if null -> list all classes
-        //TODO check TBoxVerificationResource.isOntPropertyExisting and class if necessary...
+        //TODO check TBoxVerification.isOntPropertyExisting and class if necessary...
 
         MultiException.ExceptionStack exceptionStack = null;
 
@@ -466,7 +466,7 @@ public final class OntConfig {
             // test validity of enum property
             for (final OntProp ontProp : OntProp.values()) {
                 try {
-                    if (!TBoxVerificationResource.isOntPropertyExisting(ontProp.getName(), ontModel)) {
+                    if (!TBoxVerification.isOntPropertyExisting(ontProp.getName(), ontModel)) {
                         throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
                                 + "with ontology property! Wrong String or doesn't exist in ontology!");
                     }
@@ -478,7 +478,7 @@ public final class OntConfig {
             // test validity of enum ontClass
             for (final OntCl ontClass : OntCl.values()) {
                 try {
-                    if (!TBoxVerificationResource.isOntClassExisting(ontClass.getName(), ontModel)) {
+                    if (!TBoxVerification.isOntClassExisting(ontClass.getName(), ontModel)) {
                         throw new NotAvailableException("Ontology class \"" + ontClass.getName()
                                 + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                     }

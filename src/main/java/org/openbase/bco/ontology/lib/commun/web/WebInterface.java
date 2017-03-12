@@ -157,7 +157,7 @@ public interface WebInterface {
     }
 
     /**
-     * Method processes a sparql query in select form and returns a resultSet.
+     * Method processes a sparql query in select form and returns a resultSet. Query goes to ontology server.
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.

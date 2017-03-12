@@ -22,7 +22,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.commun.web.WebInterface;
-import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
@@ -120,7 +120,7 @@ public class HeartBeatCommunication {
                 }
                 final QuerySolution querySolution = resultSet.next();
 
-                final String subj_HeartBeatPhase = OntologyEditCommands.getLocalName(querySolution.getResource("blackout").toString());
+                final String subj_HeartBeatPhase = OntologyToolkit.getLocalName(querySolution.getResource("blackout").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
                 final Date now = new Date();
 

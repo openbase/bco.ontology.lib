@@ -47,7 +47,7 @@ import java.util.List;
 public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
-    public boolean match(String query) throws IOException, JPServiceException {
+    public boolean match(final String query) throws IOException, JPServiceException {
 
         boolean queryResult;
         final HttpEntity httpEntity = getHttpEntity(query);

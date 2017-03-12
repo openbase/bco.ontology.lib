@@ -22,7 +22,7 @@ import javafx.util.Pair;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.manager.OntologyEditCommands;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
@@ -96,11 +96,11 @@ public class TBoxSynchronizer {
     private Pair<OntModel, List<TripleArrayList>> compareUnitsWithOntClasses(final List<UnitConfig> unitConfigList
             , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
 
-        final OntClass unitOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.UNIT.getName()));
+        final OntClass unitOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.UNIT.getName()));
         final Set<UnitType> missingUnitTypes = new HashSet<>();
         Set<OntClass> unitSubOntClasses = new HashSet<>();
 
-        unitSubOntClasses = TBoxVerificationResource.listSubclassesOfOntSuperclass(unitSubOntClasses, unitOntClass, false);
+        unitSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(unitSubOntClasses, unitOntClass, false);
 
         for (final UnitConfig unitConfig : unitConfigList) {
             if (!isUnitTypePresent(unitConfig, unitSubOntClasses)) {
@@ -114,11 +114,11 @@ public class TBoxSynchronizer {
     private Pair<OntModel, List<TripleArrayList>> compareStatesWithOntology(final List<UnitConfig> unitConfigList
             , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
 
-        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(OntConfig.OntCl.STATE.getName()));
+        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
         final Set<String> missingServiceStateTypes = new HashSet<>();
         Set<OntClass> stateSubOntClasses = new HashSet<>();
 
-        stateSubOntClasses = TBoxVerificationResource.listSubclassesOfOntSuperclass(stateSubOntClasses, stateOntClass, false);
+        stateSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(stateSubOntClasses, stateOntClass, false);
 
         for (final UnitConfig unitConfig : unitConfigList) {
             for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
@@ -145,13 +145,13 @@ public class TBoxSynchronizer {
         final String baseObject = OntConfig.OntCl.HOST_UNIT.getName();
         final String hostObject = OntConfig.OntCl.BASE_UNIT.getName();
 
-        final OntClass dalOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(dalObject));
-        final OntClass baseOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(baseObject));
-        final OntClass hostOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(hostObject));
+        final OntClass dalOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(dalObject));
+        final OntClass baseOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(baseObject));
+        final OntClass hostOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(hostObject));
 
         for (final UnitType unitType : missingUnitTypes) {
 
-            final String missingUnitType = OntologyEditCommands.convertToNounAndAddNS(unitType.name());
+            final String missingUnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
             final OntClass newOntClassUnitType = ontModelTriplePair.getKey().createClass(missingUnitType);
 
             // find correct subclass of unit (e.g. baseUnit, DalUnit)
@@ -178,11 +178,11 @@ public class TBoxSynchronizer {
         final String predicate = OntConfig.OntExpr.A.getName();
         final String object = OntConfig.OntCl.STATE.getName();
 
-        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyEditCommands.addNamespace(object));
+        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(object));
 
         for (final String missingState : missingStateTypes) {
 
-            final String missingStateType = OntologyEditCommands.convertToNounAndAddNS(missingState);
+            final String missingStateType = OntologyToolkit.convertToNounAndAddNS(missingState);
             final OntClass newOntClassStateType = ontModelTriplePair.getKey().createClass(missingStateType);
 
             ontModelTriplePair.getKey().getOntClass(stateOntClass.getURI()).addSubClass(newOntClassStateType);
@@ -223,7 +223,7 @@ public class TBoxSynchronizer {
                 ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
 
                 if (ontModel.isEmpty()) {
-                    ontModel = TBoxLoader.loadOntModelFromFile(null);
+                    ontModel = OntologyToolkit.loadOntModelFromFile(null);
                 }
 
             } catch (IOException e) {
