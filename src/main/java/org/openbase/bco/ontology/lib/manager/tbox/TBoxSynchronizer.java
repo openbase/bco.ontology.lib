@@ -18,109 +18,91 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import javafx.util.Pair;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
+import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
-import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
-import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author agatting on 20.02.17.
  */
 public class TBoxSynchronizer {
 
-    //TODO split tbox synch ontModel and sparql update (triples)
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TBoxSynchronizer.class);
-    private final Stopwatch stopwatch;
 
-    public TBoxSynchronizer() {
-        this.stopwatch = new Stopwatch();
-    }
-
-    public Pair<OntModel, List<TripleArrayList>> extendTBox(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
+    public OntModel extendTBoxViaServerModel(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
 
         // get tbox from server. if no available: create new from dependency.
-        final OntModel ontModel = getTBox();
+        OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
 
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
-        Pair<OntModel, List<TripleArrayList>> ontModelTriplePair = new Pair<>(ontModel, tripleArrayLists);
+        // get missing unitTypes and serviceStates
+        ontModel = compareMissingUnitsWithModel(unitConfigList, ontModel);
+        ontModel = compareMissingStatesWithModel(unitConfigList, ontModel);
 
-        // get missing unitTypes
-        ontModelTriplePair = compareUnitsWithOntClasses(unitConfigList, ontModelTriplePair);
-        // get missing stateTypes
-        return compareStatesWithOntology(unitConfigList, ontModelTriplePair);
+        return ontModel;
     }
 
-    public void uploadOntModel(final OntModel ontModel) throws InterruptedException, CouldNotPerformException, JPServiceException {
+    public List<TripleArrayList> extendTBoxViaTriples(final List<UnitConfig> unitConfigs) {
 
-        boolean isUploaded = false;
+        List<TripleArrayList> triples = new ArrayList<>();
 
-        while (!isUploaded) {
-            try {
-                ServerOntologyModel.addOntologyModel(ontModel, JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
-                        , JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
-                isUploaded = true;
-            } catch (IOException e) {
-                //retry
-                ExceptionPrinter.printHistory("No connection to upload ontModel to databases. Retry...", e, LOGGER, LogLevel.WARN);
-                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-            }
-        }
+        triples = getMissingUnitsAsTriples(unitConfigs, triples);
+        triples = getMissingServiceStatesAsTriples(unitConfigs, triples);
+
+        return triples;
     }
 
-    private Pair<OntModel, List<TripleArrayList>> compareUnitsWithOntClasses(final List<UnitConfig> unitConfigList
-            , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
+    private OntModel compareMissingUnitsWithModel(final List<UnitConfig> unitConfigs, final OntModel ontModel) {
 
-        final OntClass unitOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.UNIT.getName()));
+        final OntClass unitOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.UNIT.getName()));
         final Set<UnitType> missingUnitTypes = new HashSet<>();
         Set<OntClass> unitSubOntClasses = new HashSet<>();
 
         unitSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(unitSubOntClasses, unitOntClass, false);
 
-        for (final UnitConfig unitConfig : unitConfigList) {
+        for (final UnitConfig unitConfig : unitConfigs) {
             if (!isUnitTypePresent(unitConfig, unitSubOntClasses)) {
                 missingUnitTypes.add(unitConfig.getType());
             }
         }
-
-        return addMissingOntUnits(missingUnitTypes, ontModelTriplePair);
+        return addMissingUnitsToModel(missingUnitTypes, ontModel);
     }
 
-    private Pair<OntModel, List<TripleArrayList>> compareStatesWithOntology(final List<UnitConfig> unitConfigList
-            , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
+    private List<TripleArrayList> getMissingUnitsAsTriples(final List<UnitConfig> unitConfigs, final List<TripleArrayList> triples) {
 
-        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
+        final Set<UnitType> missingUnitTypes = unitConfigs.stream().map(UnitConfig::getType).collect(Collectors.toSet());
+
+        return addMissingUnitsToTriples(missingUnitTypes, triples);
+    }
+
+    private OntModel compareMissingStatesWithModel(final List<UnitConfig> unitConfigs, final OntModel ontModel) {
+
+        final OntClass stateOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
         final Set<String> missingServiceStateTypes = new HashSet<>();
         Set<OntClass> stateSubOntClasses = new HashSet<>();
 
         stateSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(stateSubOntClasses, stateOntClass, false);
 
-        for (final UnitConfig unitConfig : unitConfigList) {
+        for (final UnitConfig unitConfig : unitConfigs) {
             for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
                 try {
                     final String serviceStateName = Service.getServiceStateName(serviceConfig.getServiceTemplate());
@@ -134,62 +116,97 @@ public class TBoxSynchronizer {
                 }
             }
         }
-        return addMissingOntStates(missingServiceStateTypes, ontModelTriplePair);
+        return addMissingStatesToModel(missingServiceStateTypes, ontModel);
     }
 
-    private Pair<OntModel, List<TripleArrayList>> addMissingOntUnits(final Set<UnitType> missingUnitTypes
-            , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
+    private List<TripleArrayList> getMissingServiceStatesAsTriples(final List<UnitConfig> unitConfigs, final List<TripleArrayList> triples) {
 
-        final String predicate = OntConfig.OntExpr.A.getName();
-        final String dalObject = OntConfig.OntCl.DAL_UNIT.getName();
-        final String baseObject = OntConfig.OntCl.HOST_UNIT.getName();
-        final String hostObject = OntConfig.OntCl.BASE_UNIT.getName();
+        final Set<String> missingServiceStateTypes = new HashSet<>();
 
-        final OntClass dalOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(dalObject));
-        final OntClass baseOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(baseObject));
-        final OntClass hostOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(hostObject));
-
-        for (final UnitType unitType : missingUnitTypes) {
-
-            final String missingUnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
-            final OntClass newOntClassUnitType = ontModelTriplePair.getKey().createClass(missingUnitType);
-
-            // find correct subclass of unit (e.g. baseUnit, DalUnit)
-            if (UnitConfigProcessor.isDalUnit(unitType)) {
-                ontModelTriplePair.getKey().getOntClass(dalOntClass.getURI()).addSubClass(newOntClassUnitType);
-                ontModelTriplePair.getValue().add(new TripleArrayList(missingUnitType, predicate, dalObject));
-            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
-                if (UnitConfigProcessor.isHostUnit(unitType)) {
-                    ontModelTriplePair.getKey().getOntClass(hostOntClass.getURI()).addSubClass(newOntClassUnitType);
-                    ontModelTriplePair.getValue().add(new TripleArrayList(missingUnitType, predicate, hostObject));
-                } else {
-                    ontModelTriplePair.getKey().getOntClass(baseOntClass.getURI()).addSubClass(newOntClassUnitType);
-                    ontModelTriplePair.getValue().add(new TripleArrayList(missingUnitType, predicate, baseObject));
+        for (final UnitConfig unitConfig : unitConfigs) {
+            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                try {
+                    final String serviceStateName = Service.getServiceStateName(serviceConfig.getServiceTemplate());
+                    missingServiceStateTypes.add(serviceStateName);
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
+                            , e, LOGGER, LogLevel.WARN);
                 }
             }
         }
-
-        return ontModelTriplePair;
+        return addMissingStatesToTriples(missingServiceStateTypes, triples);
     }
 
-    private Pair<OntModel, List<TripleArrayList>> addMissingOntStates(final Set<String> missingStateTypes
-            , final Pair<OntModel, List<TripleArrayList>> ontModelTriplePair) {
+    private OntModel addMissingUnitsToModel(final Set<UnitType> missingUnitTypes, final OntModel ontModel) {
 
-        final String predicate = OntConfig.OntExpr.A.getName();
-        final String object = OntConfig.OntCl.STATE.getName();
+        final OntClass dalOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.DAL_UNIT.getName()));
+        final OntClass baseOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.BASE_UNIT.getName()));
+        final OntClass hostOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.HOST_UNIT.getName()));
 
-        final OntClass stateOntClass = ontModelTriplePair.getKey().getOntClass(OntologyToolkit.addNamespace(object));
+        for (final UnitType unitType : missingUnitTypes) {
+            final String missingUnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
+            final OntClass newOntClassUnitType = ontModel.createClass(missingUnitType);
+
+            // find correct subclass of unit (e.g. baseUnit, DalUnit)
+            if (UnitConfigProcessor.isDalUnit(unitType)) {
+                ontModel.getOntClass(dalOntClass.getURI()).addSubClass(newOntClassUnitType);
+            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
+                if (UnitConfigProcessor.isHostUnit(unitType)) {
+                    ontModel.getOntClass(hostOntClass.getURI()).addSubClass(newOntClassUnitType);
+                } else {
+                    ontModel.getOntClass(baseOntClass.getURI()).addSubClass(newOntClassUnitType);
+                }
+            }
+        }
+        return ontModel;
+    }
+
+    private List<TripleArrayList> addMissingUnitsToTriples(final Set<UnitType> missingUnitTypes, final List<TripleArrayList> triples) {
+
+        final String pred_isA = OntConfig.OntExpr.A.getName();
+
+        for (final UnitType unitType : missingUnitTypes) {
+            final String subj_UnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
+
+            // find correct subclass of unit (e.g. baseUnit, dalUnit)
+            if (UnitConfigProcessor.isDalUnit(unitType)) {
+                triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.DAL_UNIT.getName()));
+            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
+                if (UnitConfigProcessor.isHostUnit(unitType)) {
+                    triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.HOST_UNIT.getName()));
+                } else {
+                    triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.BASE_UNIT.getName()));
+                }
+            }
+        }
+        return triples;
+    }
+
+    private OntModel addMissingStatesToModel(final Set<String> missingStateTypes, final OntModel ontModel) {
+
+        final OntClass stateOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
 
         for (final String missingState : missingStateTypes) {
 
             final String missingStateType = OntologyToolkit.convertToNounAndAddNS(missingState);
-            final OntClass newOntClassStateType = ontModelTriplePair.getKey().createClass(missingStateType);
+            final OntClass newOntClassStateType = ontModel.createClass(missingStateType);
 
-            ontModelTriplePair.getKey().getOntClass(stateOntClass.getURI()).addSubClass(newOntClassStateType);
-            ontModelTriplePair.getValue().add(new TripleArrayList(missingStateType, predicate, object));
+            ontModel.getOntClass(stateOntClass.getURI()).addSubClass(newOntClassStateType);
         }
+        return ontModel;
+    }
 
-        return ontModelTriplePair;
+    private List<TripleArrayList> addMissingStatesToTriples(final Set<String> missingStateTypes, final List<TripleArrayList> triples) {
+
+        final String predicate = OntConfig.OntExpr.A.getName();
+        final String object = OntConfig.OntCl.STATE.getName();
+
+        for (final String missingState : missingStateTypes) {
+
+            final String missingStateType = OntologyToolkit.convertToNounAndAddNS(missingState);
+            triples.add(new TripleArrayList(missingStateType, predicate, object));
+        }
+        return triples;
     }
 
     private boolean isUnitTypePresent(final UnitConfig unitConfig, final Set<OntClass> unitSubOntClasses) {
@@ -212,27 +229,6 @@ public class TBoxSynchronizer {
             }
         }
         return false;
-    }
-
-    private OntModel getTBox() throws InterruptedException, JPServiceException {
-
-        OntModel ontModel = null;
-
-        while (ontModel == null) {
-            try {
-                ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
-
-                if (ontModel.isEmpty()) {
-                    ontModel = OntologyToolkit.loadOntModelFromFile(null);
-                }
-
-            } catch (IOException e) {
-                //retry
-                ExceptionPrinter.printHistory("No connection to get tbox ontModel from server. Retry...", e, LOGGER, LogLevel.WARN);
-                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-            }
-        }
-        return ontModel;
     }
 
 }

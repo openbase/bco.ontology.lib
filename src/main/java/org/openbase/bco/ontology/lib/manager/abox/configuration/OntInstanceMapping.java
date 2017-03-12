@@ -42,11 +42,12 @@ public interface OntInstanceMapping {
     /**
      * Method converts the unit(Config)s into triples (OntSuperClass Unit!) and returns a triple list.
      *
-     * @param ontModel The ontology model.
      * @param unitConfigList The unit(Config)s, which are convert into triples.
      * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigList);
+
+    List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigList);
 
     //TODO adapt inspection of units in context 'State' -> a unit can keep multiple states
 //    /**

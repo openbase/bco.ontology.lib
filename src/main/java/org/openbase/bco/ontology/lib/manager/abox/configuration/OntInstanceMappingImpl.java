@@ -22,7 +22,6 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
@@ -37,11 +36,10 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author agatting on 23.12.16.
@@ -53,41 +51,27 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     //TODO exception handling
     //TODO add constructor with reusable java instances (e.g. ontClass, ...)?
     //TODO add method, which calls all methods and checks if unitConfigs are initialized
+    //TODO adapt serviceType names to noun syntax (global)
 
     /**
      * {@inheritDoc}
      */
     @Override
     public List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
-
         // a set of unitConfigs, which are missing in the ontology
         final List<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, unitConfigList);
-        // the ontSuperClass of the ontology to get all unit (sub)classes
-        final OntClass ontClass = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
-
-        Set<OntClass> ontClassSet = new HashSet<>();
-        // the set with all ontology unitType classes
-        ontClassSet = TBoxVerification.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
 
         // the triples to insert the missing units into the ontology
-        return buildOntTripleOfUnitTypes(ontClassSet, unitConfigSet);
+        return buildOntTripleOfUnitTypes(unitConfigSet);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
-
-        // the ontSuperClass of the ontology to get all unit (sub)classes
-        final OntClass ontClass = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
-
-        Set<OntClass> ontClassSet = new HashSet<>();
-        // the set with all ontology unitType classes
-        ontClassSet = TBoxVerification.listSubclassesOfOntSuperclass(ontClassSet, ontClass, true);
-
+    public List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigList) {
         // the triples to insert the missing units into the ontology
-        return buildOntTripleOfUnitTypes(ontClassSet, unitConfigList);
+        return buildOntTripleOfUnitTypes(unitConfigList);
     }
 
     /**
@@ -105,13 +89,28 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     @Override
     public List<TripleArrayList> getMissingOntTripleOfProviderServices(final OntModel ontModel) {
 
-        // the ontSuperClass of the ontology to get all state (sub)classes
-        final OntClass ontClass = ontModel.getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
-
         // the set of serviceTypes, which are missing in the ontology
-        final Set<ServiceType> serviceTypeSet = inspectionOfServiceTypes(ontModel);
+        final Set<ServiceType> serviceTypes = inspectionOfServiceTypes(ontModel);
 
-        return buildOntTripleOfProviderServices(ontClass, serviceTypeSet);
+        return buildServiceTriples(serviceTypes);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigList) {
+
+        final Set<ServiceType> serviceTypes = new HashSet<>();
+
+        for (final UnitConfig unitConfig : unitConfigList) {
+            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                final ServiceType serviceType = serviceConfig.getServiceTemplate().getType();
+//                final String serviceTypeName = OntologyToolkit.convertToNounSyntax(serviceType.name());
+                serviceTypes.add(serviceType);
+            }
+        }
+        return buildServiceTriples(serviceTypes);
     }
 
     /**
@@ -119,14 +118,7 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      */
     @Override
     public List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList) {
-
-        final List<TripleArrayList> tripleArrayDeleteLists = new ArrayList<>();
-
-        for (final UnitConfig unitConfig : unitConfigList) {
-            tripleArrayDeleteLists.add(getDeleteTripleOfUnitsAndStates(unitConfig));
-        }
-
-        return tripleArrayDeleteLists;
+        return unitConfigList.stream().map(this::getDeleteTripleOfUnitsAndStates).collect(Collectors.toList());
     }
 
     /**
@@ -134,53 +126,33 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      */
     @Override
     public TripleArrayList getDeleteTripleOfUnitsAndStates(UnitConfig unitConfig) {
-
         // s, p, o pattern
-        final String subject = unitConfig.getId();
-        final String predicate = OntExpr.A.getName();
-
-        return new TripleArrayList(subject, predicate, null);
+        return new TripleArrayList(unitConfig.getId(), OntExpr.A.getName(), null);
     }
 
-    private List<TripleArrayList> buildOntTripleOfUnitTypes(final Set<OntClass> ontClassSet, final List<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildOntTripleOfUnitTypes(final List<UnitConfig> unitConfigSet) {
 
-        // alternative a list of strings (IDs) as mapValue and an unique key (unitType)
-        final Map<String, String> unitTypeUnitIdMap = new HashMap<>();
+        final List<TripleArrayList> triples = new ArrayList<>();
 
         // list all unitTypes and their unitIds of the unitConfigSet in a hashMap
         for (final UnitConfig unitConfig : unitConfigSet) {
-            String unitType = unitConfig.getType().toString().toLowerCase();
-            unitType = unitType.replaceAll(OntExpr.REMOVE.getName(), "");
+            String unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getType().name());
 
             // is the current unitType a connection or location? set unitType variable with their type
-            if (unitType.equals(OntCl.CONNECTION.getName().toLowerCase())) {
-                unitType = unitConfig.getConnectionConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(OntExpr.REMOVE.getName(), "");
-            } else if (unitType.equals(OntCl.LOCATION.getName().toLowerCase())) {
-                unitType = unitConfig.getLocationConfig().getType().toString().toLowerCase();
-                unitType = unitType.replaceAll(OntExpr.REMOVE.getName(), "");
+            if (unitType.equalsIgnoreCase(OntCl.CONNECTION.getName())) {
+                unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getConnectionConfig().getType().name());
+            } else if (unitType.equalsIgnoreCase(OntCl.LOCATION.getName())) {
+                unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getLocationConfig().getType().name());
             }
 
-            unitTypeUnitIdMap.put(unitConfig.getId(), unitType);
+            triples.add(new TripleArrayList(unitConfig.getId(), OntExpr.A.getName(), unitType));
         }
-
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
-
-        for (final OntClass ontClass : ontClassSet) {
-            final String ontClassName = ontClass.getLocalName().toLowerCase();
-
-            for (final Map.Entry<String, String> entry : unitTypeUnitIdMap.entrySet()) {
-                if (entry.getValue().equals(ontClassName)) {
-                    tripleArrayLists.add(new TripleArrayList(entry.getKey(), OntExpr.A.getName(), ontClass.getLocalName()));
-                }
-            }
-        }
-        return tripleArrayLists;
+        return triples;
     }
 
     private List<TripleArrayList> buildOntTripleOfStates(final List<UnitConfig> unitConfigSet) {
 
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        final List<TripleArrayList> triples = new ArrayList<>();
 
         for (final UnitConfig unitConfig : unitConfigSet) {
             final String unitId = unitConfig.getId();
@@ -190,28 +162,24 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
                     String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
                     serviceState = OntologyToolkit.convertToNounSyntax(serviceState);
 
-                    tripleArrayLists.add(new TripleArrayList(unitId, OntExpr.A.getName(), serviceState));
+                    triples.add(new TripleArrayList(unitId, OntExpr.A.getName(), serviceState));
                 } catch (NotAvailableException e) {
                     ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
                             , e, LOGGER, LogLevel.WARN);
                 }
             }
         }
-
-        return tripleArrayLists;
+        return triples;
     }
 
-    private List<TripleArrayList> buildOntTripleOfProviderServices(final OntClass ontClass, final Set<ServiceType> serviceTypeSet) {
+    private List<TripleArrayList> buildServiceTriples(final Set<ServiceType> serviceTypeSet) {
 
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        final List<TripleArrayList> triples = new ArrayList<>();
 
-        if (ontClass != null) {
-            // list all serviceTypes in a list
-            for (final ServiceType serviceType : serviceTypeSet) {
-                tripleArrayLists.add(new TripleArrayList(serviceType.toString(), OntExpr.A.getName(), ontClass.getLocalName()));
-            }
+        // list all serviceTypes in a list
+        for (final ServiceType serviceType : serviceTypeSet) {
+            triples.add(new TripleArrayList(serviceType.toString(), OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
         }
-
-        return tripleArrayLists;
+        return triples;
     }
 }

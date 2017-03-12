@@ -20,7 +20,7 @@ package org.openbase.bco.ontology.lib.manager.buffer;
 
 import javafx.util.Pair;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -74,10 +74,10 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     try {
                         if (pair.getValue()) {
                             // send to all databases
-                            isHttpSuccess = WebInterface.sparqlUpdateToAllDataBases(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+                            isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
                         } else {
                             // send to main database only
-                            isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+                            isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
                         }
 
                         if (isHttpSuccess) {

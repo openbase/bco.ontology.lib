@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.commun.monitor;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
@@ -42,6 +42,7 @@ import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -57,17 +58,15 @@ import java.util.concurrent.TimeUnit;
 public class HeartBeatCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
-    private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-    private final SimpleDateFormat simpleDateFormatWithoutTimeZone = new SimpleDateFormat(OntConfig.DATE_TIME_WITHOUT_TIME_ZONE, Locale.ENGLISH); //TODO
+    private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
     private Future future;
-
     private final String pred_FirstHeartBeat;
     private final String pred_LastHeartBeat;
 
     public HeartBeatCommunication() throws InitializationException {
-
         try {
+            this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
             this.stopwatch = new Stopwatch();
             this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
             this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
@@ -85,7 +84,7 @@ public class HeartBeatCommunication {
 
     private void identifyIncompleteConnectionPhases() throws InterruptedException, JPServiceException {
         try {
-            final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+            final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
             if (resultSet == null || !resultSet.hasNext()) {
                 throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
@@ -96,7 +95,7 @@ public class HeartBeatCommunication {
             boolean isHttpSuccess = false;
 
             while (!isHttpSuccess) {
-                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
+                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
                         , OntConfig.ServerServiceForm.UPDATE);
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
@@ -104,6 +103,8 @@ public class HeartBeatCommunication {
             }
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory("Could not identify incomplete connectionPhases!", e, LOGGER, LogLevel.ERROR);
+        } catch (IOException e) {
+            stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
         }
     }
 
@@ -113,7 +114,7 @@ public class HeartBeatCommunication {
 
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = WebInterface.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+                final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
                 if (resultSet == null || !resultSet.hasNext()) {
                     throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
@@ -124,14 +125,14 @@ public class HeartBeatCommunication {
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
                 final Date now = new Date();
 
-                Date dateLastTimeStamp = simpleDateFormat.parse(lastTimeStamp);
+                Date dateLastTimeStamp = dateFormat.parse(lastTimeStamp);
                 dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
 
                 if (dateLastTimeStamp.compareTo(now) >= 0) {
                     // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
                     final List<TripleArrayList> deleteTriple = new ArrayList<>();
                     final List<TripleArrayList> insertTriple = new ArrayList<>();
-                    final String objectDateTimeNow = "\"" + simpleDateFormat.format(now) + "\"^^xsd:dateTime";
+                    final String objectDateTimeNow = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
 
                     deleteTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, null));
                     insertTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
@@ -139,14 +140,14 @@ public class HeartBeatCommunication {
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
 
-                    if (!WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
-                        throw new CouldNotProcessException("Could not update. Server offline?");
+                    if (!SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
+                        throw new CouldNotProcessException("Dropped heartbeat update. Server offline?");
                     }
                 } else {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
                 }
-            } catch (CouldNotProcessException | CouldNotPerformException | IllegalAccessException e) {
+            } catch (CouldNotProcessException | CouldNotPerformException | IllegalAccessException | IOException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
             } catch (ParseException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
@@ -163,13 +164,13 @@ public class HeartBeatCommunication {
         while (!isHttpSuccess) {
             // both timestamp strings must contain the SAME date
             final Date now = new Date();
-            final String timestampWithoutZoneNow = simpleDateFormatWithoutTimeZone.format(now);
+            final String dateTime = dateFormat.format(now);
 
-            final String subj_HeartBeatPhase = "heartBeatPhase" + timestampWithoutZoneNow;
+            final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
             final String pred_isA = OntExpr.A.getName();
 
             final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
-            final String obj_TimeStamp = "\"" + simpleDateFormat.format(now) + "\"^^xsd:dateTime";
+            final String obj_TimeStamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
 
             final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
             // set initial current heartbeat phase with first and last timestamp (identical)
@@ -180,7 +181,7 @@ public class HeartBeatCommunication {
             final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTripleArrayLists);
 
             try {
-                isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);
+                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }

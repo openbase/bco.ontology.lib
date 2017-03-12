@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.commun.web.WebInterface;
+import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -246,7 +246,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private boolean sendToServer(final String sparqlUpdateExpr) throws JPServiceException {
         try {
-            final boolean isHttpSuccess = WebInterface.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
                 // could not send to server - insert sparql update expression to buffer queue

@@ -22,12 +22,10 @@ import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.commun.web.ServerOntologyModel;
+import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -92,7 +90,7 @@ public interface TBoxVerification {
         final String classNameWithNS = OntologyToolkit.addNamespace(className);
 
         if (ontModel == null) {
-            ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
+            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
         }
         return ontModel.getOntClass(classNameWithNS) != null;
     }
@@ -114,7 +112,7 @@ public interface TBoxVerification {
         final String propertyNameWithNS = OntologyToolkit.addNamespace(propertyName);
 
         if (ontModel == null) {
-            ontModel = ServerOntologyModel.getOntologyModelFromServer(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
+            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
         }
         return ontModel.getOntProperty(propertyNameWithNS) != null;
     }

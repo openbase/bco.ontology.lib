@@ -20,11 +20,8 @@
 package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
@@ -37,9 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * This java class configures the ontology-system and set different elements like namespace or superclasses of the
- * ontology. Furthermore a method tests the validity of them to roll an ExceptionHandling part out of the
- * ontology-processing-classes.
+ * This java class configures the ontology-system and set different elements like namespace or superclasses of the ontology. Furthermore a method tests the
+ * validity of them (e.g. spelling mistakes) to roll an ExceptionHandling part out of the ontology-processing.
  *
  * @author agatting on 14.11.16.
  */
@@ -47,85 +43,23 @@ import java.io.IOException;
 public final class OntConfig {
 
     /**
-     * Method returns the uri to the tbox database of the server.
-     *
-     * @return The tbox database uri.
+     * Logger.
      */
-    public static String getTBoxBaseUri() {
-        try {
-            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue();
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-        return null;
-    }
-
-    /**
-     * Method returns the uri to the tbox ontology update.
-     *
-     * @return The tbox update uri.
-     */
-//    public static String getTBoxUpdateUri() {
-//        try {
-//            return JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + "update";
-//        } catch (JPNotAvailableException e) {
-//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-//        }
-//        return null;
-//    }
-
-    /**
-     * Method returns the uri to the ontology database of the server.
-     *
-     * @return The ontology database uri.
-     */
-    public static String getOntBaseUri() {
-        try {
-            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue();
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-        return null;
-    }
-
-    /**
-     * Method returns the uri to the ontology update of the server.
-     *
-     * @return The ontology update uri.
-     */
-//    public static String getOntUpdateUri() {
-//        try {
-//            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "update";
-//        } catch (JPNotAvailableException e) {
-//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-//        }
-//        return null;
-//    }
-
-    /**
-     * Method returns the uri to the ontology sparql (query) of the server.
-     *
-     * @return The ontology sparql (query) uri.
-     */
-//    public static String getOntSparqlUri() {
-//        try {
-//            return JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql";
-//        } catch (JPNotAvailableException e) {
-//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-//        }
-//        return null;
-//    }
-
-    public enum ServerServiceForm {
-        DATA,
-        UPDATE,
-        SPARQL
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
 
     /**
      * Namespace of the ontology.
      */
     public static final String NS = "http://www.openbase.org/bco/ontology#";
+
+    /**
+     * An enum with service forms of the fuseki ontology server.
+     */
+    public enum ServerServiceForm {
+        DATA,
+        UPDATE,
+        SPARQL
+    }
 
     /**
      * Enumeration of ontology classes.
@@ -385,11 +319,6 @@ public final class OntConfig {
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
     /**
-     * DateTime format without time zone (for ontology instance naming only!).
-     */
-    public static final String DATE_TIME_WITHOUT_TIME_ZONE = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-
-    /**
      * A small retry period time in seconds.
      */
     public static final int SMALL_RETRY_PERIOD_SECONDS = 5;
@@ -419,48 +348,17 @@ public final class OntConfig {
      */
     public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 5;
 
-    // -------------------------------
-
     /**
-     * General string pattern (lower case only).
-     */
-    public static final String STRING_PATTERN = "[a-z]*";
-
-    /**
-     * Dollar sign.
-     */
-    public static final char DOLLAR_SIGN = '$';
-
-    /**
-     * state String.
-     */
-    public static final String STATE = "state";
-
-    /**
-     * get String.
-     */
-    public static final String GET = "get";
-
-    /**
+     * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.
      *
-     */
-    public static final String GET_PATTERN_STATE = GET + STRING_PATTERN + STATE;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
-
-    /**
-     * Method tests configurations.
-     *
-     * @param ontModel The ontology model.
-     * @throws CouldNotPerformException CouldNotPerformException.
+     * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
+     * @throws InterruptedException Exception is thrown, if the stopwatch is interrupted.
      */
     @SuppressWarnings("PMD.ExceptionAsFlowControl")
-    public void initialTestConfig(final OntModel ontModel) throws CouldNotPerformException, JPServiceException {
-
-        //TODO if null -> list all classes
-        //TODO check TBoxVerification.isOntPropertyExisting and class if necessary...
+    public void initialTestConfig() throws JPServiceException, InterruptedException {
 
         MultiException.ExceptionStack exceptionStack = null;
+        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
 
         try {
             // test validity of enum property
@@ -499,8 +397,7 @@ public final class OntConfig {
 
             MultiException.checkAndThrow("Could not process all ontology participants correctly!", exceptionStack);
         }  catch (CouldNotPerformException e) {
-            throw new CouldNotPerformException("Cannot perform reflection!", e);
+            ExceptionPrinter.printHistory("Please check OntConfig - names classes and properties", e, LOGGER, LogLevel.ERROR);
         }
-
     }
 }

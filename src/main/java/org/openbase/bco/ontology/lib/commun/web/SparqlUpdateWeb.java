@@ -31,7 +31,6 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
@@ -52,45 +51,12 @@ import java.util.List;
 /**
  * @author agatting on 12.12.16.
  */
-public interface WebInterface {
+public interface SparqlUpdateWeb {
 
+    /**
+     * Logger.
+     */
     Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
-
-//    /**
-//     * Constructor for WebInterface.
-//     */
-//    public WebInterface() {
-
-        // ask query via remote SPARQL
-//        final Query query = QueryFactory.create(QUERY);
-//        HttpAuthenticator authenticator = new SimpleAuthenticator("admin", "admin".toCharArray());
-//        QueryEngineHTTP qEngine = QueryExecutionFactory
-//                .createServiceRequest("http://localhost:3030/myAppFuseki/query", query, authenticator);
-//        System.out.println(qEngine.execAsk());
-//
-//        try (QueryExecution queryExecution = QueryExecutionFactory
-//                  .sparqlService("http://localhost:3030/myAppFuseki/sparql",
-//                "ASK { ?s a ?type }", authenticator)) {
-//            System.out.println(queryExecution.execAsk());
-//        }
-
-
-//        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-//        credsProvider.setCredentials(new AuthScope("http://localhost/myAppFuseki/update", 3030),
-//          new UsernamePasswordCredentials("admin", "admin"));
-//        CloseableHttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-
-//        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-//        Credentials unscopedCredentials = new UsernamePasswordCredentials("admin", "admin");
-//        credsProvider.setCredentials(AuthScope.ANY, unscopedCredentials);
-//        Credentials scopedCredentials = new UsernamePasswordCredentials("admin", "admin");
-//        final String host = "http://localhost/myAppFuseki/update";
-//        final int port = 3030;
-//        AuthScope authscope = new AuthScope(host, port);
-//        credsProvider.setCredentials(authscope, scopedCredentials);
-//        HttpClient httpclient = HttpClients.custom().setDefaultCredentialsProvider(credsProvider).build();
-//        HttpOp.setDefaultHttpClient(httpclient);
-//    }
 
     /**
      * Method processes a sparql update (update string) to the main database of the ontology server.
@@ -161,15 +127,15 @@ public interface WebInterface {
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.
-     * @throws CouldNotProcessException CouldNotProcessException.
+     * @throws CouldNotProcessException
      */
-    static ResultSet sparqlQuerySelect(final String queryString) throws CouldNotProcessException, JPServiceException {
+    static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {
             Query query = QueryFactory.create(queryString) ;
             QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql", query);
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
-            throw new CouldNotProcessException("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
                     + " failed. Connection establishment refused. Server offline?");
         }
     }

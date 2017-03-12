@@ -20,14 +20,15 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
@@ -50,10 +51,12 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-
-        Stopwatch stopwatch = new Stopwatch();
-
         try {
+            if (JPService.getProperty(JPDebugMode.class).getValue()) {
+                LOGGER.info("Debug Mode");
+            }
+
+            Stopwatch stopwatch = new Stopwatch();
             final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
@@ -61,9 +64,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             new HeartBeatCommunication();
             stopwatch.waitForStart(5000);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
-        } catch (JPNotAvailableException e) {
-            throw new InitializationException(this, e);
-        }
 
 //        stopwatch.waitForStart(10000);
 //        System.out.println("Erstelle Trigger...");
@@ -79,11 +79,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //            // do useful stuff
 //        });
 
-        try {
-            if (JPService.getProperty(JPDebugMode.class).getValue()) {
-                LOGGER.info("Debug Mode");
-            }
-        } catch (JPNotAvailableException e) {
+        } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
@@ -99,5 +95,11 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void init() throws InitializationException, InterruptedException {
+        try {
+            final OntConfig ontConfig = new OntConfig();
+            ontConfig.initialTestConfig();
+        } catch (JPServiceException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 }

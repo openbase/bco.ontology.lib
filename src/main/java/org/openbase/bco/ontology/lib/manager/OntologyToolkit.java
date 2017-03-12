@@ -73,7 +73,7 @@ public interface OntologyToolkit {
 
         if (!matcher.find()) {
             if (expression.length() >= 1) {
-                return expression.substring(0, 1).toUpperCase() + expression.substring(1);
+                return expression.substring(0, 1).toUpperCase() + expression.substring(1).toLowerCase();
             } else {
                 return expression;
             }
