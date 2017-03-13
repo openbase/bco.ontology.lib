@@ -56,7 +56,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
-//            new UnitRegistrySynchronizer(transactionBuffer);
+            new UnitRegistrySynchronizer(transactionBuffer);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
             new HeartBeatCommunication();
 

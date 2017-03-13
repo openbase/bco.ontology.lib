@@ -28,22 +28,19 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
-import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
-import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
+import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
-import rst.domotic.state.ActivationStateType;
-import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
-import rst.domotic.unit.connection.ConnectionDataType.ConnectionData;
 import rst.domotic.unit.dal.AudioSourceDataType.AudioSourceData;
 import rst.domotic.unit.dal.BatteryDataType.BatteryData;
 import rst.domotic.unit.dal.BrightnessSensorDataType.BrightnessSensorData;
@@ -73,7 +70,6 @@ import rst.domotic.unit.dal.VideoRgbSourceDataType.VideoRgbSourceData;
 import rst.domotic.unit.device.DeviceDataType.DeviceData;
 import rst.domotic.unit.app.AppDataType.AppData;
 import rst.domotic.unit.authorizationgroup.AuthorizationGroupDataType.AuthorizationGroupData;
-import rst.domotic.unit.location.LocationDataType.LocationData;
 import rst.domotic.unit.scene.SceneDataType.SceneData;
 import rst.domotic.unit.unitgroup.UnitGroupDataType.UnitGroupData;
 import rst.domotic.unit.user.UserDataType.UserData;
@@ -82,7 +78,7 @@ import rst.domotic.unit.agent.AgentDataType.AgentData;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -91,148 +87,127 @@ import java.util.concurrent.TimeUnit;
 public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
-    private ScheduledFuture scheduledFutureTask;
-    private ScheduledFuture scheduledFutureTaskRemainingUnitRemotes;
+    private Future task;
+    private Future taskRemaining;
+
+    private final TransactionBuffer transactionBuffer;
+    private final RSBInformer<OntologyChange> rsbInformer;
 
     public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
             throws InstantiationException, InitializationException {
 
-        // get classes via reflection...
-//        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
-//        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
+        this.transactionBuffer = transactionBuffer;
+        this.rsbInformer = rsbInformer;
 
-        final Observer<Boolean> activationObserver = new Observer<Boolean>() {
-            @Override
-            public void update(Observable<Boolean> source, Boolean data) throws Exception {
-                try {
-                    getAndMapUnitRemotesWithStateObservation(transactionBuffer, rsbInformer);
-                } catch (CouldNotPerformException e) {
-                    throw new InstantiationException(this, e);
-                }
-            }
-        };
+        final Observer<Boolean> activationObserver = (source, data) -> loadUnitRemotes(null);
+        final Observer<List<UnitConfig>> newUnitConfigObserver = (source, unitConfigs) -> loadUnitRemotes(unitConfigs);
 
+        UnitRegistrySynchronizer.newUnitConfigObservable.addObserver(newUnitConfigObserver);
         HeartBeatCommunication.isInitObservable.addObserver(activationObserver);
     }
 
-    private void getAndMapUnitRemotesWithStateObservation(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
-            throws NotAvailableException {
+    /**
+     * Method loads the unitRemotes from the given unitConfigs and starts the state observation.
+     *
+     * @param unitConfigs The unitConfigs. Can be set on {@code null} then all unitConfigs from the unitRegistry is taken. Otherwise the external unitConfigs
+     *                    is taken.
+     * @throws NotAvailableException Exception is thrown, if the threads are not available.
+     */
+    private void loadUnitRemotes(final List<UnitConfig> unitConfigs) throws NotAvailableException {
 
-        scheduledFutureTask = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-
+        task = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                final List<UnitConfig> unitConfigList = Units.getUnitRegistry().getUnitConfigs();
-                final Set<UnitRemote> unitRemoteSet = getAndActivateUnitRemotes(unitConfigList, transactionBuffer, rsbInformer);
+                final Set<UnitRemote> missingUnitRemotes = new HashSet<>();
+                final List<UnitConfig> unitConfigsBuf;
 
-                if (!unitRemoteSet.isEmpty()) {
-                    processOfRemainingUnitRemotes(unitRemoteSet, transactionBuffer, rsbInformer);
+                if (unitConfigs == null) {
+                    unitConfigsBuf = Units.getUnitRegistry().getUnitConfigs();
                 } else {
-                    LOGGER.info("All unitRemotes loaded successfully.");
+                    unitConfigsBuf = unitConfigs;
                 }
-                scheduledFutureTask.cancel(true);
 
+                for (final UnitConfig unitConfig : unitConfigsBuf) {
+                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
+
+                        final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
+                        try {
+                            unitRemote.waitForData(1, TimeUnit.SECONDS);
+
+                            if (unitRemote.isDataAvailable()) {
+                                // unitRemote is ready. add stateObservation
+                                identifyUnitRemote(unitRemote);
+                                LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
+                            } else {
+                                missingUnitRemotes.add(unitRemote);
+                            }
+                        } catch (CouldNotPerformException e) {
+                            // collect unitRemotes with missing data (wait for data timeout)
+                            missingUnitRemotes.add(unitRemote);
+                        }
+                    }
+                }
+                if (missingUnitRemotes.isEmpty()) {
+                    LOGGER.info("All unitRemotes loaded successfully.");
+                } else {
+                    processRemainingUnitRemotes(missingUnitRemotes);
+                    LOGGER.info("There are " + missingUnitRemotes.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
+                }
             } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
-                ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in "
-                        + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds!", e, LOGGER, LogLevel.ERROR);
+                ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException e) {
-                scheduledFutureTask.cancel(true);
+                task.cancel(true);
             }
         }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private Set<UnitRemote> getAndActivateUnitRemotes(final List<UnitConfig> unitConfigList, final TransactionBuffer transactionBuffer
-            , final RSBInformer<OntologyChange> rsbInformer) throws InterruptedException {
+    private void processRemainingUnitRemotes(final Set<UnitRemote> unitRemotes) throws NotAvailableException {
 
-        MultiException.ExceptionStack exceptionStack = null;
-        final Set<UnitRemote> unitRemoteSet = new HashSet<>();
-
-        for (final UnitConfig unitConfig : unitConfigList) {
-            if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
-
-                UnitRemote unitRemote = null;
-                try {
-                    unitRemote = Units.getUnit(unitConfig, false);
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                }
-
-                if (unitRemote != null) {
-                    try {
-                        unitRemote.waitForData(1, TimeUnit.SECONDS);
-
-                        if (unitRemote.isDataAvailable()) {
-                            // unitRemote is ready. add stateObservation
-                            identifyUnitRemote(unitRemote, transactionBuffer, rsbInformer);
-                        } else {
-                            unitRemoteSet.add(unitRemote);
-                        }
-                    } catch (CouldNotPerformException e) {
-                        // collect unitRemotes with missing data (wait for data timeout)
-                        unitRemoteSet.add(unitRemote);
-                    }
-                }
-            }
-        }
-
-        try {
-            MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
-        } catch (MultiException e) {
-            LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                    + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
-        }
-        // return a set of unitRemotes, which have no data yet
-        return unitRemoteSet;
-    }
-
-    private void processOfRemainingUnitRemotes(final Set<UnitRemote> unitRemoteSet, final TransactionBuffer transactionBuffer
-            , final RSBInformer<OntologyChange> rsbInformer) throws NotAvailableException {
-
-        Set<UnitRemote> unitRemoteSetBuf = new HashSet<>();
-
-        scheduledFutureTaskRemainingUnitRemotes = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-            MultiException.ExceptionStack exceptionStack = null;
-
-            for (final UnitRemote unitRemote : unitRemoteSet) {
-                try {
-                    unitRemote.waitForData(1, TimeUnit.SECONDS);
-
-                    if (unitRemote.isDataAvailable()) {
-                        // unitRemote is ready. add stateObservation
-                        identifyUnitRemote(unitRemote, transactionBuffer, rsbInformer);
-                    } else {
-                        unitRemoteSetBuf.add(unitRemote);
-                    }
-                } catch (CouldNotPerformException e) {
-                    // add to set and stack exception
-                    unitRemoteSetBuf.add(unitRemote);
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                } catch (InterruptedException e) {
-                    //TODO
-                }
-            }
-
+        taskRemaining = GlobalCachedExecutorService.submit(() -> {
             try {
-                MultiException.checkAndThrow("Could not process all unitRemotes!", exceptionStack);
-            } catch (MultiException e) {
-                LOGGER.warn("There are " + (exceptionStack != null ? exceptionStack.size() : 0)
-                        + " unitRemotes without data. Retry to solve in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds.");
-            }
 
-            if (unitRemoteSetBuf.isEmpty()) {
-                scheduledFutureTaskRemainingUnitRemotes.cancel(true);
-                LOGGER.info("All unitRemotes loaded successfully.");
-            } else {
-                unitRemoteSetBuf.clear();
-                unitRemoteSet.addAll(unitRemoteSetBuf);
-                unitRemoteSetBuf.clear();
+                final Set<UnitRemote> missingUnitRemotes = new HashSet<>();
+                final Stopwatch stopwatch = new Stopwatch();
+
+                while (!unitRemotes.isEmpty()) {
+
+                    for (final UnitRemote unitRemote : unitRemotes) {
+                        try {
+                            unitRemote.waitForData(2, TimeUnit.SECONDS);
+
+                            if (unitRemote.isDataAvailable()) {
+                                // unitRemote is ready. add stateObservation
+                                identifyUnitRemote(unitRemote);
+                                LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
+                            } else {
+                                missingUnitRemotes.add(unitRemote);
+                            }
+                        } catch (CouldNotPerformException e) {
+                            // collect unitRemotes with missing data (wait for data timeout)
+                            missingUnitRemotes.add(unitRemote);
+                        }
+                    }
+
+                    if (!missingUnitRemotes.isEmpty()) {
+                        unitRemotes.removeAll(missingUnitRemotes);
+                        missingUnitRemotes.clear();
+                        LOGGER.info("There are " + unitRemotes.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
+
+                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                    } else {
+                        unitRemotes.clear();
+                    }
+                }
+            } catch (InterruptedException e) {
+                taskRemaining.cancel(true);
             }
-        }, OntConfig.BIG_RETRY_PERIOD_SECONDS, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
+        });
+
+        LOGGER.info("All unitRemotes loaded successfully.");
     }
 
     //TODO set generic dataClass?! Following static process not nice...
-    private void identifyUnitRemote(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer
-            , final RSBInformer<OntologyChange> rsbInformer) throws InstantiationException {
+    private void identifyUnitRemote(final UnitRemote unitRemote) throws InstantiationException {
 
         final String dataClassName = unitRemote.getDataClass().getSimpleName().toLowerCase();
 

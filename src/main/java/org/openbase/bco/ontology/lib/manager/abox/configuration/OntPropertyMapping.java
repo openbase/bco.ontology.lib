@@ -29,38 +29,34 @@ import java.util.List;
 public interface OntPropertyMapping {
 
     /**
-     * Method returns a list of triples, which contains multiple insert triple to add properties of the unitConfigs in
-     * the ontology.
+     * Method returns a list of triples, which contains multiple insert triple to add properties of the unitConfigs in the ontology.
      *
-     * @param unitConfigList The unitConfig list.
+     * @param unitConfigs The unitConfig list.
      * @return A list with insert triple information.
      */
-    List<TripleArrayList> getPropertyTripleOfUnitConfigs(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingPropertyTriples(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method returns a list of triples, which contains multiple insert triple to add properties of the unitConfig in
-     * the ontology.
+     * Method returns a list of triples, which contains multiple insert triple to add properties of the unitConfig in the ontology.
      *
      * @param unitConfig The unitConfig, which should be synchronized.
      * @return A list with insert triple information.
      */
-    List<TripleArrayList> getPropertyTripleOfSingleUnitConfig(final UnitConfig unitConfig);
+    List<TripleArrayList> getMissingPropertyTriples(final UnitConfig unitConfig);
 
     /**
-     * Method returns a list of triples, which contains delete triple to remove properties of the unitConfigs in the
-     * ontology.
+     * Method returns a list of triples, which contains delete triple to remove properties of the unitConfigs in the ontology.
      *
-     * @param unitConfigList The unitConfig list.
+     * @param unitConfigs The unitConfig list.
      * @return A list with delete triple information.
      */
-    List<TripleArrayList> getPropertyDeleteTripleOfUnitConfigs(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getDeletePropertyTriples(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method returns a list of triples, which contains delete triple to remove properties of the unitConfig in the
-     * ontology.
+     * Method returns a list of triples, which contains delete triple to remove properties of the unitConfig in the ontology.
      *
      * @param unitConfig The unitConfig, which should be synchronized.
      * @return A list with delete triple information.
      */
-    List<TripleArrayList> getPropertyDeleteTripleOfSingleUnitConfig(final UnitConfig unitConfig);
+    List<TripleArrayList> getDeletePropertyTriples(final UnitConfig unitConfig);
 }

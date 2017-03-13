@@ -34,85 +34,81 @@ import java.util.List;
  */
 public class OntPropertyMappingImpl implements OntPropertyMapping {
 
-    //TODO exception handling
-    //TODO reduce methods params: .addAll
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getPropertyTripleOfUnitConfigs(final List<UnitConfig> unitConfigList) {
+    public List<TripleArrayList> getMissingPropertyTriples(final List<UnitConfig> unitConfigs) {
 
-        final List<TripleArrayList> tripleArrayInsertLists = new ArrayList<>();
+        final List<TripleArrayList> triples = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : unitConfigList) {
-            tripleArrayInsertLists.addAll(getPropertyTripleOfSingleUnitConfig(unitConfig));
+        for (final UnitConfig unitConfig : unitConfigs) {
+            triples.addAll(getMissingPropertyTriples(unitConfig));
         }
-
-        return tripleArrayInsertLists;
+        return triples;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getPropertyTripleOfSingleUnitConfig(final UnitConfig unitConfig) {
+    public List<TripleArrayList> getMissingPropertyTriples(final UnitConfig unitConfig) {
 
-        List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        List<TripleArrayList> triples = new ArrayList<>();
 
         if (unitConfig.getType().equals(UnitType.LOCATION)) {
-            tripleArrayLists = getInsertTripleObjPropHasSubLocation(tripleArrayLists, unitConfig);
-            tripleArrayLists = getInsertTripleObjPropHasUnit(tripleArrayLists, unitConfig);
+            triples.addAll(getInsertTripleObjPropHasSubLocation(unitConfig));
+            triples.addAll(getInsertTripleObjPropHasUnit(unitConfig));
         } else if (unitConfig.getType().equals(UnitType.CONNECTION)) {
-            tripleArrayLists = getInsertTripleObjPropHasConnection(tripleArrayLists, unitConfig);
+            triples.addAll(getInsertTripleObjPropHasConnection(unitConfig));
         }
 
-        tripleArrayLists = getInsertTripleObjPropHasState(tripleArrayLists, unitConfig);
-        tripleArrayLists = getInsertTripleDataTypePropHasLabel(tripleArrayLists, unitConfig);
-        tripleArrayLists = getTripleDataTypePropIsEnabled(tripleArrayLists, unitConfig);
+        triples.addAll(getInsertTripleObjPropHasState(unitConfig));
+        triples.addAll(getInsertTripleDataTypePropHasLabel(unitConfig));
+        triples.addAll(getTripleDataTypePropIsEnabled(unitConfig));
 
-        return tripleArrayLists;
+        return triples;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getPropertyDeleteTripleOfUnitConfigs(final List<UnitConfig> unitConfigList) {
+    public List<TripleArrayList> getDeletePropertyTriples(final List<UnitConfig> unitConfigs) {
 
-        final List<TripleArrayList> tripleArrayDeleteLists = new ArrayList<>();
+        final List<TripleArrayList> triples = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : unitConfigList) {
-            tripleArrayDeleteLists.addAll(getPropertyDeleteTripleOfSingleUnitConfig(unitConfig));
+        for (final UnitConfig unitConfig : unitConfigs) {
+            triples.addAll(getDeletePropertyTriples(unitConfig));
         }
-
-        return tripleArrayDeleteLists;
+        return triples;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getPropertyDeleteTripleOfSingleUnitConfig(final UnitConfig unitConfig) {
+    public List<TripleArrayList> getDeletePropertyTriples(final UnitConfig unitConfig) {
 
-        List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        List<TripleArrayList> triples = new ArrayList<>();
 
         if (unitConfig.getType().equals(UnitType.LOCATION)) {
-            tripleArrayLists.add(getDeleteTripleObjPropHasSubLocation(unitConfig));
-            tripleArrayLists.add(getDeleteTripleObjPropHasUnit(unitConfig));
+            triples.add(getDeleteTripleObjPropHasSubLocation(unitConfig));
+            triples.add(getDeleteTripleObjPropHasUnit(unitConfig));
         } else if (unitConfig.getType().equals(UnitType.CONNECTION)) {
-            tripleArrayLists.add(getDeleteTripleObjPropHasConnection(unitConfig));
+            triples.add(getDeleteTripleObjPropHasConnection(unitConfig));
         }
 
-        tripleArrayLists.add(getDeleteTripleObjPropHasState(unitConfig));
-        tripleArrayLists.add(getDeleteTripleDataTypePropHasLabel(unitConfig));
-        tripleArrayLists.add(getDeleteTripleDataTypePropIsEnabled(unitConfig));
+        triples.add(getDeleteTripleObjPropHasState(unitConfig));
+        triples.add(getDeleteTripleDataTypePropHasLabel(unitConfig));
+        triples.add(getDeleteTripleDataTypePropIsEnabled(unitConfig));
 
-        return tripleArrayLists;
+        return triples;
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasSubLocation(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasSubLocation(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
         final String subject = unitConfig.getId();
         final String predicate = OntProp.SUB_LOCATION.getName();
@@ -121,10 +117,10 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         // get all child IDs of the unit location
         for (final String childId : unitConfig.getLocationConfig().getChildIdList()) {
             object = childId;
-            tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+            triples.add(new TripleArrayList(subject, predicate, object));
         }
 
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleObjPropHasSubLocation(final UnitConfig unitConfig) {
@@ -136,20 +132,19 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return new TripleArrayList(subject, predicate, null);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasUnit(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasUnit(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
         final String subject = unitConfig.getId();
         final String predicate = OntProp.UNIT.getName();
-        String object;
 
         // get all unit IDs, which can be found in the unit location
-        for (final String unitId : unitConfig.getLocationConfig().getUnitIdList()) {
-            object = unitId;
-            tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+        for (final String obj_unitId : unitConfig.getLocationConfig().getUnitIdList()) {
+            triples.add(new TripleArrayList(subject, predicate, obj_unitId));
         }
 
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleObjPropHasUnit(final UnitConfig unitConfig) {
@@ -161,20 +156,18 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return new TripleArrayList(subject, predicate, null);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasConnection(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasConnection(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
-        String subject;
         final String predicate = OntProp.CONNECTION.getName();
         final String object = unitConfig.getId(); //get unit ID
 
         // get all tiles, which contains the connection unit
-        for (final String tileId : unitConfig.getConnectionConfig().getTileIdList()) {
-            subject = tileId;
-            tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+        for (final String subj_tileId : unitConfig.getConnectionConfig().getTileIdList()) {
+            triples.add(new TripleArrayList(subj_tileId, predicate, object));
         }
-
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleObjPropHasConnection(final UnitConfig unitConfig) {
@@ -186,8 +179,9 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return new TripleArrayList(null, predicate, object);
     }
 
-    private List<TripleArrayList> getInsertTripleObjPropHasState(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleObjPropHasState(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
         final String predicate = OntProp.STATE.getName();
         final String object = unitConfig.getId();
@@ -196,10 +190,9 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
 
             final String subject = OntologyToolkit.convertToNounSyntax(serviceConfig.getServiceTemplate().getType().name());
-            tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+            triples.add(new TripleArrayList(subject, predicate, object));
         }
-
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleObjPropHasState(final UnitConfig unitConfig) {
@@ -212,16 +205,17 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
     }
 
     @SuppressWarnings("checkstyle:multiplestringliterals")
-    private List<TripleArrayList> getInsertTripleDataTypePropHasLabel(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getInsertTripleDataTypePropHasLabel(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
         final String subject = unitConfig.getId();
         final String predicate = OntProp.LABEL.getName();
         final String object = "\"" + unitConfig.getLabel() + "\""; // dataTypes have quotation marks
 
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+        triples.add(new TripleArrayList(subject, predicate, object));
 
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleDataTypePropHasLabel(final UnitConfig unitConfig) {
@@ -233,8 +227,9 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return new TripleArrayList(subject, predicate, null);
     }
 
-    private List<TripleArrayList> getTripleDataTypePropIsEnabled(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
+    private List<TripleArrayList> getTripleDataTypePropIsEnabled(final UnitConfig unitConfig) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         // s, p, o pattern
         final String subject = unitConfig.getId();
         final String predicate = OntProp.IS_ENABLED.getName();
@@ -246,9 +241,9 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
             object = "\"false\""; // dataTypes have quotation marks
         }
 
-        tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
+        triples.add(new TripleArrayList(subject, predicate, object));
 
-        return tripleArrayLists;
+        return triples;
     }
 
     private TripleArrayList getDeleteTripleDataTypePropIsEnabled(final UnitConfig unitConfig) {

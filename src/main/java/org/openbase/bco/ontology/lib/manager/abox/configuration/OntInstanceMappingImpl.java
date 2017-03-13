@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
+import rst.domotic.unit.UnitConfigType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
@@ -49,19 +50,32 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
-    //TODO add method, which calls all methods and checks if unitConfigs are initialized
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getAllMissingConfigTriples(List<UnitConfig> unitConfigs) throws IllegalArgumentException {
+
+        final List<TripleArrayList> triples = new ArrayList<>();
+
+        triples.addAll(getMissingUnitTriples(unitConfigs));
+        triples.addAll(getMissingStateTriples(unitConfigs));
+        triples.addAll(getMissingServiceTriples(unitConfigs));
+
+        return triples;
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigList)
+    public List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
             throws CouldNotPerformException, IllegalArgumentException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
 
-        triples.addAll(getMissingUnitTriplesViaOntModel(ontModel, unitConfigList));
-        triples.addAll(getMissingStateTriplesViaOntModel(ontModel, unitConfigList));
+        triples.addAll(getMissingUnitTriplesViaOntModel(ontModel, unitConfigs));
+        triples.addAll(getMissingStateTriplesViaOntModel(ontModel, unitConfigs));
         triples.addAll(getMissingServiceTriplesViaOntModel(ontModel));
 
         return triples;
