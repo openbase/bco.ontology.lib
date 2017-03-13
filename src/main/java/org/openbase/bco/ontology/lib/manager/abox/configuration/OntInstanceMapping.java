@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.jul.exception.CouldNotPerformException;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.List;
@@ -28,6 +29,10 @@ import java.util.List;
  * @author agatting on 09.01.17.
  */
 public interface OntInstanceMapping {
+
+    List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigList)
+            throws CouldNotPerformException, IllegalArgumentException;
+
     /**
      * Method compares the unit(Config)s with the units (OntSuperClass Unit!) in the ontology model. The missing units
      * are convert into triples and are stored in the returned list.
@@ -37,7 +42,8 @@ public interface OntInstanceMapping {
      *                       instances in the ontology.
      * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel, final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingUnitTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigList)
+            throws CouldNotPerformException, IllegalArgumentException;
 
     /**
      * Method converts the unit(Config)s into triples (OntSuperClass Unit!) and returns a triple list.
@@ -45,22 +51,21 @@ public interface OntInstanceMapping {
      * @param unitConfigList The unit(Config)s, which are convert into triples.
      * @return A list with unit triple information.
      */
-    List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigList) throws IllegalArgumentException;
 
-    List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigList) throws IllegalArgumentException;
 
-    //TODO adapt inspection of units in context 'State' -> a unit can keep multiple states
-//    /**
-//     * Method compares the unit(Config)s with the units (OntSuperClass State!) in the ontology model. The missing units
-//     * are convert into triples and are stored in the returning list.
-//     *
-//     * @param ontModel The ontology model.
-//     * @param unitConfigList The unit(Config)s, which are compared with the existing unit (OntSuperClass State!)
-//     *                       instances in the ontology.
-//     * @return A list with triple information.
-//     */
-//    List<TripleArrayList> getMissingOntTripleOfStatesAfterInspection(final OntModel ontModel
-//            , final List<UnitConfig> unitConfigList);
+    /**
+     * Method compares the unit(Config)s with the units (OntSuperClass State!) in the ontology model. The missing units
+     * are convert into triples and are stored in the returning list.
+     *
+     * @param ontModel The ontology model.
+     * @param unitConfigList The unit(Config)s, which are compared with the existing unit (OntSuperClass State!)
+     *                       instances in the ontology.
+     * @return A list with triple information.
+     */
+    List<TripleArrayList> getMissingStateTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigList)
+            throws CouldNotPerformException, IllegalArgumentException;
 
     /**
      * Method converts the unit(Config)s into triples (OntSuperClass State!) and returns a triple list.
@@ -68,7 +73,7 @@ public interface OntInstanceMapping {
      * @param unitConfigList The unit(Config)s, which are convert into triples.
      * @return A list with triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfStates(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getMissingStateTriples(final List<UnitConfig> unitConfigList);
 
     /**
      * Method compares the registry providerServices with the providerServices (OntSuperClass ProviderService!) in the
@@ -77,7 +82,7 @@ public interface OntInstanceMapping {
      * @param ontModel The ontology model.
      * @return A list with triple information.
      */
-    List<TripleArrayList> getMissingOntTripleOfProviderServices(final OntModel ontModel);
+    List<TripleArrayList> getMissingServiceTriplesViaOntModel(final OntModel ontModel) throws CouldNotPerformException, IllegalArgumentException;
 
     /**
      * Method returns a list of triples, which contains delete triple to remove the unitConfigs instances in the
@@ -86,7 +91,7 @@ public interface OntInstanceMapping {
      * @param unitConfigList The unitConfig list.
      * @return A list with delete triple information.
      */
-    List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList);
+    List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList) throws IllegalArgumentException;
 
     /**
      * Method returns a list of triples, which contains delete triple to remove the unitConfig instance in the ontology.
@@ -94,5 +99,5 @@ public interface OntInstanceMapping {
      * @param unitConfig The unitConfig.
      * @return A delete triple.
      */
-    TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig);
+    TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig) throws IllegalArgumentException;
 }

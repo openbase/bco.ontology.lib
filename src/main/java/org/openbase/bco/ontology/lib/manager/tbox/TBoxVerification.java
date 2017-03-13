@@ -45,12 +45,9 @@ public interface TBoxVerification {
      * @return A set with class results.
      * @throws IllegalArgumentException Exception is thrown, if the superClass has no subClasses.
      */
-    static Set<OntClass> listSubclassesOfOntSuperclass(Set<OntClass> ontClassSet, final OntClass ontSuperClass, final boolean inclusiveSuperclass)
-            throws IllegalArgumentException {
+    static Set<OntClass> listSubclassesOfOntSuperclass(Set<OntClass> ontClassSet, final OntClass ontSuperClass, final boolean inclusiveSuperclass) {
 
-        if (!ontSuperClass.hasSubClass()) {
-            throw new IllegalArgumentException("Input superClass is no superClass, cause it has no subClasses!");
-        } else if (ontClassSet == null) {
+        if (ontClassSet == null) {
             ontClassSet = new HashSet<>();
         }
         // add initial superclass

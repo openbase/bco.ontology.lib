@@ -19,10 +19,8 @@
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
 import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -35,114 +33,100 @@ import java.util.Set;
  * @author agatting on 20.12.16.
  */
 public class OntInstanceInspection {
-    //TODO handling of units with missing data (e.g. location)
 
     /**
      * Method compares the units of the registry with the actual units in the ontology model. Missing units are listed.
      *
-     * @param ontModel The actual ontology model.
-     * @param unitConfigList A list of unitConfigs.
+     * @param unitConfigs A list of unitConfigs.
      *
      * @return A set of missing unitConfigs (units) in the actual ontology model.
      */
-    protected List<UnitConfig> inspectionOfUnits(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
+    protected List<UnitConfig> inspectionOfUnits(final List<UnitConfig> unitConfigs, final OntClass ontClass) {
 
-        final List<UnitConfig> missingUnitConfigSet = new ArrayList<>();
-        Set<String> ontUnitIndNameSet = new HashSet<>(); //Ind: individual
+        final List<UnitConfig> missingUnitConfigs = new ArrayList<>();
+        Set<String> ontUnitInstances = new HashSet<>();
 
-        // preparation: get all individuals of the class "Unit" which are currently in the model
-        final OntClass ontClassUnit = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
+        ontUnitInstances = listInstancesOfOntClass(ontUnitInstances, ontClass);
 
-        if (ontClassUnit == null) {
-            //TODO
-        } else {
-            ontUnitIndNameSet = listIndOfOntClass(ontUnitIndNameSet, ontClassUnit);
-        }
+        assert unitConfigs != null : "Could not get missing unitConfigs, cause unitConfigs list is null!";
+        for (final UnitConfig unitConfig : unitConfigs) {
 
-        for (final UnitConfig unitConfig : unitConfigList) {
-            final String unitId = unitConfig.getId();
-
-            if (!ontUnitIndNameSet.contains(unitId)) {
+            if (!ontUnitInstances.contains(unitConfig.getId())) {
                 // list all missing units. Means units, which aren't currently in the model
-                missingUnitConfigSet.add(unitConfig);
+                missingUnitConfigs.add(unitConfig);
             }
         }
-
-        return missingUnitConfigSet;
+        return missingUnitConfigs;
     }
 
     /**
      * Method compares all registry serviceTypes with the serviceTypes in the ontology. Missing serviceTypes are listed.
      *
-     * @param ontModel The actual ontology model.
-     *
      * @return A set of missing serviceTypes in the actual ontology model.
      */
-    protected Set<ServiceType> inspectionOfServiceTypes(final OntModel ontModel) {
+    protected Set<ServiceType> inspectionOfServiceTypes(final OntClass ontClassProviderService) {
 
         final Set<ServiceType> missingServiceTypeSet = new HashSet<>();
-        Set<String> ontServiceTypeIndNameSet = new HashSet<>(); //Ind: individual
+        Set<String> ontServiceTypeInstances = new HashSet<>();
 
-        // preparation: get all individuals of the class "ProviderService" which are currently in the model
-        final OntClass ontClassServiceType = ontModel.getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
-        ontServiceTypeIndNameSet = listIndOfOntClass(ontServiceTypeIndNameSet, ontClassServiceType);
+        ontServiceTypeInstances = listInstancesOfOntClass(ontServiceTypeInstances, ontClassProviderService);
 
         // get all serviceTypes (ProviderService) of the registry
-        final ServiceType[] serviceTypeArray = ServiceType.values();
+        final ServiceType[] serviceTypes = ServiceType.values();
 
-        for (final ServiceType serviceTypeElement : serviceTypeArray) {
-            final String serviceType = serviceTypeElement.toString();
-
+        for (final ServiceType serviceType : serviceTypes) {
             // list all missing serviceTypes. Means serviceTypes, which aren't currently in the model
-            if (!ontServiceTypeIndNameSet.contains(serviceType)) {
-                missingServiceTypeSet.add(serviceTypeElement);
+            if (!ontServiceTypeInstances.contains(serviceType.name())) {
+                missingServiceTypeSet.add(serviceType);
             }
         }
         return missingServiceTypeSet;
     }
 
     /**
-     * Method returns a set of names of individuals from a superclass via recursion. Differently to listIndividuals()
-     * of jena, the method returns all individuals (inclusive individuals of subclasses). Furthermore the set contains
-     * the local name only (without namespace) to aim more efficiency by compare operations (e.g. contains()) later on.
+     * Method returns a set of local names of all instances from a superclass via recursion. Differently to listIndividuals() of jena, the method returns all
+     * instances (inclusive instances of subclasses). Furthermore the set contains the local name only (without namespace) to aim more efficiency by compare
+     * operations (e.g. contains()) later on.
      *
-     * @param individualNameSet The set of names of the individuals.
+     * @param instanceNameSet The set of names of the individuals. Can be empty. Needed for recursion.
      * @param ontClass The superclass which keeps the individuals.
      *
-     * @return A set of strings with individual localNames.
+     * @return A set with local names of the input ont super class.
      */
-    private Set<String> listIndOfOntClass(final Set<String> individualNameSet, final OntClass ontClass) {
+    private Set<String> listInstancesOfOntClass(Set<String> instanceNameSet, final OntClass ontClass) {
 
-        final ExtendedIterator instanceExIt;
+        if (instanceNameSet == null) {
+            instanceNameSet = new HashSet<>();
+        }
+
+        assert ontClass != null : "Could not list instances, cause ontClass is null!";
         if (ontClass.hasSubClass()) {
-
             // case: class has subclass and individuals
-            instanceExIt = ontClass.listInstances();
-            while (instanceExIt.hasNext()) {
-                // add local name (substring) of individual only
-                String indName = instanceExIt.next().toString();
-                indName = indName.substring(OntConfig.NS.length(), indName.length());
-                individualNameSet.add(indName);
-            }
+            final ExtendedIterator instanceExIt = ontClass.listInstances();
 
+            while (instanceExIt.hasNext()) {
+                final String instanceName = OntologyToolkit.getLocalName(instanceExIt.next().toString());
+                // add local name (substring) of individual only
+                instanceNameSet.add(instanceName);
+            }
             // goto next (sub-)class
             final ExtendedIterator<OntClass> ontClassExIt = ontClass.listSubClasses();
+
             while (ontClassExIt.hasNext()) {
                 final OntClass ontSubClass = ontClassExIt.next();
-                listIndOfOntClass(individualNameSet, ontSubClass);
+                listInstancesOfOntClass(instanceNameSet, ontSubClass);
             }
         } else {
-
             // class has no subclass(es) anymore. add individuals to list
-            instanceExIt = ontClass.listInstances();
+            final ExtendedIterator instanceExIt = ontClass.listInstances();
+
             while (instanceExIt.hasNext()) {
+                final String instanceName = OntologyToolkit.getLocalName(instanceExIt.next().toString());
                 // add local name (substring) of individual only
-                String indName = instanceExIt.next().toString();
-                indName = indName.substring(OntConfig.NS.length(), indName.length());
-                individualNameSet.add(indName);
+                instanceNameSet.add(instanceName);
             }
         }
-        return individualNameSet;
+        return instanceNameSet;
     }
 
 }

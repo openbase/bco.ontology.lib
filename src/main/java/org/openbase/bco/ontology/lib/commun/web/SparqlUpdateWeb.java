@@ -127,7 +127,6 @@ public interface SparqlUpdateWeb {
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.
-     * @throws CouldNotProcessException
      */
     static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {

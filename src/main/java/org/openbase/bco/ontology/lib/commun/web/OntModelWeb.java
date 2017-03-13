@@ -82,7 +82,8 @@ public interface OntModelWeb {
      * Method tries to download the tbox from the ontology server. If there is no connection, the method retries in a specific interval with the download. If
      * the ontModel from the server is empty, the ontModel from the dependency is taken. Consider, if there is no connection, the method blocks.
      *
-     * @return The TBox ontModel from the server or from the dependency, if the server ontModel is empty.
+     * @return The TBox ontModel from the server or from the dependency, if the server ontModel is empty. If the file is not found, an empty ontModel is
+     * returned.
      * @throws InterruptedException Exception is thrown, if the application is interrupted.
      * @throws JPServiceException Exception is thrown, if the JPService is not available.
      */
@@ -96,11 +97,12 @@ public interface OntModelWeb {
                 if (ontModel.isEmpty()) {
                     ontModel = OntologyToolkit.loadOntModelFromFile(null);
                 }
-
             } catch (IOException e) {
                 //retry
                 ExceptionPrinter.printHistory("No connection to get tbox ontModel from server. Retry...", e, LOGGER, LogLevel.WARN);
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+            } catch (IllegalArgumentException e ){
+                ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
             }
         }
         return ontModel;

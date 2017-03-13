@@ -35,6 +35,7 @@ import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -161,19 +162,20 @@ public class UnitRegistrySynchronizer {
         this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
     }
 
-    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigList, final OntModel ontModel) throws JPServiceException {
+    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigs, final OntModel ontModel) throws InstantiationException {
+        try {
+            final List<TripleArrayList> insertTriples = new ArrayList<>();
 
-        final List<TripleArrayList> insertTripleArrayLists = new ArrayList<>();
+            // insert instances
+            insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriplesViaOntModel(ontModel, unitConfigs));
+            // insert properties
+            insertTriples.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigs));
 
-        // insert instances
-        insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfUnitsAfterInspection(ontModel, unitConfigList));
-        insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfStates(unitConfigList));
-        insertTripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfProviderServices(ontModel));
-        // insert properties
-        insertTripleArrayLists.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigList));
-
-        // convert to sparql expression and upload...or save, if no server connection
-        convertToSparqlExprAndUpload(null, insertTripleArrayLists);
+            // convert to sparql expression and upload...or save in buffer, if no server connection
+            convertToSparqlExprAndUpload(null, insertTriples);
+        } catch (JPServiceException | IllegalArgumentException | CouldNotPerformException e) {
+            throw new InstantiationException(this, e);
+        }
     }
 
     private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
@@ -194,12 +196,12 @@ public class UnitRegistrySynchronizer {
         insertTriples.addAll(tboxTriples);
         // insert instances
         insertTriples.addAll(ontInstanceMapping.getMissingUnitTriples(unitConfigList));
-        insertTriples.addAll(ontInstanceMapping.getMissingOntTripleOfStates(unitConfigList));
+        insertTriples.addAll(ontInstanceMapping.getMissingStateTriples(unitConfigList));
         insertTriples.addAll(ontInstanceMapping.getMissingServiceTriples(unitConfigList));
         // insert properties
         insertTriples.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigList));
 
-        // convert to sparql expression and upload...or save, if no server connection
+        // convert to sparql expression and upload...or save in buffer, if no server connection
         convertToSparqlExprAndUpload(deleteTriples, insertTriples);
     }
 
@@ -213,12 +215,12 @@ public class UnitRegistrySynchronizer {
         tripleArrayLists.addAll(tboxTriples);
         // insert instances
         tripleArrayLists.addAll(ontInstanceMapping.getMissingUnitTriples(unitConfigList));
-        tripleArrayLists.addAll(ontInstanceMapping.getMissingOntTripleOfStates(unitConfigList));
+        tripleArrayLists.addAll(ontInstanceMapping.getMissingStateTriples(unitConfigList));
         tripleArrayLists.addAll(ontInstanceMapping.getMissingServiceTriples(unitConfigList));
         // insert properties
         tripleArrayLists.addAll(ontPropertyMapping.getPropertyTripleOfUnitConfigs(unitConfigList));
 
-        // convert to sparql expression and upload...or save, if no server connection
+        // convert to sparql expression and upload...or save in buffer, if no server connection
         convertToSparqlExprAndUpload(null, tripleArrayLists);
     }
 

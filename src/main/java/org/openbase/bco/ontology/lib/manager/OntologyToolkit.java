@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ontology.Individual;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
@@ -72,7 +73,7 @@ public interface OntologyToolkit {
         final Matcher matcher = pattern.matcher(expression);
 
         if (!matcher.find()) {
-            if (expression.length() >= 1) {
+            if (StringUtils.isAllUpperCase(expression) && (expression.length() > 0)) {
                 return expression.substring(0, 1).toUpperCase() + expression.substring(1).toLowerCase();
             } else {
                 return expression;

@@ -86,19 +86,17 @@ public class HeartBeatCommunication {
         try {
             final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
-            if (resultSet == null || !resultSet.hasNext()) {
-                throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
-            }
+            if (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.next();
+                final String lastTimeStamp = "\"" + querySolution.getLiteral("lastTime").getLexicalForm() + "\"^^xsd:dateTime";
+                boolean isHttpSuccess = false;
 
-            final QuerySolution querySolution = resultSet.next();
-            final String lastTimeStamp = "\"" + querySolution.getLiteral("lastTime").getLexicalForm() + "\"^^xsd:dateTime";
-            boolean isHttpSuccess = false;
-
-            while (!isHttpSuccess) {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
-                        , OntConfig.ServerServiceForm.UPDATE);
-                if (!isHttpSuccess) {
-                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                while (!isHttpSuccess) {
+                    isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
+                            , OntConfig.ServerServiceForm.UPDATE);
+                    if (!isHttpSuccess) {
+                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                    }
                 }
             }
         } catch (CouldNotPerformException e) {

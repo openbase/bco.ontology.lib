@@ -26,6 +26,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -48,8 +49,6 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
-    //TODO exception handling
-    //TODO add constructor with reusable java instances (e.g. ontClass, ...)?
     //TODO add method, which calls all methods and checks if unitConfigs are initialized
     //TODO adapt serviceType names to noun syntax (global)
 
@@ -57,85 +56,168 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfUnitsAfterInspection(final OntModel ontModel, final List<UnitConfig> unitConfigList) {
-        // a set of unitConfigs, which are missing in the ontology
-        final List<UnitConfig> unitConfigSet = inspectionOfUnits(ontModel, unitConfigList);
+    public List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigList)
+            throws CouldNotPerformException, IllegalArgumentException {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
+
+        triples.addAll(getMissingUnitTriplesViaOntModel(ontModel, unitConfigList));
+        triples.addAll(getMissingStateTriplesViaOntModel(ontModel, unitConfigList));
+        triples.addAll(getMissingServiceTriplesViaOntModel(ontModel));
+
+        return triples;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingUnitTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
+            throws CouldNotPerformException, IllegalArgumentException {
+
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
+
+        assert ontModel != null : "Could not get ontClass Unit, cause ontModel is null!";
+        // preparation: get all individuals of the class "Unit" which are currently in the model
+        final OntClass ontClassUnitType = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
+
+        if (ontClassUnitType == null) {
+            throw new CouldNotPerformException("Could not get missing unitConfigs, cause ontClass unitType can't be found.");
+        } else {
+
+            // a set of unitConfigs, which are missing in the ontology
+            final List<UnitConfig> missingUnitConfigs = inspectionOfUnits(unitConfigs, ontClassUnitType);
+            // the triples to insert the missing unitType instances into the ontology
+            return buildTriplesOfUnitTypes(missingUnitConfigs);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
+
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
         // the triples to insert the missing units into the ontology
-        return buildOntTripleOfUnitTypes(unitConfigSet);
+        return buildTriplesOfUnitTypes(unitConfigs);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigList) {
-        // the triples to insert the missing units into the ontology
-        return buildOntTripleOfUnitTypes(unitConfigList);
+    public List<TripleArrayList> getMissingServiceTriplesViaOntModel(final OntModel ontModel) throws CouldNotPerformException, IllegalArgumentException {
+
+        assert ontModel != null : "Could not get ontClass ProviderService, cause ontModel is null!";
+        // preparation: get all individuals of the class "ProviderService" which are currently in the model
+        final OntClass ontClassServiceType = ontModel.getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
+
+        if (ontClassServiceType == null) {
+            throw new CouldNotPerformException("Could not get missing serviceTypes, cause ontClass ServiceType can't be find.");
+        } else {
+            // the set of serviceTypes, which are missing in the ontology
+            final Set<ServiceType> serviceTypes = inspectionOfServiceTypes(ontClassServiceType);
+            // the triples to insert the missing serviceType instances into the ontology
+            return buildTriplesOfServices(serviceTypes);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingOntTripleOfStates(final List<UnitConfig> unitConfigList) {
+    public List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
 
-        return buildOntTripleOfStates(unitConfigList);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingOntTripleOfProviderServices(final OntModel ontModel) {
-
-        // the set of serviceTypes, which are missing in the ontology
-        final Set<ServiceType> serviceTypes = inspectionOfServiceTypes(ontModel);
-
-        return buildServiceTriples(serviceTypes);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigList) {
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
 
         final Set<ServiceType> serviceTypes = new HashSet<>();
 
-        for (final UnitConfig unitConfig : unitConfigList) {
+        for (final UnitConfig unitConfig : unitConfigs) {
             for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
                 final ServiceType serviceType = serviceConfig.getServiceTemplate().getType();
 //                final String serviceTypeName = OntologyToolkit.convertToNounSyntax(serviceType.name());
                 serviceTypes.add(serviceType);
             }
         }
-        return buildServiceTriples(serviceTypes);
+        return buildTriplesOfServices(serviceTypes);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigList) {
-        return unitConfigList.stream().map(this::getDeleteTripleOfUnitsAndStates).collect(Collectors.toList());
+    public List<TripleArrayList> getMissingStateTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
+            throws CouldNotPerformException, IllegalArgumentException {
+
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
+
+        assert ontModel != null : "Could not get ontClass State, cause ontModel is null!";
+        // preparation: get all individuals of the class "State" which are currently in the model
+        final OntClass ontClassUnitState = ontModel.getOntClass(OntConfig.NS + OntCl.STATE.getName());
+
+        if (ontClassUnitState == null) {
+            throw new CouldNotPerformException("Could not get missing unitConfigs, cause ontClass unitType can't be found.");
+        } else {
+            // a set of unitConfigs, which are missing in the ontology
+            final List<UnitConfig> missingUnitConfigs = inspectionOfUnits(unitConfigs, ontClassUnitState);
+            // the triples to insert the missing unitState instances into the ontology
+            return buildTriplesOfStates(missingUnitConfigs);
+        }
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public TripleArrayList getDeleteTripleOfUnitsAndStates(UnitConfig unitConfig) {
+    public List<TripleArrayList> getMissingStateTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
+
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
+        // the triples to insert the missing states (services) into the ontology
+        return buildTriplesOfStates(unitConfigs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
+
+        if (unitConfigs == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
+        return unitConfigs.stream().map(this::getDeleteTripleOfUnitsAndStates).collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig) throws IllegalArgumentException {
+
+        if (unitConfig == null) {
+            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
+        }
         // s, p, o pattern
         return new TripleArrayList(unitConfig.getId(), OntExpr.A.getName(), null);
     }
 
-    private List<TripleArrayList> buildOntTripleOfUnitTypes(final List<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildTriplesOfUnitTypes(final List<UnitConfig> unitConfigs) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
 
         // list all unitTypes and their unitIds of the unitConfigSet in a hashMap
-        for (final UnitConfig unitConfig : unitConfigSet) {
+        for (final UnitConfig unitConfig : unitConfigs) {
             String unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getType().name());
 
             // is the current unitType a connection or location? set unitType variable with their type
@@ -150,11 +232,11 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return triples;
     }
 
-    private List<TripleArrayList> buildOntTripleOfStates(final List<UnitConfig> unitConfigSet) {
+    private List<TripleArrayList> buildTriplesOfStates(final List<UnitConfig> unitConfigs) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : unitConfigSet) {
+        for (final UnitConfig unitConfig : unitConfigs) {
             final String unitId = unitConfig.getId();
 
             for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
@@ -172,14 +254,13 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         return triples;
     }
 
-    private List<TripleArrayList> buildServiceTriples(final Set<ServiceType> serviceTypeSet) {
+    private List<TripleArrayList> buildTriplesOfServices(final Set<ServiceType> serviceTypeSet) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
 
         // list all serviceTypes in a list
-        for (final ServiceType serviceType : serviceTypeSet) {
-            triples.add(new TripleArrayList(serviceType.toString(), OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
-        }
+        triples.addAll(serviceTypeSet.stream().map(serviceType ->
+                new TripleArrayList(serviceType.toString(), OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName())).collect(Collectors.toList()));
         return triples;
     }
 }
