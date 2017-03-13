@@ -223,161 +223,161 @@ public class BCOConfig {
         /**
          * Activation service type.
          */
-        public static final String ACTIVATION_STATE_SERVICE = "ACTIVATION_STATE_SERVICE";
+        public static final String ACTIVATION_STATE_SERVICE = "activationstateservice";
 
         /**
          * Battery service type.
          */
-        public static final String BATTERY_STATE_SERVICE = "BATTERY_STATE_SERVICE";
+        public static final String BATTERY_STATE_SERVICE = "batterystateservice";
 
         /**
          * Blind Service.
          */
-        public static final String BLIND_STATE_SERVICE = "BLIND_STATE_SERVICE";
+        public static final String BLIND_STATE_SERVICE = "blindstateservice";
 
         /**
          * Brightness service.
          */
-        public static final String BRIGHTNESS_STATE_SERVICE = "BRIGHTNESS_STATE_SERVICE";
+        public static final String BRIGHTNESS_STATE_SERVICE = "brightnessstateservice";
 
         /**
          * Button service.
          */
-        public static final String BUTTON_STATE_SERVICE = "BUTTON_STATE_SERVICE";
+        public static final String BUTTON_STATE_SERVICE = "buttonstateservice";
 
         /**
          * Color service.
          */
-        public static final String COLOR_STATE_SERVICE = "COLOR_STATE_SERVICE";
+        public static final String COLOR_STATE_SERVICE = "colorstateservice";
 
         /**
          * Contact service.
          */
-        public static final String CONTACT_STATE_SERVICE = "CONTACT_STATE_SERVICE";
+        public static final String CONTACT_STATE_SERVICE = "contactstateservice";
 
         /**
          * Door state service.
          */
-        public static final String DOOR_STATE_SERVICE = "DOOR_STATE_SERVICE";
+        public static final String DOOR_STATE_SERVICE = "doorstateservice";
 
         /**
          * Earthquake alarm state service.
          */
-        public static final String EARTHQUAKE_ALARM_STATE_SERVICE = "EARTHQUAKE_ALARM_STATE_SERVICE";
+        public static final String EARTHQUAKE_ALARM_STATE_SERVICE = "earthquakealarmstateservice";
 
         /**
          * Fire alarm state service.
          */
-        public static final String FIRE_ALARM_STATE_SERVICE = "FIRE_ALARM_STATE_SERVICE";
+        public static final String FIRE_ALARM_STATE_SERVICE = "firealarmstateservice";
 
         /**
          * Handle service.
          */
-        public static final String HANDLE_STATE_SERVICE = "HANDLE_STATE_SERVICE";
+        public static final String HANDLE_STATE_SERVICE = "handlestateservice";
 
         /**
          * Illuminance service.
          */
-        public static final String ILLUMINANCE_STATE_SERVICE = "ILLUMINANCE_STATE_SERVICE";
+        public static final String ILLUMINANCE_STATE_SERVICE = "illuminancestateservice";
 
         /**
          * Intrusion alarm state service.
          */
-        public static final String INTRUSION_ALARM_STATE_SERVICE = "INTRUSION_ALARM_STATE_SERVICE";
+        public static final String INTRUSION_ALARM_STATE_SERVICE = "intrusionalarmstateservice";
 
         /**
          * Intensity service.
          */
-        public static final String INTENSITY_STATE_SERVICE = "INTENSITY_STATE_SERVICE";
+        public static final String INTENSITY_STATE_SERVICE = "intensitystateservice";
 
         /**
          * Medial emergency alarm state service.
          */
-        public static final String MEDICAL_EMERGENCY_ALARM_STATE_SERVICE = "MEDICAL_EMERGENCY_ALARM_STATE_SERVICE";
+        public static final String MEDICAL_EMERGENCY_ALARM_STATE_SERVICE = "medicalemergencyalarmstateservice";
 
         /**
          * Motion service.
          */
-        public static final String MOTION_STATE_SERVICE = "MOTION_STATE_SERVICE";
+        public static final String MOTION_STATE_SERVICE = "motionstateservice";
 
         /**
          * Passage state service.
          */
-        public static final String PASSAGE_STATE_SERVICE = "PASSAGE_STATE_SERVICE";
+        public static final String PASSAGE_STATE_SERVICE = "passagestateservice";
 
         /**
          * Power-Consumption service.
          */
-        public static final String POWER_CONSUMPTION_STATE_SERVICE = "POWER_CONSUMPTION_STATE_SERVICE";
+        public static final String POWER_CONSUMPTION_STATE_SERVICE = "powerconsumptionstateservice";
 
         /**
          * Power service.
          */
-        public static final String POWER_STATE_SERVICE = "POWER_STATE_SERVICE";
+        public static final String POWER_STATE_SERVICE = "powerstateservice";
 
         /**
          * Presence state e.g. used for locations to give feedback about human presence.
          */
-        public static final String PRESENCE_STATE_SERVICE = "PRESENCE_STATE_SERVICE";
+        public static final String PRESENCE_STATE_SERVICE = "presencestateservice";
 
         /**
          * Service used by RFIDs.
          */
-        public static final String RFID_STATE_SERVICE = "RFID_STATE_SERVICE";
+        public static final String RFID_STATE_SERVICE = "rfidstateservice";
 
         /**
          * Smoke Alarm state service.
          */
-        public static final String SMOKE_ALARM_STATE_SERVICE = "SMOKE_ALARM_STATE_SERVICE";
+        public static final String SMOKE_ALARM_STATE_SERVICE = "smokealarmstateservice";
 
         /**
          * Smoke state service.
          */
-        public static final String SMOKE_STATE_SERVICE = "SMOKE_STATE_SERVICE";
+        public static final String SMOKE_STATE_SERVICE = "smokestateservice";
 
         /**
          * Standby service.
          */
-        public static final String STANDBY_STATE_SERVICE = "STANDBY_STATE_SERVICE";
+        public static final String STANDBY_STATE_SERVICE = "standbystateservice";
 
         /**
          * Tamper service.
          */
-        public static final String TAMPER_STATE_SERVICE = "TAMPER_STATE_SERVICE";
+        public static final String TAMPER_STATE_SERVICE = "tamperstateservice";
 
         /**
          * Target temperature service.
          */
-        public static final String TARGET_TEMPERATURE_STATE_SERVICE = "TARGET_TEMPERATURE_STATE_SERVICE";
+        public static final String TARGET_TEMPERATURE_STATE_SERVICE = "targettemperaturestateservice";
 
         /**
          * Temperature alarm state service.
          */
-        public static final String TEMPERATURE_ALARM_STATE_SERVICE = "TEMPERATURE_ALARM_STATE_SERVICE";
+        public static final String TEMPERATURE_ALARM_STATE_SERVICE = "temperaturealarmstateservice";
 
         /**
          * Temperature service.
          */
-        public static final String TEMPERATURE_STATE_SERVICE = "TEMPERATURE_STATE_SERVICE";
+        public static final String TEMPERATURE_STATE_SERVICE = "temperaturestateservice";
 
         /**
          * Tempest alarm state service.
          */
-        public static final String TEMPEST_ALARM_STATE_SERVICE = "TEMPEST_ALARM_STATE_SERVICE";
+        public static final String TEMPEST_ALARM_STATE_SERVICE = "tempestalarmstateservice";
 
         /**
          * Switch service.
          */
-        public static final String SWITCH_STATE_SERVICE = "SWITCH_STATE_SERVICE";
+        public static final String SWITCH_STATE_SERVICE = "switchstateservice";
 
         /**
          * Water alarm state service.
          */
-        public static final String WATER_ALARM_STATE_SERVICE = "WATER_ALARM_STATE_SERVICE";
+        public static final String WATER_ALARM_STATE_SERVICE = "wateralarmstateservice";
 
         /**
          * Window state service.
          */
-        public static final String WINDOW_STATE_SERVICE = "WINDOW_STATE_SERVICE";
+        public static final String WINDOW_STATE_SERVICE = "windowstateservice";
     }
 }

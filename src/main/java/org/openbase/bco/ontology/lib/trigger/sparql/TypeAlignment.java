@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
@@ -34,14 +35,6 @@ public interface TypeAlignment {
     String[] locationCategories = new String[] {"region", "tile", "zone"};
     String[] connectionCategories = new String[] {"door", "passage", "window"};
 
-    static List<String> addAlignedUnitCategories(final List<String> alignedUnitTypes) {
-
-        final String[] strings = new String[] {"dalunit", "hostunit", "baseunit", "region", "tile", "zone", "door", "passage", "window"};
-//        UnitConfigProcessor.getDalUnitTypes();
-
-        return alignedUnitTypes;
-    }
-
     /**
      * Method returns a map with aligned unit types. An map entry contains an aligned unit type (lower case & removed "_" signs) as key and the original
      * unit type as value.
@@ -54,7 +47,7 @@ public interface TypeAlignment {
 
         for (final UnitType unitType : UnitType.values()) {
 
-            final String alignedUnitType = unitType.name().toLowerCase().replaceAll(OntConfig.OntExpr.REMOVE.getName(), "");
+            final String alignedUnitType = OntologyToolkit.convertToNounSyntax(unitType.name());
             alignedUnitTypes.put(alignedUnitType, unitType);
         }
         return alignedUnitTypes;
@@ -72,7 +65,7 @@ public interface TypeAlignment {
 
         for (final ServiceType serviceType : ServiceType.values()) {
 
-            final String alignedServiceType = serviceType.name().toLowerCase().replaceAll(OntConfig.OntExpr.REMOVE.getName(), "");
+            final String alignedServiceType = OntologyToolkit.convertToNounSyntax(serviceType.name());
             alignedServiceTypes.put(alignedServiceType, serviceType);
         }
         return alignedServiceTypes;

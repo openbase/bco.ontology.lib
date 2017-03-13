@@ -34,9 +34,11 @@ import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.InitializationException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 public class HeartBeatCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
+    public static final ObservableImpl<Boolean> isInitObservable = new ObservableImpl<>();
     private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
     private Future future;
@@ -65,20 +68,25 @@ public class HeartBeatCommunication {
     private final String pred_LastHeartBeat;
 
     public HeartBeatCommunication() throws InitializationException {
-        try {
-            this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
-            this.stopwatch = new Stopwatch();
-            this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
-            this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
 
+        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
+        this.stopwatch = new Stopwatch();
+        this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
+        this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
+
+        try {
             // first "repair" old connectionPhases
             identifyIncompleteConnectionPhases();
+            // init of connectionPhases ready...notify unitRemoteSynchronizer
+            isInitObservable.notifyObservers(true);
 
             //generate new heartbeat phase
             setNewHeartBeatPhase();
             startHeartBeatThread();
         } catch (NotAvailableException | InterruptedException | JPServiceException e) {
             throw new InitializationException(this, e);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 

@@ -50,7 +50,6 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
     //TODO add method, which calls all methods and checks if unitConfigs are initialized
-    //TODO adapt serviceType names to noun syntax (global)
 
     /**
      * {@inheritDoc}
@@ -142,7 +141,6 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         for (final UnitConfig unitConfig : unitConfigs) {
             for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
                 final ServiceType serviceType = serviceConfig.getServiceTemplate().getType();
-//                final String serviceTypeName = OntologyToolkit.convertToNounSyntax(serviceType.name());
                 serviceTypes.add(serviceType);
             }
         }
@@ -259,8 +257,10 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
         final List<TripleArrayList> triples = new ArrayList<>();
 
         // list all serviceTypes in a list
-        triples.addAll(serviceTypeSet.stream().map(serviceType ->
-                new TripleArrayList(serviceType.toString(), OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName())).collect(Collectors.toList()));
+        triples.addAll(serviceTypeSet.stream().map(serviceType -> {
+            final String serviceTypeName = OntologyToolkit.convertToNounSyntax(serviceType.name());
+            return new TripleArrayList(serviceTypeName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName());
+        }).collect(Collectors.toList()));
         return triples;
     }
 }

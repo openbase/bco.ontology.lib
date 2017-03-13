@@ -87,7 +87,9 @@ public class IdentifyStateTypeValue extends StateTypeValue {
 
     private Set<Pair<String, Boolean>> identifyState(final String serviceType, final Object stateObject) {
 
-        switch (serviceType) {
+        final String serviceTypeBuf = serviceType.toLowerCase();
+
+        switch (serviceTypeBuf) {
             case ServiceTypes.ACTIVATION_STATE_SERVICE:
                 return activationStateValue((ActivationState) stateObject);
             case ServiceTypes.BATTERY_STATE_SERVICE:

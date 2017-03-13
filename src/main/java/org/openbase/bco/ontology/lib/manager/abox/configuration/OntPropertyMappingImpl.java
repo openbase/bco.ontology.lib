@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
@@ -188,13 +189,13 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
     private List<TripleArrayList> getInsertTripleObjPropHasState(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern
-        String subject;
         final String predicate = OntProp.STATE.getName();
         final String object = unitConfig.getId();
 
         // get all serviceConfigs of the actual unit
         for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-            subject = serviceConfig.getServiceTemplate().getType().toString();
+
+            final String subject = OntologyToolkit.convertToNounSyntax(serviceConfig.getServiceTemplate().getType().name());
             tripleArrayLists.add(new TripleArrayList(subject, predicate, object));
         }
 
@@ -232,7 +233,6 @@ public class OntPropertyMappingImpl implements OntPropertyMapping {
         return new TripleArrayList(subject, predicate, null);
     }
 
-    //TODO isAvailable
     private List<TripleArrayList> getTripleDataTypePropIsEnabled(final List<TripleArrayList> tripleArrayLists, final UnitConfig unitConfig) {
 
         // s, p, o pattern

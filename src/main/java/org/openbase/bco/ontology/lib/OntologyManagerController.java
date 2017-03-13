@@ -24,7 +24,6 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
@@ -36,7 +35,6 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
@@ -55,28 +53,12 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 LOGGER.info("Debug Mode");
             }
 
-            Stopwatch stopwatch = new Stopwatch();
             final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
-            new UnitRegistrySynchronizer(transactionBuffer);
-            new HeartBeatCommunication();
-            stopwatch.waitForStart(5000);
+//            new UnitRegistrySynchronizer(transactionBuffer);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
-
-//        stopwatch.waitForStart(10000);
-//        System.out.println("Erstelle Trigger...");
-//
-//        OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
-//        final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(AskQueryExample.QUERY_0)
-//                .setDependingOntologyChange(ontologyChange).build();
-//
-//        final TriggerFactory triggerFactory = new TriggerFactory();
-//        final Trigger trigger = triggerFactory.newInstance(triggerConfig);
-//        trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-//            System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
-//            // do useful stuff
-//        });
+            new HeartBeatCommunication();
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -94,11 +76,11 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void init() throws InitializationException, InterruptedException {
-        try {
-            final OntConfig ontConfig = new OntConfig();
-            ontConfig.initialTestConfig();
-        } catch (JPServiceException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
+//        try {
+//            final OntConfig ontConfig = new OntConfig();
+//            ontConfig.initialTestConfig();
+//        } catch (JPServiceException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
     }
 }

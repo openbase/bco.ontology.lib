@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.manager.datapool;
 
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
+import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.system.config.BCOConfig.UnitDataClass;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
@@ -32,10 +33,14 @@ import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
+import org.openbase.jul.pattern.Observable;
+import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.state.ActivationStateType;
+import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.connection.ConnectionDataType.ConnectionData;
@@ -96,11 +101,18 @@ public class UnitRemoteSynchronizer {
 //        Reflections reflections = new Reflections("rst.domotic.unit.dal", new SubTypesScanner(false));
 //        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
 
-        try {
-            getAndMapUnitRemotesWithStateObservation(transactionBuffer, rsbInformer);
-        } catch (CouldNotPerformException e) {
-            throw new InstantiationException(this, e);
-        }
+        final Observer<Boolean> activationObserver = new Observer<Boolean>() {
+            @Override
+            public void update(Observable<Boolean> source, Boolean data) throws Exception {
+                try {
+                    getAndMapUnitRemotesWithStateObservation(transactionBuffer, rsbInformer);
+                } catch (CouldNotPerformException e) {
+                    throw new InstantiationException(this, e);
+                }
+            }
+        };
+
+        HeartBeatCommunication.isInitObservable.addObserver(activationObserver);
     }
 
     private void getAndMapUnitRemotesWithStateObservation(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
@@ -173,7 +185,7 @@ public class UnitRemoteSynchronizer {
         return unitRemoteSet;
     }
 
-    private void processOfRemainingUnitRemotes(Set<UnitRemote> unitRemoteSet, final TransactionBuffer transactionBuffer
+    private void processOfRemainingUnitRemotes(final Set<UnitRemote> unitRemoteSet, final TransactionBuffer transactionBuffer
             , final RSBInformer<OntologyChange> rsbInformer) throws NotAvailableException {
 
         Set<UnitRemote> unitRemoteSetBuf = new HashSet<>();
@@ -249,9 +261,9 @@ public class UnitRemoteSynchronizer {
             case UnitDataClass.COLORABLE_LIGHT:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, ColorableLightData.class);
                 break;
-            case UnitDataClass.CONNECTION:
-                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, ConnectionData.class);
-                break;
+//            case UnitDataClass.CONNECTION:
+//                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, ConnectionData.class);
+//                break;
             case UnitDataClass.DEVICE:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DeviceData.class);
                 break;
@@ -273,9 +285,9 @@ public class UnitRemoteSynchronizer {
             case UnitDataClass.LIGHT_SENSOR:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, LightSensorData.class);
                 break;
-            case UnitDataClass.LOCATION:
-                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, LocationData.class);
-                break;
+//            case UnitDataClass.LOCATION:
+//                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, LocationData.class);
+//                break;
             case UnitDataClass.MONITOR:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, MonitorData.class);
                 break;
@@ -331,14 +343,15 @@ public class UnitRemoteSynchronizer {
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, VideoRgbSourceData.class);
                 break;
             default:
-//                if (UnitDataClass.CONNECTION.equalsIgnoreCase(dataClassName) || UnitDataClass.LOCATION.equalsIgnoreCase(dataClassName)) {
-//                    // ignore both to avoid exceptions...
-//                } else {
-                try {
-                    throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
-                            + " to BCOConfig and call it.");
-                } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                if (UnitDataClass.CONNECTION.equalsIgnoreCase(dataClassName) || UnitDataClass.LOCATION.equalsIgnoreCase(dataClassName)) {
+                    // ignore both to avoid exceptions...
+                } else {
+                    try {
+                        throw new NotAvailableException("Could not identify className. Please check implementation or rather integrate " + dataClassName
+                                + " to BCOConfig and call it.");
+                    } catch (NotAvailableException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                    }
                 }
         }
     }

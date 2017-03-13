@@ -20,6 +20,13 @@ package org.openbase.bco.ontology.lib.trigger.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.trigger.Trigger;
+import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
+import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.pattern.Observable;
+import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
+import rst.domotic.state.ActivationStateType.ActivationState;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -178,6 +185,27 @@ public class AskQueryExample {
         newDate = DateUtils.addYears(newDate, years);
 
         return simpleDateFormat.format(newDate);
+    }
+
+    /**
+     * Just an example trigger. Do not use method. Take the example code and modify.
+     *
+     * @throws CouldNotPerformException Exception is thrown, if the TriggerFactory could not be buil.
+     * @throws InterruptedException Exception is thrown, if the application is interrupted.
+     */
+    public void exampleTrigger() throws CouldNotPerformException, InterruptedException {
+
+        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
+        final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(AskQueryExample.QUERY_0)
+                .setDependingOntologyChange(ontologyChange).build();
+
+        final TriggerFactory triggerFactory = new TriggerFactory();
+        final Trigger trigger = triggerFactory.newInstance(triggerConfig);
+
+        trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
+            System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
+            // do useful stuff
+        });
     }
 
 }

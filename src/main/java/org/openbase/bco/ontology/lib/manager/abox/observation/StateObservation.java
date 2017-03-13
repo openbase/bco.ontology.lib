@@ -198,8 +198,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasUnitId, remoteUnitId));
 
                 //### serviceType triple ###\\
-                final ServiceType serviceType = getServiceType(methodStateType.getName());
-                final String obj_serviceType = serviceType.name();
+//                final String serviceType =
+                final String obj_serviceType = getServiceType(methodStateType.getName());
                 serviceList.add(serviceTypeMap.get(obj_serviceType));
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
 
@@ -267,15 +267,14 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         RsbCommunication.startNotification(rsbInformer, ontologyChange);
     }
 
-    private ServiceType getServiceType(final String methodStateType) throws NoSuchElementException {
+    private String getServiceType(final String methodStateType) throws NoSuchElementException {
 
         // standardized string to allow comparison
-        final String stateTypeBuf = methodStateType.toLowerCase().replaceFirst(MethodRegEx.GET.getName(), "");
-
+        final String stateTypeBuf = methodStateType.replaceFirst(MethodRegEx.GET.getName(), "");
         for (final String serviceType : serviceTypeMap.keySet()) {
-            if (serviceType.contains(stateTypeBuf)) {
-                // successful compared - return correct serviceType
-                return serviceTypeMap.get(serviceType);
+            if (serviceType.toLowerCase().startsWith(stateTypeBuf.toLowerCase())) {
+                // successful compared - return correct serviceType name (aligned)
+                return serviceType;
             }
         }
         throw new NoSuchElementException("Could not identify methodState, cause there is no element, which contains " + methodStateType);
