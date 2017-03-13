@@ -42,6 +42,7 @@ import org.openbase.jul.extension.rst.processing.TimestampJavaTimeTransform;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
+import org.openbase.jul.schedule.RecurrenceEventFilter;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,6 +80,18 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private final UnitType unitType;
     private String s_CurConnectionPhase;
     private boolean wasConnected;
+    private T observerData;
+
+    private final RecurrenceEventFilter recurrenceEventFilter = new RecurrenceEventFilter(2000) {
+        @Override
+        public void relay() {
+            try {
+                stateUpdate(observerData);
+            } catch (InterruptedException | CouldNotPerformException | JPServiceException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO handling?!
+            }
+        }
+    };
 
     public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer
             , final Class<T> data) throws InstantiationException {
@@ -96,7 +109,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             initConnectionState(unitRemote);
 
             final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T remoteData) -> {
-                stateUpdate(remoteData); //TODO catch exception?!
+                this.observerData = remoteData;
+                recurrenceEventFilter.trigger();
             };
 
             final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
@@ -113,6 +127,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
+
         } catch (JPServiceException | CouldNotPerformException e) {
             throw new InstantiationException(this, e);
         }
@@ -198,7 +213,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasUnitId, remoteUnitId));
 
                 //### serviceType triple ###\\
-//                final String serviceType =
                 final String obj_serviceType = getServiceType(methodStateType.getName());
                 serviceList.add(serviceTypeMap.get(obj_serviceType));
                 tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
