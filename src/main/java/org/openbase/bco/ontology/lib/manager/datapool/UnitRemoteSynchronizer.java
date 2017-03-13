@@ -152,6 +152,7 @@ public class UnitRemoteSynchronizer {
                     processRemainingUnitRemotes(missingUnitRemotes);
                     LOGGER.info("There are " + missingUnitRemotes.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
                 }
+                task.cancel(true);
             } catch (CouldNotPerformException e) {
                 // retry via scheduled thread
                 ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds!", e, LOGGER, LogLevel.ERROR);
