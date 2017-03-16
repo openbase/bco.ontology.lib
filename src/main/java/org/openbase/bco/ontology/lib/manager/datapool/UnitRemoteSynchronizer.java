@@ -99,7 +99,7 @@ public class UnitRemoteSynchronizer {
         this.transactionBuffer = transactionBuffer;
         this.rsbInformer = rsbInformer;
 
-        final Observer<Boolean> activationObserver = (source, data) -> loadUnitRemotes(null);
+        final Observer<Boolean> activationObserver = (source, data) -> loadUnitRemotes(null); //TODO
         final Observer<List<UnitConfig>> newUnitConfigObserver = (source, unitConfigs) -> loadUnitRemotes(unitConfigs);
 
         UnitRegistrySynchronizer.newUnitConfigObservable.addObserver(newUnitConfigObserver);

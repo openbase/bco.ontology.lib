@@ -253,7 +253,7 @@ public class UnitRegistrySynchronizer {
             }
         } catch (CouldNotPerformException e) {
             transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException e) {
             ExceptionPrinter.printHistory("Defect sparql update expression! Dropped.", e, LOGGER, LogLevel.ERROR);
         }
     }

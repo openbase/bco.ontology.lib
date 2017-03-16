@@ -62,6 +62,11 @@ public final class OntConfig {
     }
 
     /**
+     * RecentHeartBeat (instance).
+     */
+    public static final String INSTANCE_RECENT_HEARTBEAT = "recentHeartBeat";
+
+    /**
      * Enumeration of ontology classes.
      */
     public enum OntCl {
@@ -124,7 +129,12 @@ public final class OntConfig {
         /**
          * DalUnit (class).
          */
-        DAL_UNIT("DalUnit");
+        DAL_UNIT("DalUnit"),
+
+        /**
+         * RecentHeartBeat (class).
+         */
+        RECENT_HEARTBEAT("RecentHeartBeat");
 
         private final String ontClass;
 
