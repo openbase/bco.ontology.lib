@@ -153,30 +153,6 @@ public class HeartBeatCommunication {
         return new TripleArrayList(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp);
     }
 
-    private void identifyIncompleteConnectionPhases() throws InterruptedException, JPServiceException { //TODo
-        try {
-            final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
-
-            if (resultSet.hasNext()) {
-                final QuerySolution querySolution = resultSet.next();
-                final String lastTimeStamp = "\"" + querySolution.getLiteral("lastTime").getLexicalForm() + "\"^^xsd:dateTime";
-                boolean isHttpSuccess = false;
-
-                while (!isHttpSuccess) {
-                    isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(StaticSparqlExpression.getConnectionPhaseUpdateExpr(lastTimeStamp)
-                            , OntConfig.ServerServiceForm.UPDATE);
-                    if (!isHttpSuccess) {
-                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                    }
-                }
-            }
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Could not identify incomplete connectionPhases!", e, LOGGER, LogLevel.ERROR);
-        } catch (IOException e) {
-            stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-        }
-    }
-
     private void startHeartBeatThread() throws NotAvailableException {
         //observe current heartbeat now, refresh or start new heartbeat phase
         future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -245,6 +221,10 @@ public class HeartBeatCommunication {
             final String obj_TimeStamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
 
             final List<TripleArrayList> insertTriples = new ArrayList<>();
+            final List<TripleArrayList> deleteTriples = new ArrayList<>();
+
+            deleteTriples.add(getDeleteTripleRecentHeartBeat());
+
             // add initial instance "recentHeartBeat" with initial timestamp
             insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
             // set initial current heartbeat phase with first and last timestamp (identical)
@@ -252,7 +232,8 @@ public class HeartBeatCommunication {
             insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
             insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
 
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
+//            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
+            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriples, insertTriples, null);
 
             try {
                 isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);

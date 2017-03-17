@@ -95,6 +95,7 @@ public class UnitRegistrySynchronizer {
         startInitialization(unitConfigList);
         // start thread to synch tbox and abox changes by observer
         startUpdateObserver();
+        LOGGER.info("UnitRegistrySynchronizer started successfully.");
     }
 
     private void startInitialization(final List<UnitConfig> unitConfigList) throws InterruptedException, CouldNotPerformException, JPServiceException {

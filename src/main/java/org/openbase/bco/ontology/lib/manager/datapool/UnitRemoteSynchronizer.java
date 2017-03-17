@@ -78,8 +78,10 @@ import rst.domotic.unit.agent.AgentDataType.AgentData;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author agatting on 07.02.17.
@@ -92,6 +94,8 @@ public class UnitRemoteSynchronizer {
 
     private final TransactionBuffer transactionBuffer;
     private final RSBInformer<OntologyChange> rsbInformer;
+
+    //TODO incomplete units + observer, diff
 
     public UnitRemoteSynchronizer(final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer)
             throws InstantiationException, InitializationException {
@@ -117,7 +121,7 @@ public class UnitRemoteSynchronizer {
 
         task = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
             try {
-                final Set<UnitRemote> missingUnitRemotes = new HashSet<>();
+                final Set<UnitConfig> missingUnitConfigs = new HashSet<>();
                 final List<UnitConfig> unitConfigsBuf;
 
                 if (unitConfigs == null) {
@@ -129,28 +133,30 @@ public class UnitRemoteSynchronizer {
                 for (final UnitConfig unitConfig : unitConfigsBuf) {
                     if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
 
-                        final UnitRemote unitRemote = Units.getUnit(unitConfig, false);
+                        UnitRemote unitRemote = null;
                         try {
-                            unitRemote.waitForData(1, TimeUnit.SECONDS);
+                            unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
 
                             if (unitRemote.isDataAvailable()) {
                                 // unitRemote is ready. add stateObservation
                                 identifyUnitRemote(unitRemote);
                                 LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
                             } else {
-                                missingUnitRemotes.add(unitRemote);
+                                missingUnitConfigs.add(unitConfig);
                             }
-                        } catch (CouldNotPerformException e) {
+                        } catch (TimeoutException e) {
                             // collect unitRemotes with missing data (wait for data timeout)
-                            missingUnitRemotes.add(unitRemote);
+                            missingUnitConfigs.add(unitConfig);
+                        } catch (ExecutionException | NotAvailableException e) {
+                            LOGGER.warn("Could not get unitRemote of " + unitConfig.getType());
                         }
                     }
                 }
-                if (missingUnitRemotes.isEmpty()) {
+                if (missingUnitConfigs.isEmpty()) {
                     LOGGER.info("All unitRemotes loaded successfully.");
                 } else {
-                    processRemainingUnitRemotes(missingUnitRemotes);
-                    LOGGER.info("There are " + missingUnitRemotes.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
+                    processRemainingUnitRemotes(missingUnitConfigs);
+                    LOGGER.info("There are " + missingUnitConfigs.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
                 }
                 task.cancel(true);
             } catch (CouldNotPerformException e) {
@@ -162,41 +168,46 @@ public class UnitRemoteSynchronizer {
         }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void processRemainingUnitRemotes(final Set<UnitRemote> unitRemotes) throws NotAvailableException {
+    private void processRemainingUnitRemotes(final Set<UnitConfig> unitConfigs) throws NotAvailableException {
 
         taskRemaining = GlobalCachedExecutorService.submit(() -> {
             try {
 
-                final Set<UnitRemote> missingUnitRemotes = new HashSet<>();
+                final Set<UnitConfig> missingUnitConfigs = new HashSet<>();
                 final Stopwatch stopwatch = new Stopwatch();
 
-                while (!unitRemotes.isEmpty()) {
+                while (!unitConfigs.isEmpty()) {
 
-                    for (final UnitRemote unitRemote : unitRemotes) {
+                    for (final UnitConfig unitConfig : unitConfigs) {
+                        UnitRemote unitRemote = null;
                         try {
-                            unitRemote.waitForData(2, TimeUnit.SECONDS);
+                             unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
 
                             if (unitRemote.isDataAvailable()) {
                                 // unitRemote is ready. add stateObservation
                                 identifyUnitRemote(unitRemote);
                                 LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
                             } else {
-                                missingUnitRemotes.add(unitRemote);
+                                missingUnitConfigs.add(unitConfig);
                             }
-                        } catch (CouldNotPerformException e) {
+                        } catch (TimeoutException e) {
                             // collect unitRemotes with missing data (wait for data timeout)
-                            missingUnitRemotes.add(unitRemote);
+                            missingUnitConfigs.add(unitConfig);
+                        } catch (NotAvailableException | ExecutionException e) {
+                            LOGGER.warn("Could not get unitRemote of " + unitConfig.getType());
+                        } catch (InstantiationException e) {
+                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                         }
                     }
 
-                    if (!missingUnitRemotes.isEmpty()) {
-                        unitRemotes.removeAll(missingUnitRemotes);
-                        missingUnitRemotes.clear();
-                        LOGGER.info("There are " + unitRemotes.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
+                    if (!missingUnitConfigs.isEmpty()) {
+                        unitConfigs.removeAll(missingUnitConfigs);
+                        missingUnitConfigs.clear();
+                        LOGGER.info("There are " + unitConfigs.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
 
                         stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                     } else {
-                        unitRemotes.clear();
+                        unitConfigs.clear();
                     }
                 }
             } catch (InterruptedException e) {

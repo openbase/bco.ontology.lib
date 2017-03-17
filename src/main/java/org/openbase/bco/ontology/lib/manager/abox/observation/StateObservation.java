@@ -186,6 +186,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                         + ". Dropped.", e, LOGGER, LogLevel.WARN);
             } catch (InterruptedException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            } catch (NoSuchElementException e) {
+
             }
             tripleArrayListsBuf.clear();
         }
@@ -216,6 +218,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 return serviceType;
             }
         }
-        throw new NoSuchElementException("Could not identify methodState, cause there is no element, which contains " + methodStateType);
+        LOGGER.warn("Could not identify methodState, cause there is no element, which contains " + methodStateType);
+        throw new NoSuchElementException();
     }
 }
