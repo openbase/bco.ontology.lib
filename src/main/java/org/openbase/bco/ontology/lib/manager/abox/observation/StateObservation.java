@@ -170,7 +170,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
                 //### stateValue triple ###\\
                 final int sizeBuf = tripleArrayListsBuf.size();
-                tripleArrayListsBuf = addStateValue(obj_serviceType, obj_stateType, subj_Observation, tripleArrayListsBuf);
+                tripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, tripleArrayListsBuf);
 
                 if (tripleArrayListsBuf.size() == sizeBuf) {
                     // incomplete observation instance. dropped...
