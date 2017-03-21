@@ -221,9 +221,9 @@ public class HeartBeatCommunication {
             final String obj_TimeStamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
 
             final List<TripleArrayList> insertTriples = new ArrayList<>();
-            final List<TripleArrayList> deleteTriples = new ArrayList<>();
 
-            deleteTriples.add(getDeleteTripleRecentHeartBeat());
+            final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateSingleDeleteExpr(getDeleteTripleRecentHeartBeat(), null);
+            System.out.println(sparqlUpdateDelete);
 
             // add initial instance "recentHeartBeat" with initial timestamp
             insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
@@ -233,12 +233,19 @@ public class HeartBeatCommunication {
             insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
 
 //            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriples, insertTriples, null);
+            final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
 
             try {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE);
+                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateDelete, OntConfig.ServerServiceForm.UPDATE);
+
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                } else {
+                    isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateInsert, OntConfig.ServerServiceForm.UPDATE);
+
+                    if (!isHttpSuccess) {
+                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                    }
                 }
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory("HeartBeat update is bad and could not be performed by ontology server. Please check implementation.", e, LOGGER

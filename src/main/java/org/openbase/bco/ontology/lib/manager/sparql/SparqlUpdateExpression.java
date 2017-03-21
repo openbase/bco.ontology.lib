@@ -49,7 +49,7 @@ public interface SparqlUpdateExpression {
                     + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                     + "INSERT DATA { "
                         + getTripleCommand(triple)
-                    + " }";
+                    + " } ";
 
             expressionList.add(updateExpression);
         }
@@ -78,7 +78,7 @@ public interface SparqlUpdateExpression {
         }
 
         // close the large expression
-        return multipleUpdateExpression + " }";
+        return multipleUpdateExpression + " } ";
     }
 
     static String getSparqlUpdateInsertWhereBundleExpr(final List<TripleArrayList> insertTriples, final List<TripleArrayList> whereTriples)
@@ -102,7 +102,7 @@ public interface SparqlUpdateExpression {
         }
 
         // close the large expression
-        return multipleUpdateExpression + " }";
+        return multipleUpdateExpression + " } ";
     }
 
     /**
@@ -177,17 +177,15 @@ public interface SparqlUpdateExpression {
                 "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
-                    + getTripleCommand(deleteTriple)
-                + "} ";
+                    + getTripleCommand(deleteTriple);
 
         if (whereExpr == null) { // same triples as delete (functional reasons)
             singleUpdateExpression = singleUpdateExpression
                     + "} WHERE { "
-                    + "DELETE { "
                         + getTripleCommand(deleteTriple)
                     + "} ";
         } else {
-            singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + " }";
+            singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + " } ";
         }
 
         return singleUpdateExpression;
