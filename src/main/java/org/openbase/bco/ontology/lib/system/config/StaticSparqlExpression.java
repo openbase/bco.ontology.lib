@@ -69,4 +69,35 @@ public class StaticSparqlExpression {
             + "} "
             + "ORDER BY DESC(?lastTime) LIMIT 1";
 
+    public final static String getAllConnectionPhases =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp WHERE { "
+                // get all connectionPhases
+                + "?connectionPhase a NS:ConnectionPhase . "
+                + "?unit NS:hasConnectionPhase ?connectionPhase . "
+                + "?connectionPhase NS:hasFirstConnection ?firstTimestamp . "
+
+                + "?connectionPhase NS:hasLastConnection ?timestamp . "
+                + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
+                // reduce times to one variable via if condition
+                + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
+            + "} "
+            + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
+
+    public static String getAllObservations(final String timestampFrom, final String timestampUntil) {
+
+        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT ?observation ?unit ?stateValue ?providerService WHERE { "
+                    + "?observation a NS:Observation . "
+                    + "?observation NS:hasTimeStamp ?timeStamp . "
+//                    + "FILTER (?timestamp >= " + timestampFrom + " && ?timestamp < " + timestampUntil + " ) . "
+                    + "?observation NS:hasUnitId ?unit . "
+                    + "?observation NS:hasStateValue ?stateValue . "
+                    + "?observation NS:hasProviderService ?providerService . "
+                + "} "
+                + "GROUP BY ?observation ?unit ?stateValue ?providerService ";
+    }
+
 }

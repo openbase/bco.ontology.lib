@@ -38,6 +38,8 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -141,6 +143,8 @@ public interface OntologyToolkit {
             return ontElementExpr.substring(OntConfig.NS.length(), ontElementExpr.length());
         } else if (ontElementExpr.contains(OntExpr.NS.getName())) {
             return ontElementExpr.substring(OntExpr.NS.getName().length(), ontElementExpr.length());
+        } else if (ontElementExpr.contains(OntConfig.XSD)) {
+            return ontElementExpr.substring(OntConfig.XSD.length(), ontElementExpr.length());
         } else {
             return ontElementExpr;
         }
@@ -154,19 +158,24 @@ public interface OntologyToolkit {
      * @throws JenaException Exception is thrown, if the ontModel could not be created.
      * @throws IllegalArgumentException Exception is thrown, if the file could not be loaded.
      */
-    static OntModel loadOntModelFromFile(OntModel ontModel) throws JenaException, IllegalArgumentException {
+    static OntModel loadOntModelFromFile(OntModel ontModel, final String path) throws JenaException, IllegalArgumentException {
 
         if (ontModel == null) {
             ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         }
 
-        final InputStream input = OntologyToolkit.class.getResourceAsStream("/Ontology.owl");
-
-        if (input == null) {
-            throw new IllegalArgumentException("File not found in /Ontology.owl!");
+        final InputStream input;
+        if (path == null) {
+            input = OntologyToolkit.class.getResourceAsStream("/Ontology.owl");
         } else {
-            LOGGER.info("Ontology file loaded from " + input);
+            try {
+                input = new FileInputStream(path);
+            } catch (FileNotFoundException e) {
+                throw new IllegalArgumentException("File not found!");
+            }
         }
+
+        LOGGER.info("Ontology file loaded from " + input);
 
         //load data into ontModel
         ontModel.read(input, null);

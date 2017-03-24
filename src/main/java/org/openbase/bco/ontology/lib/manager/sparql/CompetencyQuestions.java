@@ -821,7 +821,7 @@ public final class CompetencyQuestions {
      */
     public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
                                                   final int years) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         final Date now = new Date();
 
         Date newDate = DateUtils.addHours(now, hours);

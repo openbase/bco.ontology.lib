@@ -126,8 +126,6 @@ public class ConnectionPhase {
         }
     }
 
-
-
     boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparqlUpdateExpr) throws JPServiceException {
         try {
             final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);

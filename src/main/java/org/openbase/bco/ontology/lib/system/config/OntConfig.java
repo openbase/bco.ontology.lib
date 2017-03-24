@@ -53,6 +53,11 @@ public final class OntConfig {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
+     * Namespace of the xsd schema (w3c). Don't modify.
+     */
+    public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
+
+    /**
      * An enum with service forms of the fuseki ontology server.
      */
     public enum ServerServiceForm {
