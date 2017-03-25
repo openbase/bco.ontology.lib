@@ -20,12 +20,10 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.manager.aggregation.AggregationTest;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
@@ -51,7 +49,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
 
-//        AggregationTest aggregationTest = new AggregationTest();
+//        DataProviding DataProviding = new DataProviding();
+//        DataAssignation dataAssignation = new DataAssignation();
 
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {

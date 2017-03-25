@@ -29,6 +29,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,18 +41,18 @@ import java.util.List;
 /**
  * @author agatting on 24.03.17.
  */
-public class AggregationTest {
+public class DataProviding {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AggregationTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataProviding.class);
     private final DateTime now;
 
-    public AggregationTest() {
+    public DataProviding() {
 
         this.now = new DateTime();
 
         getAllObservationOfDay();
     }
-    
+
     private HashMap<String, Long> getConnectionTimeForEachUnit() {
 
         final HashMap<String, Long> hashMap = new HashMap<>();
@@ -94,9 +95,9 @@ public class AggregationTest {
         return hashMap;
     }
 
-    private HashMap<String, List<TripleObservationData>> getAllObservationOfDay() {
+    private HashMap<String, List<ObservationDataCollection>> getAllObservationOfDay() {
 
-        final HashMap<String, List<TripleObservationData>> hashMap = new HashMap<>();
+        final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
 
         final DateTime dateTimeFrom = getAdaptedDateTime(now, 1); //TODO add days..
         final DateTime dateTimeUntil = getAdaptedDateTime(now, 0);
@@ -116,6 +117,7 @@ public class AggregationTest {
 
             final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
             final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("providerService").toString());
+            final String timestamp = querySolution.getLiteral("timestamp").getLexicalForm();
             final RDFNode rdfNode = querySolution.get("stateValue");
             String dataType = null;
             String stateValue;
@@ -131,24 +133,25 @@ public class AggregationTest {
                 stateValue = OntologyToolkit.getLocalName(rdfNode.asResource().toString());
             }
 
-            final TripleObservationData tripleObs = new TripleObservationData(providerService, stateValue, dataType);
+            final ObservationDataCollection obsDataColl = new ObservationDataCollection(providerService, stateValue, dataType, timestamp);
 
             if (hashMap.containsKey(unitId)) {
                 // there is an entry: add data
-                final List<TripleObservationData> tripleObsList = hashMap.get(unitId);
-                tripleObsList.add(tripleObs);
+                final List<ObservationDataCollection> tripleObsList = hashMap.get(unitId);
+                tripleObsList.add(obsDataColl);
                 hashMap.put(unitId, tripleObsList);
             } else {
                 // there is no entry: put data
-                final List<TripleObservationData> tripleObsList = new ArrayList<>();
-                tripleObsList.add(tripleObs);
+                final List<ObservationDataCollection> tripleObsList = new ArrayList<>();
+                tripleObsList.add(obsDataColl);
                 hashMap.put(unitId, tripleObsList);
             }
         }
 
         for (String s : hashMap.keySet()) {
-            for (TripleObservationData tripleObservationData : hashMap.get(s)) {
-                System.out.println(s + ", " + tripleObservationData.getProviderService() + ", " + tripleObservationData.getStateValue() + ", " + tripleObservationData.getDataType() + ", ");
+            for (ObservationDataCollection obsDataColl : hashMap.get(s)) {
+                System.out.println(s + ", " + obsDataColl.getProviderService() + ", " + obsDataColl.getStateValue()
+                        + ", " + obsDataColl.getDataType() + ", " + obsDataColl.getTimestamp());
             }
         }
 
@@ -167,6 +170,6 @@ public class AggregationTest {
 
 
     private void checkOldObservation() {
-        //TODO ask query: after deletion of aggregated data...is there older observations?? => true...error
+        //TODO ask query: after deletion of aggregated data...is there older observation?? => true...error
     }
 }

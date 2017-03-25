@@ -89,7 +89,7 @@ public class StaticSparqlExpression {
 
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "SELECT ?observation ?unit ?stateValue ?providerService WHERE { "
+                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
                     + "?observation a NS:Observation . "
                     + "?observation NS:hasTimeStamp ?timeStamp . "
 //                    + "FILTER (?timestamp >= " + timestampFrom + " && ?timestamp < " + timestampUntil + " ) . "
@@ -97,7 +97,7 @@ public class StaticSparqlExpression {
                     + "?observation NS:hasStateValue ?stateValue . "
                     + "?observation NS:hasProviderService ?providerService . "
                 + "} "
-                + "GROUP BY ?observation ?unit ?stateValue ?providerService ";
+                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
     }
 
 }

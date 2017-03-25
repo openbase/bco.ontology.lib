@@ -16,33 +16,22 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.manager.aggregation;
+package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
 /**
- * @author agatting on 24.03.17.
+ * @author agatting on 25.03.17.
  */
-public class TripleObservationData {
-
-    private final String providerService;
+public class StateValueAtTime {
     private final String stateValue;
-    private final String dataType;
+    private final String timestamp;
 
-    public TripleObservationData(final String providerService, final String stateValue, final String dataType) {
-        this.providerService = providerService;
+    public StateValueAtTime(final String stateValue, final String timestamp) {
         this.stateValue = stateValue;
-        this.dataType = dataType;
+        this.timestamp = timestamp;
     }
 
     /**
-     * Getter for observation data: providerService.
-     *
-     * @return providerService.
-     */
-    public String getProviderService() {
-        return providerService; }
-
-    /**
-     * Getter for observation data: stateValue.
+     * Getter for stateValue.
      *
      * @return stateValue.
      */
@@ -50,10 +39,11 @@ public class TripleObservationData {
         return stateValue; }
 
     /**
-     * Getter for observation data: dataType.
+     * Getter for timestamp.
      *
-     * @return dataType.
+     * @return timestamp.
      */
-    public String getDataType() {
-        return dataType; }
+    public String getTimestamp() {
+        return timestamp; }
+
 }
