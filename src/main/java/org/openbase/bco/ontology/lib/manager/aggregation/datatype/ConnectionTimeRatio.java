@@ -18,24 +18,43 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
+import org.joda.time.DateTime;
+
 /**
  * @author agatting on 25.03.17.
  */
 public class ConnectionTimeRatio {
+    private final DateTime dateTimeFrom;
+    private final DateTime dateTimeUntil;
     private final long unitConnectionTime;
-    private final long timeConcept;
 
     /**
-     * Method creates a pair of the connection time of a unit and the concept of time (hour, day, week, month, ...). Both values represent the ratio of the
-     * connection time to the concept of time. E.g. 1hour/24hours.
      *
+     * @param dateTimeFrom
+     * @param dateTimeUntil
      * @param unitConnectionTime
-     * @param timeConcept
      */
-    public ConnectionTimeRatio(final long unitConnectionTime, final long timeConcept) {
+    public ConnectionTimeRatio(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final long unitConnectionTime) {
+        this.dateTimeFrom = dateTimeFrom;
+        this.dateTimeUntil = dateTimeUntil;
         this.unitConnectionTime = unitConnectionTime;
-        this.timeConcept = timeConcept;
     }
+
+    /**
+     * Getter for dateTimeFrom.
+     *
+     * @return dateTimeFrom.
+     */
+    public DateTime getDateTimeFrom() {
+        return dateTimeFrom; }
+
+    /**
+     * Getter for dateTimeUntil.
+     *
+     * @return dateTimeUntil.
+     */
+    public DateTime getDateTimeUntil() {
+        return dateTimeUntil; }
 
     /**
      * Getter for unitConnectionTime.
@@ -44,12 +63,4 @@ public class ConnectionTimeRatio {
      */
     public long getUnitConnectionTime() {
         return unitConnectionTime; }
-
-    /**
-     * Getter for timeConcept.
-     *
-     * @return timeConcept.
-     */
-    public long getTimeConcept() {
-        return timeConcept; }
 }

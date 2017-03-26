@@ -20,7 +20,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueAtTime;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueTimestamp;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,18 +169,18 @@ public class DataAssignation {
 
     private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList) {
 
-        final List<StateValueAtTime> batteryValueList = new ArrayList<>();
-        final List<StateValueAtTime> batteryLevelList = new ArrayList<>();
+        final List<StateValueTimestamp> batteryValueList = new ArrayList<>();
+        final List<StateValueTimestamp> batteryLevelList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueAtTime stateValueAtTime = new StateValueAtTime(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueTimestamp stateValueTimestamp = new StateValueTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
                 //battery value
-                batteryValueList.add(stateValueAtTime);
+                batteryValueList.add(stateValueTimestamp);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("percent")) {
                 // battery level
-                batteryLevelList.add(stateValueAtTime);
+                batteryLevelList.add(stateValueTimestamp);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in batteryStateValue!");
             }

@@ -29,8 +29,13 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ConnectionTimeRatio;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +49,15 @@ import java.util.List;
 public class DataProviding {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProviding.class);
-    private final DateTime now;
+    private final DateTime dateTimeFrom;
+    private final DateTime dateTimeUntil;
+
 
     public DataProviding() {
+        final DateTime now = new DateTime();
 
-        this.now = new DateTime();
+        this.dateTimeFrom = getAdaptedDateTime(now);
+        this.dateTimeUntil = getAdaptedDateTime(now);
 
         getAllObservationOfDay();
     }
@@ -56,9 +65,6 @@ public class DataProviding {
     private HashMap<String, Long> getConnectionTimeForEachUnit() {
 
         final HashMap<String, Long> hashMap = new HashMap<>();
-
-        final DateTime dateTimeFrom = getAdaptedDateTime(now, 1); //TODO add days..
-        final DateTime dateTimeUntil = getAdaptedDateTime(now, 0);
         final Interval intervalWholeDay = new Interval(dateTimeFrom, dateTimeUntil);
 
 
@@ -98,10 +104,6 @@ public class DataProviding {
     private HashMap<String, List<ObservationDataCollection>> getAllObservationOfDay() {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
-
-        final DateTime dateTimeFrom = getAdaptedDateTime(now, 1); //TODO add days..
-        final DateTime dateTimeUntil = getAdaptedDateTime(now, 0);
-
         final String timestampFrom = addXsdDateTime(dateTimeFrom);
         final String timestampUntil = addXsdDateTime(dateTimeUntil);
 
@@ -111,6 +113,8 @@ public class DataProviding {
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
 //        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
+
+//        ResultSetFormatter.out(System.out, resultSet, query);
 
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
@@ -148,20 +152,45 @@ public class DataProviding {
             }
         }
 
-        for (String s : hashMap.keySet()) {
-            for (ObservationDataCollection obsDataColl : hashMap.get(s)) {
-                System.out.println(s + ", " + obsDataColl.getProviderService() + ", " + obsDataColl.getStateValue()
-                        + ", " + obsDataColl.getDataType() + ", " + obsDataColl.getTimestamp());
-            }
-        }
+//        for (String s : hashMap.keySet()) {
+//            for (ObservationDataCollection obsDataColl : hashMap.get(s)) {
+//                System.out.println(s + ", " + obsDataColl.getProviderService() + ", " + obsDataColl.getStateValue()
+//                        + ", " + obsDataColl.getDataType() + ", " + obsDataColl.getTimestamp());
+//            }
+//        }
 
         queryExecution.close();
         return hashMap;
     }
 
-    private DateTime getAdaptedDateTime(DateTime dateTime, final int daysReduced) {
-        dateTime = dateTime.minusDays(daysReduced);
-        return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 0, 0, 0);
+    private DateTime getAdaptedDateTime(DateTime dateTime) {
+
+        switch (OntConfig.PERIOD_FOR_AGGREGATION) {
+            case HOUR:
+                dateTime = dateTime.minusHours(OntConfig.BACKDATED_BEGINNING_OF_PERIOD);
+                break;
+            case DAY:
+                dateTime = dateTime.minusDays(OntConfig.BACKDATED_BEGINNING_OF_PERIOD);
+                break;
+            case WEEK:
+                dateTime = dateTime.minusWeeks(OntConfig.BACKDATED_BEGINNING_OF_PERIOD);
+                break;
+            case MONTH:
+                dateTime = dateTime.minusMonths(OntConfig.BACKDATED_BEGINNING_OF_PERIOD);
+                break;
+            case YEAR:
+                dateTime = dateTime.minusYears(OntConfig.BACKDATED_BEGINNING_OF_PERIOD);
+                break;
+            default:
+                try {
+                    throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
+                            + OntConfig.PERIOD_FOR_AGGREGATION + " could not be identified!");
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                }
+        }
+
+        return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
     }
 
     private String addXsdDateTime(final DateTime dateTime) {

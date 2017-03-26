@@ -66,6 +66,18 @@ public final class OntConfig {
         SPARQL
     }
 
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 2;
+
+    public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
+
+    public enum Period {
+        HOUR,
+        DAY,
+        WEEK,
+        MONTH,
+        YEAR
+    }
+
     /**
      * RecentHeartBeat (instance).
      */

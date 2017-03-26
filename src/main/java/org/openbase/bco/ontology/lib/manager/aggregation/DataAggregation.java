@@ -18,15 +18,18 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
+import javafx.util.Pair;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ConnectionTimeRatio;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueAtTime;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueTimestamp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ValueConfidenceRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author agatting on 25.03.17.
@@ -35,20 +38,21 @@ public class DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAggregation.class);
 
-    private ValueConfidenceRange percentCalculation(final List<StateValueAtTime> percentValueList, final ConnectionTimeRatio connectionTimeRatio)
+    private ValueConfidenceRange percentCalculation(final List<StateValueTimestamp> percentValueList, final ConnectionTimeRatio connectionTimeRatio)
             throws IllegalArgumentException {
 
         final int quantity = percentValueList.size();
         double percentValue = 0.0;
 
-        for (final StateValueAtTime stateValueAtTime : percentValueList) {
-            percentValue += Double.parseDouble(stateValueAtTime.getStateValue());
+        for (final StateValueTimestamp stateValueTimestamp : percentValueList) {
+            percentValue += Double.parseDouble(stateValueTimestamp.getStateValue());
         }
 
         final double avgPercent = percentValue / quantity;
+        final long aggregationPeriod = connectionTimeRatio.getDateTimeUntil().getMillis() - connectionTimeRatio.getDateTimeFrom().getMillis();
 
-        if (connectionTimeRatio.getUnitConnectionTime() <= connectionTimeRatio.getTimeConcept()) {
-            final double timeRatio = connectionTimeRatio.getUnitConnectionTime() / connectionTimeRatio.getTimeConcept();
+        if (connectionTimeRatio.getUnitConnectionTime() <= aggregationPeriod) {
+            final double timeRatio = connectionTimeRatio.getUnitConnectionTime() / aggregationPeriod;
             final double invertedTimeRatio = 100.0 - timeRatio;
 
             final double minValue = (avgPercent * timeRatio) + (1.0 * invertedTimeRatio);
@@ -60,17 +64,58 @@ public class DataAggregation {
         }
     }
 
-    private void bcoStateValueCalculation(final List<StateValueAtTime> valueList) {
+    private HashMap<String, Pair<Long, Integer>> getTotalTimeAndQuantityForEachStateValue(final List<StateValueTimestamp> valueList
+            , final ConnectionTimeRatio connectionTimeRatio) {
 
-        final int quantity = valueList.size();
+        final HashMap<String, Pair<Long, Integer>> hashMap = new HashMap<>();
 
         // sort ascending (old to young)
-        Collections.sort(valueList, new Comparator<StateValueAtTime>() {
-            @Override
-            public int compare(StateValueAtTime o1, StateValueAtTime o2) {
-                return o1.getTimestamp().compareTo(o2.getTimestamp());
+        Collections.sort(valueList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+
+        //TODO beginning timestamp or rather stateValue from 0:00 o'clock not available...
+
+        String lastTimestamp = null;
+        String lastStateValue = null;
+
+        final ListIterator<StateValueTimestamp> listIterator = valueList.listIterator();
+
+        while (listIterator.hasNext()) {
+            final StateValueTimestamp stateValueTimestamp = listIterator.next();
+
+            if (lastTimestamp != null) {
+                long timeDiffMillis;
+
+                if (listIterator.hasNext()) {
+                    final String currentTimestamp = stateValueTimestamp.getTimestamp();
+                    timeDiffMillis = new DateTime(currentTimestamp).getMillis() - new DateTime(lastTimestamp).getMillis();
+                } else {
+                    // reached last entry: timestampUntil is the timestampUntil of the aggregationPeriod
+                    timeDiffMillis = new DateTime(connectionTimeRatio.getDateTimeUntil()).getMillis() - new DateTime(lastTimestamp).getMillis();
+                }
+
+                if (hashMap.containsKey(lastStateValue)) {
+                    // there is an entry: add data
+                    final long totalTime = hashMap.get(lastStateValue).getKey() + timeDiffMillis;
+                    final int quantity = hashMap.get(lastStateValue).getValue() + 1;
+                    hashMap.put(lastStateValue, new Pair<>(totalTime, quantity));
+                } else {
+                    // there is no entry: put data
+                    hashMap.put(lastStateValue, new Pair<>(timeDiffMillis, 1));
+                }
             }
-        });
-        //TODO get time of each statValue...
+
+            lastStateValue = stateValueTimestamp.getStateValue();
+            lastTimestamp = stateValueTimestamp.getTimestamp();
+        }
+
+        return hashMap;
+    }
+
+    private ValueConfidenceRange getConfidenceRangeForStatevalue(final long StateValueTime, final ConnectionTimeRatio connectionTimeRatio) {
+
+        final double minValue = 0;
+        final double maxValue = 0;
+
+        return new ValueConfidenceRange(String.valueOf(minValue), String.valueOf(maxValue));
     }
 }

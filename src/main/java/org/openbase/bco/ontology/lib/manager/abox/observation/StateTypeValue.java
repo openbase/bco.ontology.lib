@@ -195,14 +195,14 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> hsbValuesPairSet = new HashSet<>();
 
-        final double brightness = colorState.getColor().getHsbColor().getBrightness();
-        hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
+        final double red = colorState.getColor().getRgbColor().getRed();
+        hsbValuesPairSet.add(new Pair<>("\"" + red + "\"^^NS:Red", true));
 
-        final double hue = colorState.getColor().getHsbColor().getHue();
-        hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+        final double green = colorState.getColor().getRgbColor().getGreen();
+        hsbValuesPairSet.add(new Pair<>("\"" + green + "\"^^NS:Green", true));
 
-        final double saturation = colorState.getColor().getHsbColor().getSaturation();
-        hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+        final double blue = colorState.getColor().getRgbColor().getBlue();
+        hsbValuesPairSet.add(new Pair<>("\"" + blue + "\"^^NS:Blue", true));
 
         return hsbValuesPairSet;
     }
