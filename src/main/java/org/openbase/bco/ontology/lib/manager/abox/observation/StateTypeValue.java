@@ -52,6 +52,7 @@ import rst.domotic.state.UserActivityStateType.UserActivityState;
 import rst.domotic.state.UserPresenceStateType.UserPresenceState;
 import rst.domotic.state.WindowStateType.WindowState;
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -195,14 +196,33 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> hsbValuesPairSet = new HashSet<>();
 
-        final double red = colorState.getColor().getRgbColor().getRed();
-        hsbValuesPairSet.add(new Pair<>("\"" + red + "\"^^NS:Red", true));
+        if (colorState.getColor().hasHsbColor()) {
+            final double brightness = colorState.getColor().getHsbColor().getBrightness();
+            final double saturation = colorState.getColor().getHsbColor().getSaturation();
+            final double hue = colorState.getColor().getHsbColor().getHue();
 
-        final double green = colorState.getColor().getRgbColor().getGreen();
-        hsbValuesPairSet.add(new Pair<>("\"" + green + "\"^^NS:Green", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
 
-        final double blue = colorState.getColor().getRgbColor().getBlue();
-        hsbValuesPairSet.add(new Pair<>("\"" + blue + "\"^^NS:Blue", true));
+        } else if (colorState.getColor().hasRgbColor()) {
+            final int red = colorState.getColor().getRgbColor().getRed();
+            final int green = colorState.getColor().getRgbColor().getGreen();
+            final int blue = colorState.getColor().getRgbColor().getBlue();
+
+            float[] hsb = new float[3];
+            hsb = Color.RGBtoHSB(red, green, blue, hsb);
+            final double hue = hsb[0];
+            final double saturation = hsb[1];
+            final double brightness = hsb[2];
+
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
+
+        } else {
+            LOGGER.error("Could not set colorValue of colorState. Color is not set!");
+        }
 
         return hsbValuesPairSet;
     }

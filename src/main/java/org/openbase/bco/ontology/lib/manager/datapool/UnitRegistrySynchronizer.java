@@ -164,6 +164,7 @@ public class UnitRegistrySynchronizer {
         try {
             final List<TripleArrayList> insertTriples = new ArrayList<>();
 
+            //TODO delete first
             // insert instances
             insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriplesViaOntModel(ontModel, unitConfigs));
             // insert properties

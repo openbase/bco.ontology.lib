@@ -59,7 +59,7 @@ public class DataProviding {
         this.dateTimeFrom = getAdaptedDateTime(now);
         this.dateTimeUntil = getAdaptedDateTime(now);
 
-        getAllObservationOfDay();
+        getAllObservationOfPeriod();
     }
 
     private HashMap<String, Long> getConnectionTimeForEachUnit() {
@@ -101,7 +101,7 @@ public class DataProviding {
         return hashMap;
     }
 
-    private HashMap<String, List<ObservationDataCollection>> getAllObservationOfDay() {
+    private HashMap<String, List<ObservationDataCollection>> getAllObservationOfPeriod() {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
         final String timestampFrom = addXsdDateTime(dateTimeFrom);
