@@ -254,9 +254,9 @@ public class UnitRemoteSynchronizer {
 //            case CONNECTION:
 //                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, ConnectionData.class);
 //                break;
-            case DEVICE:
-                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DeviceData.class);
-                break;
+//            case DEVICE:
+//                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DeviceData.class);
+//                break;
             case DIMMABLE_LIGHT:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DimmableLightData.class);
                 break;
@@ -333,7 +333,7 @@ public class UnitRemoteSynchronizer {
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, VideoRgbSourceData.class);
                 break;
             default:
-                if (UnitType.CONNECTION.equals(unitType) || UnitType.LOCATION.equals(unitType)) {
+                if (UnitType.CONNECTION.equals(unitType) || UnitType.LOCATION.equals(unitType) || UnitType.DEVICE.equals(unitType)) {
                     // ignore both to avoid exceptions...
                 } else {
                     try {

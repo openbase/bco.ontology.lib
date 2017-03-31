@@ -20,7 +20,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueTimestamp;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -169,22 +169,24 @@ public class DataAssignation {
 
     private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList) {
 
-        final List<StateValueTimestamp> batteryValueList = new ArrayList<>();
-        final List<StateValueTimestamp> batteryLevelList = new ArrayList<>();
+        final List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
+        final List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueTimestamp stateValueTimestamp = new StateValueTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
                 //battery value
-                batteryValueList.add(stateValueTimestamp);
+                batteryValueList.add(stateValueWithTimestamp);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("percent")) {
                 // battery level
-                batteryLevelList.add(stateValueTimestamp);
+                batteryLevelList.add(stateValueWithTimestamp);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in batteryStateValue!");
             }
         }
         //TODO
     }
+
+
 }

@@ -101,6 +101,10 @@ public class DataProviding {
         return hashMap;
     }
 
+//    private HashMap<String, ConnectionTimeRatio> blub(final HashMap<String, Long> unitIdAndTime) {
+//
+//    }
+
     private HashMap<String, List<ObservationDataCollection>> getAllObservationOfPeriod() {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();

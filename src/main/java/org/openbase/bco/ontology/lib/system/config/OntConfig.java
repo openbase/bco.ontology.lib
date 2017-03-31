@@ -373,7 +373,7 @@ public final class OntConfig {
     /**
      * Tolerance of heartbeat communication.
      */
-    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 5;
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
 
     /**
      * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.

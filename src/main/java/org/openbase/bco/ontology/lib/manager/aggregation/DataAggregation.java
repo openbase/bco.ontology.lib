@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ConnectionTimeRatio;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueTimestamp;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ValueConfidenceRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +38,14 @@ public class DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAggregation.class);
 
-    private ValueConfidenceRange percentCalculation(final List<StateValueTimestamp> percentValueList, final ConnectionTimeRatio connectionTimeRatio)
+    private ValueConfidenceRange percentCalculation(final List<StateValueWithTimestamp> percentValueList, final ConnectionTimeRatio connectionTimeRatio)
             throws IllegalArgumentException {
 
         final int quantity = percentValueList.size();
         double percentValue = 0.0;
 
-        for (final StateValueTimestamp stateValueTimestamp : percentValueList) {
-            percentValue += Double.parseDouble(stateValueTimestamp.getStateValue());
+        for (final StateValueWithTimestamp stateValueWithTimestamp : percentValueList) {
+            percentValue += Double.parseDouble(stateValueWithTimestamp.getStateValue());
         }
 
         final double avgPercent = percentValue / quantity;
@@ -64,7 +64,7 @@ public class DataAggregation {
         }
     }
 
-    private HashMap<String, Pair<Long, Integer>> getTotalTimeAndQuantityForEachStateValue(final List<StateValueTimestamp> valueList
+    private HashMap<String, Pair<Long, Integer>> getTotalTimeAndQuantityForEachStateValue(final List<StateValueWithTimestamp> valueList
             , final ConnectionTimeRatio connectionTimeRatio) {
 
         final HashMap<String, Pair<Long, Integer>> hashMap = new HashMap<>();
@@ -77,16 +77,16 @@ public class DataAggregation {
         String lastTimestamp = null;
         String lastStateValue = null;
 
-        final ListIterator<StateValueTimestamp> listIterator = valueList.listIterator();
+        final ListIterator<StateValueWithTimestamp> listIterator = valueList.listIterator();
 
         while (listIterator.hasNext()) {
-            final StateValueTimestamp stateValueTimestamp = listIterator.next();
+            final StateValueWithTimestamp stateValueWithTimestamp = listIterator.next();
 
             if (lastTimestamp != null) {
                 long timeDiffMillis;
 
                 if (listIterator.hasNext()) {
-                    final String currentTimestamp = stateValueTimestamp.getTimestamp();
+                    final String currentTimestamp = stateValueWithTimestamp.getTimestamp();
                     timeDiffMillis = new DateTime(currentTimestamp).getMillis() - new DateTime(lastTimestamp).getMillis();
                 } else {
                     // reached last entry: timestampUntil is the timestampUntil of the aggregationPeriod
@@ -104,8 +104,8 @@ public class DataAggregation {
                 }
             }
 
-            lastStateValue = stateValueTimestamp.getStateValue();
-            lastTimestamp = stateValueTimestamp.getTimestamp();
+            lastStateValue = stateValueWithTimestamp.getStateValue();
+            lastTimestamp = stateValueWithTimestamp.getTimestamp();
         }
 
         return hashMap;
