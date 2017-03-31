@@ -30,6 +30,8 @@ import java.util.List;
 @SuppressWarnings({"PMD.UseStringBufferForStringAppends", "checkstyle:multiplestringliterals"})
 public interface SparqlUpdateExpression {
 
+    //TODO exception handling if null
+
     /**
      * Method creates a list with sparql update insert expressions. Each list element is an valid update.
      *
@@ -47,7 +49,7 @@ public interface SparqlUpdateExpression {
                     + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                     + "INSERT DATA { "
                         + getTripleCommand(triple)
-                    + "} ";
+                    + " } ";
 
             expressionList.add(updateExpression);
         }
@@ -76,7 +78,31 @@ public interface SparqlUpdateExpression {
         }
 
         // close the large expression
-        return multipleUpdateExpression + "} ";
+        return multipleUpdateExpression + " } ";
+    }
+
+    static String getSparqlUpdateInsertWhereBundleExpr(final List<TripleArrayList> insertTriples, final List<TripleArrayList> whereTriples)
+            throws IllegalArgumentException {
+
+        // initial part of the large expression
+        String multipleUpdateExpression =
+                "PREFIX NS: <" + OntConfig.NS + "> "
+                        + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                        + "INSERT DATA { ";
+
+        for (final TripleArrayList triple : insertTriples) {
+            // add triples to the large expression
+            multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
+        }
+
+        multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
+
+        for (final TripleArrayList triple : whereTriples) {
+            multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
+        }
+
+        // close the large expression
+        return multipleUpdateExpression + " } ";
     }
 
     /**
@@ -90,12 +116,13 @@ public interface SparqlUpdateExpression {
      *
      * @param deleteTriples The delete triple information (with or without namespace).
      * @param insertTriples The insert triple information (with or without namespace).
-     * @param whereExpr Additional filter expression. Can be set to null, if not necessary.
+     * @param whereTriples Additional filter expression. Can be set to null, if not necessary.
      * @return A single sparql update delete & insert expression (bundle).
-     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
+     * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null (triple! not list!), to prevent a deletion
+     * of whole ontology.
      */
     static String getSparqlUpdateDeleteAndInsertBundleExpr(final List<TripleArrayList> deleteTriples, final List<TripleArrayList> insertTriples
-            , final String whereExpr) throws IllegalAccessException {
+            , final List<TripleArrayList> whereTriples) throws IllegalArgumentException {
 
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
@@ -112,7 +139,7 @@ public interface SparqlUpdateExpression {
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(insertTriple);
         }
 
-        if (whereExpr == null) { // same triples as delete (functional reasons)
+        if (whereTriples == null) { // same triples as delete (functional reasons)
             multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
             for (final TripleArrayList deleteTriple : deleteTriples) {
                 multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(deleteTriple);
@@ -120,7 +147,11 @@ public interface SparqlUpdateExpression {
 
             multipleUpdateExpression = multipleUpdateExpression + "} ";
         } else {
-            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { " + whereExpr + "} ";
+            multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
+            for (final TripleArrayList whereTriple : whereTriples) {
+                multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(whereTriple);
+            }
+            multipleUpdateExpression = multipleUpdateExpression + "} ";
         }
 
         return multipleUpdateExpression;
@@ -140,23 +171,21 @@ public interface SparqlUpdateExpression {
      * @return A sparql update string to delete a triple.
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    static String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTriple, final String whereExpr) throws IllegalAccessException {
+    static String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTriple, final String whereExpr) throws IllegalArgumentException {
 
         String singleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
-                    + getTripleCommand(deleteTriple)
-                + "} ";
+                    + getTripleCommand(deleteTriple);
 
         if (whereExpr == null) { // same triples as delete (functional reasons)
             singleUpdateExpression = singleUpdateExpression
                     + "} WHERE { "
-                    + "DELETE { "
                         + getTripleCommand(deleteTriple)
                     + "} ";
         } else {
-            singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + "} ";
+            singleUpdateExpression = singleUpdateExpression + "} WHERE { " + whereExpr + " } ";
         }
 
         return singleUpdateExpression;

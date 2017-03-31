@@ -48,6 +48,10 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
+
+//        DataProviding DataProviding = new DataProviding();
+//        DataAssignation dataAssignation = new DataAssignation();
+
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
                 LOGGER.info("Debug Mode");

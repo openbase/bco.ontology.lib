@@ -18,10 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
-import javafx.util.Pair;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -48,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
-import rst.domotic.state.ActivationStateType.ActivationState.State;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 import rst.timing.TimestampType;
 
@@ -78,8 +75,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private Set<Method> methodSetStateType;
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
-    private String s_CurConnectionPhase;
-    private boolean wasConnected;
+    private final ConnectionPhase connectionPhase;
     private T observerData;
 
     private final RecurrenceEventFilter recurrenceEventFilter = new RecurrenceEventFilter(2000) {
@@ -105,76 +101,21 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             this.stopwatch = new Stopwatch();
             this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
             this.remoteUnitId = unitRemote.getId().toString();
+            this.connectionPhase = new ConnectionPhase(unitRemote, transactionBuffer);
 
-            initConnectionState(unitRemote);
-
-            final Observer<T> unitRemoteStateObserver = (Observable<T> observable, T remoteData) -> {
+            final Observer<T> unitRemoteStateObserver = (final Observable<T> observable, final T remoteData) -> {
                 this.observerData = remoteData;
                 recurrenceEventFilter.trigger();
             };
 
-            final Observer<ConnectionState> unitRemoteConnectionObserver = (Observable<ConnectionState> observable, ConnectionState connectionState) -> {
-                if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
-                    // was NOT connected and now is connected - start connection phase
-                    updateConnectionPhase(State.ACTIVE);
-                    wasConnected = !wasConnected;
-                } else if (!connectionState.equals(ConnectionState.CONNECTED) && wasConnected){
-                    // was connected and now is NOT connected - close connection phase
-                    updateConnectionPhase(State.DEACTIVE);
-                    wasConnected = !wasConnected;
-                }
-            };
+            final Observer<ConnectionState> unitRemoteConnectionObserver = (final Observable<ConnectionState> observable
+                    , final ConnectionState connectionState) -> connectionPhase.identifyConnection(connectionState);
 
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
 
         } catch (JPServiceException | CouldNotPerformException e) {
             throw new InstantiationException(this, e);
-        }
-    }
-
-    private void updateConnectionPhase(final State activationState) throws JPServiceException {
-
-        final String pred_IsA = OntExpr.A.getName();
-        final String pred_HasFirstConnection = OntProp.FIRST_CONNECTION.getName();
-        final String pred_HasLastConnection = OntProp.LAST_CONNECTION.getName();
-        final String pred_HasConnectionPhase = OntProp.CONNECTION_PHASE.getName();
-        final String obj_ConnectionPhase = OntCl.CONNECTION_PHASE.getName();
-
-        final List<TripleArrayList> insertTriple = new ArrayList<>();
-
-        if (activationState.equals(State.ACTIVE)) {
-            final Date now = new Date();
-            final String dateTime = dateFormat.format(now);
-            s_CurConnectionPhase = "connectionPhase" + remoteUnitId + dateTime.substring(0, dateTime.indexOf("+")); // must be the same at start and close!
-            final String obj_Timestamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
-
-            insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-            insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, s_CurConnectionPhase));
-            insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
-
-        } else if (activationState.equals(State.DEACTIVE)) {
-
-            final String obj_Timestamp = "\"" + dateFormat.format(new Date()) + "\"^^xsd:dateTime";
-            insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-            insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, s_CurConnectionPhase));
-            insertTriple.add(new TripleArrayList(s_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
-
-        } else {
-            LOGGER.warn("Method updateConnectionPhase is called with wrong ActivationState parameter.");
-        }
-
-        final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriple);
-        sendToServer(sparqlUpdate);
-    }
-
-    private void initConnectionState(final UnitRemote unitRemote) throws JPServiceException {
-        // reduce connectionState to binary classification - connected and not connected
-        if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
-            wasConnected = true;
-            updateConnectionPhase(State.ACTIVE);
-        } else {
-            wasConnected = false;
         }
     }
 
@@ -229,7 +170,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
                 //### stateValue triple ###\\
                 final int sizeBuf = tripleArrayListsBuf.size();
-                tripleArrayListsBuf = addStateValue(obj_serviceType, obj_stateType, subj_Observation, tripleArrayListsBuf);
+                tripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, tripleArrayListsBuf);
 
                 if (tripleArrayListsBuf.size() == sizeBuf) {
                     // incomplete observation instance. dropped...
@@ -245,6 +186,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                         + ". Dropped.", e, LOGGER, LogLevel.WARN);
             } catch (InterruptedException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            } catch (NoSuchElementException e) {
+
             }
             tripleArrayListsBuf.clear();
         }
@@ -252,26 +195,10 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(tripleArrayLists);
         System.out.println(sparqlUpdateExpr);
 
-        final boolean isHttpSuccess = sendToServer(sparqlUpdateExpr);
+        final boolean isHttpSuccess = connectionPhase.sendToServer(transactionBuffer, sparqlUpdateExpr);
         if (isHttpSuccess) {
             rsbNotification(serviceList);
         }
-    }
-
-    private boolean sendToServer(final String sparqlUpdateExpr) throws JPServiceException {
-        try {
-            final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
-
-            if (!isHttpSuccess) {
-                // could not send to server - insert sparql update expression to buffer queue
-                transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
-            }
-            return isHttpSuccess;
-        } catch (CouldNotPerformException e) {
-            // could not send to server - insert sparql update expression to buffer queue
-            transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
-        }
-        return false;
     }
 
     private void rsbNotification(final List<ServiceType> serviceList) {
@@ -291,6 +218,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 return serviceType;
             }
         }
-        throw new NoSuchElementException("Could not identify methodState, cause there is no element, which contains " + methodStateType);
+        LOGGER.warn("Could not identify methodState, cause there is no element, which contains " + methodStateType);
+        throw new NoSuchElementException();
     }
 }

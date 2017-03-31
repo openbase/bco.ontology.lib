@@ -30,7 +30,7 @@ import java.util.Locale;
  * @author agatting on 16.11.16.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
-public final class QueryStrings {
+public final class CompetencyQuestions {
 
     //TODO later: get concrete object of query...
     //TODO make all strings like "home" generic
@@ -797,7 +797,7 @@ public final class QueryStrings {
     /**
      * Private Constructor.
      */
-    private QueryStrings() {
+    private CompetencyQuestions() {
     }
 
     /**
@@ -821,7 +821,7 @@ public final class QueryStrings {
      */
     public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
                                                   final int years) {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         final Date now = new Date();
 
         Date newDate = DateUtils.addHours(now, hours);

@@ -95,7 +95,7 @@ public interface OntModelWeb {
                 ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
 
                 if (ontModel.isEmpty()) {
-                    ontModel = OntologyToolkit.loadOntModelFromFile(null);
+                    ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
                 }
             } catch (IOException e) {
                 //retry

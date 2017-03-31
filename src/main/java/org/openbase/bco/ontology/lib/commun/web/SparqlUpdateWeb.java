@@ -31,6 +31,7 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
@@ -41,6 +42,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,11 @@ public interface SparqlUpdateWeb {
      * Logger.
      */
     Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
+
+    /**
+     * Stopwatch for retries.
+     */
+    Stopwatch stopwatch = new Stopwatch();
 
     /**
      * Method processes a sparql update (update string) to the main database of the ontology server.
@@ -130,13 +137,33 @@ public interface SparqlUpdateWeb {
      */
     static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {
-            Query query = QueryFactory.create(queryString) ;
-            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql", query);
+            final Query query = QueryFactory.create(queryString) ;
+            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+                    + "sparql", query);
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
             throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
                     + " failed. Connection establishment refused. Server offline?");
         }
+    }
+
+    static ResultSet sparqlQuerySelectViaRetry(final String queryString) throws JPServiceException, InterruptedException {
+        ResultSet resultSet = null;
+
+        while (resultSet == null) {
+            try {
+                final Query query = QueryFactory.create(queryString) ;
+                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+                        + "sparql", query);
+                resultSet = queryExecution.execSelect();
+            } catch (QueryExceptionHTTP e) {
+                //retry
+                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+                        + " failed. Connection establishment refused. Server offline? Retry... ", e, LOGGER, LogLevel.WARN);
+                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+            }
+        }
+        return resultSet;
     }
 
     /**

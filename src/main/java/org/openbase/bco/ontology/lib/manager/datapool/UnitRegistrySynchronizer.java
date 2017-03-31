@@ -95,6 +95,7 @@ public class UnitRegistrySynchronizer {
         startInitialization(unitConfigList);
         // start thread to synch tbox and abox changes by observer
         startUpdateObserver();
+        LOGGER.info("UnitRegistrySynchronizer started successfully.");
     }
 
     private void startInitialization(final List<UnitConfig> unitConfigList) throws InterruptedException, CouldNotPerformException, JPServiceException {
@@ -163,6 +164,7 @@ public class UnitRegistrySynchronizer {
         try {
             final List<TripleArrayList> insertTriples = new ArrayList<>();
 
+            //TODO delete first
             // insert instances
             insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriplesViaOntModel(ontModel, unitConfigs));
             // insert properties
@@ -253,7 +255,7 @@ public class UnitRegistrySynchronizer {
             }
         } catch (CouldNotPerformException e) {
             transactionBufferImpl.insertData(new Pair<>(multiExprUpdate, true));
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException e) {
             ExceptionPrinter.printHistory("Defect sparql update expression! Dropped.", e, LOGGER, LogLevel.ERROR);
         }
     }

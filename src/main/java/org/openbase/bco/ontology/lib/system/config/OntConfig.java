@@ -53,6 +53,11 @@ public final class OntConfig {
     public static final String NS = "http://www.openbase.org/bco/ontology#";
 
     /**
+     * Namespace of the xsd schema (w3c). Don't modify.
+     */
+    public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
+
+    /**
      * An enum with service forms of the fuseki ontology server.
      */
     public enum ServerServiceForm {
@@ -60,6 +65,23 @@ public final class OntConfig {
         UPDATE,
         SPARQL
     }
+
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 2;
+
+    public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
+
+    public enum Period {
+        HOUR,
+        DAY,
+        WEEK,
+        MONTH,
+        YEAR
+    }
+
+    /**
+     * RecentHeartBeat (instance).
+     */
+    public static final String INSTANCE_RECENT_HEARTBEAT = "recentHeartBeat";
 
     /**
      * Enumeration of ontology classes.
@@ -124,7 +146,12 @@ public final class OntConfig {
         /**
          * DalUnit (class).
          */
-        DAL_UNIT("DalUnit");
+        DAL_UNIT("DalUnit"),
+
+        /**
+         * RecentHeartBeat (class).
+         */
+        RECENT_HEARTBEAT("RecentHeartBeat");
 
         private final String ontClass;
 

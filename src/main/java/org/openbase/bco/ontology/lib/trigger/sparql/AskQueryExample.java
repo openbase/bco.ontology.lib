@@ -151,6 +151,19 @@ public class AskQueryExample {
                     + "?obs NS:hasTimeStamp ?lastTime . "
                 + "}";
 
+
+    public static final String queryToLastConnectionPhaseTimeStamp =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT * WHERE { "
+                    + "?conn a NS:ConnectionPhase . "
+                    // get times, which are stored in different cases
+                    + "?conn NS:hasLastConnection ?time . "
+                    + "OPTIONAL { ?time NS:hasLastConnection ?lastHeartBeat . } . "
+                    // reduce times to one variable via if condition
+                    + "bind(if(isLiteral(?time), ?time, ?lastHeartBeat) as ?resultTime)"
+                + "} ";
+
     /**
      * Method returns the current dateTime.
      *

@@ -34,6 +34,7 @@ import rst.domotic.state.ContactStateType.ContactState;
 import rst.domotic.state.DoorStateType.DoorState;
 import rst.domotic.state.EnablingStateType.EnablingState;
 import rst.domotic.state.HandleStateType.HandleState;
+import rst.domotic.state.IlluminanceStateType.IlluminanceState;
 import rst.domotic.state.IntensityStateType.IntensityState;
 import rst.domotic.state.InventoryStateType.InventoryState;
 import rst.domotic.state.MotionStateType.MotionState;
@@ -51,6 +52,7 @@ import rst.domotic.state.UserActivityStateType.UserActivityState;
 import rst.domotic.state.UserPresenceStateType.UserPresenceState;
 import rst.domotic.state.WindowStateType.WindowState;
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -155,12 +157,8 @@ public class StateTypeValue {
         final BrightnessState.DataUnit dataUnit = brightnessState.getBrightnessDataUnit();
 
         switch (dataUnit) {
-            //TODO LUX is not unqualified...
-//            case LUX:
-//                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Lux", true));
-//                break;
             case PERCENT:
-                LOGGER.warn("Dropped brightness state value, cause cannot convert dataUnit Percentage to lux. Lux for query needed.");
+                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Percent", true));
                 break;
             case UNKNOWN:
                 LOGGER.warn("Dropped brightness state value, cause dataUnit is UNKNOWN.");
@@ -198,14 +196,33 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> hsbValuesPairSet = new HashSet<>();
 
-        final double brightness = colorState.getColor().getHsbColor().getBrightness();
-        hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
+        if (colorState.getColor().hasHsbColor()) {
+            final double brightness = colorState.getColor().getHsbColor().getBrightness();
+            final double saturation = colorState.getColor().getHsbColor().getSaturation();
+            final double hue = colorState.getColor().getHsbColor().getHue();
 
-        final double hue = colorState.getColor().getHsbColor().getHue();
-        hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
 
-        final double saturation = colorState.getColor().getHsbColor().getSaturation();
-        hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+        } else if (colorState.getColor().hasRgbColor()) {
+            final int red = colorState.getColor().getRgbColor().getRed();
+            final int green = colorState.getColor().getRgbColor().getGreen();
+            final int blue = colorState.getColor().getRgbColor().getBlue();
+
+            float[] hsb = new float[3];
+            hsb = Color.RGBtoHSB(red, green, blue, hsb);
+            final double hue = hsb[0];
+            final double saturation = hsb[1];
+            final double brightness = hsb[2];
+
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
+
+        } else {
+            LOGGER.error("Could not set colorValue of colorState. Color is not set!");
+        }
 
         return hsbValuesPairSet;
     }
@@ -271,12 +288,40 @@ public class StateTypeValue {
     }
 
     /**
+     * Method returns state values of the given illuminanceState.
+     *
+     * @param illuminanceState The IlluminanceState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    protected Set<Pair<String, Boolean>> illuminanceStateValue(final IlluminanceState illuminanceState) {
+
+        final Set<Pair<String, Boolean>> illuminanceValuePairSet = new HashSet<>();
+        final IlluminanceState.DataUnit dataUnit = illuminanceState.getIlluminanceDataUnit();
+
+        switch (dataUnit) {
+            case LUX:
+                illuminanceValuePairSet.add(new Pair<>("\"" + String.valueOf(illuminanceState.getIlluminance()) + "\"^^NS:Lux", true));
+                break;
+            case UNKNOWN:
+                LOGGER.warn("Dropped illuminance state value, cause dataUnit is UNKNOWN.");
+                break;
+            default:
+                LOGGER.warn("DataUnit of intensity state could not be detected. Please add " + dataUnit + " to ontologyManager implementation.");
+        }
+
+        return illuminanceValuePairSet;
+    }
+
+
+    /**
      * Method returns state values of the given intensityState.
      *
      * @param intensityState The IntensityState.
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
+    @Deprecated
     protected Set<Pair<String, Boolean>> intensityStateValue(final IntensityState intensityState) {
 
         final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
