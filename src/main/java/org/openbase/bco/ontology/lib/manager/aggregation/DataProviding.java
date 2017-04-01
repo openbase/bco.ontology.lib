@@ -102,7 +102,7 @@ public class DataProviding {
 
 
         final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/Ontology3.owl");
-        final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
+        final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
 //        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
