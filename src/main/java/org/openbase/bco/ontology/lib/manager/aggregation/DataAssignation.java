@@ -18,10 +18,11 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -37,55 +38,19 @@ import java.util.Map;
 /**
  * @author agatting on 25.03.17.
  */
-public class DataAssignation {
+public class DataAssignation extends DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAssignation.class);
-    private Map<String, ServiceType> serviceTypeMap;
+    private final Map<String, ServiceType> serviceTypeMap;
 
-    public DataAssignation() {
-//        calculation();
+    public DataAssignation(final DateTime dateTimeFrom, final DateTime dateTimeUntil) {
+        super(dateTimeFrom, dateTimeUntil);
         this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
     }
 
-    private void relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit, final HashMap<String, List<ObservationDataCollection>> observationDataPerUnit) {
+    protected void identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId) {
 
-        for (final String unitId : connectionTimePerUnit.keySet()) {
-            final long connectionTimeMilli = connectionTimePerUnit.get(unitId);
-            final List<ObservationDataCollection> obsDataCollList = observationDataPerUnit.get(unitId);
-
-            relateDataForEachProviderServiceOfEachUnit(unitId, connectionTimeMilli, obsDataCollList);
-        }
-    }
-
-    private void relateDataForEachProviderServiceOfEachUnit(final String unitId, final long connectionTimeMilli, final List<ObservationDataCollection> obsDataCollList) {
-
-        final HashMap<String, List<ServiceDataCollection>> hashMap = new HashMap<>();
-
-        for (final ObservationDataCollection tripleObs : obsDataCollList) {
-
-            final ServiceDataCollection serviceDataCollection = new ServiceDataCollection(tripleObs.getStateValue(), tripleObs.getDataType(), tripleObs.getTimestamp());
-
-            if (hashMap.containsKey(tripleObs.getProviderService())) {
-                // there is an entry: add data
-                final List<ServiceDataCollection> arrayList = hashMap.get(tripleObs.getProviderService());
-                arrayList.add(serviceDataCollection);
-                hashMap.put(tripleObs.getProviderService(), arrayList);
-            } else {
-                // there is no entry: put data
-                final List<ServiceDataCollection> arrayList = new ArrayList<>();
-                arrayList.add(serviceDataCollection);
-                hashMap.put(tripleObs.getProviderService(), arrayList);
-            }
-        }
-
-
-
-    }
-
-    private void dataAssignationToServiceType(final HashMap<String, List<ServiceDataCollection>> providerServiceDataMap) {
-
-        for (final String serviceTypeName : providerServiceDataMap.keySet()) {
-
+        for (final String serviceTypeName : serviceDataMap.keySet()) {
 
             switch (serviceTypeMap.get(serviceTypeName)) {
                 case UNKNOWN:
@@ -94,7 +59,7 @@ public class DataAssignation {
                 case ACTIVATION_STATE_SERVICE:
 
                 case BATTERY_STATE_SERVICE:
-
+                    batteryStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId);
                 case BLIND_STATE_SERVICE:
 
                 case BRIGHTNESS_STATE_SERVICE:
@@ -159,7 +124,7 @@ public class DataAssignation {
                     // no matched providerService
                     try {
                         throw new NotAvailableException("Could not assign to providerService. Please check implementation or rather integrate "
-                                + serviceTypeMap.get(serviceTypeName) + " to method dataAssignationToServiceType of aggregation component.");
+                                + serviceTypeMap.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
                     } catch (NotAvailableException e) {
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
                     }
@@ -167,7 +132,8 @@ public class DataAssignation {
         }
     }
 
-    private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList) {
+
+    private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId)  {
 
         final List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
         final List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
@@ -188,5 +154,30 @@ public class DataAssignation {
         //TODO
     }
 
+
+    private List<String> discrete(final long connectionTimeMilli, final List<StateValueWithTimestamp> discreteList) throws CouldNotPerformException {
+
+        final List<String> stateValueObjects = new ArrayList<>();
+        final DiscreteStateValues discreteStateValues = new DiscreteStateValues(connectionTimeMilli, discreteList);
+
+        stateValueObjects.add(String.valueOf(discreteStateValues.getTimeWeighting()) + "\"^^NS:TimeWeighting");
+        //TODO convert values...
+
+        return stateValueObjects;
+    }
+
+    private List<String> continuous(final long connectionTimeMilli, final List<StateValueWithTimestamp> continuousList) throws CouldNotPerformException {
+
+        final List<String> stateValueObjects = new ArrayList<>();
+        final ContinuousStateValues continuousStateValues = new ContinuousStateValues(connectionTimeMilli, continuousList);
+
+        stateValueObjects.add(String.valueOf(continuousStateValues.getMean()) + "\"^^NS:Mean");
+        stateValueObjects.add(String.valueOf(continuousStateValues.getQuantity()) + "\"^^NS:Quantity");
+        stateValueObjects.add(String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^NS:StandardDeviation");
+        stateValueObjects.add(String.valueOf(continuousStateValues.getVariance()) + "\"^^NS:Variance");
+        stateValueObjects.add(String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^NS:TimeWeighting");
+
+        return stateValueObjects;
+    }
 
 }

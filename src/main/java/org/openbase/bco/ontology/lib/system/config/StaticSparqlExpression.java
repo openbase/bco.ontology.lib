@@ -85,36 +85,19 @@ public class StaticSparqlExpression {
             + "} "
             + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
 
-    public static String getAllObservations(final String timestampFrom, final String timestampUntil) {
+    public static String getAllObservations(final String timestampUntil) {
 
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
                     + "?observation a NS:Observation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
-//                    + "FILTER (?timestamp >= " + timestampFrom + " && ?timestamp < " + timestampUntil + " ) . "
+                    + "FILTER (?timestamp < " + timestampUntil + " ) . "
                     + "?observation NS:hasUnitId ?unit . "
                     + "?observation NS:hasStateValue ?stateValue . "
                     + "?observation NS:hasProviderService ?providerService . "
                 + "} "
                 + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
-    }
-
-    //TODO get multiple observations per unit (for every different state...)
-    public static String getLastObservationsOfBeforePeriod(final String timestampFrom) {
-
-        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                    + "?observation a NS:Observation . "
-                    + "?observation NS:hasTimeStamp ?timestamp . "
-                    + "FILTER (?timestamp < " + timestampFrom + " ) . "
-                    + "?observation NS:hasUnitId ?unit . "
-                    + "?observation NS:hasStateValue ?stateValue . "
-                    + "?observation NS:hasProviderService ?providerService . "
-                + "} "
-                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp "
-                + "ORDER BY DESC(?timestamp) LIMIT 1 ";
     }
 
 }

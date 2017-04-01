@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.apache.commons.math3.stat.StatUtils;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;

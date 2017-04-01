@@ -350,11 +350,12 @@ public class StateTypeValue {
      * The size of the set describes the number of state values the individual state keeps.
      */
     protected Set<Pair<String, Boolean>> inventoryStateValue(final InventoryState inventoryState) {
+        //TODO no identification in ontology...
 
         final Set<Pair<String, Boolean>> inventoryValuePairSet = new HashSet<>();
         inventoryValuePairSet.add(new Pair<>(inventoryState.getValue().toString(), false));
-        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getLocationId() + "\"^^xsd:string", true));
-        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getOwnerId() + "\"^^xsd:string", true));
+//        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getLocationId() + "\"^^xsd:string", true));
+//        inventoryValuePairSet.add(new Pair<>("\"" + inventoryState.getOwnerId() + "\"^^xsd:string", true));
 
         return inventoryValuePairSet;
     }
@@ -400,8 +401,8 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> powerConsumptionValuePairSet = new HashSet<>();
         powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NS:Voltage", true));
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:WattHour", true));
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NS:Watt", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:Watt", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NS:Ampere", true));
 
         return powerConsumptionValuePairSet;
     }
