@@ -133,6 +133,10 @@ public class DataAggregation {
 
                 lastStateValue = stateValueWithTimestamp.getStateValue();
                 lastTimestamp = stateValueWithTimestamp.getTimestamp();
+
+                if (new DateTime(lastTimestamp).getMillis() < dateTimeFrom.getMillis()) {
+                    lastTimestamp = dateTimeFrom.toString();
+                }
             }
 
             return hashMap;

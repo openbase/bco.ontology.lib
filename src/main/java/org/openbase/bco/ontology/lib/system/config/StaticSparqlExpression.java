@@ -100,4 +100,20 @@ public class StaticSparqlExpression {
                 + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
     }
 
+    public static String getRecentObservationsBeforeTimeFrame(final String timestampFrom) {
+
+        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
+                + "?observation a NS:Observation . "
+                + "?observation NS:hasTimeStamp ?timestamp . "
+                + "FILTER (?timestamp < " + timestampFrom + " ) . "
+                + "?observation NS:hasUnitId ?unit . "
+                + "?observation NS:hasStateValue ?stateValue . "
+                + "?observation NS:hasProviderService ?providerService . "
+                + "} "
+                + "ORDER BY DESC(?observation) DESC(?unit) ?stateValue ?providerService ASC(?timestamp) ";
+//                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+    }
+
 }

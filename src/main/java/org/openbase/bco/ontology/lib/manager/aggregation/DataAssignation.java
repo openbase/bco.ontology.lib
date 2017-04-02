@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +43,12 @@ public class DataAssignation extends DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAssignation.class);
     private final Map<String, ServiceType> serviceTypeMap;
+    private final DateTime dateTimeFrom;
 
     public DataAssignation(final DateTime dateTimeFrom, final DateTime dateTimeUntil) {
         super(dateTimeFrom, dateTimeUntil);
         this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
+        this.dateTimeFrom = dateTimeFrom;
     }
 
     protected void identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId) {
@@ -135,8 +138,8 @@ public class DataAssignation extends DataAggregation {
 
     private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId)  {
 
-        final List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
-        final List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
+        List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
+        List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
             final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
@@ -151,6 +154,9 @@ public class DataAssignation extends DataAggregation {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in batteryStateValue!");
             }
         }
+        batteryValueList = selectionOfInsignificantObservations(batteryValueList);
+        batteryLevelList = selectionOfInsignificantObservations(batteryLevelList);
+
         //TODO
     }
 
@@ -178,6 +184,34 @@ public class DataAssignation extends DataAggregation {
         stateValueObjects.add(String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^NS:TimeWeighting");
 
         return stateValueObjects;
+    }
+
+    // dismiss all observations below the dateTimeFrom. BESIDES the youngest observation below the dateTimeFrom.
+    private List<StateValueWithTimestamp> selectionOfInsignificantObservations(final List<StateValueWithTimestamp> stateValueWithTimestampList) {
+
+        // sort ascending (old to young)
+        Collections.sort(stateValueWithTimestampList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+
+        final List<StateValueWithTimestamp> bufDataList = new ArrayList<>();
+        boolean insignificant = true;
+        StateValueWithTimestamp bufData = null;
+        final long dateTimeFromMillis = dateTimeFrom.getMillis();
+
+        for (final StateValueWithTimestamp stateValueWithTimestamp : stateValueWithTimestampList) {
+            final long stateValueMillis = new DateTime(stateValueWithTimestamp.getTimestamp()).getMillis();
+
+            if (insignificant && stateValueMillis <= dateTimeFromMillis) {
+                bufData = stateValueWithTimestamp;
+            } else {
+                if (insignificant && bufData != null) {
+                    bufDataList.add(bufData);
+                    insignificant = false;
+                }
+                bufDataList.add(stateValueWithTimestamp);
+            }
+        }
+
+        return bufDataList;
     }
 
 }

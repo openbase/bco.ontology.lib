@@ -25,6 +25,7 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.RDFNode;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -103,6 +104,7 @@ public class DataProviding {
 
         final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/Ontology3.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
+//        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
 //        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
@@ -114,42 +116,35 @@ public class DataProviding {
 
             final String timestamp = querySolution.getLiteral("timestamp").getLexicalForm();
 
-            final Interval obsInterval = new Interval(new DateTime(timestamp), dateTimeUntil);
-            final Interval overlapInterval = intervalTimeFrame.overlap(obsInterval);
+            final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
+            final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("providerService").toString());
+            final RDFNode rdfNode = querySolution.get("stateValue");
+            String dataType = null;
+            String stateValue;
 
-            // if there is an overlap, than it is a needed observation instance
-            if (overlapInterval != null) {
+            if (rdfNode.isLiteral()) {
+                stateValue = rdfNode.asLiteral().getLexicalForm();
+                dataType = OntologyToolkit.getLocalName(rdfNode.asLiteral().getDatatypeURI());
 
-                final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
-                final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("providerService").toString());
-                final RDFNode rdfNode = querySolution.get("stateValue");
-                String dataType = null;
-                String stateValue;
-
-                if (rdfNode.isLiteral()) {
-                    stateValue = rdfNode.asLiteral().getLexicalForm();
-                    dataType = OntologyToolkit.getLocalName(rdfNode.asLiteral().getDatatypeURI());
-
-                    if (dataType == null) {
-                        LOGGER.error("Could not identify dataType of " + rdfNode.asLiteral().getDatatypeURI());
-                    }
-                } else {
-                    stateValue = OntologyToolkit.getLocalName(rdfNode.asResource().toString());
+                if (dataType == null) {
+                    LOGGER.error("Could not identify dataType of " + rdfNode.asLiteral().getDatatypeURI());
                 }
+            } else {
+                stateValue = OntologyToolkit.getLocalName(rdfNode.asResource().toString());
+            }
 
-                final ObservationDataCollection obsDataColl = new ObservationDataCollection(providerService, stateValue, dataType, timestamp);
+            final ObservationDataCollection obsDataColl = new ObservationDataCollection(providerService, stateValue, dataType, timestamp);
 
-                if (hashMap.containsKey(unitId)) {
-                    // there is an entry: add data
-                    final List<ObservationDataCollection> tripleObsList = hashMap.get(unitId);
-                    tripleObsList.add(obsDataColl);
-                    hashMap.put(unitId, tripleObsList);
-                } else {
-                    // there is no entry: put data
-                    final List<ObservationDataCollection> tripleObsList = new ArrayList<>();
-                    tripleObsList.add(obsDataColl);
-                    hashMap.put(unitId, tripleObsList);
-                }
+            if (hashMap.containsKey(unitId)) {
+                // there is an entry: add data
+                final List<ObservationDataCollection> tripleObsList = hashMap.get(unitId);
+                tripleObsList.add(obsDataColl);
+                hashMap.put(unitId, tripleObsList);
+            } else {
+                // there is no entry: put data
+                final List<ObservationDataCollection> tripleObsList = new ArrayList<>();
+                tripleObsList.add(obsDataColl);
+                hashMap.put(unitId, tripleObsList);
             }
         }
 
