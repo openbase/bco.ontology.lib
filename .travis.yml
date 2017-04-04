@@ -11,9 +11,9 @@ jdk:
 install:
   - mvn --settings .travis/settings.xml install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
-#before_install:
-#  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
-#  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
+before_install:
+  - echo $GPG_SECRET_KEYS | base64 --decode | $GPG_EXECUTABLE --import
+  - echo $GPG_OWNERTRUST | base64 --decode | $GPG_EXECUTABLE --import-ownertrust
 
 notifications:
     slack: openbase-org:vGz7LO4CvGoGMneYkEm3ON7E
@@ -24,13 +24,13 @@ deploy:
   - provider: script
     script: .travis/deploy.sh
     on:
-        repo: openbase/jps
+        repo: openbase/bco.ontology.lib
         branch: master
         jdk: oraclejdk8
   - provider: script
     script: .travis/deploy.sh
     on:
-        repo: openbase/jps
+        repo: openbase/bco.ontology.lib
         tags: true
         jdk: oraclejdk8
 
