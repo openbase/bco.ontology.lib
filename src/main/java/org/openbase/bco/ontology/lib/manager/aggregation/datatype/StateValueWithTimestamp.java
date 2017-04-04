@@ -21,11 +21,11 @@ package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 /**
  * @author agatting on 25.03.17.
  */
-public class StateValueTimestamp {
+public class StateValueWithTimestamp {
     private final String stateValue;
     private final String timestamp;
 
-    public StateValueTimestamp(final String stateValue, final String timestamp) {
+    public StateValueWithTimestamp(final String stateValue, final String timestamp) {
         this.stateValue = stateValue;
         this.timestamp = timestamp;
     }

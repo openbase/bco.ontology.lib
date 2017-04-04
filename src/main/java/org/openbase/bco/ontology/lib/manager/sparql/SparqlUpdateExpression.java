@@ -88,7 +88,7 @@ public interface SparqlUpdateExpression {
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                        + "INSERT DATA { ";
+                        + "INSERT { ";
 
         for (final TripleArrayList triple : insertTriples) {
             // add triples to the large expression

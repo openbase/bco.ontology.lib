@@ -187,6 +187,7 @@ public class HeartBeatCommunication {
 
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
+                    System.out.println(sparqlUpdate);
 
                     if (!SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
                         throw new CouldNotProcessException("Dropped heartbeat update. Server offline?");

@@ -68,6 +68,8 @@ public final class OntConfig {
 
     public static final int BACKDATED_BEGINNING_OF_PERIOD = 2;
 
+    public static final int QUANTITY_OF_PERIOD = 1;
+
     public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
 
     public enum Period {
@@ -373,7 +375,7 @@ public final class OntConfig {
     /**
      * Tolerance of heartbeat communication.
      */
-    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 5;
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
 
     /**
      * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.
