@@ -71,8 +71,8 @@ public interface SparqlUpdateWeb {
      * @param updateString The sparql update string.
      * @param serviceForm The service form.
      * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
-     * @throws CouldNotPerformException
-     * @throws JPServiceException
+     * @throws CouldNotPerformException CouldNotPerformException
+     * @throws JPServiceException JPServiceException
      */
     static boolean sparqlUpdateToMainOntology(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
             , JPServiceException {

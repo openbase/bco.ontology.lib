@@ -36,7 +36,7 @@ public interface TypeAlignment {
     String[] connectionCategories = new String[] {"door", "passage", "window"};
 
     /**
-     * Method returns a map with aligned unit types. An map entry contains an aligned unit type (lower case & removed special signs) as key and the original
+     * Method returns a map with aligned unit types. An map entry contains an aligned unit type (lower case and removed special signs) as key and the original
      * unit type as value.
      *
      * @return A Map with aligned unit types as keys and original unit types as values.
@@ -54,7 +54,7 @@ public interface TypeAlignment {
     }
 
     /**
-     * Method returns a map with aligned service types. An map entry contains an aligned service type (lower case & removed special signs) as key and the
+     * Method returns a map with aligned service types. An map entry contains an aligned service type (lower case and removed special signs) as key and the
      * original service type as value.
      *
      * @return A Map with aligned service types as keys and original service types as values.
