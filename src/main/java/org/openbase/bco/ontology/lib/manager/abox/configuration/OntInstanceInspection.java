@@ -38,7 +38,7 @@ public class OntInstanceInspection {
      * Method compares the units of the registry with the actual units in the ontology model. Missing units are listed.
      *
      * @param unitConfigs A list of unitConfigs.
-     *
+     * @param ontClass The ontClass unit.
      * @return A set of missing unitConfigs (units) in the actual ontology model.
      */
     protected List<UnitConfig> inspectionOfUnits(final List<UnitConfig> unitConfigs, final OntClass ontClass) {
@@ -62,6 +62,7 @@ public class OntInstanceInspection {
     /**
      * Method compares all registry serviceTypes with the serviceTypes in the ontology. Missing serviceTypes are listed.
      *
+     * @param ontClassProviderService ontClassProviderService
      * @return A set of missing serviceTypes in the actual ontology model.
      */
     protected Set<ServiceType> inspectionOfServiceTypes(final OntClass ontClassProviderService) {

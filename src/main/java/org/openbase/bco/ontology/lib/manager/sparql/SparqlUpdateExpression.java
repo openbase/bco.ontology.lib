@@ -117,7 +117,7 @@ public interface SparqlUpdateExpression {
      * @param deleteTriples The delete triple information (with or without namespace).
      * @param insertTriples The insert triple information (with or without namespace).
      * @param whereTriples Additional filter expression. Can be set to null, if not necessary.
-     * @return A single sparql update delete & insert expression (bundle).
+     * @return A single sparql update delete and insert expression (bundle).
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null (triple! not list!), to prevent a deletion
      * of whole ontology.
      */

@@ -59,7 +59,7 @@ public interface OntologyToolkit {
 
     /**
      * Method converts a given string to a string with noun syntax. Thereby substrings, which are separated by special characters(-+*=_#/), will be processed
-     * as independent words. For example 'ACTION_STATE-Super+Service#word' => 'ActionStateSuperServiceWord'.
+     * as independent words. For example 'ACTION_STATE-Super+Service#word' = 'ActionStateSuperServiceWord'.
      *
      * @param expression The string, which should be converted.
      * @return The converted string with noun syntax (each substring).
@@ -154,6 +154,7 @@ public interface OntologyToolkit {
      * Method loads data into an ontModel from the fileSystem. The ontModel can be given by argument or a new default ontModel, based on OWL_DL_MEM, is created.
      *
      * @param ontModel The ontModel to load data from the fileSystem. If argument is {@code null}, then default ontModel, based on OWL_DL_MEM, is created.
+     * @param path path
      * @return The ontModel with data from the filesystem.
      * @throws JenaException Exception is thrown, if the ontModel could not be created.
      * @throws IllegalArgumentException Exception is thrown, if the file could not be loaded.
@@ -235,6 +236,7 @@ public interface OntologyToolkit {
      *
      * @param queryString The ASK query.
      * @param ontModel The local ontModel, which has to be asked.
+     * @return The solution object.
      * @throws JenaException Exception is thrown, if the ask query could not be performed (cause e.g. it is a select query...).
      */
     static boolean askQuery(final String queryString, final OntModel ontModel) throws JenaException {

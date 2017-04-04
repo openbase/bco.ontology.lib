@@ -40,7 +40,7 @@ public interface OntInstanceMapping {
      * @param unitConfigs The unitConfigs.
      * @return A list of triple to update the ontology with unit config data.
      * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
             throws CouldNotPerformException, IllegalArgumentException;
@@ -50,7 +50,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfigs The unitConfigs.
      * @return A list of triple to update the ontology with unit config data.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getAllMissingConfigTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
 
@@ -62,7 +62,7 @@ public interface OntInstanceMapping {
      * @param unitConfigs The unit(Config)s, which are compared with the existing unit (OntSuperClass Unit!) instances in the ontology.
      * @return A list with unit triple information.
      * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingUnitTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
             throws CouldNotPerformException, IllegalArgumentException;
@@ -74,7 +74,7 @@ public interface OntInstanceMapping {
      * @param ontModel The ontModel for comparing of ontology elements.
      * @return A list with service triple information.
      * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingServiceTriplesViaOntModel(final OntModel ontModel) throws CouldNotPerformException, IllegalArgumentException;
 
@@ -86,7 +86,7 @@ public interface OntInstanceMapping {
      * @param unitConfigs The unit(Config)s, which are compared with the existing unitState (OntSuperClass State!) instances in the ontology.
      * @return A list with unitState triple information.
      * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingStateTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
             throws CouldNotPerformException, IllegalArgumentException;
@@ -96,7 +96,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfigs The unit(Config)s, which are converted into triples.
      * @return A list with unit triple information.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
 
@@ -105,7 +105,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfigs The unit(Config)s, which are converted into triples.
      * @return A list with service triple information.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
 
@@ -114,7 +114,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfigs The unit(Config)s, which are converted into triples.
      * @return A list with unitState triple information.
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getMissingStateTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
 
@@ -124,7 +124,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfigs The unitConfig list, which are converted into delete triples.
      * @return A list with delete triple information (unitTypes and unitStates).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
 
@@ -133,7 +133,7 @@ public interface OntInstanceMapping {
      *
      * @param unitConfig The unitConfig, which is converted into delete triple.
      * @return A delete triple (unitType and unitState).
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException IllegalArgumentException
      */
     TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig) throws IllegalArgumentException;
 }

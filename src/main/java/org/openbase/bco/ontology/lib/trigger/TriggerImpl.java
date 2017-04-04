@@ -63,6 +63,8 @@ public class TriggerImpl implements Trigger {
 
     /**
      * Constructor for TriggerImpl.
+     *
+     * @param ontologyRemote ontologyRemote
      */
     public TriggerImpl(final OntologyRemote ontologyRemote) {
         this.category = OntologyChange.Category.UNKNOWN; //TODO

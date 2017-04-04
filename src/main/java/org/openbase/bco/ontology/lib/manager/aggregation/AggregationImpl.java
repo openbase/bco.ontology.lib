@@ -60,10 +60,10 @@ public class AggregationImpl implements Aggregation {
     }
 
     /**
-     *
      * @param period The time frame, which should be aggregated (hour, day, week, ...).
      * @param quantityPeriod The number of period (one day, two days, ten days, ...). Must be less than backDatedQuantity!
      * @param backDatedQuantity The back-dated beginning of the aggregation (before two days, before 20 days, ...). Must be bigger than quantityPeriod!
+     * @throws CouldNotPerformException CouldNotPerformException
      */
     public void setTimeFrame(final Period period, final int quantityPeriod, final int backDatedQuantity) throws CouldNotPerformException {
 

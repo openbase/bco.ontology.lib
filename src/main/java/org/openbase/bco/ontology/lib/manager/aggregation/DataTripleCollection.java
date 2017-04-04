@@ -73,6 +73,7 @@ public class DataTripleCollection extends DataAssignation {
     private List<TripleArrayList> relateDataForEachProviderServiceOfEachUnit(final String unitId, final long connectionTimeMilli
             , final List<ObservationDataCollection> obsDataCollList) {
 
+        final List<TripleArrayList> triples = new ArrayList<>();
         final HashMap<String, List<ServiceDataCollection>> serviceDataColl = new HashMap<>();
 
         for (final ObservationDataCollection tripleObs : obsDataCollList) {
@@ -91,10 +92,8 @@ public class DataTripleCollection extends DataAssignation {
                 serviceDataColl.put(tripleObs.getProviderService(), arrayList);
             }
         }
+        triples.addAll(identifyServiceType(serviceDataColl, connectionTimeMilli, unitId));
 
-        identifyServiceType(serviceDataColl, connectionTimeMilli, unitId);
-
-
-        return null; //TODO
+        return triples;
     }
 }

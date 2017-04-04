@@ -69,7 +69,10 @@ public interface SparqlUpdateWeb {
      * Method processes a sparql update (update string) to the main database of the ontology server.
      *
      * @param updateString The sparql update string.
+     * @param serviceForm The service form.
      * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
+     * @throws CouldNotPerformException
+     * @throws JPServiceException
      */
     static boolean sparqlUpdateToMainOntology(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
             , JPServiceException {
@@ -98,8 +101,10 @@ public interface SparqlUpdateWeb {
      * Method processes a sparql update (update string) to all databases of the ontology server (main and tbox databases).
      *
      * @param updateString The sparql update string.
+     * @param serviceForm The service form.
      * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
      * @throws CouldNotPerformException CouldNotPerformException is thrown if request was not successful, because of e.g. update string is broken.
+     * @throws JPServiceException JPServiceException
      */
     static boolean sparqlUpdateToAllDataBases(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
             , JPServiceException {
@@ -134,6 +139,8 @@ public interface SparqlUpdateWeb {
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.
+     * @throws IOException IOException
+     * @throws JPServiceException JPServiceException
      */
     static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {

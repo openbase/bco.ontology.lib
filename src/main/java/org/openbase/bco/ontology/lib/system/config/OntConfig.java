@@ -276,12 +276,12 @@ public final class OntConfig {
     public enum OntExpr {
 
         /**
-         * Pattern to insert an individual to a class -> "a".
+         * Pattern to insert an individual to a class: "is a" - scheme.
          */
         A("a"),
 
         /**
-         * Pattern for SPARQL namespace -> "NS:".
+         * Pattern for SPARQL namespace: "NS:".
          */
         NS("NS:"),
 

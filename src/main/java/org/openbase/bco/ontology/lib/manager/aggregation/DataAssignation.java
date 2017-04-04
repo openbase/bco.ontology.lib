@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
+import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -51,7 +52,9 @@ public class DataAssignation extends DataAggregation {
         this.dateTimeFrom = dateTimeFrom;
     }
 
-    protected void identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId) {
+    protected List<TripleArrayList> identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId) {
+
+        final List<TripleArrayList> triples = new ArrayList<>();
 
         for (final String serviceTypeName : serviceDataMap.keySet()) {
 
@@ -62,7 +65,7 @@ public class DataAssignation extends DataAggregation {
                 case ACTIVATION_STATE_SERVICE:
 
                 case BATTERY_STATE_SERVICE:
-                    batteryStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId);
+                    triples.addAll(batteryStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId));
                 case BLIND_STATE_SERVICE:
 
                 case BRIGHTNESS_STATE_SERVICE:
@@ -133,11 +136,12 @@ public class DataAssignation extends DataAggregation {
                     }
             }
         }
+        return triples;
     }
 
+    private List<TripleArrayList> batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId)  {
 
-    private void batteryStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId)  {
-
+        final List<TripleArrayList> triples = new ArrayList<>();
         List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
         List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
 
@@ -157,7 +161,7 @@ public class DataAssignation extends DataAggregation {
         batteryValueList = selectionOfInsignificantObservations(batteryValueList);
         batteryLevelList = selectionOfInsignificantObservations(batteryLevelList);
 
-        //TODO
+        return null;//TODO
     }
 
 

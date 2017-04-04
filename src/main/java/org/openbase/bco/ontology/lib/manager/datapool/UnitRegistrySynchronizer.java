@@ -81,6 +81,11 @@ public class UnitRegistrySynchronizer {
 
     /**
      * Constructor for UnitRegistrySynchronizer.
+     *
+     * @param transactionBuffer transactionBuffer
+     * @throws InterruptedException InterruptedException
+     * @throws CouldNotPerformException CouldNotPerformException
+     * @throws JPServiceException JPServiceException
      */
     public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) throws InterruptedException, CouldNotPerformException, JPServiceException {
 
