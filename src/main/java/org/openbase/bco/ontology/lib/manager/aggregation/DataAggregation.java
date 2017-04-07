@@ -64,8 +64,6 @@ public class DataAggregation {
 
             checkTimeValidity();
 
-            final List<String> bcoValuesString = getStateValues(bcoValuesAndTimestamps);
-
             this.timeWeighting = calcTimeWeighting(unitConnectionTime);
             this.activeTimeAndQuantityPerStateValue = getActiveTimeAndQuantityPerStateValue();
         }
@@ -241,8 +239,8 @@ public class DataAggregation {
      * Method calculates the time weighting of a connection time. Means a value, which describes the ratio of connection time and period time. If an unit has
      * connection the whole period the value is 1. If the unit has connection half of the period time the value is 0.5. The range is [0..1].
      *
-     * @param unitConnectionTime
-     * @return
+     * @param unitConnectionTime unitConnectionTime
+     * @return The time weighting.
      */
     private double calcTimeWeighting(final long unitConnectionTime) {
         return unitConnectionTime / timeFrameMilli;

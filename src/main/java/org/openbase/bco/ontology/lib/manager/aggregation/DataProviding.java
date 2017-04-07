@@ -60,8 +60,7 @@ public class DataProviding {
 
         final HashMap<String, Long> hashMap = new HashMap<>();
 
-
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/Ontology3.owl");
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
@@ -91,18 +90,16 @@ public class DataProviding {
         }
 
         queryExecution.close();
+
         return hashMap;
     }
 
     public HashMap<String, List<ObservationDataCollection>> getObservationsForEachUnit() {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
-        final String timestampFrom = addXsdDateTime(dateTimeFrom);
         final String timestampUntil = addXsdDateTime(dateTimeUntil);
 
-
-
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/Ontology3.owl");
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);

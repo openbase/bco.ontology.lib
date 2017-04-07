@@ -22,6 +22,7 @@ import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,35 +33,35 @@ import java.util.List;
  */
 public class DataTripleCollection extends DataAssignation {
 
-    private DateTime dateTimeFrom;
-    private DateTime dateTimeUntil;
+    private final DateTime dateTimeFrom;
+    private final DateTime dateTimeUntil;
 
-    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil) {
-        super(dateTimeFrom, dateTimeUntil);
+    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) {
+        super(dateTimeFrom, dateTimeUntil, period);
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
 
 
-        collect();
+        final List<TripleArrayList> triples = collect();
     }
 
-    private void collect() {
+    private List<TripleArrayList> collect() {
         final DataProviding dataProviding = new DataProviding(dateTimeFrom, dateTimeUntil);
 
         final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit();
         final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
-        final List<TripleArrayList> triples = new ArrayList<>();
 
-        triples.addAll(relateDataForEachUnit(connTimeEachUnit, observationsEachUnit));
-        //TODO
+        return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
+
+
 
     private List<TripleArrayList> relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit
             , final HashMap<String, List<ObservationDataCollection>> observationsPerUnit) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
 
-        for (final String unitId : connectionTimePerUnit.keySet()) {
+        for (final String unitId : observationsPerUnit.keySet()) {
             final long connectionTimeMilli = connectionTimePerUnit.get(unitId);
             final List<ObservationDataCollection> obsDataCollList = observationsPerUnit.get(unitId);
 

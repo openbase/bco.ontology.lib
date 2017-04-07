@@ -147,17 +147,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 final String dateTimeNow = dateFormat.format(new Date());
                 final String subj_Observation = "O" + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
 
-                //### add observation instance to observation class ###\\
-                tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_IsA, obj_Observation));
-
-                //### unitID triple ###\\
-                tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasUnitId, remoteUnitId));
-
-                //### serviceType triple ###\\
-                final String obj_serviceType = getServiceType(methodStateType.getName());
-                serviceList.add(serviceTypeMap.get(obj_serviceType));
-                tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
-
                 //### timeStamp triple ###\\
                 final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ObjectReflection
                         .getInvokedObject(obj_stateType , MethodRegEx.GET_TIMESTAMP.getName());
@@ -166,20 +155,32 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
                     final String obj_dateTime = "\"" + dateFormat.format(timestamp) + "\"^^xsd:dateTime";
                     tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasTimeStamp, obj_dateTime));
+
+                    //### add observation instance to observation class ###\\
+                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_IsA, obj_Observation));
+
+                    //### unitID triple ###\\
+                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasUnitId, remoteUnitId));
+
+                    //### serviceType triple ###\\
+                    final String obj_serviceType = getServiceType(methodStateType.getName());
+                    serviceList.add(serviceTypeMap.get(obj_serviceType));
+                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
+
+
+
+                    //### stateValue triple ###\\
+                    final int sizeBuf = tripleArrayListsBuf.size();
+                    tripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, tripleArrayListsBuf);
+
+                    if (tripleArrayListsBuf.size() == sizeBuf) {
+                        // incomplete observation instance. dropped...
+                        tripleArrayListsBuf.clear();
+                    }
+
+                    // no exception produced: observation individual complete. add to main list
+                    tripleArrayLists.addAll(tripleArrayListsBuf);
                 }
-
-                //### stateValue triple ###\\
-                final int sizeBuf = tripleArrayListsBuf.size();
-                tripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, tripleArrayListsBuf);
-
-                if (tripleArrayListsBuf.size() == sizeBuf) {
-                    // incomplete observation instance. dropped...
-                    tripleArrayListsBuf.clear();
-                }
-
-                // no exception produced: observation individual complete. add to main list
-                tripleArrayLists.addAll(tripleArrayListsBuf);
-
             } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
                 // Could not collect all elements of observation instance
                 ExceptionPrinter.printHistory("Could not get data from stateType " + methodStateType.getName() + " from unitRemote " + remoteUnitId

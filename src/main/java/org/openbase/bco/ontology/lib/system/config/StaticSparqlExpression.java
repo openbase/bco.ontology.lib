@@ -64,8 +64,8 @@ public class StaticSparqlExpression {
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?blackout ?lastTime { "
                 + "?blackout a NS:HeartBeatPhase . "
-                + "?blackout NS:hasFirstHeartBeat ?firstTime . "
-                + "?blackout NS:hasLastHeartBeat ?lastTime . "
+                + "?blackout NS:hasFirstConnection ?firstTime . "
+                + "?blackout NS:hasLastConnection ?lastTime . "
             + "} "
             + "ORDER BY DESC(?lastTime) LIMIT 1";
 

@@ -66,7 +66,7 @@ public final class OntConfig {
         SPARQL
     }
 
-    public static final int BACKDATED_BEGINNING_OF_PERIOD = 2;
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 0;
 
     public static final int QUANTITY_OF_PERIOD = 1;
 
@@ -250,29 +250,39 @@ public final class OntConfig {
         IS_ENABLED("isEnabled"),
 
         /**
-         * hasLastHeartBeat (dataType property).
-         */
-        LAST_HEARTBEAT("hasLastHeartBeat"),
-
-        /**
-         * hasFirstHeartBeat (dataType property).
-         */
-        FIRST_HEARTBEAT("hasFirstHeartBeat"),
-
-        /**
          * hasFirstConnection (dataType property).
          */
         FIRST_CONNECTION("hasFirstConnection"),
 
         /**
-         * hasAggregationValue (dataType property).
+         * hasTimeWeighting (dataType property).
          */
-        AGGREGATION_VALUE("hasAggregationValue"),
+        TIME_WEIGHTING("hasTimeWeighting"),
 
         /**
-         * hasPeriodLength (dataType property).
+         * hasQuantity (dataType property).
          */
-        PERIOD_LENGTH("hasPeriodLength"),
+        QUANTITY("hasQuantity"),
+
+        /**
+         * hasActivityTime (dataType property).
+         */
+        ACTIVITY_TIME("hasActivityTime"),
+
+        /**
+         * hasMean (dataType property).
+         */
+        MEAN("hasMean"),
+
+        /**
+         * hasStandardDeviation (dataType property).
+         */
+        STANDARD_DEVIATION("hasStandardDeviation"),
+
+        /**
+         * hasVariance (dataType property).
+         */
+        VARIANCE("hasVariance"),
 
         /**
          * hasLastConnection (dataType property).
