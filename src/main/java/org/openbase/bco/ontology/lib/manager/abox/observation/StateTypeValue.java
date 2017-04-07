@@ -326,7 +326,6 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
         final IntensityState.DataUnit dataUnit = intensityState.getIntensityDataUnit();
-        intensityState.getIntensityDataUnit();
 
         switch (dataUnit) {
             case PERCENT:
@@ -385,7 +384,7 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> passageStateValue(final PassageState passageState) {
 
         final Set<Pair<String, Boolean>> passageValuePairSet = new HashSet<>();
-//        passageValuePairSet.add(new Pair<>(passageState..., false));
+//        passageValuePairSet.add(new Pair<>(passageState..., false)); //TODO
 
         return passageValuePairSet;
     }
@@ -447,7 +446,7 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> rfidStateValue(final RFIDState rfidState) {
 
         final Set<Pair<String, Boolean>> rfidValuePairSet = new HashSet<>();
-        rfidValuePairSet.add(new Pair<>(rfidState.getData().toString(), true));
+        rfidValuePairSet.add(new Pair<>("\"" + rfidState.getData().toString()  + "\"^^xsd:string", true));
 
         return rfidValuePairSet;
     }

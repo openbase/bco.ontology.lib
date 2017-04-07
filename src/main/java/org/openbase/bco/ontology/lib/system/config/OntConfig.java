@@ -151,6 +151,16 @@ public final class OntConfig {
         DAL_UNIT("DalUnit"),
 
         /**
+         * Period (class).
+         */
+        PERIOD("Period"),
+
+        /**
+         * AggregationObservation (class).
+         */
+        AGGREGATION_OBSERVATION("AggregationObservation"),
+
+        /**
          * RecentHeartBeat (class).
          */
         RECENT_HEARTBEAT("RecentHeartBeat");
@@ -217,6 +227,11 @@ public final class OntConfig {
          */
         CONNECTION_PHASE("hasConnectionPhase"),
 
+        /**
+         * hasPeriod (object property).
+         */
+        PERIOD("hasPeriod"),
+
         // ### dataType properties of ontology ###
 
         /**
@@ -248,6 +263,16 @@ public final class OntConfig {
          * hasFirstConnection (dataType property).
          */
         FIRST_CONNECTION("hasFirstConnection"),
+
+        /**
+         * hasAggregationValue (dataType property).
+         */
+        AGGREGATION_VALUE("hasAggregationValue"),
+
+        /**
+         * hasPeriodLength (dataType property).
+         */
+        PERIOD_LENGTH("hasPeriodLength"),
 
         /**
          * hasLastConnection (dataType property).
