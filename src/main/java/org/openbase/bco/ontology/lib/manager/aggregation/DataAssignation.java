@@ -548,7 +548,7 @@ public class DataAssignation extends DataAggregation {
             , final String unitId, final String serviceType) throws InterruptedException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        final double timeWeighting = connectionTimeMilli / (dateTimeUntil.getMillis() - dateTimeFrom.getMillis());
+        final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli / (double) (dateTimeUntil.getMillis() - dateTimeFrom.getMillis()));
         final Set<Triple<Integer, Integer, Integer>> hsbSet = hsbCountMap.keySet();
 
         for (final Triple<Integer, Integer, Integer> hsb : hsbSet) {
@@ -563,11 +563,12 @@ public class DataAssignation extends DataAggregation {
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
+            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + timeWeighting + "\"^^xsd:double"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + quantity + "\"^^xsd:int"));
+            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
         }
         return triples;
     }
@@ -594,7 +595,7 @@ public class DataAssignation extends DataAggregation {
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
-//            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), ));
+            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
         }
         return triples;
     }
@@ -617,30 +618,10 @@ public class DataAssignation extends DataAggregation {
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
-//      triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), ));
+        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
 
         return triples;
     }
-
-    //    private String getTimestampPeriodCode(final String timestamp) throws NotAvailableException {
-//        final DateTime dateTime = new DateTime(timestamp);
-//
-//        switch (period) {
-//            case HOUR:
-//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0).toString();
-//            case DAY:
-//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 0, 0, 0).toString();
-//            case WEEK:
-//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 0, 0, 0).toString(); //TODO
-//            case MONTH:
-//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 0, 0, 0, 0).toString();
-//            case YEAR:
-//                return new DateTime(dateTime.getYear(), 0, 0, 0, 0, 0).toString();
-//            default:
-//                throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
-//                        + period.toString() + " could not be identified!");
-//        }
-//    }
 
     private String getAggObsInstance(final String unitId) throws InterruptedException {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
@@ -656,6 +637,9 @@ public class DataAssignation extends DataAggregation {
 
         // sort ascending (old to young)
         Collections.sort(stateValueWithTimestampList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+
+
+
 
         final List<StateValueWithTimestamp> bufDataList = new ArrayList<>();
         boolean insignificant = true;

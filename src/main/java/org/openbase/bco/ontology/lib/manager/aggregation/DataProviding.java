@@ -97,7 +97,7 @@ public class DataProviding {
     public HashMap<String, List<ObservationDataCollection>> getObservationsForEachUnit() {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
-        final String timestampUntil = addXsdDateTime(dateTimeUntil);
+        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
 
         final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
@@ -147,10 +147,6 @@ public class DataProviding {
 
         queryExecution.close();
         return hashMap;
-    }
-
-    private String addXsdDateTime(final DateTime dateTime) {
-        return "\"" + dateTime.toString() + "\"^^xsd:dateTime";
     }
 
     private void checkOldObservation() {

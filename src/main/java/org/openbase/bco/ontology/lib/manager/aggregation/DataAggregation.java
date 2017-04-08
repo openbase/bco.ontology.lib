@@ -24,6 +24,7 @@ import org.apache.commons.math3.util.FastMath;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ValueConfidenceRange;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 
 import java.util.ArrayList;
@@ -243,7 +244,7 @@ public class DataAggregation {
      * @return The time weighting.
      */
     private double calcTimeWeighting(final long unitConnectionTime) {
-        return unitConnectionTime / timeFrameMilli;
+        return Double.parseDouble(OntConfig.decimalFormat().format((double) unitConnectionTime / (double) timeFrameMilli));
     }
 
     private double calcVariance(final double stateValuesArray[]) {

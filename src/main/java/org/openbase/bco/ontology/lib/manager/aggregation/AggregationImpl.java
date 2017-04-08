@@ -18,9 +18,18 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.joda.time.DateTime;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
+import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
@@ -39,7 +48,7 @@ public class AggregationImpl implements Aggregation {
     private Period period;
     private int backDatedQuantity;
 
-    public AggregationImpl() throws NotAvailableException {
+    public AggregationImpl() throws CouldNotPerformException {
 
         this.period = OntConfig.PERIOD_FOR_AGGREGATION;
         this.backDatedQuantity = OntConfig.BACKDATED_BEGINNING_OF_PERIOD;
@@ -49,28 +58,36 @@ public class AggregationImpl implements Aggregation {
         this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
         this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
 
+//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+//        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+//        final Query query = QueryFactory.create(StaticSparqlExpression.test(timestampUntil));
+//        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+//        final ResultSet resultSet = queryExecution.execSelect();
+//
+//        ResultSetFormatter.out(System.out, resultSet, query);
+
         startAgg();
     }
 
-    /**
-     * @param period The time frame, which should be aggregated (hour, day, week, ...).
-//     * @param quantityPeriod The number of period (one day, two days, ten days, ...). Must be less than backDatedQuantity!
-     * @param backDatedQuantity The back-dated beginning of the aggregation (before two days, before 20 days, ...). Must be bigger than quantityPeriod!
-     * @throws CouldNotPerformException CouldNotPerformException
-     */
-    public void setTimeFrame(final Period period, final int backDatedQuantity) throws CouldNotPerformException {
+//    /**
+//     * @param period The time frame, which should be aggregated (hour, day, week, ...).
+////     * @param quantityPeriod The number of period (one day, two days, ten days, ...). Must be less than backDatedQuantity!
+//     * @param backDatedQuantity The back-dated beginning of the aggregation (before two days, before 20 days, ...). Must be bigger than quantityPeriod!
+//     * @throws CouldNotPerformException CouldNotPerformException
+//     */
+//    public void setTimeFrame(final Period period, final int backDatedQuantity) throws CouldNotPerformException {
+//
+//
+//        this.period = period;
+//        this.backDatedQuantity = backDatedQuantity;
+//
+//        final DateTime now = new DateTime();
+//
+//        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
+//        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
+//    }
 
-
-        this.period = period;
-        this.backDatedQuantity = backDatedQuantity;
-
-        final DateTime now = new DateTime();
-
-        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
-        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
-    }
-
-    public void startAgg() {
+    public void startAgg() throws CouldNotPerformException {
         final DataTripleCollection dataTripleCollection = new DataTripleCollection(dateTimeFrom, dateTimeUntil, period);
     }
 

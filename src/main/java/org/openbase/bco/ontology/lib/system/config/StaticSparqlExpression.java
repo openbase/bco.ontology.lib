@@ -100,20 +100,96 @@ public class StaticSparqlExpression {
                 + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
     }
 
-    public static String getRecentObservationsBeforeTimeFrame(final String timestampFrom) {
-
-        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+    public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
+        return "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                + "?observation a NS:Observation . "
-                + "?observation NS:hasTimeStamp ?timestamp . "
-                + "FILTER (?timestamp < " + timestampFrom + " ) . "
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue ?stateValue . "
-                + "?observation NS:hasProviderService ?providerService . "
-                + "} "
-                + "ORDER BY DESC(?observation) DESC(?unit) ?stateValue ?providerService ASC(?timestamp) ";
-//                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+                + "DELETE { "
+                    + "?connectionPhase ?p ?o . "
+                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+                + "} WHERE { "
+                    + "?connectionPhase ?p ?o . "
+                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+                    + "?connectionPhase a NS:ConnectionPhase . "
+                    + "?connectionPhase NS:hasLastConnection ?lastTimestamp . "
+                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
+                + "}";
     }
+
+    public static String deleteUnusedHeartBeatPhases(final String dateTimeUntil) {
+        return "PREFIX NS: <" + OntConfig.NS + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "DELETE { "
+                    + "?heartBeatPhase ?p ?o . "
+                + "} WHERE { "
+                    + "?heartBeatPhase ?p ?o . "
+                    + "?heartBeatPhase a NS:HeartBeatPhase . "
+                    + "?heartBeatPhase NS:hasLastConnection ?lastTimestamp . "
+                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
+                + "}";
+    }
+
+    public static String deleteUnusedObservations(final String dateTimeUntil) {
+        return "PREFIX NS: <" + OntConfig.NS + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "DELETE { "
+                    + "?obs ?p ?o . "
+                + "} WHERE { "
+                + "{ SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
+                        + "?observation a NS:Observation . "
+                        + "?observation NS:hasTimeStamp ?timestamp . "
+                        + "FILTER (?timestamp < " + dateTimeUntil + " ) . "
+                        + "?observation NS:hasUnitId ?unit . "
+                        + "?observation NS:hasStateValue ?stateValue . "
+                        + "?observation NS:hasProviderService ?providerService . "
+                        + "FILTER NOT EXISTS { "
+                            + "?observation NS:hasPeriod ?period . } . "
+                        + "} "
+                        + "GROUP BY ?unit ?providerService ?maxTimestamp } "
+
+                    + "?obs ?p ?o . "
+                    + "?obs a NS:Observation . "
+                    + "?obs NS:hasUnitId ?unit . "
+                    + "?obs NS:hasProviderService ?providerService . "
+                    + "?obs NS:hasTimeStamp ?obsTime . "
+                    + "FILTER NOT EXISTS { "
+                        + "?obs NS:hasPeriod ?period . "
+                    + "} "
+                    + "FILTER (?obsTime < ?maxTimestamp ) . "
+                + "}";
+    }
+
+//    public static String test(final String timestampUntil) {
+//
+//        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
+//                    + "?observation a NS:Observation . "
+//                    + "?observation NS:hasTimeStamp ?timestamp . "
+//                    + "FILTER (?timestamp < " + timestampUntil + " ) . "
+//                    + "?observation NS:hasUnitId ?unit . "
+//                    + "?observation NS:hasStateValue ?stateValue . "
+//                    + "?observation NS:hasProviderService ?providerService . "
+//                    + "FILTER NOT EXISTS { "
+//                        + "?observation NS:hasPeriod ?period . "
+//                    + "} . "
+//                + "} "
+//                + "GROUP BY ?unit ?providerService ?maxTimestamp ";
+//    }
+
+//    public static String getRecentObservationsBeforeTimeFrame(final String timestampFrom) {
+//
+//        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
+//                + "?observation a NS:Observation . "
+//                + "?observation NS:hasTimeStamp ?timestamp . "
+//                + "FILTER (?timestamp < " + timestampFrom + " ) . "
+//                + "?observation NS:hasUnitId ?unit . "
+//                + "?observation NS:hasStateValue ?stateValue . "
+//                + "?observation NS:hasProviderService ?providerService . "
+//                + "} "
+//                + "ORDER BY DESC(?observation) DESC(?unit) ?stateValue ?providerService ASC(?timestamp) ";
+////                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+//    }
 
 }

@@ -18,8 +18,11 @@
  */
 package org.openbase.bco.ontology.lib;
 
+import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
+import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
@@ -51,7 +54,13 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
 
-//        Aggregation aggregation = new AggregationImpl();
+//        try {
+//            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+//            OntModelWeb.addOntModelViaRetry(ontModel);
+//            Aggregation aggregation = new AggregationImpl();
+//        } catch (JPServiceException e) {
+//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        }
 
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {

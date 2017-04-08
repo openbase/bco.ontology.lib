@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the ontology. Furthermore a method tests the
@@ -66,9 +70,7 @@ public final class OntConfig {
         SPARQL
     }
 
-    public static final int BACKDATED_BEGINNING_OF_PERIOD = 0;
-
-    public static final int QUANTITY_OF_PERIOD = 1;
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 1;
 
     public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
 
@@ -79,6 +81,17 @@ public final class OntConfig {
         MONTH,
         YEAR
     }
+
+    public static DecimalFormat decimalFormat() {
+        final DecimalFormat decimalFormat = new DecimalFormat("#.###");
+        final DecimalFormatSymbols decimalFormatSymbols = decimalFormat.getDecimalFormatSymbols();
+
+        decimalFormatSymbols.setDecimalSeparator('.');
+        decimalFormat.setDecimalFormatSymbols(decimalFormatSymbols);
+
+        return decimalFormat;
+    }
+
 
     /**
      * RecentHeartBeat (instance).
