@@ -100,6 +100,40 @@ public class StaticSparqlExpression {
                 + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
     }
 
+//    public static String getMinPeriod(final String period, final String timestampFrom, final String timestampUntil) {
+//
+//        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "SELECT (MIN(?timestamp) AS ?minTimestamp) WHERE { "
+//                    + "?aggObs NS:hasPeriod NS:" + period + " . "
+//                    + "?aggObs NS:hasTimeStamp ?timestamp . "
+//                + "} "
+//                + "GROUP BY ?minTimestamp ";
+//    }
+
+    public static String getAllAggObs(final String period, final String dateTimeFrom, final String dateTimeUntil) {
+
+        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean WHERE { "
+                    + "?aggObs a NS:AggregationObservation . "
+                    + "?aggObs NS:hasPeriod NS:" + period + " . "
+                    + "?aggObs NS:hasTimeStamp ?timestamp . "
+                    + "FILTER (?timestamp >= " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
+                    + "?aggObs NS:hasUnitId ?unit . "
+                    + "?aggObs NS:hasProviderService ?service . "
+                    + "?aggObs NS:hasUnitId ?unit . "
+                    + "OPTIONAL {?aggObs NS:hasQuantity ?quantity . } . "
+                    + "OPTIONAL {?aggObs NS:hasActivityTime ?activityTime . } . "
+                    + "OPTIONAL {?aggObs NS:hasVariance ?variance . } . "
+                    + "OPTIONAL {?aggObs NS:hasStandardDeviation ?standardDeviation . } . "
+                    + "OPTIONAL {?aggObs NS:hasMean ?mean . } . "
+                    + "OPTIONAL {?aggObs NS:hasStateValue ?stateValue . } . "
+                    + "OPTIONAL {?aggObs NS:hasTimeWeighting ?timeWeighting . } . "
+                + "} "
+                + "GROUP BY ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean ";
+    }
+
     public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
         return "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
@@ -110,7 +144,10 @@ public class StaticSparqlExpression {
                     + "?connectionPhase ?p ?o . "
                     + "?s NS:hasConnectionPhase ?connectionPhase . "
                     + "?connectionPhase a NS:ConnectionPhase . "
-                    + "?connectionPhase NS:hasLastConnection ?lastTimestamp . "
+                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
+                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
+                    // reduce times to one variable via if condition
+                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
                     + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
                 + "}";
     }

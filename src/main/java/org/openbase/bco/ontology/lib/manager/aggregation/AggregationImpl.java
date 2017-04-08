@@ -58,9 +58,10 @@ public class AggregationImpl implements Aggregation {
         this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
         this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
 
-//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+//        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
 //        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
-//        final Query query = QueryFactory.create(StaticSparqlExpression.test(timestampUntil));
+//        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
 //

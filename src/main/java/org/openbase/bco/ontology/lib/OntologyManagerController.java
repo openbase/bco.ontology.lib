@@ -55,7 +55,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void activate() throws CouldNotPerformException, InterruptedException {
 
 //        try {
-//            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+//            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //            OntModelWeb.addOntModelViaRetry(ontModel);
 //            Aggregation aggregation = new AggregationImpl();
 //        } catch (JPServiceException e) {

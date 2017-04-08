@@ -21,8 +21,9 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.joda.time.DateTime;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueDataCollection;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
@@ -71,7 +72,8 @@ public class DataAssignation extends DataAggregation {
         this.stopwatch = new Stopwatch();
     }
 
-    protected List<TripleArrayList> identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId) {
+    protected List<TripleArrayList> identifyServiceType(final HashMap<String, List<ServiceDataCollection>> serviceDataMap, final long connectionTimeMilli, final String unitId
+            , final boolean isAggData) {
         final List<TripleArrayList> triples = new ArrayList<>();
 
         for (final String serviceTypeName : serviceDataMap.keySet()) {
@@ -79,8 +81,9 @@ public class DataAssignation extends DataAggregation {
             switch (serviceTypeMap.get(serviceTypeName)) {
                 case UNKNOWN:
                     LOGGER.warn("There is a serviceType UNKNOWN!");
+                    break;
                 case ACTIVATION_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case BATTERY_STATE_SERVICE:
                     triples.addAll(batteryStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
@@ -91,16 +94,16 @@ public class DataAssignation extends DataAggregation {
                 case BRIGHTNESS_STATE_SERVICE:
                     break;
                 case BUTTON_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case COLOR_STATE_SERVICE:
                     triples.addAll(colorStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case CONTACT_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case DOOR_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case EARTHQUAKE_ALARM_STATE_SERVICE:
                     break;
@@ -119,7 +122,7 @@ public class DataAssignation extends DataAggregation {
                 case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
                     break;
                 case MOTION_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case PASSAGE_STATE_SERVICE:
                     break;
@@ -127,10 +130,10 @@ public class DataAssignation extends DataAggregation {
                     triples.addAll(powerConsumptionStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case POWER_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case PRESENCE_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case RFID_STATE_SERVICE:
 //                    triples.addAll(rfidStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
@@ -141,13 +144,13 @@ public class DataAssignation extends DataAggregation {
                     triples.addAll(smokeStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case STANDBY_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case SWITCH_STATE_SERVICE:
                     triples.addAll(switchStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
                     break;
                 case TAMPER_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 case TARGET_TEMPERATURE_STATE_SERVICE:
                     break;
@@ -161,7 +164,7 @@ public class DataAssignation extends DataAggregation {
                 case WATER_ALARM_STATE_SERVICE:
                     break;
                 case WINDOW_STATE_SERVICE:
-                    triples.addAll(genericBcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                    triples.addAll(bcoStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
                     break;
                 default:
                     // no matched providerService
@@ -178,17 +181,17 @@ public class DataAssignation extends DataAggregation {
     }
 
     // method only for serviceTypes with one stateValue (bco simpleDiscreteValues stateValues) - no individual distinction necessary
-    private List<TripleArrayList> genericBcoStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId
+    private List<TripleArrayList> bcoStateValue(final long connectionTimeMilli, final List<ServiceDataCollection> serviceDataCollList, final String unitId
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> genericValueList = new ArrayList<>();
+        List<StateValueDataCollection> genericValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
-                genericValueList.add(stateValueWithTimestamp);
+                genericValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType()
                         + " doesn't match with expected dataType in genericStateValue with serviceType: " + serviceType + " !");
@@ -199,7 +202,7 @@ public class DataAssignation extends DataAggregation {
         try {
             triples.addAll(simpleDiscreteValues(connectionTimeMilli, genericValueList, unitId, serviceType));
         } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @genericBcoStateValue ...!", e, LOGGER, LogLevel.ERROR);
+            ExceptionPrinter.printHistory("Dropped data @bcoStateValue ...!", e, LOGGER, LogLevel.ERROR);
         }
 
         return triples;
@@ -209,18 +212,18 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> batteryValueList = new ArrayList<>();
-        List<StateValueWithTimestamp> batteryLevelList = new ArrayList<>();
+        List<StateValueDataCollection> batteryValueList = new ArrayList<>();
+        List<StateValueDataCollection> batteryLevelList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
                 //battery value
-                batteryValueList.add(stateValueWithTimestamp);
+                batteryValueList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("percent")) {
                 // battery level
-                batteryLevelList.add(stateValueWithTimestamp);
+                batteryLevelList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in batteryStateValue!");
             }
@@ -242,18 +245,18 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> blindMovementStateList = new ArrayList<>();
-        List<StateValueWithTimestamp> blindOpeningRationList = new ArrayList<>();
+        List<StateValueDataCollection> blindMovementStateList = new ArrayList<>();
+        List<StateValueDataCollection> blindOpeningRationList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
                 //blind movement state
-                blindMovementStateList.add(stateValueWithTimestamp);
+                blindMovementStateList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("percent")) {
                 // blind opening ratio
-                blindOpeningRationList.add(stateValueWithTimestamp);
+                blindOpeningRationList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in blindStateValue!");
             }
@@ -275,22 +278,22 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> brightnessList = new ArrayList<>();
-        List<StateValueWithTimestamp> hueList = new ArrayList<>();
-        List<StateValueWithTimestamp> saturationList = new ArrayList<>();
+        List<StateValueDataCollection> brightnessList = new ArrayList<>();
+        List<StateValueDataCollection> hueList = new ArrayList<>();
+        List<StateValueDataCollection> saturationList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("brightness")) {
                 //brightness value
-                brightnessList.add(stateValueWithTimestamp);
+                brightnessList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("hue")) {
                 // hue value
-                hueList.add(stateValueWithTimestamp);
+                hueList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("saturation")) {
                 // saturation value
-                saturationList.add(stateValueWithTimestamp);
+                saturationList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in colorStateValue!");
             }
@@ -299,13 +302,19 @@ public class DataAssignation extends DataAggregation {
         saturationList = dismissInsignificantObservations(saturationList);
         brightnessList = dismissInsignificantObservations(brightnessList);
 
-        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = getAggColorValues(hueList, saturationList, brightnessList);
         try {
-            triples.addAll(getColorTriple(connectionTimeMilli, hsbCountMap, unitId, serviceType));
-        } catch (InterruptedException e) {
+            triples.addAll(simpleContinuousValues(connectionTimeMilli, hueList, unitId, serviceType, "hue"));
+            triples.addAll(simpleContinuousValues(connectionTimeMilli, saturationList, unitId, serviceType, "saturation"));
+            triples.addAll(simpleContinuousValues(connectionTimeMilli, brightnessList, unitId, serviceType, "brightness"));
+        } catch (CouldNotPerformException | InterruptedException e) {
             ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
         }
-
+//        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = getAggColorValues(hueList, saturationList, brightnessList);
+//        try {
+//            triples.addAll(getColorTriple(connectionTimeMilli, hsbCountMap, unitId, serviceType));
+//        } catch (InterruptedException e) {
+//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
         return triples;
     }
 
@@ -313,15 +322,15 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> handleValueList = new ArrayList<>();
+        List<StateValueDataCollection> handleValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("double")) {
                 //TODO 0...360...another calculation of mean?
                 //position value
-                handleValueList.add(stateValueWithTimestamp);
+                handleValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in handleStateValue!");
             }
@@ -341,14 +350,14 @@ public class DataAssignation extends DataAggregation {
             , final String unitId, final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> illuminanceValueList = new ArrayList<>();
+        List<StateValueDataCollection> illuminanceValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("lux")) {
                 //illuminance value
-                illuminanceValueList.add(stateValueWithTimestamp);
+                illuminanceValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in illuminanceStateValue!");
             }
@@ -368,22 +377,22 @@ public class DataAssignation extends DataAggregation {
             , final String unitId, final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> voltageList = new ArrayList<>();
-        List<StateValueWithTimestamp> wattList = new ArrayList<>();
-        List<StateValueWithTimestamp> ampereList = new ArrayList<>();
+        List<StateValueDataCollection> voltageList = new ArrayList<>();
+        List<StateValueDataCollection> wattList = new ArrayList<>();
+        List<StateValueDataCollection> ampereList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("voltage")) {
                 //voltage value
-                voltageList.add(stateValueWithTimestamp);
+                voltageList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("watt")) {
                 // watt value
-                wattList.add(stateValueWithTimestamp);
+                wattList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("ampere")) {
                 // ampere value
-                ampereList.add(stateValueWithTimestamp);
+                ampereList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in powerConsumptionStateValue!");
             }
@@ -407,14 +416,14 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> rfidValueList = new ArrayList<>();
+        List<StateValueDataCollection> rfidValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("string")) {
                 //rfid string
-                rfidValueList.add(stateValueWithTimestamp);
+                rfidValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in rfidStateValue!");
             }
@@ -428,18 +437,18 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> smokeValueList = new ArrayList<>();
-        List<StateValueWithTimestamp> smokeLevelList = new ArrayList<>();
+        List<StateValueDataCollection> smokeValueList = new ArrayList<>();
+        List<StateValueDataCollection> smokeLevelList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType() == null) {
                 //smoke value
-                smokeValueList.add(stateValueWithTimestamp);
+                smokeValueList.add(stateValueDataCollection);
             } else if (serviceDataColl.getDataType().equalsIgnoreCase("percent")) {
                 // smoke level
-                smokeLevelList.add(stateValueWithTimestamp);
+                smokeLevelList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in smokeStateValue!");
             }
@@ -461,15 +470,15 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> switchValueList = new ArrayList<>();
+        List<StateValueDataCollection> switchValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("double")) {
                 ////TODO 0...1...another calculation of mean?
                 //position value
-                switchValueList.add(stateValueWithTimestamp);
+                switchValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in switchStateValue!");
             }
@@ -489,14 +498,14 @@ public class DataAssignation extends DataAggregation {
             , final String unitId, final String serviceType) {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        List<StateValueWithTimestamp> temperatureValueList = new ArrayList<>();
+        List<StateValueDataCollection> temperatureValueList = new ArrayList<>();
 
         for (final ServiceDataCollection serviceDataColl : serviceDataCollList) {
-            final StateValueWithTimestamp stateValueWithTimestamp = new StateValueWithTimestamp(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
+            final StateValueDataCollection stateValueDataCollection = new StateValueDataCollection(serviceDataColl.getStateValue(), serviceDataColl.getTimestamp());
 
             if (serviceDataColl.getDataType().equalsIgnoreCase("celsius")) {
                 //temperature value
-                temperatureValueList.add(stateValueWithTimestamp);
+                temperatureValueList.add(stateValueDataCollection);
             } else {
                 LOGGER.warn("Containing dataType " + serviceDataColl.getDataType() + " doesn't match with expected dataType in temperatureStateValue!");
             }
@@ -512,8 +521,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<StateValueWithTimestamp> hueList
-            , List<StateValueWithTimestamp> saturationList, final List<StateValueWithTimestamp> brightnessList) {
+    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<StateValueDataCollection> hueList
+            , List<StateValueDataCollection> saturationList, final List<StateValueDataCollection> brightnessList) {
 
         if (hueList.size() != saturationList.size() || hueList.size() != brightnessList.size()) {
             LOGGER.error("List sizes of hue, saturation and brightness are not equal!");
@@ -573,7 +582,7 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> simpleDiscreteValues(final long connectionTimeMilli, final List<StateValueWithTimestamp> discreteList, final String unitId
+    private List<TripleArrayList> simpleDiscreteValues(final long connectionTimeMilli, final List<StateValueDataCollection> discreteList, final String unitId
             , final String serviceType) throws CouldNotPerformException, InterruptedException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
@@ -600,7 +609,7 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> simpleContinuousValues(final long connectionTimeMilli, final List<StateValueWithTimestamp> continuousList, final String unitId
+    private List<TripleArrayList> simpleContinuousValues(final long connectionTimeMilli, final List<StateValueDataCollection> continuousList, final String unitId
             , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
@@ -623,6 +632,22 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
+//    private List<TripleArrayList> simpleAggContinuousValues(final List<ServiceAggDataCollection> aggDataList, final String unitId, final String serviceType) {
+//        //TODO period week
+//
+//        final List<TripleArrayList> triples = new ArrayList<>();
+//
+//        final List<String> test = new ArrayList<>();
+//
+//        for (final ServiceAggDataCollection aggData : aggDataList) {
+//
+//            test.add(aggData.getTimeWeighting());
+//
+//
+//        }
+//
+//    }
+
     private String getAggObsInstance(final String unitId) throws InterruptedException {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
         stopwatch.waitForStop(1);
@@ -633,33 +658,29 @@ public class DataAssignation extends DataAggregation {
     }
 
     // dismiss all observations below the dateTimeFrom. BESIDES the youngest observation below the dateTimeFrom.
-    private List<StateValueWithTimestamp> dismissInsignificantObservations(final List<StateValueWithTimestamp> stateValueWithTimestampList) {
+    private List<StateValueDataCollection> dismissInsignificantObservations(final List<StateValueDataCollection> stateValueDataCollectionList) {
 
         // sort ascending (old to young)
-        Collections.sort(stateValueWithTimestampList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+        Collections.sort(stateValueDataCollectionList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
 
-
-
-
-        final List<StateValueWithTimestamp> bufDataList = new ArrayList<>();
+        final List<StateValueDataCollection> bufDataList = new ArrayList<>();
         boolean insignificant = true;
-        StateValueWithTimestamp bufData = null;
+        StateValueDataCollection bufData = null;
         final long dateTimeFromMillis = dateTimeFrom.getMillis();
 
-        for (final StateValueWithTimestamp stateValueWithTimestamp : stateValueWithTimestampList) {
-            final long stateValueMillis = new DateTime(stateValueWithTimestamp.getTimestamp()).getMillis();
+        for (final StateValueDataCollection stateValueDataCollection : stateValueDataCollectionList) {
+            final long stateValueMillis = new DateTime(stateValueDataCollection.getTimestamp()).getMillis();
 
             if (insignificant && stateValueMillis <= dateTimeFromMillis) {
-                bufData = stateValueWithTimestamp;
+                bufData = stateValueDataCollection;
             } else {
                 if (insignificant && bufData != null) {
                     bufDataList.add(bufData);
                     insignificant = false;
                 }
-                bufDataList.add(stateValueWithTimestamp);
+                bufDataList.add(stateValueDataCollection);
             }
         }
-
         return bufDataList;
     }
 

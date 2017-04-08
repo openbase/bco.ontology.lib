@@ -22,7 +22,8 @@ import javafx.util.Pair;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueWithTimestamp;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.StateValueDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ValueConfidenceRange;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -54,12 +55,12 @@ public class DataAggregation {
     protected class DiscreteStateValues {
 
         private final long unitConnectionTime;
-        private final List<StateValueWithTimestamp> bcoValuesAndTimestamps;
+        private final List<StateValueDataCollection> bcoValuesAndTimestamps;
 
         private final double timeWeighting;
         private final HashMap<String, Pair<Long, Integer>> activeTimeAndQuantityPerStateValue;
 
-        public DiscreteStateValues(final long unitConnectionTime, final List<StateValueWithTimestamp> bcoValuesAndTimestamps) throws CouldNotPerformException {
+        public DiscreteStateValues(final long unitConnectionTime, final List<StateValueDataCollection> bcoValuesAndTimestamps) throws CouldNotPerformException {
             this.unitConnectionTime = unitConnectionTime;
             this.bcoValuesAndTimestamps = bcoValuesAndTimestamps;
 
@@ -103,16 +104,16 @@ public class DataAggregation {
             String lastTimestamp = null;
             String lastStateValue = null;
 
-            final ListIterator<StateValueWithTimestamp> listIterator = bcoValuesAndTimestamps.listIterator();
+            final ListIterator<StateValueDataCollection> listIterator = bcoValuesAndTimestamps.listIterator();
 
             while (listIterator.hasNext()) {
-                final StateValueWithTimestamp stateValueWithTimestamp = listIterator.next();
+                final StateValueDataCollection stateValueDataCollection = listIterator.next();
 
                 if (lastTimestamp != null) {
                     long timeDiffMillis;
 
                     if (listIterator.hasNext()) {
-                        final String currentTimestamp = stateValueWithTimestamp.getTimestamp();
+                        final String currentTimestamp = stateValueDataCollection.getTimestamp();
                         timeDiffMillis = new DateTime(currentTimestamp).getMillis() - new DateTime(lastTimestamp).getMillis();
                     } else {
                         // reached last entry: timestampUntil is the timestampUntil of the aggregationPeriod
@@ -130,8 +131,8 @@ public class DataAggregation {
                     }
                 }
 
-                lastStateValue = stateValueWithTimestamp.getStateValue();
-                lastTimestamp = stateValueWithTimestamp.getTimestamp();
+                lastStateValue = stateValueDataCollection.getStateValue();
+                lastTimestamp = stateValueDataCollection.getTimestamp();
 
                 if (new DateTime(lastTimestamp).getMillis() < dateTimeFrom.getMillis()) {
                     lastTimestamp = dateTimeFrom.toString();
@@ -152,20 +153,17 @@ public class DataAggregation {
 
     protected class ContinuousStateValues {
 
-        private final long unitConnectionTime;
-
         private final double mean;
         private final double variance;
         private final double standardDeviation;
         private final double timeWeighting;
         private final int quantity;
 
-        public ContinuousStateValues(final long unitConnectionTime, final List<StateValueWithTimestamp> stateValueWithTimestampList) throws CouldNotPerformException {
-            this.unitConnectionTime = unitConnectionTime;
+        public ContinuousStateValues(final long unitConnectionTime, final List<StateValueDataCollection> stateValueDataCollectionList) throws CouldNotPerformException {
 
-            checkTimeValidity();
+            checkTimeValidity(unitConnectionTime);
 
-            final List<String> stateValuesString = getStateValues(stateValueWithTimestampList);
+            final List<String> stateValuesString = getStateValues(stateValueDataCollectionList);
             final List<Double> stateValuesDouble = convertStateValuesStringToDouble(stateValuesString);
             final double stateValuesArray[] = convertToArray(stateValuesDouble);
 
@@ -175,6 +173,18 @@ public class DataAggregation {
             this.timeWeighting = calcTimeWeighting(unitConnectionTime);
             this.quantity = calcQuantity(stateValuesDouble);
         }
+
+//        public ContinuousStateValues(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
+//
+////            final List<Double> aggStateValuesDouble = convertStateValuesStringToDouble(aggDataList);
+////            final double aggStateValues[] = convertToArray(aggStateValuesDouble);
+////
+////            this.mean = calcMean(aggStateValues);
+////            this.variance = calcVariance(aggStateValues);
+////            this.standardDeviation = calcStandardDeviation(aggStateValues);
+////            this.timeWeighting = calcTimeWeighting(unitConnectionTime);
+////            this.quantity = calcQuantity(aggStateValuesDouble);
+//        }
 
         public double getMean() {
             return mean;
@@ -196,22 +206,42 @@ public class DataAggregation {
             return quantity;
         }
 
-        private ValueConfidenceRange percentCalculation() throws CouldNotPerformException {
-
-            //TODO other types the same way? -> interval needed like battery 1-100
-            //TODO if yes: distinction of this types...
-            final double avgPercent = mean;
-
-            final double timeRatio = calcTimeWeighting(unitConnectionTime);
-            final double invertedTimeRatio = 100.0 - timeRatio;
-
-            final double minValue = (avgPercent * timeRatio) + (1.0 * invertedTimeRatio);
-            final double maxValue = (avgPercent * timeRatio) + (100.0 * invertedTimeRatio);
-
-            return new ValueConfidenceRange(String.valueOf(minValue), String.valueOf(maxValue));
+        private List<String> getMeanList(final List<ServiceAggDataCollection> aggDataList) {
+            return aggDataList.stream().map(ServiceAggDataCollection::getMean).collect(Collectors.toList());
         }
 
-        private void checkTimeValidity() throws CouldNotPerformException {
+        private List<String> getVarianceList(final List<ServiceAggDataCollection> aggDataList) {
+            return aggDataList.stream().map(ServiceAggDataCollection::getVariance).collect(Collectors.toList());
+        }
+
+        private List<String> getStandardDeviationList(final List<ServiceAggDataCollection> aggDataList) {
+            return aggDataList.stream().map(ServiceAggDataCollection::getStandardDeviation).collect(Collectors.toList());
+        }
+
+        private List<String> getQuantity(final List<ServiceAggDataCollection> aggDataList) {
+            return aggDataList.stream().map(ServiceAggDataCollection::getQuantity).collect(Collectors.toList());
+        }
+
+        private List<String> getTimeWeightingList(final List<ServiceAggDataCollection> aggDataList) {
+            return aggDataList.stream().map(ServiceAggDataCollection::getTimeWeighting).collect(Collectors.toList());
+        }
+
+//        private ValueConfidenceRange percentCalculation() throws CouldNotPerformException {
+//
+//            //TODO other types the same way? -> interval needed like battery 1-100
+//            //TODO if yes: distinction of this types...
+//            final double avgPercent = mean;
+//
+//            final double timeRatio = calcTimeWeighting(unitConnectionTime);
+//            final double invertedTimeRatio = 100.0 - timeRatio;
+//
+//            final double minValue = (avgPercent * timeRatio) + (1.0 * invertedTimeRatio);
+//            final double maxValue = (avgPercent * timeRatio) + (100.0 * invertedTimeRatio);
+//
+//            return new ValueConfidenceRange(String.valueOf(minValue), String.valueOf(maxValue));
+//        }
+
+        private void checkTimeValidity(final long unitConnectionTime) throws CouldNotPerformException {
             if (unitConnectionTime > timeFrameMilli) {
                 throw new CouldNotPerformException("Could not process stateValues, because unitConnectionTime is bigger than the time frame of aggregation!");
             }
@@ -219,8 +249,8 @@ public class DataAggregation {
 
     }
 
-    private List<String> getStateValues(final List<StateValueWithTimestamp> stateValueWithTimestampList) {
-        return stateValueWithTimestampList.stream().map(StateValueWithTimestamp::getStateValue).collect(Collectors.toList());
+    private List<String> getStateValues(final List<StateValueDataCollection> stateValueDataCollectionList) {
+        return stateValueDataCollectionList.stream().map(StateValueDataCollection::getStateValue).collect(Collectors.toList());
     }
 
     private List<Double> convertStateValuesStringToDouble(final List<String> stateValuesString) throws CouldNotPerformException {

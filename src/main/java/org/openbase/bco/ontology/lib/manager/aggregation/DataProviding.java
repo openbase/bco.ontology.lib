@@ -30,7 +30,9 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +62,7 @@ public class DataProviding {
 
         final HashMap<String, Long> hashMap = new HashMap<>();
 
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/normalData.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
@@ -88,7 +90,6 @@ public class DataProviding {
                 }
             }
         }
-
         queryExecution.close();
 
         return hashMap;
@@ -99,7 +100,7 @@ public class DataProviding {
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
         final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
 
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartment.owl");
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/normalData.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
@@ -147,6 +148,63 @@ public class DataProviding {
 
         queryExecution.close();
         return hashMap;
+    }
+
+    public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit() {
+
+        final HashMap<String, List<ObservationAggDataCollection>> hashMap = new HashMap<>();
+
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
+        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(OntConfig.Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
+//        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
+        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+        final ResultSet resultSet = queryExecution.execSelect();
+//        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
+//        ResultSetFormatter.out(System.out, resultSet, query);
+
+        while (resultSet.hasNext()) {
+            final QuerySolution querySolution = resultSet.nextSolution();
+
+            final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
+            final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("service").toString());
+            final String timeWeighting = querySolution.getLiteral("timeWeighting").getLexicalForm();
+            final String quantity = getLiteral(querySolution, "quantity");
+            final String activityTime = getLiteral(querySolution, "activityTime");
+            final String variance = getLiteral(querySolution, "variance");
+            final String standardDeviation = getLiteral(querySolution, "standardDeviation");
+            final String mean = getLiteral(querySolution, "mean");
+            final RDFNode rdfNode = querySolution.get("stateValue");
+            final String stateValue;
+
+            if (rdfNode.isLiteral()) {
+                stateValue = rdfNode.asLiteral().getLexicalForm();
+            } else {
+                stateValue = rdfNode.asResource().toString();
+            }
+
+            final ObservationAggDataCollection obsAggDataColl = new ObservationAggDataCollection(providerService, stateValue, quantity, activityTime, variance
+                    , standardDeviation, mean, timeWeighting);
+
+            if (hashMap.containsKey(unitId)) {
+                // there is an entry: add data
+                final List<ObservationAggDataCollection> tripleAggObsList = hashMap.get(unitId);
+                tripleAggObsList.add(obsAggDataColl);
+                hashMap.put(unitId, tripleAggObsList);
+            } else {
+                // there is no entry: put data
+                final List<ObservationAggDataCollection> tripleAggObsList = new ArrayList<>();
+                tripleAggObsList.add(obsAggDataColl);
+                hashMap.put(unitId, tripleAggObsList);
+            }
+        }
+        queryExecution.close();
+        return hashMap;
+    }
+
+    private String getLiteral(final QuerySolution querySolution, final String propertyName) {
+        return (querySolution.getLiteral(propertyName) == null) ? null : querySolution.getLiteral(propertyName).getLexicalForm();
     }
 
     private void checkOldObservation() {
