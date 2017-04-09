@@ -18,12 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
+import org.apache.jena.rdf.model.RDFNode;
+
 /**
  * @author agatting on 25.03.17.
  */
 public class ServiceDataCollection {
-    private final String stateValue;
-    private final String dataType;
+    private final RDFNode stateValue;
     private final String timestamp;
 
     /**
@@ -31,12 +32,10 @@ public class ServiceDataCollection {
      * A dataType can be null, then it's a BCO stateValue (like ON/OFF) or not null, then it's a physical unit or a specific membership.
      *
      * @param stateValue The value as discrete (BCO value) or continuous.
-     * @param dataType The physical dataType/specific membership or null (no dataType).
      * @param timestamp The timestamp of the stateValue and dataType.
      */
-    public ServiceDataCollection(final String stateValue, final String dataType, final String timestamp) {
+    public ServiceDataCollection(final RDFNode stateValue, final String timestamp) {
         this.stateValue = stateValue;
-        this.dataType = dataType;
         this.timestamp = timestamp;
     }
 
@@ -45,16 +44,8 @@ public class ServiceDataCollection {
      *
      * @return stateValue.
      */
-    public String getStateValue() {
+    public RDFNode getStateValue() {
         return stateValue; }
-
-    /**
-     * Getter for dataType.
-     *
-     * @return dataType.
-     */
-    public String getDataType() {
-        return dataType; }
 
     /**
      * Getter for timestamp.

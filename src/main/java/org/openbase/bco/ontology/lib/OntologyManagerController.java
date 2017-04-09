@@ -57,7 +57,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        try {
 //            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //            OntModelWeb.addOntModelViaRetry(ontModel);
-//            Aggregation aggregation = new AggregationImpl();
+//            new AggregationImpl();
 //        } catch (JPServiceException e) {
 //            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
 //        }

@@ -18,12 +18,14 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
+import org.apache.jena.rdf.model.RDFNode;
+
 /**
  * @author agatting on 08.04.17.
  */
 public class ServiceAggDataCollection {
 
-    private final String stateValue;
+    private final RDFNode stateValue;
     private final String quantity;
     private final String activityTime;
     private final String variance;
@@ -31,7 +33,7 @@ public class ServiceAggDataCollection {
     private final String mean;
     private final String timeWeighting;
 
-    public ServiceAggDataCollection(final String stateValue, final String quantity, final String activityTime, final String variance
+    public ServiceAggDataCollection(final RDFNode stateValue, final String quantity, final String activityTime, final String variance
             , final String standardDeviation, final String mean, final String timeWeighting) {
         this.stateValue = stateValue;
         this.quantity = quantity;
@@ -42,7 +44,7 @@ public class ServiceAggDataCollection {
         this.timeWeighting = timeWeighting;
     }
 
-    public String getStateValue() {
+    public RDFNode getStateValue() {
         return stateValue; }
 
     public String getQuantity() {

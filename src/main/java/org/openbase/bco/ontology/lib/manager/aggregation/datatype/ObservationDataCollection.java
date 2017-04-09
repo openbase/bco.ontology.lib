@@ -18,20 +18,20 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
+import org.apache.jena.rdf.model.RDFNode;
+
 /**
  * @author agatting on 24.03.17.
  */
 public class ObservationDataCollection {
 
     private final String providerService;
-    private final String stateValue;
-    private final String dataType;
+    private final RDFNode stateValue;
     private final String timestamp;
 
-    public ObservationDataCollection(final String providerService, final String stateValue, final String dataType, final String timestamp) {
+    public ObservationDataCollection(final String providerService, final RDFNode stateValue, final String timestamp) {
         this.providerService = providerService;
         this.stateValue = stateValue;
-        this.dataType = dataType;
         this.timestamp = timestamp;
     }
 
@@ -48,16 +48,8 @@ public class ObservationDataCollection {
      *
      * @return stateValue.
      */
-    public String getStateValue() {
+    public RDFNode getStateValue() {
         return stateValue; }
-
-    /**
-     * Getter for observation data: dataType.
-     *
-     * @return dataType.
-     */
-    public String getDataType() {
-        return dataType; }
 
     /**
      * Getter for observation data: timestamp.

@@ -70,7 +70,7 @@ public final class OntConfig {
         SPARQL
     }
 
-    public static final int BACKDATED_BEGINNING_OF_PERIOD = 0;
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 1;
 
     public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
 

@@ -195,6 +195,21 @@ public class StaticSparqlExpression {
                 + "}";
     }
 
+    public static String deleteUnusedAggObs(String period, final String dateTimeFrom, final String dateTimeUntil) {
+        period = period.toLowerCase();
+        return "PREFIX NS: <" + OntConfig.NS + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "DELETE { "
+                    + "?aggObs ?p ?o . "
+                + "} WHERE { "
+                    + "?aggObs ?p ?o . "
+                    + "?aggObs a NS:AggregationObservation . "
+                    + "?aggObs NS:hasPeriod NS:" + period + " . "
+                    + "?aggObs NS:hasTimeStamp ?timestamp . "
+                    + "FILTER (?timestamp >= " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
+                + "}";
+    }
+
 //    public static String test(final String timestampUntil) {
 //
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "

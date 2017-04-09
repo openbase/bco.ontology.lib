@@ -113,25 +113,11 @@ public class DataProviding {
             final QuerySolution querySolution = resultSet.nextSolution();
 
             final String timestamp = querySolution.getLiteral("timestamp").getLexicalForm();
-
             final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
             final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("providerService").toString());
             final RDFNode rdfNode = querySolution.get("stateValue");
-            String dataType = null;
-            String stateValue;
 
-            if (rdfNode.isLiteral()) {
-                stateValue = rdfNode.asLiteral().getLexicalForm();
-                dataType = OntologyToolkit.getLocalName(rdfNode.asLiteral().getDatatypeURI());
-
-                if (dataType == null) {
-                    LOGGER.error("Could not identify dataType of " + rdfNode.asLiteral().getDatatypeURI());
-                }
-            } else {
-                stateValue = OntologyToolkit.getLocalName(rdfNode.asResource().toString());
-            }
-
-            final ObservationDataCollection obsDataColl = new ObservationDataCollection(providerService, stateValue, dataType, timestamp);
+            final ObservationDataCollection obsDataColl = new ObservationDataCollection(providerService, rdfNode, timestamp);
 
             if (hashMap.containsKey(unitId)) {
                 // there is an entry: add data
@@ -145,7 +131,6 @@ public class DataProviding {
                 hashMap.put(unitId, tripleObsList);
             }
         }
-
         queryExecution.close();
         return hashMap;
     }
@@ -176,15 +161,10 @@ public class DataProviding {
             final String standardDeviation = getLiteral(querySolution, "standardDeviation");
             final String mean = getLiteral(querySolution, "mean");
             final RDFNode rdfNode = querySolution.get("stateValue");
-            final String stateValue;
+//            final String stateValue = rdfNode.isLiteral() ? rdfNode.asLiteral().getLexicalForm() : rdfNode.asResource().toString();
+//            final boolean isLiteral = rdfNode.isLiteral();
 
-            if (rdfNode.isLiteral()) {
-                stateValue = rdfNode.asLiteral().getLexicalForm();
-            } else {
-                stateValue = rdfNode.asResource().toString();
-            }
-
-            final ObservationAggDataCollection obsAggDataColl = new ObservationAggDataCollection(providerService, stateValue, quantity, activityTime, variance
+            final ObservationAggDataCollection obsAggDataColl = new ObservationAggDataCollection(providerService, rdfNode, quantity, activityTime, variance
                     , standardDeviation, mean, timeWeighting);
 
             if (hashMap.containsKey(unitId)) {

@@ -20,13 +20,16 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
+import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
+import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.schedule.Stopwatch;
@@ -54,32 +57,42 @@ public class DataTripleCollection extends DataAssignation {
 
 
         //### stage one ###\\
-//        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collect());
-//
-//        // send aggregated values ...
-//        sendToServer(sparqlUpdateExpr);
-//
-//        // delete unused connectionPhases (old)
-//        sendToServer(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
-//        // delete unused heartBeatPhases (old)
-//        sendToServer(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
-//        // delete unused observations (old)
-//        sendToServer(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectData());
+
+        // send aggregated values ...
+        sendToServer(sparqlUpdateExpr);
+
+        // delete unused connectionPhases (old)
+        sendToServer(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        // delete unused heartBeatPhases (old)
+        sendToServer(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        // delete unused observations (old)
+        sendToServer(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
 
         //### stage two ###\\
-        dataProviding.getAggObsForEachUnit();
+        sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectAggData());
 
+        // send aggregated aggregations ...
+        sendToServer(sparqlUpdateExpr);
+
+        // delete unused aggregations (old)
+        sendToServer(StaticSparqlExpression.deleteUnusedAggObs(Period.DAY.toString(), OntologyToolkit.addXsdDateTime(dateTimeFrom)
+                , OntologyToolkit.addXsdDateTime(dateTimeUntil)));
     }
 
-    private List<TripleArrayList> collect() {
+    private List<TripleArrayList> collectData() {
         final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit();
         final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
 
         return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
 
-    private void sendToServer(final String sparqlUpdateExpr) throws CouldNotPerformException {
+    private List<TripleArrayList> collectAggData() {
+        final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit();
+        return relateAggDataForEachUnit(observationsEachUnit);
+    }
 
+    private void sendToServer(final String sparqlUpdateExpr) throws CouldNotPerformException {
         try {
             boolean isHttpSuccess = false;
 
@@ -141,7 +154,7 @@ public class DataTripleCollection extends DataAssignation {
                 serviceAggDataCollList.put(aggDataObs.getProviderService(), arrayList);
             }
         }
-//        triples.addAll(identifyServiceType(serviceAggDataCollList, 0, unitId, true)); //TODO
+        triples.addAll(identifyServiceType(serviceAggDataCollList, 0, unitId));
 
         return triples;
     }
@@ -152,7 +165,7 @@ public class DataTripleCollection extends DataAssignation {
         final HashMap<String, List<ServiceDataCollection>> serviceDataCollList = new HashMap<>();
 
         for (final ObservationDataCollection dataObs : obsDataCollList) {
-            final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValue(), dataObs.getDataType(), dataObs.getTimestamp());
+            final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValue(), dataObs.getTimestamp());
 
             if (serviceDataCollList.containsKey(dataObs.getProviderService())) {
                 // there is an entry: add data
@@ -166,7 +179,7 @@ public class DataTripleCollection extends DataAssignation {
                 serviceDataCollList.put(dataObs.getProviderService(), arrayList);
             }
         }
-        triples.addAll(identifyServiceType(serviceDataCollList, connectionTimeMilli, unitId, false));
+        triples.addAll(identifyServiceType(serviceDataCollList, connectionTimeMilli, unitId));
 
         return triples;
     }
