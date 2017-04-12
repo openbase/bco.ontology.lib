@@ -26,8 +26,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -92,7 +92,7 @@ public interface OntModelWeb {
 
         while (ontModel == null) {
             try {
-                ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
+                ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
 
                 if (ontModel.isEmpty()) {
                     ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
@@ -151,8 +151,8 @@ public interface OntModelWeb {
 
         while (!isUploaded) {
             try {
-                OntModelWeb.addOntModel(ontModel, JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
-                        , JPService.getProperty(JPTBoxDatabaseUri.class).getValue());
+                OntModelWeb.addOntModel(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
+                        , JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
                 isUploaded = true;
             } catch (IOException e) {
                 //retry
