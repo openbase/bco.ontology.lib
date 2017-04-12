@@ -95,7 +95,7 @@
                     <programs>
                         <program>
                             <mainClass>org.openbase.bco.ontology.lib.OntologyManagerLauncher</mainClass>
-                            <id>ontology.lib</id>
+                            <id>bco-ontology-manager</id>
                             <platforms>
                                 <platform>unix</platform>
                             </platforms>
