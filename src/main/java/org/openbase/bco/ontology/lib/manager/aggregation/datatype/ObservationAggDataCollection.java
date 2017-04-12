@@ -21,41 +21,52 @@ package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 import org.apache.jena.rdf.model.RDFNode;
 
 /**
- * @author agatting on 24.03.17.
+ * @author agatting on 08.04.17.
  */
-public class ObservationDataCollection {
+public class ObservationAggDataCollection {
 
     private final String providerService;
     private final RDFNode stateValue;
-    private final String timestamp;
+    private final String quantity;
+    private final String activityTime;
+    private final String variance;
+    private final String standardDeviation;
+    private final String mean;
+    private final String timeWeighting;
 
-    public ObservationDataCollection(final String providerService, final RDFNode stateValue, final String timestamp) {
+    public ObservationAggDataCollection(final String providerService, final RDFNode stateValue, final String quantity, final String activityTime
+            , final String variance, final String standardDeviation, final String mean, final String timeWeighting) {
         this.providerService = providerService;
         this.stateValue = stateValue;
-        this.timestamp = timestamp;
+        this.quantity = quantity;
+        this.activityTime = activityTime;
+        this.variance = variance;
+        this.standardDeviation = standardDeviation;
+        this.mean = mean;
+        this.timeWeighting = timeWeighting;
     }
 
-    /**
-     * Getter for observation data: providerService.
-     *
-     * @return providerService.
-     */
     public String getProviderService() {
         return providerService; }
 
-    /**
-     * Getter for observation data: stateValue.
-     *
-     * @return stateValue.
-     */
     public RDFNode getStateValue() {
         return stateValue; }
 
-    /**
-     * Getter for observation data: timestamp.
-     *
-     * @return timestamp.
-     */
-    public String getTimestamp() {
-        return timestamp; }
+    public String getQuantity() {
+        return quantity; }
+
+    public String getActivityTime() {
+        return activityTime; }
+
+    public String getVariance() {
+        return variance; }
+
+    public String getStandardDeviation() {
+        return standardDeviation; }
+
+    public String getMean() {
+        return mean; }
+
+    public String getTimeWeighting() {
+        return timeWeighting; }
 }

@@ -71,8 +71,8 @@ public class HeartBeatCommunication {
 
         this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.stopwatch = new Stopwatch();
-        this.pred_FirstHeartBeat = OntProp.FIRST_HEARTBEAT.getName();
-        this.pred_LastHeartBeat = OntProp.LAST_HEARTBEAT.getName();
+        this.pred_FirstHeartBeat = OntProp.FIRST_CONNECTION.getName();
+        this.pred_LastHeartBeat = OntProp.LAST_CONNECTION.getName();
 
         try {
             // close old connectionPhases. Means set last timestamp of connectionPhases with timestamp pointer to heartbeat pointer

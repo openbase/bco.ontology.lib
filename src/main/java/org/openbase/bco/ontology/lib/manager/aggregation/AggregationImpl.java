@@ -18,19 +18,22 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.ResultSetFormatter;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
+import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * @author agatting on 25.03.17.
@@ -43,87 +46,73 @@ public class AggregationImpl implements Aggregation {
     public DateTime dateTimeUntil;
 
     private Period period;
-    private int quantityPeriod;
     private int backDatedQuantity;
 
-    public AggregationImpl() {
+    public AggregationImpl() throws CouldNotPerformException {
 
-        this.period = Period.DAY;
-        this.quantityPeriod = OntConfig.QUANTITY_OF_PERIOD;
+        this.period = OntConfig.PERIOD_FOR_AGGREGATION;
         this.backDatedQuantity = OntConfig.BACKDATED_BEGINNING_OF_PERIOD;
 
-        final DateTime now = new DateTime();
-        final int diffPeriodUntil = backDatedQuantity - quantityPeriod;
+        DateTime now = new DateTime();
 
-        this.dateTimeFrom = getAdaptedDateTime(now, diffPeriodUntil);
-        this.dateTimeUntil = getAdaptedDateTime(now, diffPeriodUntil);
+        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
+        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
+
+//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+//        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
+//        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+//        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
+//        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+//        final ResultSet resultSet = queryExecution.execSelect();
+//
+//        ResultSetFormatter.out(System.out, resultSet, query);
+
+        startAgg();
     }
 
-    /**
-     * @param period The time frame, which should be aggregated (hour, day, week, ...).
-     * @param quantityPeriod The number of period (one day, two days, ten days, ...). Must be less than backDatedQuantity!
-     * @param backDatedQuantity The back-dated beginning of the aggregation (before two days, before 20 days, ...). Must be bigger than quantityPeriod!
-     * @throws CouldNotPerformException CouldNotPerformException
-     */
-    public void setTimeFrame(final Period period, final int quantityPeriod, final int backDatedQuantity) throws CouldNotPerformException {
+//    /**
+//     * @param period The time frame, which should be aggregated (hour, day, week, ...).
+////     * @param quantityPeriod The number of period (one day, two days, ten days, ...). Must be less than backDatedQuantity!
+//     * @param backDatedQuantity The back-dated beginning of the aggregation (before two days, before 20 days, ...). Must be bigger than quantityPeriod!
+//     * @throws CouldNotPerformException CouldNotPerformException
+//     */
+//    public void setTimeFrame(final Period period, final int backDatedQuantity) throws CouldNotPerformException {
+//
+//
+//        this.period = period;
+//        this.backDatedQuantity = backDatedQuantity;
+//
+//        final DateTime now = new DateTime();
+//
+//        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
+//        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
+//    }
 
-        if (quantityPeriod > backDatedQuantity) {
-            throw new CouldNotPerformException("Could not aggregate, because set time frame is illegal! Should aggregate time frame of " + quantityPeriod + " "
-                    + period.toString() + " back-dated from " + backDatedQuantity + " " + period.toString() + "!");
-        }
-
-        this.period = period;
-        this.quantityPeriod = quantityPeriod;
-        this.backDatedQuantity = backDatedQuantity;
-
-        final DateTime now = new DateTime();
-        final int diffPeriodUntil = backDatedQuantity - quantityPeriod;
-
-        this.dateTimeFrom = getAdaptedDateTime(now, diffPeriodUntil);
-        this.dateTimeUntil = getAdaptedDateTime(now, diffPeriodUntil);
+    public void startAgg() throws CouldNotPerformException {
+        final DataTripleCollection dataTripleCollection = new DataTripleCollection(dateTimeFrom, dateTimeUntil, period);
     }
 
-    public void startAgg() {
-
-    }
-
-    private void collect() {
-        final DataProviding dataProviding = new DataProviding(dateTimeFrom, dateTimeUntil);
-
-        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit();
-        final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
-
-        final DataAssignation dataAssignation = new DataAssignation(dateTimeFrom, dateTimeUntil);
-
-    }
-
-    private DateTime getAdaptedDateTime(DateTime dateTime, final int reducedTime) {
+    private DateTime getAdaptedDateTime(DateTime dateTime, final int timeToReduce) throws NotAvailableException {
 
         switch (period) {
             case HOUR:
-                dateTime = dateTime.minusHours(reducedTime);
-                break;
+                dateTime = dateTime.minusHours(timeToReduce);
+                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
             case DAY:
-                dateTime = dateTime.minusDays(reducedTime);
-                break;
-            case WEEK:
-                dateTime = dateTime.minusWeeks(reducedTime);
-                break;
+                dateTime = dateTime.minusDays(timeToReduce);
+                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 0, 0, 0);
+//            case WEEK:
+//                dateTime = dateTime.minusWeeks(timeToReduce);
+//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
             case MONTH:
-                dateTime = dateTime.minusMonths(reducedTime);
-                break;
+                dateTime = dateTime.minusMonths(timeToReduce);
+                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 0, 0, 0, 0);
             case YEAR:
-                dateTime = dateTime.minusYears(reducedTime);
-                break;
+                dateTime = dateTime.minusYears(timeToReduce);
+                return new DateTime(dateTime.getYear(), 0, 0, 0, 0, 0);
             default:
-                try {
-                    throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
-                            + OntConfig.PERIOD_FOR_AGGREGATION + " could not be identified!");
-                } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                }
+                throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
+                        + period.toString() + " could not be identified!");
         }
-
-        return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
     }
 }

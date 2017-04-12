@@ -117,7 +117,7 @@ public class IdentifyStateTypeValue extends StateTypeValue {
             case ILLUMINANCE_STATE_SERVICE:
                 return illuminanceStateValue((IlluminanceState) stateObject);
             case INTENSITY_STATE_SERVICE:
-                return intensityStateValue((IntensityState) stateObject);
+                return null;
             case INTRUSION_ALARM_STATE_SERVICE:
                 return null;
             case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:

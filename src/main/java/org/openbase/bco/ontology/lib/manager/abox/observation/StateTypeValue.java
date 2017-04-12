@@ -139,7 +139,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> blindValuePairSet = new HashSet<>();
         blindValuePairSet.add(new Pair<>(blindState.getMovementState().toString(), false));
-        blindValuePairSet.add(new Pair<>("\"" + String.valueOf(blindState.getOpeningRatio()) + "\"^^xsd:double", true));
+        blindValuePairSet.add(new Pair<>("\"" + String.valueOf(blindState.getOpeningRatio()) + "\"^^NS:Percent", true));
 
         return blindValuePairSet;
     }
@@ -326,7 +326,6 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
         final IntensityState.DataUnit dataUnit = intensityState.getIntensityDataUnit();
-        intensityState.getIntensityDataUnit();
 
         switch (dataUnit) {
             case PERCENT:
@@ -385,7 +384,7 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> passageStateValue(final PassageState passageState) {
 
         final Set<Pair<String, Boolean>> passageValuePairSet = new HashSet<>();
-//        passageValuePairSet.add(new Pair<>(passageState..., false));
+//        passageValuePairSet.add(new Pair<>(passageState..., false)); //TODO
 
         return passageValuePairSet;
     }
@@ -447,7 +446,7 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> rfidStateValue(final RFIDState rfidState) {
 
         final Set<Pair<String, Boolean>> rfidValuePairSet = new HashSet<>();
-        rfidValuePairSet.add(new Pair<>(rfidState.getData().toString(), true));
+        rfidValuePairSet.add(new Pair<>("\"" + rfidState.getData().toString()  + "\"^^xsd:string", true));
 
         return rfidValuePairSet;
     }
@@ -463,7 +462,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> smokeValuePairSet = new HashSet<>();
         smokeValuePairSet.add(new Pair<>(smokeState.getValue().toString(), false));
-        smokeValuePairSet.add(new Pair<>("\"" + String.valueOf(smokeState.getSmokeLevel()) + "\"^^xsd:double", true));
+        smokeValuePairSet.add(new Pair<>("\"" + String.valueOf(smokeState.getSmokeLevel()) + "\"^^NS:Percent", true));
 
         return smokeValuePairSet;
     }

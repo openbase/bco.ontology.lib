@@ -32,6 +32,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.iterator.ExtendedIterator;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -264,6 +265,10 @@ public interface OntologyToolkit {
 
         ResultSetFormatter.out(System.out, resultSet, query);
         queryExecution.close();
+    }
+
+    static String addXsdDateTime(final DateTime dateTime) {
+        return "\"" + dateTime.toString() + "\"^^xsd:dateTime";
     }
 
 }
