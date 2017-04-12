@@ -34,8 +34,8 @@ import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -80,7 +80,7 @@ public interface SparqlUpdateWeb {
         final String serverServiceForm = getServerServiceForm(serviceForm);
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + serverServiceForm);
+        final HttpPost httpPost = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
@@ -112,8 +112,8 @@ public interface SparqlUpdateWeb {
         final String serverServiceForm = getServerServiceForm(serviceForm);
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + serverServiceForm);
-        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + serverServiceForm);
+        final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
+        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
@@ -145,11 +145,11 @@ public interface SparqlUpdateWeb {
     static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {
             final Query query = QueryFactory.create(queryString) ;
-            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
                     + "sparql", query);
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
-            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
                     + " failed. Connection establishment refused. Server offline?");
         }
     }
@@ -160,12 +160,12 @@ public interface SparqlUpdateWeb {
         while (resultSet == null) {
             try {
                 final Query query = QueryFactory.create(queryString) ;
-                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
                         + "sparql", query);
                 resultSet = queryExecution.execSelect();
             } catch (QueryExceptionHTTP e) {
                 //retry
-                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
                         + " failed. Connection establishment refused. Server offline? Retry... ", e, LOGGER, LogLevel.WARN);
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             }

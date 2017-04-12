@@ -16,35 +16,37 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.system.jp;
+package org.openbase.bco.ontology.lib.jp;
 
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 27.02.17.
+ * @author agatting on 22.02.17.
  */
-public class JPRsbScope extends AbstractJPString {
+public class JPOntologyDatabaseURL extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--rsbScope"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-uri"};
 
     /**
      * Constructor for the JPOntologyDatabaseUri class.
      */
-    public JPRsbScope() {
+    public JPOntologyDatabaseURL() {
         super(COMMAND_IDENTIFIERS);
     }
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "/ontology/rsb";
+        return JPService.getProperty(JPOntologyURL.class).getValue() + "/bco.ontology/";
     }
 
     @Override
     public String getDescription() {
-        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
+        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
     }
+
 }

@@ -22,7 +22,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
-import org.openbase.bco.ontology.lib.system.jp.JPServerPingUri;
+import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.MultiException;
@@ -61,7 +61,7 @@ public class ServerConnection {
 
             try {
                 final HttpClient httpclient = HttpClients.createDefault();
-                final HttpGet httpGet = new HttpGet(JPService.getProperty(JPServerPingUri.class).getValue());
+                final HttpGet httpGet = new HttpGet(JPService.getProperty(JPOntologyPingURL.class).getValue());
                 final HttpResponse httpResponse = httpclient.execute(httpGet);
                 // get response code and take the first number only
                 final int responseCodeShort = Integer.parseInt(Integer.toString(httpResponse.getStatusLine().getStatusCode()).substring(0, 1));

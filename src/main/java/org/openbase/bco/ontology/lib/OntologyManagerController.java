@@ -29,7 +29,7 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
+import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -67,7 +67,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 LOGGER.info("Debug Mode");
             }
 
-            final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPRsbScope.class).getValue());
+            final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPOntologyScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
             new UnitRegistrySynchronizer(transactionBuffer);

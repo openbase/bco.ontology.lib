@@ -16,35 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.system.jp;
+package org.openbase.bco.ontology.lib.jp;
 
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 01.03.17.
+ * @author agatting on 27.02.17.
  */
-public class JPServerPingUri extends AbstractJPString {
+public class JPOntologyScope extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--serverPingUri", "--ontologyPingUri", "--serverPingUri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-scope"};
 
     /**
-     * Constructor for the JPServerPingUri class.
+     * Constructor for the JPOntologyDatabaseUri class.
      */
-    public JPServerPingUri() {
+    public JPOntologyScope() {
         super(COMMAND_IDENTIFIERS);
     }
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/$/ping";
+        return "/ontology/rsb";
     }
 
     @Override
     public String getDescription() {
-        return "ServerPingUri property is used to set the ping address of the ontology server, which has to be reached.";
+        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
     }
 }
