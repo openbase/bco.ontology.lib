@@ -113,21 +113,21 @@ public interface SparqlUpdateWeb {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
-        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
+//        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
 
         try {
             httpPostMain.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+//            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             final HttpResponse httpResponseMain = httpclient.execute(httpPostMain);
-            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
+//            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
 
             final int codeMain = httpResponseMain.getStatusLine().getStatusCode();
-            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
+//            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
 
-            return isHttpRequestSuccess(codeMain) && isHttpRequestSuccess(codeTBox);
+            return isHttpRequestSuccess(codeMain);
         } catch (IOException e) {
             ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
             return false;

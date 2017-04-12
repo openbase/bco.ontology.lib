@@ -87,7 +87,7 @@ public interface TBoxVerification {
         final String classNameWithNS = OntologyToolkit.addNamespace(className);
 
         if (ontModel == null) {
-            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+//            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
         }
         return ontModel.getOntClass(classNameWithNS) != null;
     }

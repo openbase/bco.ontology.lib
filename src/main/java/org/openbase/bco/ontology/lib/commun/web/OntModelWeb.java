@@ -123,15 +123,16 @@ public interface OntModelWeb {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main ontModel is null!");
         } else if (mainUri == null) {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main uri is null!");
-        } else if (tboxUri == null) {
-            throw new IllegalArgumentException("Could not add model to ontology server, cause tbox uri is null!");
         }
+//        } else if (tboxUri == null) {
+//            throw new IllegalArgumentException("Could not add model to ontology server, cause tbox uri is null!");
+//        }
         try {
             DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri + "data");
             datasetAccessor.add(ontModel);
 
-            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
-            datasetAccessor.add(ontModel);
+//            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
+//            datasetAccessor.add(ontModel);
 
         } catch (Exception e) {
             throw new IOException("Could not add model to ontology server!", e);

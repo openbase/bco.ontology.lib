@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -435,7 +436,9 @@ public final class OntConfig {
     public void initialTestConfig() throws JPServiceException, InterruptedException {
 
         MultiException.ExceptionStack exceptionStack = null;
-        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+//        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
+
 
         try {
             // test validity of enum property
