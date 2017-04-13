@@ -30,7 +30,7 @@ public class JPOntologyPingURL extends AbstractJPString {
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--owl-server-ping-uri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-ping-url"};
 
     /**
      * Constructor for the JPServerPingUri class.

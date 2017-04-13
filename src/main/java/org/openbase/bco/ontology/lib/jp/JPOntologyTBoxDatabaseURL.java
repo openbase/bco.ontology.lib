@@ -25,17 +25,17 @@ import org.openbase.jps.preset.AbstractJPString;
 /**
  * @author agatting on 22.02.17.
  */
-public class JPTBoxDatabaseURL extends AbstractJPString {
+public class JPOntologyTBoxDatabaseURL extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--tboxServerUri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-tbox-db-url"};
 
     /**
      * Constructor for the JPTBoxDatabaseUri class.
      */
-    public JPTBoxDatabaseURL() {
+    public JPOntologyTBoxDatabaseURL() {
         super(COMMAND_IDENTIFIERS);
     }
 
