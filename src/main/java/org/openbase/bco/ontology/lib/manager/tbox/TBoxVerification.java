@@ -23,7 +23,7 @@ import org.apache.jena.ontology.OntModel;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 
@@ -87,7 +87,7 @@ public interface TBoxVerification {
         final String classNameWithNS = OntologyToolkit.addNamespace(className);
 
         if (ontModel == null) {
-            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+//            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
         }
         return ontModel.getOntClass(classNameWithNS) != null;
     }
@@ -109,7 +109,7 @@ public interface TBoxVerification {
         final String propertyNameWithNS = OntologyToolkit.addNamespace(propertyName);
 
         if (ontModel == null) {
-            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
         }
         return ontModel.getOntProperty(propertyNameWithNS) != null;
     }

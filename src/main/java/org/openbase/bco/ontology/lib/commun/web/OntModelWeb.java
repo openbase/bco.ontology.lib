@@ -27,7 +27,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -92,7 +92,7 @@ public interface OntModelWeb {
 
         while (ontModel == null) {
             try {
-                ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+                ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
 
                 if (ontModel.isEmpty()) {
                     ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
@@ -123,15 +123,16 @@ public interface OntModelWeb {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main ontModel is null!");
         } else if (mainUri == null) {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main uri is null!");
-        } else if (tboxUri == null) {
-            throw new IllegalArgumentException("Could not add model to ontology server, cause tbox uri is null!");
         }
+//        } else if (tboxUri == null) {
+//            throw new IllegalArgumentException("Could not add model to ontology server, cause tbox uri is null!");
+//        }
         try {
             DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri + "data");
             datasetAccessor.add(ontModel);
 
-            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
-            datasetAccessor.add(ontModel);
+//            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
+//            datasetAccessor.add(ontModel);
 
         } catch (Exception e) {
             throw new IOException("Could not add model to ontology server!", e);
@@ -152,7 +153,7 @@ public interface OntModelWeb {
         while (!isUploaded) {
             try {
                 OntModelWeb.addOntModel(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
-                        , JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+                        , JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
                 isUploaded = true;
             } catch (IOException e) {
                 //retry

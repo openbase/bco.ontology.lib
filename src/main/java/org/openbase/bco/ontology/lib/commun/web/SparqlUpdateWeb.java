@@ -35,7 +35,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -113,21 +113,21 @@ public interface SparqlUpdateWeb {
 
         final HttpClient httpclient = HttpClients.createDefault();
         final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
-        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
+//        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
 
         try {
             httpPostMain.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+//            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             final HttpResponse httpResponseMain = httpclient.execute(httpPostMain);
-            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
+//            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
 
             final int codeMain = httpResponseMain.getStatusLine().getStatusCode();
-            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
+//            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
 
-            return isHttpRequestSuccess(codeMain) && isHttpRequestSuccess(codeTBox);
+            return isHttpRequestSuccess(codeMain);
         } catch (IOException e) {
             ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
             return false;

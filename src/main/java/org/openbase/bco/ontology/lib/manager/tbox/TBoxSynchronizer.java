@@ -52,7 +52,8 @@ public class TBoxSynchronizer {
     public OntModel extendTBoxViaServerModel(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
 
         // get tbox from server. if no available: create new from dependency.
-        OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+//        OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+        OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
 
         // get missing unitTypes and serviceStates
         ontModel = compareMissingUnitsWithModel(unitConfigList, ontModel);

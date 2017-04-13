@@ -29,7 +29,7 @@ public class JPOntologyURL extends AbstractJPString {
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-uri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-url"};
 
     /**
      * Constructor for the JPOntologyDatabaseUri class.
