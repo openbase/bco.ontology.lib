@@ -26,7 +26,9 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.pattern.Observable;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -53,7 +55,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:ColorableLight . "
-                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // refer to the observation and check if the state value is on
@@ -74,7 +76,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Tile . "
-                        + "?obs NS:hasProviderService NS:PRESENCE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -96,7 +98,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Television . "
-                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -121,7 +123,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:User . "
-                        + "?obs NS:hasProviderService NS:PRESENCE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -142,7 +144,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:SmokeDetector . "
-                        + "?obs NS:hasProviderService NS:SMOKE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:SmokeStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -208,7 +210,8 @@ public class AskQueryExample {
      */
     public void exampleTrigger() throws CouldNotPerformException, InterruptedException {
 
-        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
+        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN)
+                .addUnitType(UnitType.COLORABLE_LIGHT).addServiceType(ServiceType.POWER_STATE_SERVICE).build();
         final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(AskQueryExample.QUERY_0)
                 .setDependingOntologyChange(ontologyChange).build();
 

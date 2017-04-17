@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib;
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
@@ -30,6 +31,7 @@ import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
+import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -40,9 +42,14 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
+import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.unit.UnitConfigType;
+import rst.domotic.unit.UnitTemplateType;
+
+import java.util.List;
 
 /**
  * @author agatting on 20.10.16.
@@ -53,7 +60,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-
 //        try {
 //            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //            OntModelWeb.addOntModelViaRetry(ontModel);
@@ -77,6 +83,10 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
+
+//        final Stopwatch stopwatch = new Stopwatch();
+//        stopwatch.waitForStart(20000);
+//        new Measurement();
     }
 
     @Override
