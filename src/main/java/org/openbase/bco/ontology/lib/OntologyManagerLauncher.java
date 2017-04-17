@@ -20,7 +20,9 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
-import org.openbase.bco.ontology.lib.jp.JPTBoxDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
+import org.openbase.bco.ontology.lib.jp.JPOntologyURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.bco.registry.lib.BCO;
 import org.openbase.bco.registry.lib.launch.AbstractLauncher;
 import org.openbase.jps.core.JPService;
@@ -47,10 +49,12 @@ public class OntologyManagerLauncher extends AbstractLauncher<OntologyManagerCon
      */
     @Override
     protected void loadProperties() {
-        JPService.registerProperty(JPDebugMode.class);
+        JPService.registerProperty(JPOntologyURL.class);
         JPService.registerProperty(JPOntologyDatabaseURL.class);
-        JPService.registerProperty(JPTBoxDatabaseURL.class);
+        JPService.registerProperty(JPOntologyTBoxDatabaseURL.class);
         JPService.registerProperty(JPOntologyPingURL.class);
+        JPService.registerProperty(JPOntologyScope.class);
+        JPService.registerProperty(JPDebugMode.class);
     }
 
     /**
