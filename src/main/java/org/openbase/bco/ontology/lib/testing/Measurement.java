@@ -103,7 +103,7 @@ public class Measurement {
         try {
             colorableLightRemote = (ColorableLightRemote) Units.getUnit("a0f2c9d8-41a6-45c6-9609-5686b6733d4e", true);
 
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1000; i++) {
                 stopwatchBlock.waitForStart(3000);
 
                 stopwatchMeasure.restart();
@@ -116,7 +116,6 @@ public class Measurement {
             }
 
             stopwatchBlock.waitForStart(5000);
-            System.out.println("set states finished...");
 
             System.out.println(measuredData.size());
             System.out.println(measuredData);

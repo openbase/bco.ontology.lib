@@ -106,10 +106,10 @@ public class AggregationImpl implements Aggregation {
 //                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
             case MONTH:
                 dateTime = dateTime.minusMonths(timeToReduce);
-                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 0, 0, 0, 0);
+                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 1, 0, 0, 0);
             case YEAR:
                 dateTime = dateTime.minusYears(timeToReduce);
-                return new DateTime(dateTime.getYear(), 0, 0, 0, 0, 0);
+                return new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0);
             default:
                 throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
                         + period.toString() + " could not be identified!");
