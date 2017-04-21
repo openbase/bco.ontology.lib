@@ -18,6 +18,9 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
@@ -67,6 +70,7 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
+//    private final DateTimeFormatter dateTimeFormatter;
     private final SimpleDateFormat dateFormat;
     private Map<String, ServiceType> serviceTypeMap;
     private String remoteUnitId;
@@ -94,7 +98,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
         try {
             this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
-            this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
             this.unitType = unitRemote.getType();
             this.rsbInformer = rsbInformer;
             this.transactionBuffer = transactionBuffer;
@@ -102,6 +105,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
             this.remoteUnitId = unitRemote.getId().toString();
             this.connectionPhase = new ConnectionPhase(unitRemote, transactionBuffer);
+            this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
+//            this.dateTimeFormatter = DateTimeFormat.forPattern(OntConfig.DATE_TIME);
 
             final Observer<T> unitRemoteStateObserver = (final Observable<T> observable, final T remoteData) -> {
                 this.observerData = remoteData;
@@ -144,7 +149,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 // get method as invoked object
                 final Object obj_stateType = methodStateType.invoke(remoteData);
 
-                final String dateTimeNow = dateFormat.format(new Date());
+//                final String dateTimeNow = dateFormat.format(new Date());
+                final String dateTimeNow = new DateTime().toString();
                 final String subj_Observation = "O" + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
 
                 //### timeStamp triple ###\\
@@ -154,6 +160,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
                     final String obj_dateTime = "\"" + dateFormat.format(timestamp) + "\"^^xsd:dateTime";
+//                    final String obj_dateTime = "\"" + timestamp + "\"^^xsd:dateTime";
                     tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasTimeStamp, obj_dateTime));
 
                     //### add observation instance to observation class ###\\
@@ -166,8 +173,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     final String obj_serviceType = getServiceType(methodStateType.getName());
                     serviceList.add(serviceTypeMap.get(obj_serviceType));
                     tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
-
-
 
                     //### stateValue triple ###\\
                     final int sizeBuf = tripleArrayListsBuf.size();

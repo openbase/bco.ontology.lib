@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
@@ -172,35 +173,36 @@ public class AskQueryExample {
      * @return String in format yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public static String getCurrentDateTime() {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-        final Date date = new Date();
+//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+//        final Date date = new Date();
 
-        return simpleDateFormat.format(date);
+        return new DateTime().toString();
     }
 
-    /**
-     * Method adds/subtracts time to the current dateTime.
-     *
-     * @param minutes The minutes.
-     * @param hours The hours.
-     * @param days The days.
-     * @param months The months.
-     * @param years The years.
-     * @return The changed dateTime as String.
-     */
-    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months, final int years) {
-
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-        final Date now = new Date();
-
-        Date newDate = DateUtils.addHours(now, hours);
-        newDate = DateUtils.addMinutes(newDate, minutes);
-        newDate = DateUtils.addDays(newDate, days);
-        newDate = DateUtils.addMonths(newDate, months);
-        newDate = DateUtils.addYears(newDate, years);
-
-        return simpleDateFormat.format(newDate);
-    }
+//    /**
+//     * Method adds/subtracts time to the current dateTime.
+//     *
+//     * @param minutes The minutes.
+//     * @param hours The hours.
+//     * @param days The days.
+//     * @param months The months.
+//     * @param years The years.
+//     * @return The changed dateTime as String.
+//     */
+//    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months, final int years) {
+//
+//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+//        final Date now = new Date();
+//
+//        Date newDate = DateUtils.addHours(now, hours);
+//        newDate = DateUtils.addMinutes(newDate, minutes);
+//        newDate = DateUtils.addDays(newDate, days);
+//        newDate = DateUtils.addMonths(newDate, months);
+//        newDate = DateUtils.addYears(newDate, years);
+//
+//        return simpleDateFormat.format(newDate);
+//    }
+    //TODO adapt method with joda time...
 
     /**
      * Just an example trigger. Do not use method. Take the example code and modify.

@@ -61,6 +61,9 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
+        final Stopwatch stopwatch = new Stopwatch();
+        stopwatch.waitForStart(60000);
+
 //        try {
 //            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //            OntModelWeb.addOntModelViaRetry(ontModel);
@@ -68,6 +71,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 //        } catch (JPServiceException e) {
 //            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
 //        }
+
 
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
@@ -85,8 +89,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
-//        final Stopwatch stopwatch = new Stopwatch();
-//        stopwatch.waitForStart(20000);
 //        new Measurement();
     }
 
