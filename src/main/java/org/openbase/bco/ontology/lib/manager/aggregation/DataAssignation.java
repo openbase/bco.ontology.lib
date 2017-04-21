@@ -57,7 +57,7 @@ public class DataAssignation extends DataAggregation {
     private final DateTime dateTimeFrom;
     private final DateTime dateTimeUntil;
     private final OntConfig.Period period;
-    private final SimpleDateFormat dateFormat;
+//    private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
 
     //TODO if a state has multiple continuous values, than an additionally distinction is needed
@@ -69,7 +69,7 @@ public class DataAssignation extends DataAggregation {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
         this.period = period;
-        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
+//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.stopwatch = new Stopwatch();
     }
 
@@ -638,7 +638,7 @@ public class DataAssignation extends DataAggregation {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
         stopwatch.waitForStop(1);
 
-        final String dateTimeNow = dateFormat.format(new Date());
+        final String dateTimeNow = new DateTime().toString();
 
         return "AggObs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
     }

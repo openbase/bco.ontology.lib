@@ -97,6 +97,22 @@ public interface SparqlUpdateWeb {
         }
     }
 
+    static void sparqlUpdateToMainOntologyViaRetry(final String sparqlUpdateExpr, final ServerServiceForm serviceForm) throws CouldNotPerformException {
+        try {
+            boolean isHttpSuccess = false;
+
+            while (!isHttpSuccess) {
+                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, serviceForm);
+
+                if (!isHttpSuccess) {
+                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                }
+            }
+        } catch (JPServiceException | CouldNotPerformException | InterruptedException e) {
+            throw new CouldNotPerformException("Could not send aggregation to server... ");
+        }
+    }
+
     /**
      * Method processes a sparql update (update string) to all databases of the ontology server (main and tbox databases).
      *

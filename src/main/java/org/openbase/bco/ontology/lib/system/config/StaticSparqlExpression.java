@@ -210,6 +210,19 @@ public class StaticSparqlExpression {
                 + "}";
     }
 
+    public static String deleteObservationOfTimeFrame(final String dateTimeFrom, final String dateTimeUntil) {
+        return "PREFIX NS: <" + OntConfig.NS + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "DELETE { "
+                    + "?obs ?p ?o . "
+                + "} WHERE { "
+                    + "?obs ?p ?o . "
+                    + "?obs a NS:Observation . "
+                    + "?obs NS:hasTimeStamp ?timestamp . "
+                    + "FILTER (?timestamp < " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
+                + "}";
+    }
+
 //    public static String test(final String timestampUntil) {
 //
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "

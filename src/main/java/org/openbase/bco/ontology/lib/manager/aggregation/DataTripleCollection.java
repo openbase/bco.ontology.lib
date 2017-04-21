@@ -60,24 +60,24 @@ public class DataTripleCollection extends DataAssignation {
         String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectData());
 
         // send aggregated values ...
-        sendToServer(sparqlUpdateExpr);
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
         // delete unused connectionPhases (old)
-        sendToServer(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
         // delete unused heartBeatPhases (old)
-        sendToServer(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
         // delete unused observations (old)
-        sendToServer(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
 
         //### stage two ###\\
         sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectAggData());
 
         // send aggregated aggregations ...
-        sendToServer(sparqlUpdateExpr);
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
         // delete unused aggregations (old)
-        sendToServer(StaticSparqlExpression.deleteUnusedAggObs(Period.DAY.toString(), OntologyToolkit.addXsdDateTime(dateTimeFrom)
-                , OntologyToolkit.addXsdDateTime(dateTimeUntil)));
+        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(Period.DAY.toString(), OntologyToolkit.addXsdDateTime(dateTimeFrom)
+                , OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
     }
 
     private List<TripleArrayList> collectData() {
@@ -90,22 +90,6 @@ public class DataTripleCollection extends DataAssignation {
     private List<TripleArrayList> collectAggData() {
         final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit();
         return relateAggDataForEachUnit(observationsEachUnit);
-    }
-
-    private void sendToServer(final String sparqlUpdateExpr) throws CouldNotPerformException {
-        try {
-            boolean isHttpSuccess = false;
-
-            while (!isHttpSuccess) {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
-
-                if (!isHttpSuccess) {
-                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                }
-            }
-        } catch (JPServiceException | CouldNotPerformException | InterruptedException e) {
-            throw new CouldNotPerformException("Could not send aggregation to server... ");
-        }
     }
 
     private List<TripleArrayList> relateAggDataForEachUnit(final HashMap<String, List<ObservationAggDataCollection>> obsAggPerUnit) {

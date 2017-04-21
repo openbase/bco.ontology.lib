@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.commun.monitor;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
@@ -61,7 +62,7 @@ public class HeartBeatCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
     public static final ObservableImpl<Boolean> isInitObservable = new ObservableImpl<>();
-    private final SimpleDateFormat dateFormat;
+//    private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
     private Future future;
     private final String pred_FirstHeartBeat;
@@ -69,7 +70,7 @@ public class HeartBeatCommunication {
 
     public HeartBeatCommunication() throws InitializationException {
 
-        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
+//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.stopwatch = new Stopwatch();
         this.pred_FirstHeartBeat = OntProp.FIRST_CONNECTION.getName();
         this.pred_LastHeartBeat = OntProp.LAST_CONNECTION.getName();
@@ -168,16 +169,17 @@ public class HeartBeatCommunication {
 
                 final String subj_HeartBeatPhase = OntologyToolkit.getLocalName(querySolution.getResource("blackout").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
-                final Date now = new Date();
+                final DateTime now = new DateTime();
 
-                Date dateLastTimeStamp = dateFormat.parse(lastTimeStamp);
-                dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
+//                Date dateLastTimeStamp = dateFormat.parse(lastTimeStamp);
+                DateTime dateLastTimestamp = new DateTime(lastTimeStamp).plusSeconds(OntConfig.HEART_BEAT_TOLERANCE);
+//                dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
 
-                if (dateLastTimeStamp.compareTo(now) >= 0) {
+                if (dateLastTimestamp.compareTo(now) >= 0) {
                     // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
                     final List<TripleArrayList> deleteTriple = new ArrayList<>();
                     final List<TripleArrayList> insertTriple = new ArrayList<>();
-                    final String objectDateTimeNow = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
+                    final String objectDateTimeNow = "\"" + now + "\"^^xsd:dateTime";
 
                     deleteTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, null));
                     deleteTriple.add(getDeleteTripleRecentHeartBeat());
@@ -198,8 +200,6 @@ public class HeartBeatCommunication {
                 }
             } catch (CouldNotProcessException | CouldNotPerformException | IllegalArgumentException | IOException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
-            } catch (ParseException e) {
-                ExceptionPrinter.printHistory("Dropped heartbeat update, cause could not create subject of triple heartbeat!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException | JPServiceException e) {
                 future.cancel(true);
             }
@@ -212,14 +212,14 @@ public class HeartBeatCommunication {
 
         while (!isHttpSuccess) {
             // both timestamp strings must contain the SAME date
-            final Date now = new Date();
-            final String dateTime = dateFormat.format(now);
+//            final Date now = new Date();
+            final String dateTime = new DateTime().toString();
 
             final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
             final String pred_isA = OntExpr.A.getName();
 
             final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
-            final String obj_TimeStamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
+            final String obj_TimeStamp = "\"" + dateTime + "\"^^xsd:dateTime";
 
             final List<TripleArrayList> insertTriples = new ArrayList<>();
 
