@@ -142,7 +142,6 @@ public class UnitRemoteSynchronizer {
                         try {
                             unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
                             if (unitRemote.isDataAvailable()) {
-                                System.out.println(unitRemote.getType());
                                 // unitRemote is ready. add stateObservation
                                 identifyUnitRemote(unitRemote);
                                 LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");

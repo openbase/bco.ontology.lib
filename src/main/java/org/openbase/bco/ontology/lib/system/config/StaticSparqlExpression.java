@@ -219,9 +219,16 @@ public class StaticSparqlExpression {
                     + "?obs ?p ?o . "
                     + "?obs a NS:Observation . "
                     + "?obs NS:hasTimeStamp ?timestamp . "
-                    + "FILTER (?timestamp < " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
+                    + "FILTER (?timestamp < " + dateTimeFrom + " || ?timestamp >= " + dateTimeUntil + " ) . "
                 + "}";
     }
+
+    public final static String countAllTriples =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT (count(*) as ?count) WHERE { "
+                + "?s ?p ?o . "
+            + "}";
 
 //    public static String test(final String timestampUntil) {
 //
