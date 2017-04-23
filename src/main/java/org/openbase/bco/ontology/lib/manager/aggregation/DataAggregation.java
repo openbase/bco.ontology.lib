@@ -187,8 +187,12 @@ public class DataAggregation {
                     }
                 }
 
+//                if (!stateValueDataCollection.getStateValue().isLiteral()) {
+                    lastStateValue = OntologyToolkit.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
+//                } else {
+//                    lastStateValue = "UNKNOWN"; //TODO (bad hack)
+//                }
 
-                lastStateValue = OntologyToolkit.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
                 lastTimestamp = stateValueDataCollection.getTimestamp();
 
                 if (new DateTime(lastTimestamp).getMillis() < dateTimeFrom.getMillis()) {

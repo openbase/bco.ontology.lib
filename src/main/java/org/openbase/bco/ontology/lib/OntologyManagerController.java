@@ -19,6 +19,8 @@
 package org.openbase.bco.ontology.lib;
 
 import org.apache.jena.ontology.OntModel;
+import org.apache.jena.ontology.OntModelSpec;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
@@ -35,6 +37,7 @@ import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.testing.DuplicateData;
 import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
@@ -53,6 +56,7 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.unit.UnitConfigType;
 import rst.domotic.unit.UnitTemplateType;
 
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -95,7 +99,6 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             new UnitRegistrySynchronizer(transactionBuffer);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
             new HeartBeatCommunication();
-
 
 //            stopwatch.waitForStart(20000);
 //            new Measurement();

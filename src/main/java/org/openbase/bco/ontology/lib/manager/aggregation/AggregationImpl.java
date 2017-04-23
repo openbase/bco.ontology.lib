@@ -30,6 +30,7 @@ import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
@@ -48,15 +49,15 @@ public class AggregationImpl implements Aggregation {
     private Period period;
     private int backDatedQuantity;
 
-    public AggregationImpl() throws CouldNotPerformException {
+    public AggregationImpl() throws CouldNotPerformException, InterruptedException, JPServiceException {
 
-        this.period = OntConfig.PERIOD_FOR_AGGREGATION;
-        this.backDatedQuantity = OntConfig.BACKDATED_BEGINNING_OF_PERIOD;
-
-        DateTime now = new DateTime();
-
-        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
-        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
+//        this.period = OntConfig.PERIOD_FOR_AGGREGATION;
+//        this.backDatedQuantity = OntConfig.BACKDATED_BEGINNING_OF_PERIOD;
+//
+//        DateTime now = new DateTime();
+//
+//        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
+//        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
 
 //        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
@@ -67,7 +68,7 @@ public class AggregationImpl implements Aggregation {
 //
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
-        startAgg();
+//        startAggregation();
     }
 
 //    /**
@@ -88,8 +89,31 @@ public class AggregationImpl implements Aggregation {
 //        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
 //    }
 
-    public void startAgg() throws CouldNotPerformException {
-        final DataTripleCollection dataTripleCollection = new DataTripleCollection(dateTimeFrom, dateTimeUntil, period);
+    public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, JPServiceException {
+
+        final DateTime dateTimeFromTest = new DateTime(2017, 1, 1, 0, 0, 0, 0);
+        final DateTime dateTimeUntilTest = new DateTime(2018, 1, 1, 0, 0, 0, 0);
+        currentDays += 1;
+
+        if (currentDays % 7 == 0) {
+            final Period periodTest = Period.WEEK;
+            System.out.println("Start aggregation at day: " + currentDays + " : " + periodTest.toString());
+            new DataTripleCollection(dateTimeFromTest, dateTimeUntilTest, periodTest);
+        }
+        if (currentDays % 28 == 0) {
+            final Period periodTest = Period.MONTH;
+            System.out.println("Start aggregation at day: " + currentDays + " : " + periodTest.toString());
+            new DataTripleCollection(dateTimeFromTest, dateTimeUntilTest, periodTest);
+        }
+        if (currentDays % 364 == 0) {
+            final Period periodTest = Period.YEAR;
+            System.out.println("Start aggregation at day: " + currentDays + " : " + periodTest.toString());
+            new DataTripleCollection(dateTimeFromTest, dateTimeUntilTest, periodTest);
+        }
+
+//        final Period periodTest = Period.DAY;
+//        new DataTripleCollection(dateTimeFrom, dateTimeUntil, period);
+//        new DataTripleCollection(dateTimeFromTest, dateTimeUntilTest, periodTest);
     }
 
     private DateTime getAdaptedDateTime(DateTime dateTime, final int timeToReduce) throws NotAvailableException {

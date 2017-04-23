@@ -47,48 +47,69 @@ public class DataTripleCollection extends DataAssignation {
     private final DateTime dateTimeUntil;
     private final Stopwatch stopwatch;
     private final DataProviding dataProviding;
+    private final Period period;
 
-    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) throws CouldNotPerformException {
+    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException, JPServiceException {
         super(dateTimeFrom, dateTimeUntil, period);
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
         this.stopwatch = new Stopwatch();
         this.dataProviding = new DataProviding(dateTimeFrom, dateTimeUntil);
+        this.period = period;
 
+        if (period.equals(Period.DAY)) {
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectData());
 
-        //### stage one ###\\
-        String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectData());
+            // send aggregated values ...
+            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
-        // send aggregated values ...
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+//            // delete unused connectionPhases (old)
+//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            // delete unused heartBeatPhases (old)
+//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            // delete unused observations (old)
+//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
 
-        // delete unused connectionPhases (old)
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
-        // delete unused heartBeatPhases (old)
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
-        // delete unused observations (old)
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+        } else {
+            final Period oldPeriod;
 
-        //### stage two ###\\
-        sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectAggData());
+            switch (period) {
+                case WEEK:
+                    oldPeriod = Period.DAY;
+                    break;
+                case MONTH:
+                    oldPeriod = Period.WEEK;
+                    break;
+                case YEAR:
+                    oldPeriod = Period.MONTH;
+                    break;
+                default:
+                    oldPeriod = Period.HOUR; //TODO
+                    break;
+            }
 
-        // send aggregated aggregations ...
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(collectAggData(oldPeriod));
 
-        // delete unused aggregations (old)
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(Period.DAY.toString(), OntologyToolkit.addXsdDateTime(dateTimeFrom)
-                , OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+            // send aggregated aggregations ...
+            System.out.println("Send AggData...");
+            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+
+            // delete unused aggregations (old)
+            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), OntologyToolkit.addXsdDateTime(dateTimeFrom)
+                    , OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+        }
     }
 
     private List<TripleArrayList> collectData() {
-        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit();
+//        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit(); //TODO
         final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
+        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnitForTesting(observationsEachUnit.keySet());
 
         return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
 
-    private List<TripleArrayList> collectAggData() {
-        final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit();
+    private List<TripleArrayList> collectAggData(final Period period) throws JPServiceException, InterruptedException {
+        final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit(period);
         return relateAggDataForEachUnit(observationsEachUnit);
     }
 
@@ -150,6 +171,7 @@ public class DataTripleCollection extends DataAssignation {
 
         for (final ObservationDataCollection dataObs : obsDataCollList) {
             final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValue(), dataObs.getTimestamp());
+//            System.out.println(dataObs.getProviderService() + ", " + dataObs.getStateValue() + ", " + unitId);
 
             if (serviceDataCollList.containsKey(dataObs.getProviderService())) {
                 // there is an entry: add data

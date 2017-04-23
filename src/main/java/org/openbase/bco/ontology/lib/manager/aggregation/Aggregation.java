@@ -18,8 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
+import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jul.exception.CouldNotPerformException;
+
 /**
  * @author agatting on 25.03.17.
  */
 public interface Aggregation {
+
+    void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, JPServiceException;
 }

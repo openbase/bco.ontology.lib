@@ -210,12 +210,12 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> batteryLevelList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//                    final String dataType = OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (!serviceDataColl.getStateValue().isLiteral()) {
                         //battery/blind/smoke value
                         batteryValueList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("percent")) {
+                    } else if (OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
                         // battery/blind/smoke level
                         batteryLevelList.add(serviceDataColl);
                     }
@@ -230,12 +230,12 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceAggDataCollection> batteryLevelList = new ArrayList<>();
 
                 for (final ServiceAggDataCollection serviceDataColl : (List<ServiceAggDataCollection>) serviceDataCollList) {
-                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
+//                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
 
                     if (!serviceDataColl.getStateValue().isLiteral()) {
                         //battery/blind/smoke value
                         batteryValueList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("percent")) {
+                    } else if (serviceDataColl.getStateValue().asLiteral().toString().equalsIgnoreCase("percent")) {
                         // battery/blind/smoke level
                         batteryLevelList.add(serviceDataColl);
                     }
@@ -563,7 +563,7 @@ public class DataAssignation extends DataAggregation {
             throws CouldNotPerformException, InterruptedException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        final OntConfig.Period toAggregatedPeriod = OntConfig.Period.WEEK; //TODO to aggregated period...
+        final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
         final DiscreteStateValues discreteStateValues = new DiscreteStateValues(aggDiscreteList, toAggregatedPeriod);
 
         final HashMap<String, Long> activationTimeMap = discreteStateValues.getActiveTimePerStateValue();
@@ -577,7 +577,7 @@ public class DataAssignation extends DataAggregation {
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), toAggregatedPeriod.toString().toLowerCase()));
+            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), bcoStateType));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
             triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
@@ -614,14 +614,14 @@ public class DataAssignation extends DataAggregation {
             , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
 
         final List<TripleArrayList> triples = new ArrayList<>();
-        final OntConfig.Period toAggregatedPeriod = OntConfig.Period.WEEK; //TODO to aggregated period...
+        final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
         final ContinuousStateValues continuousStateValues = new ContinuousStateValues(aggContinuousList, toAggregatedPeriod);
         final String subj_AggObs = getAggObsInstance(unitId);
 
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), toAggregatedPeriod.toString().toLowerCase()));
+        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
         // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
         triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));

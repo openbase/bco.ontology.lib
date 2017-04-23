@@ -31,7 +31,8 @@ import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
+import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
@@ -65,16 +66,18 @@ public class Measurement {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Measurement.class);
     private ObservableImpl<Boolean> triggerMeasurementObservable = null;
-private static final String FILE_NAME = "TriggerMeasurement.xlsx";
+    private static final String FILE_NAME = "TriggerMeasurement.xlsx";
     private final ColorableLightRemote colorableLightRemote;
     private final Stopwatch measurementWatch;
-    private final static int TRIGGER_MAX_COUNT = 10; //1000
+    private final static int TRIGGER_MAX_COUNT = 5; //1000
     private int triggerCurrentCount;
-    private final static int DAYS_MAX_COUNT = 1; //365
+    private final static int DAYS_MAX_COUNT = 365; //365
     private int daysCurrentCount;
-    private final ManipulateData manipulateData;
+    private final DuplicateData duplicateData;
     private final Long[][] measuredValues;
     private boolean finishedMeasurement;
+    private final Aggregation aggregation;
+    private final Stopwatch stopwatch;
 
     private static final String SIMPLE_QUERY =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
@@ -93,22 +96,19 @@ private static final String FILE_NAME = "TriggerMeasurement.xlsx";
         this.colorableLightRemote = (ColorableLightRemote) Units.getUnit("a0f2c9d8-41a6-45c6-9609-5686b6733d4e", true);
         this.triggerCurrentCount = 0;
         this.daysCurrentCount = 0;
-        this.manipulateData = new ManipulateData();
+        this.duplicateData = new DuplicateData();
         this.measuredValues = new Long[DAYS_MAX_COUNT][TRIGGER_MAX_COUNT + 1];
         this.finishedMeasurement = false;
+        this.aggregation = new AggregationImpl();
+        this.stopwatch = new Stopwatch();
 
-        initOntologyMeasurement();
-        Trigger();
-        final Observer<Boolean> activationObserver = (source, data) -> startMeasurement();
-        triggerMeasurementObservable.addObserver(activationObserver);
-
-        startMeasurement();
+        init();
+        startAggregatedDataMeasurement();
     }
 
-    private void startMeasurement() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void startMeasurementData() throws InterruptedException, CouldNotPerformException, JPServiceException {
 
         if (triggerCurrentCount < TRIGGER_MAX_COUNT) {
-            System.out.println("start measure...");
             measurementWatch.restart();
 
             colorableLightRemote.setPowerState(PowerState.State.OFF);
@@ -120,33 +120,75 @@ private static final String FILE_NAME = "TriggerMeasurement.xlsx";
             daysCurrentCount++;
 
             if (daysCurrentCount < DAYS_MAX_COUNT) {
-                System.out.println("duplicate data...Day: " + daysCurrentCount);
+                System.out.println("Duplicate data...Day: " + (daysCurrentCount + 1));
 
-                manipulateData.duplicateDataOfOneDay(daysCurrentCount);
-                System.out.println("Uploaded ontModel with day data...");
+                duplicateData.duplicateDataOfOneDay(daysCurrentCount);
 
                 askNumberOfTriple();
                 triggerCurrentCount = 0;
-                startMeasurement();
+                startMeasurementData();
             } else {
                 finishedMeasurement = true;
-                createExcelFile("TriggerSimpleMeasure", measuredValues);
+                createExcelFile("TriggerSimpleMeasureData", measuredValues);
             }
         }
     }
 
-    private void initOntologyMeasurement() throws InterruptedException, JPServiceException {
+    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, JPServiceException {
+
+        if (triggerCurrentCount < TRIGGER_MAX_COUNT) {
+            measurementWatch.restart();
+
+            colorableLightRemote.setPowerState(PowerState.State.OFF);
+        } else {
+            daysCurrentCount++;
+
+            if (daysCurrentCount < DAYS_MAX_COUNT) {
+                aggregation.startAggregation(daysCurrentCount);
+                stopwatch.waitForStart(2000);
+
+                System.out.println("Duplicate data...Day: " + (daysCurrentCount + 1));
+                duplicateData.duplicateDataOfAggObs(daysCurrentCount);
+
+                askNumberOfTriple();
+                triggerCurrentCount = 0;
+                startMeasurementAggData();
+            } else {
+                finishedMeasurement = true;
+                createExcelFile("TriggerSimpleMeasureAggData", measuredValues);
+            }
+        }
+    }
+
+    private void init() throws InterruptedException, JPServiceException {
         InputStream input = Measurement.class.getResourceAsStream("/apartmentDataSimpleWithoutObs.owl");
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
 //        final OntModel baseOntModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
         OntModelWeb.addOntModelViaRetry(ontModel);
+    }
 
-        System.out.println("Duplicate data...Day: 0");
-        manipulateData.duplicateDataOfOneDay(daysCurrentCount);
-        System.out.println("Uploaded ontModel...");
+    private void startAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
+        System.out.println("Duplicate data...Day: 1");
+        duplicateData.duplicateDataOfAggObs(daysCurrentCount);
         askNumberOfTriple();
+
+        Trigger();
+        final Observer<Boolean> activationObserver = (source, data) -> startMeasurementAggData();
+        triggerMeasurementObservable.addObserver(activationObserver);
+        startMeasurementAggData();
+    }
+
+    private void startNotAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
+        System.out.println("Duplicate data...Day: 1");
+        duplicateData.duplicateDataOfOneDay(daysCurrentCount);
+        askNumberOfTriple();
+
+        Trigger();
+        final Observer<Boolean> activationObserver = (source, data) -> startMeasurementData();
+        triggerMeasurementObservable.addObserver(activationObserver);
+        startMeasurementData();
     }
 
     private void askNumberOfTriple() throws InterruptedException, JPServiceException {
