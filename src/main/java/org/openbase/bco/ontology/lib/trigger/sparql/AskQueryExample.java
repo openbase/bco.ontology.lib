@@ -18,9 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -30,10 +28,6 @@ import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * The class contains examples of ASK queries, which can be used to generate triggers or rather triggerConfig. They can be used complete or as pattern.

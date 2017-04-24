@@ -82,7 +82,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private final ConnectionPhase connectionPhase;
     private T observerData;
 
-    private final RecurrenceEventFilter recurrenceEventFilter = new RecurrenceEventFilter(2000) {
+    private final RecurrenceEventFilter recurrenceEventFilter = new RecurrenceEventFilter(1) {
         @Override
         public void relay() {
             try {

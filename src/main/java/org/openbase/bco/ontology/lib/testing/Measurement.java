@@ -28,11 +28,13 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
+import org.openbase.bco.dal.remote.unit.PowerSwitchRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
@@ -48,16 +50,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
-import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState;
 import rst.domotic.state.PowerStateType.PowerState;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author agatting on 17.04.17.
@@ -68,39 +71,81 @@ public class Measurement {
     private ObservableImpl<Boolean> triggerMeasurementObservable = null;
     private static final String FILE_NAME = "TriggerMeasurement.xlsx";
     private final ColorableLightRemote colorableLightRemote;
+    private final PowerSwitchRemote powerSwitchRemote;
     private final Stopwatch measurementWatch;
     private final static int TRIGGER_MAX_COUNT = 5; //1000
-    private int triggerCurrentCount;
+    private int simpleTriggerCurCount;
+    private boolean simpleQueryActive;
     private final static int DAYS_MAX_COUNT = 365; //365
-    private int daysCurrentCount;
+    private int daysCurCount;
     private final DuplicateData duplicateData;
-    private final Long[][] measuredValues;
     private boolean finishedMeasurement;
     private final Aggregation aggregation;
     private final Stopwatch stopwatch;
+    private final List<Long> simpleQuMeasuredValues;
+    private final List<Long> complexQuMeasuredValues;
+    private long numberOfTriple;
 
-    private static final String SIMPLE_QUERY =
+//    private static final String SIMPLE_QUERY =
+//            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+//                    + "ASK { "
+//                        + "?obs a NS:Observation . "
+//                        + "?obs NS:hasUnitId ?unit . "
+//                        + "?obs NS:hasStateValue NS:ON . "
+//                        + "?unit a NS:ColorableLight . "
+//                    + "}";
+
+    public static final String COMPLEX_QUERY =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-                    + "ASK { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?obs NS:hasStateValue NS:ON . "
-                        + "?unit a NS:ColorableLight . "
-                    + "}";
+            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+                + "ASK { "
+                    + "{ SELECT ?timeA ?unitA WHERE { "
+                        + "?obsA a NS:Observation . "
+                        + "?obsA NS:hasTimeStamp ?timeA . "
+                        + "?obsA NS:hasUnitId ?unitA . "
+                        + "?unitA a NS:PowerSwitch . "
+                        + "?obsA NS:hasProviderService NS:PowerStateService . "
+                        + "?obsA NS:hasStateValue NS:OFF . "
+                    + "} "
+                    + "ORDER BY DESC(?timeA) "
+                    + "LIMIT 10 } . "
+                    + "{ SELECT ?timeB ?unitB WHERE { "
+                        + "?obsB a NS:Observation . "
+                        + "?obsB NS:hasTimeStamp ?timeB . "
+                        + "?obsB NS:hasUnitId ?unitB . "
+                        + "?unitB a NS:ColorableLight . "
+                        + "?obsB NS:hasProviderService NS:PowerStateService . "
+                        + "?obsB NS:hasStateValue NS:ON . "
+                    + "} "
+                    + "ORDER BY DESC(?timeB) "
+                    + "LIMIT 10 } . "
+                    + "?obsA NS:hasUnitId ?unitA . "
+                    + "?obsA NS:hasTimeStamp ?timeA . "
+                    + "?obsB NS:hasUnitId ?unitB . "
+                    + "?obsB NS:hasTimeStamp ?timeB . "
+                    + "BIND(minutes(xsd:dateTime(?timeA)) as ?minuteA) . "
+                    + "BIND(minutes(xsd:dateTime(?timeB)) as ?minuteB) . "
+                    + "FILTER (?minuteA = ?minuteB) . "
+                + "}";
 
-    private static final String COMPLEX_QUERY = AskQueryExample.QUERY_0;
+    private static final String SIMPLE_QUERY = AskQueryExample.QUERY_0;
 
     public Measurement() throws InterruptedException, CouldNotPerformException, JPServiceException {
         this.measurementWatch = new Stopwatch();
         this.triggerMeasurementObservable = new ObservableImpl<>(false, this);
         this.colorableLightRemote = (ColorableLightRemote) Units.getUnit("a0f2c9d8-41a6-45c6-9609-5686b6733d4e", true);
-        this.triggerCurrentCount = 0;
-        this.daysCurrentCount = 0;
+        this.powerSwitchRemote = (PowerSwitchRemote) Units.getUnit("d2b8b0e7-dd37-4d89-822c-d66d38dfb6e0", true);
+        this.simpleTriggerCurCount = 0;
+        this.simpleQueryActive = true;
+        this.daysCurCount = 0;
         this.duplicateData = new DuplicateData();
-        this.measuredValues = new Long[DAYS_MAX_COUNT][TRIGGER_MAX_COUNT + 1];
+//        this.measuredValues = new Long[DAYS_MAX_COUNT][TRIGGER_MAX_COUNT + 1];
         this.finishedMeasurement = false;
         this.aggregation = new AggregationImpl();
         this.stopwatch = new Stopwatch();
+        this.simpleQuMeasuredValues = new ArrayList<>();
+        this.complexQuMeasuredValues = new ArrayList<>();
+        this.numberOfTriple = 0L;
 
         init();
         startAggregatedDataMeasurement();
@@ -108,54 +153,63 @@ public class Measurement {
 
     private void startMeasurementData() throws InterruptedException, CouldNotPerformException, JPServiceException {
 
-        if (triggerCurrentCount < TRIGGER_MAX_COUNT) {
+        if (simpleTriggerCurCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
 
-            colorableLightRemote.setPowerState(PowerState.State.OFF);
-//            if (colorableLightRemote.getPowerState().getValue().equals(PowerState.State.ON)) {
-//            } else {
-//                colorableLightRemote.setPowerState(PowerState.State.ON);
-//            }
+            if (simpleQueryActive) {
+                colorableLightRemote.setPowerState(PowerState.State.OFF);
+            } else {
+                powerSwitchRemote.setPowerState(PowerState.State.OFF);
+            }
         } else {
-            daysCurrentCount++;
+            putIntoExcelFile("TriggerSimpleMeasureData", simpleQuMeasuredValues, complexQuMeasuredValues, daysCurCount);
+            daysCurCount++;
+            simpleQuMeasuredValues.clear();
+            complexQuMeasuredValues.clear();
 
-            if (daysCurrentCount < DAYS_MAX_COUNT) {
-                System.out.println("Duplicate data...Day: " + (daysCurrentCount + 1));
+            if (daysCurCount < DAYS_MAX_COUNT) {
+                System.out.println("Duplicate data...Day: " + (daysCurCount + 1));
 
-                duplicateData.duplicateDataOfOneDay(daysCurrentCount);
+                duplicateData.duplicateDataOfOneDay(daysCurCount);
 
                 askNumberOfTriple();
-                triggerCurrentCount = 0;
+                simpleTriggerCurCount = 0;
                 startMeasurementData();
             } else {
                 finishedMeasurement = true;
-                createExcelFile("TriggerSimpleMeasureData", measuredValues);
             }
         }
     }
 
     private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, JPServiceException {
 
-        if (triggerCurrentCount < TRIGGER_MAX_COUNT) {
+        if (simpleTriggerCurCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
 
-            colorableLightRemote.setPowerState(PowerState.State.OFF);
+            if (simpleQueryActive) {
+                colorableLightRemote.setPowerState(PowerState.State.OFF);
+            } else {
+                powerSwitchRemote.setPowerState(PowerState.State.OFF);
+            }
         } else {
-            daysCurrentCount++;
+            putIntoExcelFile("TriggerSimpleMeasureData", simpleQuMeasuredValues, complexQuMeasuredValues, daysCurCount);
+            daysCurCount++;
+            simpleQuMeasuredValues.clear();
+            complexQuMeasuredValues.clear();
 
-            if (daysCurrentCount < DAYS_MAX_COUNT) {
-                aggregation.startAggregation(daysCurrentCount);
+            if (daysCurCount < DAYS_MAX_COUNT) {
+                SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteAllObservations, OntConfig.ServerServiceForm.UPDATE);
+                aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
-                System.out.println("Duplicate data...Day: " + (daysCurrentCount + 1));
-                duplicateData.duplicateDataOfAggObs(daysCurrentCount);
+                System.out.println("Duplicate data...Day: " + (daysCurCount + 1));
+                duplicateData.duplicateDataOfAggObs(daysCurCount);
 
                 askNumberOfTriple();
-                triggerCurrentCount = 0;
+                simpleTriggerCurCount = 0;
                 startMeasurementAggData();
             } else {
                 finishedMeasurement = true;
-                createExcelFile("TriggerSimpleMeasureAggData", measuredValues);
             }
         }
     }
@@ -171,7 +225,7 @@ public class Measurement {
 
     private void startAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
         System.out.println("Duplicate data...Day: 1");
-        duplicateData.duplicateDataOfAggObs(daysCurrentCount);
+        duplicateData.duplicateDataOfAggObs(daysCurCount);
         askNumberOfTriple();
 
         Trigger();
@@ -182,7 +236,7 @@ public class Measurement {
 
     private void startNotAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
         System.out.println("Duplicate data...Day: 1");
-        duplicateData.duplicateDataOfOneDay(daysCurrentCount);
+        duplicateData.duplicateDataOfOneDay(daysCurCount);
         askNumberOfTriple();
 
         Trigger();
@@ -203,13 +257,13 @@ public class Measurement {
         } else {
             LOGGER.error("There is no resultSet to identify the number of triples! Set to 0.");
         }
-        measuredValues[daysCurrentCount][0] = numTriples;
+        numberOfTriple = numTriples;
+//        measuredValues[daysCurCount][0] = numTriples;
     }
 
     private void Trigger() throws InterruptedException {
         try {
-            final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN)
-                    .addUnitType(UnitType.COLORABLE_LIGHT).addServiceType(ServiceType.POWER_STATE_SERVICE).build();
+            final OntologyChange ontologyChange = OntologyChange.newBuilder().addUnitType(UnitType.COLORABLE_LIGHT).build();
             final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(SIMPLE_QUERY)
                     .setDependingOntologyChange(ontologyChange).build();
 
@@ -217,18 +271,50 @@ public class Measurement {
             final Trigger trigger = triggerFactory.newInstance(triggerConfig);
 
             trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
-                if (measurementWatch.isRunning() && !finishedMeasurement) {
+                if (measurementWatch.isRunning() && !finishedMeasurement && simpleQueryActive) {
 
                     measurementWatch.stop();
-                    measuredValues[daysCurrentCount][triggerCurrentCount + 1] = measurementWatch.getTime();
+                    simpleQuMeasuredValues.add(measurementWatch.getTime());
 
-                    triggerCurrentCount++;
+//                    measuredValues[daysCurCount][simpleTriggerCurCount + 1] = measurementWatch.getTime();
+//                    simpleTriggerCurCount++;
+                    simpleQueryActive = false;
 
                     System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
-                    System.out.println("measurementWatch time: " + measurementWatch.getTime());
+                    System.out.println("measured time of simple query: " + measurementWatch.getTime());
 
                     triggerMeasurementObservable.notifyObservers(true);
-                } else {
+                } else if (!finishedMeasurement) {
+                    LOGGER.error("Stopwatch is not running!");
+                }
+            });
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER);
+        }
+
+        try {
+            final OntologyChange ontologyChange = OntologyChange.newBuilder().addUnitType(UnitType.POWER_SWITCH).build();
+            final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger1").setQuery(COMPLEX_QUERY)
+                    .setDependingOntologyChange(ontologyChange).build();
+
+            final TriggerFactory triggerFactory = new TriggerFactory();
+            final Trigger trigger = triggerFactory.newInstance(triggerConfig);
+
+            trigger.addObserver((Observable<ActivationState.State> source, ActivationState.State data) -> {
+                if (measurementWatch.isRunning() && !finishedMeasurement && !simpleQueryActive) {
+
+                    measurementWatch.stop();
+                    complexQuMeasuredValues.add(measurementWatch.getTime());
+//                    measuredValues[daysCurCount][simpleTriggerCurCount + 1] = measurementWatch.getTime();
+
+                    simpleTriggerCurCount++;
+                    simpleQueryActive = true;
+
+                    System.out.println(trigger.getTriggerConfig().getLabel() + " is " + data);
+                    System.out.println("measured time of complex query: " + measurementWatch.getTime());
+
+                    triggerMeasurementObservable.notifyObservers(true);
+                } else if (!finishedMeasurement) {
                     LOGGER.error("Stopwatch is not running!");
                 }
             });
@@ -237,60 +323,72 @@ public class Measurement {
         }
     }
 
-    private void createExcelFile(final String sheetName, final Long[][] measuredData) {
+    private void putIntoExcelFile(final String sheetName, final List<Long> simpleQuMeasuredValues, final List<Long> complexQuMeasuredValues, int daysCurCount) {
         // https://www.mkyong.com/java/apache-poi-reading-and-writing-excel-file-in-java/
-        System.out.println("Creating excel");
-        System.out.println(Arrays.deepToString(measuredData));
+        XSSFWorkbook workbook;
+        XSSFSheet sheet;
+        Row row;
 
-        final XSSFWorkbook workbook = new XSSFWorkbook();
-        final XSSFSheet sheet = workbook.createSheet(sheetName);
-        int rowNum = 0;
-        Row row = sheet.createRow(rowNum++);
+        try {
+            FileInputStream excelFile = new FileInputStream(new File(FILE_NAME));
+            workbook = new XSSFWorkbook(excelFile);
+            sheet = workbook.getSheet(sheetName);
+        } catch (IOException e) {
+            workbook = new XSSFWorkbook();
+            sheet = workbook.createSheet(sheetName);
+            row = sheet.createRow(daysCurCount);
 
-        row.createCell(0).setCellValue("Days");
-        row.createCell(1).setCellValue("Triple");
-        row.createCell(2).setCellValue("Mean of trigger time");
-        row.createCell(3).setCellValue("Trigger times ...");
-
-        for (Long[] days : measuredData) {
-            row = sheet.createRow(rowNum++);
-            int colNum = 0;
-            long sum = 0L;
-
-            // number of days
-            final Cell cellDay = row.createCell(colNum++);
-            cellDay.setCellValue(rowNum - 1);
-
-            // number of triple
-            final Cell cellTriple = row.createCell(colNum++);
-            cellTriple.setCellValue(days[0]);
-
-            // mean of trigger time
-            final Cell cellMean = row.createCell(colNum++);
-
-            for (int i = 1; i < days.length; i++) {
-                sum += days[i];
-
-                final Cell cellValue = row.createCell(colNum++);
-                cellValue.setCellValue(days[i]);
-            }
-
-            final long mean = sum / days.length;
-            cellMean.setCellValue(mean);
+            row.createCell(0).setCellValue("Days");
+            row.createCell(1).setCellValue("Triple");
+            row.createCell(2).setCellValue("Mean of simple trigger");
+            row.createCell(3).setCellValue("Mean of complex trigger");
         }
+
+        row = sheet.createRow(daysCurCount + 1);
+
+//        System.out.println("Creating excel");
+        System.out.println("simple: " + simpleQuMeasuredValues);
+        System.out.println("complex: " + complexQuMeasuredValues);
+
+        long sumSimple = 0L;
+        long sumComplex = 0L;
+
+        for (final long valueSimple : simpleQuMeasuredValues) {
+            sumSimple += valueSimple;
+        }
+        for (final long valueComplex : complexQuMeasuredValues) {
+            sumComplex += valueComplex;
+        }
+
+        // number of days
+        final Cell cellDay = row.createCell(0);
+        cellDay.setCellValue(daysCurCount + 1);
+
+        // number of triple
+        final Cell cellTriple = row.createCell(1);
+        cellTriple.setCellValue(numberOfTriple);
+
+        // mean of simple trigger time
+        final Cell cellMeanSimple = row.createCell(2);
+        cellMeanSimple.setCellValue(sumSimple / simpleQuMeasuredValues.size());
+
+        // mean of complex trigger time
+        final Cell cellMeanComplex = row.createCell(3);
+        cellMeanComplex.setCellValue(sumComplex/ complexQuMeasuredValues.size());
 
         try {
             final File file = new File(FILE_NAME);
             file.setReadable(true, false);
             file.setExecutable(true, false);
             file.setWritable(true, false);
+            System.out.println("Save data row ...");
             final FileOutputStream outputStream = new FileOutputStream(file);
             workbook.write(outputStream);
             workbook.close();
         } catch (IOException e) {
             ExceptionPrinter.printHistory(e, LOGGER);
         }
-        System.out.println("Done");
+//        System.out.println("Done");
     }
 
 }

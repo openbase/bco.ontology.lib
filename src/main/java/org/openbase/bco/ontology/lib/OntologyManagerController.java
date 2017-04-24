@@ -69,7 +69,9 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
         final Stopwatch stopwatch = new Stopwatch();
-        stopwatch.waitForStart(60000);
+//        stopwatch.waitForStart(60000);
+
+//        System.out.println(Units.getUnitRegistry().getUnitConfigs(UnitTemplateType.UnitTemplate.UnitType.POWER_SWITCH));
 
 //        try {
 //            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
@@ -100,8 +102,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
             new HeartBeatCommunication();
 
-//            stopwatch.waitForStart(20000);
-//            new Measurement();
+            stopwatch.waitForStart(30000);
+            new Measurement();
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

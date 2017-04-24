@@ -90,7 +90,6 @@ public class AggregationImpl implements Aggregation {
 //    }
 
     public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, JPServiceException {
-
         final DateTime dateTimeFromTest = new DateTime(2017, 1, 1, 0, 0, 0, 0);
         final DateTime dateTimeUntilTest = new DateTime(2018, 1, 1, 0, 0, 0, 0);
         currentDays += 1;

@@ -210,6 +210,16 @@ public class StaticSparqlExpression {
                 + "}";
     }
 
+    public static final String deleteAllObservations =
+            "PREFIX NS: <" + OntConfig.NS + "> "
+            + "DELETE { "
+                + "?observation ?p ?o . "
+            + "} WHERE { "
+                + "?observation ?p ?o . "
+                + "?observation a NS:Observation . "
+            + "}";
+
+
     public static String deleteObservationOfTimeFrame(final String dateTimeFrom, final String dateTimeUntil) {
         return "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
