@@ -33,7 +33,7 @@
         <developer>
             <id>DivineThreepwood</id>
             <name>Marian Pohling</name>
-            <email>divinethreepwood@gmail.com</email>
+            <email>divine@openbase.org</email>
             <url>https://github.com/DivineThreepwood</url>
             <organization>openbase.org</organization>
             <organizationUrl>https://github.com/openbase</organizationUrl>
@@ -54,9 +54,9 @@
     <packaging>jar</packaging>
     
     <scm>
-        <connection>scm:git:git@github.com/openbase/ontology.lib.git</connection>
-        <developerConnection>scm:git:git@github.com/openbase/ontology.lib.git</developerConnection>
-        <url>git@github.com/openbase/ontology.lib.git</url>
+        <connection>scm:git:https://github.com/openbase/bco.ontology.lib.git</connection>
+        <developerConnection>scm:git:https://github.com/openbase/bco.ontology.lib.git</developerConnection>
+        <url>https://github.com/openbase/bco.ontology.lib.git</url>
     </scm>
 
     <build>
@@ -64,7 +64,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.6.1</version>
                 <configuration>
                     <source>${source.java.version}</source>
                     <target>${target.java.version}</target>
@@ -74,7 +74,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.5.0</version>
+                <version>1.6.0</version>
                 <configuration>
                     <executable>java</executable>
                 </configuration>
@@ -82,7 +82,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
-                <version>1.10</version>
+                <version>2.0.0</version>
                 <executions>
                     <execution>
                         <phase>install</phase>
@@ -95,7 +95,7 @@
                     <programs>
                         <program>
                             <mainClass>org.openbase.bco.ontology.lib.OntologyManagerLauncher</mainClass>
-                            <id>ontology.lib</id>
+                            <id>bco-ontology-manager</id>
                             <platforms>
                                 <platform>unix</platform>
                             </platforms>
@@ -172,7 +172,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -249,60 +249,20 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.21</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openbase</groupId>
-            <artifactId>jul.extension.rct</artifactId>
-            <version>${dependency.jul.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase</groupId>
-            <artifactId>jul.schedule</artifactId>
-            <version>${dependency.jul.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.openbase.bco</groupId>
             <artifactId>dal.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>registry.unit.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>manager.location.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>manager.user.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>manager.scene.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>manager.app.remote</artifactId>
-            <version>${dependency.bco.dal.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>manager.agent.remote</artifactId>
             <version>${dependency.bco.dal.version}</version>
         </dependency>
         <dependency>
             <groupId>org.aksw.jena-sparql-api</groupId>
             <artifactId>jena-sparql-api-core</artifactId>
             <version>3.1.1-1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.jena</groupId>
+                    <artifactId>apache-jena-libs</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -320,11 +280,10 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        <!-- Just so maven doesn't complain about a missing version. -->
         <dependency>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-project-info-reports-plugin</artifactId>
-            <version>2.9</version>
+            <groupId>org.openbase.bco</groupId>
+            <artifactId>ontology</artifactId>
+            <version>0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
@@ -332,14 +291,14 @@
             <version>2.9.9</version>
         </dependency>
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.9.10</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
         </dependency>
         <dependency>
-            <groupId>org.openbase.bco</groupId>
-            <artifactId>ontology</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.15</version>
         </dependency>
     </dependencies>
 

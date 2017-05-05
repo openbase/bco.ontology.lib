@@ -16,36 +16,36 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.system.jp;
+package org.openbase.bco.ontology.lib.jp;
 
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.AbstractJPString;
 
 /**
  * @author agatting on 22.02.17.
  */
-public class JPOntologyDatabaseUri extends AbstractJPString {
+public class JPOntologyTBoxDatabaseURL extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--ontologyServerUri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-tbox-db-url"};
 
     /**
-     * Constructor for the JPOntologyDatabaseUri class.
+     * Constructor for the JPTBoxDatabaseUri class.
      */
-    public JPOntologyDatabaseUri() {
+    public JPOntologyTBoxDatabaseURL() {
         super(COMMAND_IDENTIFIERS);
     }
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/bco.ontology/";
+        return JPService.getProperty(JPOntologyURL.class).getValue() + "/bco.tbox/";
     }
 
     @Override
     public String getDescription() {
-        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
+        return "TBoxDatabaseUri property is used to set the uri to server with the tbox ontology database.";
     }
-
 }

@@ -63,12 +63,14 @@ public class TriggerImpl implements Trigger {
 
     /**
      * Constructor for TriggerImpl.
+     *
+     * @param ontologyRemote ontologyRemote
      */
     public TriggerImpl(final OntologyRemote ontologyRemote) {
         this.category = OntologyChange.Category.UNKNOWN; //TODO
         this.hasConnection = ConnectionState.UNKNOWN;
         this.ontologyRemote = ontologyRemote;
-        this.activationObservable = new ObservableImpl<>(false, this);
+        this.activationObservable = new ObservableImpl<>(false, this); //TODO set true after testing
 
         final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(category).build();
 

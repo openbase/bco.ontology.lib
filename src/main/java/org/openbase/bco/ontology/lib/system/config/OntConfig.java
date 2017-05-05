@@ -21,6 +21,7 @@ package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -32,6 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the ontology. Furthermore a method tests the
@@ -66,7 +71,7 @@ public final class OntConfig {
         SPARQL
     }
 
-    public static final int BACKDATED_BEGINNING_OF_PERIOD = 2;
+    public static final int BACKDATED_BEGINNING_OF_PERIOD = 1;
 
     public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
 
@@ -77,6 +82,17 @@ public final class OntConfig {
         MONTH,
         YEAR
     }
+
+    public static DecimalFormat decimalFormat() {
+        final DecimalFormat decimalFormat = new DecimalFormat("#.###");
+        final DecimalFormatSymbols decimalFormatSymbols = decimalFormat.getDecimalFormatSymbols();
+
+        decimalFormatSymbols.setDecimalSeparator('.');
+        decimalFormat.setDecimalFormatSymbols(decimalFormatSymbols);
+
+        return decimalFormat;
+    }
+
 
     /**
      * RecentHeartBeat (instance).
@@ -149,6 +165,16 @@ public final class OntConfig {
         DAL_UNIT("DalUnit"),
 
         /**
+         * Period (class).
+         */
+        PERIOD("Period"),
+
+        /**
+         * AggregationObservation (class).
+         */
+        AGGREGATION_OBSERVATION("AggregationObservation"),
+
+        /**
          * RecentHeartBeat (class).
          */
         RECENT_HEARTBEAT("RecentHeartBeat");
@@ -215,6 +241,11 @@ public final class OntConfig {
          */
         CONNECTION_PHASE("hasConnectionPhase"),
 
+        /**
+         * hasPeriod (object property).
+         */
+        PERIOD("hasPeriod"),
+
         // ### dataType properties of ontology ###
 
         /**
@@ -233,19 +264,39 @@ public final class OntConfig {
         IS_ENABLED("isEnabled"),
 
         /**
-         * hasLastHeartBeat (dataType property).
-         */
-        LAST_HEARTBEAT("hasLastHeartBeat"),
-
-        /**
-         * hasFirstHeartBeat (dataType property).
-         */
-        FIRST_HEARTBEAT("hasFirstHeartBeat"),
-
-        /**
          * hasFirstConnection (dataType property).
          */
         FIRST_CONNECTION("hasFirstConnection"),
+
+        /**
+         * hasTimeWeighting (dataType property).
+         */
+        TIME_WEIGHTING("hasTimeWeighting"),
+
+        /**
+         * hasQuantity (dataType property).
+         */
+        QUANTITY("hasQuantity"),
+
+        /**
+         * hasActivityTime (dataType property).
+         */
+        ACTIVITY_TIME("hasActivityTime"),
+
+        /**
+         * hasMean (dataType property).
+         */
+        MEAN("hasMean"),
+
+        /**
+         * hasStandardDeviation (dataType property).
+         */
+        STANDARD_DEVIATION("hasStandardDeviation"),
+
+        /**
+         * hasVariance (dataType property).
+         */
+        VARIANCE("hasVariance"),
 
         /**
          * hasLastConnection (dataType property).
@@ -274,12 +325,12 @@ public final class OntConfig {
     public enum OntExpr {
 
         /**
-         * Pattern to insert an individual to a class -> "a".
+         * Pattern to insert an individual to a class: "is a" - scheme.
          */
         A("a"),
 
         /**
-         * Pattern for SPARQL namespace -> "NS:".
+         * Pattern for SPARQL namespace: "NS:".
          */
         NS("NS:"),
 
@@ -373,7 +424,7 @@ public final class OntConfig {
     /**
      * Tolerance of heartbeat communication.
      */
-    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 5;
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
 
     /**
      * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.
@@ -385,7 +436,9 @@ public final class OntConfig {
     public void initialTestConfig() throws JPServiceException, InterruptedException {
 
         MultiException.ExceptionStack exceptionStack = null;
-        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+//        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
+
 
         try {
             // test validity of enum property

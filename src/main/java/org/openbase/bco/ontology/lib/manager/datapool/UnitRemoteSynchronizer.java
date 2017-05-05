@@ -131,12 +131,16 @@ public class UnitRemoteSynchronizer {
                 }
 
                 for (final UnitConfig unitConfig : unitConfigsBuf) {
-                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
 
+                    //filter device units
+                    if(unitConfig.getType() == UnitType.DEVICE) {
+                        continue;
+                    }
+
+                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
                         UnitRemote unitRemote = null;
                         try {
                             unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
-
                             if (unitRemote.isDataAvailable()) {
                                 // unitRemote is ready. add stateObservation
                                 identifyUnitRemote(unitRemote);
@@ -254,9 +258,9 @@ public class UnitRemoteSynchronizer {
 //            case CONNECTION:
 //                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, ConnectionData.class);
 //                break;
-            case DEVICE:
-                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DeviceData.class);
-                break;
+//            case DEVICE:
+//                new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DeviceData.class);
+//                break;
             case DIMMABLE_LIGHT:
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, DimmableLightData.class);
                 break;
@@ -333,7 +337,7 @@ public class UnitRemoteSynchronizer {
                 new StateObservation<>(unitRemote, transactionBuffer, rsbInformer, VideoRgbSourceData.class);
                 break;
             default:
-                if (UnitType.CONNECTION.equals(unitType) || UnitType.LOCATION.equals(unitType)) {
+                if (UnitType.CONNECTION.equals(unitType) || UnitType.LOCATION.equals(unitType) || UnitType.DEVICE.equals(unitType)) {
                     // ignore both to avoid exceptions...
                 } else {
                     try {

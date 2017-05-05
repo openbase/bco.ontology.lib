@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.trigger;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.system.jp.JPRsbScope;
+import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemoteImpl;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
@@ -46,7 +46,7 @@ public class TriggerFactory implements Factory {
         new ServerConnection();
 
         try {
-            RsbCommunication.startRsbListener(JPService.getProperty(JPRsbScope.class).getValue(), changeCategoryObservable);
+            RsbCommunication.startRsbListener(JPService.getProperty(JPOntologyScope.class).getValue(), changeCategoryObservable);
         } catch (InterruptedException | JPNotAvailableException e) {
             throw new CouldNotPerformException("Could not activate rsb listener!", e);
         }

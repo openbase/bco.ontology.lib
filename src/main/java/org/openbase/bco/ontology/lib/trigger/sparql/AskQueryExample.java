@@ -18,19 +18,16 @@
  */
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
-import org.apache.commons.lang.time.DateUtils;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.pattern.Observable;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.ActivationStateType.ActivationState;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 /**
  * The class contains examples of ASK queries, which can be used to generate triggers or rather triggerConfig. They can be used complete or as pattern.
@@ -53,7 +50,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:ColorableLight . "
-                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // refer to the observation and check if the state value is on
@@ -74,7 +71,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Tile . "
-                        + "?obs NS:hasProviderService NS:PRESENCE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -96,7 +93,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Television . "
-                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -121,7 +118,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:User . "
-                        + "?obs NS:hasProviderService NS:PRESENCE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -142,7 +139,7 @@ public class AskQueryExample {
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:SmokeDetector . "
-                        + "?obs NS:hasProviderService NS:SMOKE_STATE_SERVICE . "
+                        + "?obs NS:hasProviderService NS:SmokeStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
@@ -170,35 +167,36 @@ public class AskQueryExample {
      * @return String in format yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public static String getCurrentDateTime() {
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-        final Date date = new Date();
+//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+//        final Date date = new Date();
 
-        return simpleDateFormat.format(date);
+        return new DateTime().toString();
     }
 
-    /**
-     * Method adds/subtracts time to the current dateTime.
-     *
-     * @param minutes The minutes.
-     * @param hours The hours.
-     * @param days The days.
-     * @param months The months.
-     * @param years The years.
-     * @return The changed dateTime as String.
-     */
-    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months, final int years) {
-
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
-        final Date now = new Date();
-
-        Date newDate = DateUtils.addHours(now, hours);
-        newDate = DateUtils.addMinutes(newDate, minutes);
-        newDate = DateUtils.addDays(newDate, days);
-        newDate = DateUtils.addMonths(newDate, months);
-        newDate = DateUtils.addYears(newDate, years);
-
-        return simpleDateFormat.format(newDate);
-    }
+//    /**
+//     * Method adds/subtracts time to the current dateTime.
+//     *
+//     * @param minutes The minutes.
+//     * @param hours The hours.
+//     * @param days The days.
+//     * @param months The months.
+//     * @param years The years.
+//     * @return The changed dateTime as String.
+//     */
+//    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months, final int years) {
+//
+//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.ENGLISH);
+//        final Date now = new Date();
+//
+//        Date newDate = DateUtils.addHours(now, hours);
+//        newDate = DateUtils.addMinutes(newDate, minutes);
+//        newDate = DateUtils.addDays(newDate, days);
+//        newDate = DateUtils.addMonths(newDate, months);
+//        newDate = DateUtils.addYears(newDate, years);
+//
+//        return simpleDateFormat.format(newDate);
+//    }
+    //TODO adapt method with joda time...
 
     /**
      * Just an example trigger. Do not use method. Take the example code and modify.
@@ -208,7 +206,8 @@ public class AskQueryExample {
      */
     public void exampleTrigger() throws CouldNotPerformException, InterruptedException {
 
-        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
+        final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN)
+                .addUnitType(UnitType.COLORABLE_LIGHT).addServiceType(ServiceType.POWER_STATE_SERVICE).build();
         final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel("trigger0").setQuery(AskQueryExample.QUERY_0)
                 .setDependingOntologyChange(ontologyChange).build();
 

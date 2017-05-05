@@ -16,35 +16,37 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.system.jp;
+package org.openbase.bco.ontology.lib.jp;
 
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 01.03.17.
+ * @author agatting on 22.02.17.
  */
-public class JPServerPingUri extends AbstractJPString {
+public class JPOntologyDatabaseURL extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--serverPingUri", "--ontologyPingUri", "--serverPingUri"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-db-url"};
 
     /**
-     * Constructor for the JPServerPingUri class.
+     * Constructor for the JPOntologyDatabaseUri class.
      */
-    public JPServerPingUri() {
+    public JPOntologyDatabaseURL() {
         super(COMMAND_IDENTIFIERS);
     }
 
     @Override
     protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/$/ping";
+        return JPService.getProperty(JPOntologyURL.class).getValue() + "/bco.ontology/";
     }
 
     @Override
     public String getDescription() {
-        return "ServerPingUri property is used to set the ping address of the ontology server, which has to be reached.";
+        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
     }
+
 }

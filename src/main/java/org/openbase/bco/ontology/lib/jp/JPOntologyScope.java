@@ -16,34 +16,35 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
+package org.openbase.bco.ontology.lib.jp;
+
+import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 25.03.17.
+ * @author agatting on 27.02.17.
  */
-public class StateValueTimestamp {
-    private final String stateValue;
-    private final String timestamp;
+public class JPOntologyScope extends AbstractJPString {
 
-    public StateValueTimestamp(final String stateValue, final String timestamp) {
-        this.stateValue = stateValue;
-        this.timestamp = timestamp;
+    /**
+     * Command line argument strings.
+     */
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-scope"};
+
+    /**
+     * Constructor for the JPOntologyDatabaseUri class.
+     */
+    public JPOntologyScope() {
+        super(COMMAND_IDENTIFIERS);
     }
 
-    /**
-     * Getter for stateValue.
-     *
-     * @return stateValue.
-     */
-    public String getStateValue() {
-        return stateValue; }
+    @Override
+    protected String getPropertyDefaultValue() throws JPNotAvailableException {
+        return "/ontology/rsb";
+    }
 
-    /**
-     * Getter for timestamp.
-     *
-     * @return timestamp.
-     */
-    public String getTimestamp() {
-        return timestamp; }
-
+    @Override
+    public String getDescription() {
+        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
+    }
 }

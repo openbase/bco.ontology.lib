@@ -34,8 +34,8 @@ import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
-import org.openbase.bco.ontology.lib.system.jp.JPTBoxDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -69,7 +69,10 @@ public interface SparqlUpdateWeb {
      * Method processes a sparql update (update string) to the main database of the ontology server.
      *
      * @param updateString The sparql update string.
+     * @param serviceForm The service form.
      * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
+     * @throws CouldNotPerformException CouldNotPerformException
+     * @throws JPServiceException JPServiceException
      */
     static boolean sparqlUpdateToMainOntology(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
             , JPServiceException {
@@ -77,7 +80,7 @@ public interface SparqlUpdateWeb {
         final String serverServiceForm = getServerServiceForm(serviceForm);
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + serverServiceForm);
+        final HttpPost httpPost = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
@@ -94,12 +97,30 @@ public interface SparqlUpdateWeb {
         }
     }
 
+    static void sparqlUpdateToMainOntologyViaRetry(final String sparqlUpdateExpr, final ServerServiceForm serviceForm) throws CouldNotPerformException {
+        try {
+            boolean isHttpSuccess = false;
+
+            while (!isHttpSuccess) {
+                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, serviceForm);
+
+                if (!isHttpSuccess) {
+                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                }
+            }
+        } catch (JPServiceException | CouldNotPerformException | InterruptedException e) {
+            throw new CouldNotPerformException("Could not send aggregation to server... ");
+        }
+    }
+
     /**
      * Method processes a sparql update (update string) to all databases of the ontology server (main and tbox databases).
      *
      * @param updateString The sparql update string.
+     * @param serviceForm The service form.
      * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
      * @throws CouldNotPerformException CouldNotPerformException is thrown if request was not successful, because of e.g. update string is broken.
+     * @throws JPServiceException JPServiceException
      */
     static boolean sparqlUpdateToAllDataBases(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
             , JPServiceException {
@@ -107,22 +128,22 @@ public interface SparqlUpdateWeb {
         final String serverServiceForm = getServerServiceForm(serviceForm);
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + serverServiceForm);
-        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseUri.class).getValue() + serverServiceForm);
+        final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
+//        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
 
         final List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceForm, updateString));
 
         try {
             httpPostMain.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+//            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             final HttpResponse httpResponseMain = httpclient.execute(httpPostMain);
-            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
+//            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
 
             final int codeMain = httpResponseMain.getStatusLine().getStatusCode();
-            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
+//            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
 
-            return isHttpRequestSuccess(codeMain) && isHttpRequestSuccess(codeTBox);
+            return isHttpRequestSuccess(codeMain);
         } catch (IOException e) {
             ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
             return false;
@@ -134,15 +155,17 @@ public interface SparqlUpdateWeb {
      *
      * @param queryString The query String.
      * @return A resultSet with potential solutions.
+     * @throws IOException IOException
+     * @throws JPServiceException JPServiceException
      */
     static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
         try {
             final Query query = QueryFactory.create(queryString) ;
-            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
                     + "sparql", query);
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
-            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
                     + " failed. Connection establishment refused. Server offline?");
         }
     }
@@ -153,12 +176,12 @@ public interface SparqlUpdateWeb {
         while (resultSet == null) {
             try {
                 final Query query = QueryFactory.create(queryString) ;
-                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseUri.class).getValue()
+                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
                         + "sparql", query);
                 resultSet = queryExecution.execSelect();
             } catch (QueryExceptionHTTP e) {
                 //retry
-                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql"
+                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
                         + " failed. Connection establishment refused. Server offline? Retry... ", e, LOGGER, LogLevel.WARN);
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             }

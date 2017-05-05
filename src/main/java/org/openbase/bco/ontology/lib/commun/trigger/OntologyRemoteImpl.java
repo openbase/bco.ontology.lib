@@ -28,7 +28,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.jp.JPOntologyDatabaseUri;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
@@ -95,7 +95,7 @@ public class OntologyRemoteImpl implements OntologyRemote {
         params.add(new BasicNameValuePair("query", query));
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpGet httpGet = new HttpGet(JPService.getProperty(JPOntologyDatabaseUri.class).getValue() + "sparql?" + URLEncodedUtils.format(params, "UTF-8"));
+        final HttpGet httpGet = new HttpGet(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql?" + URLEncodedUtils.format(params, "UTF-8"));
 
         final HttpEntity httpEntity = httpclient.execute(httpGet).getEntity();
 

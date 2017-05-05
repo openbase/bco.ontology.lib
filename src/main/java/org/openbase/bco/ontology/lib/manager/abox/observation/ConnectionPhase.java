@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
 import javafx.util.Pair;
+import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
@@ -45,7 +46,7 @@ import java.util.Locale;
 public class ConnectionPhase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPhase.class);
-    private final SimpleDateFormat dateFormat;
+//    private final SimpleDateFormat dateFormat;
     private final String remoteUnitId;
     private String subj_CurConnectionPhase;
     private boolean wasConnected;
@@ -53,7 +54,7 @@ public class ConnectionPhase {
 
     public ConnectionPhase(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer) throws JPServiceException, NotAvailableException {
 
-        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
+//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.remoteUnitId = unitRemote.getId().toString();
         this.transactionBuffer = transactionBuffer;
 
@@ -96,10 +97,11 @@ public class ConnectionPhase {
         final List<TripleArrayList> whereTriples = new ArrayList<>();
 
         if (activationState.equals(ActivationState.State.ACTIVE)) {
-            final Date now = new Date();
-            final String dateTime = dateFormat.format(now);
+//            final Date now = new Date();
+//            final String dateTime = dateFormat.format(now);
+            final String dateTime = new DateTime().toString();
             subj_CurConnectionPhase = "connectionPhase" + remoteUnitId + dateTime.substring(0, dateTime.indexOf("+")); // must be the same at start and close!
-            final String obj_Timestamp = "\"" + dateFormat.format(now) + "\"^^xsd:dateTime";
+            final String obj_Timestamp = "\"" + dateTime + "\"^^xsd:dateTime";
 
             insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
             insertTriples.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
@@ -111,7 +113,7 @@ public class ConnectionPhase {
 
         } else if (activationState.equals(ActivationState.State.DEACTIVE)) {
 
-            final String obj_Timestamp = "\"" + dateFormat.format(new Date()) + "\"^^xsd:dateTime";
+            final String obj_Timestamp = "\"" + new DateTime().toString() + "\"^^xsd:dateTime";
 //            insertTriple.add(new TripleArrayList(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
 //            insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
             insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
