@@ -210,6 +210,16 @@ public class StaticSparqlExpression {
                 + "}";
     }
 
+    public static final String deleteAllObservations =
+            "PREFIX NS: <" + OntConfig.NS + "> "
+            + "DELETE { "
+                + "?observation ?p ?o . "
+            + "} WHERE { "
+                + "?observation ?p ?o . "
+                + "?observation a NS:Observation . "
+            + "}";
+
+
     public static String deleteObservationOfTimeFrame(final String dateTimeFrom, final String dateTimeUntil) {
         return "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
@@ -219,9 +229,16 @@ public class StaticSparqlExpression {
                     + "?obs ?p ?o . "
                     + "?obs a NS:Observation . "
                     + "?obs NS:hasTimeStamp ?timestamp . "
-                    + "FILTER (?timestamp < " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
+                    + "FILTER (?timestamp < " + dateTimeFrom + " || ?timestamp >= " + dateTimeUntil + " ) . "
                 + "}";
     }
+
+    public final static String countAllTriples =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+            + "SELECT (count(*) as ?count) WHERE { "
+                + "?s ?p ?o . "
+            + "}";
 
 //    public static String test(final String timestampUntil) {
 //

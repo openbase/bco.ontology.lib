@@ -189,7 +189,7 @@ public class HeartBeatCommunication {
 
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
-                    System.out.println(sparqlUpdate);
+//                    System.out.println(sparqlUpdate);
 
                     if (!SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
                         throw new CouldNotProcessException("Dropped heartbeat update. Server offline?");
@@ -224,7 +224,7 @@ public class HeartBeatCommunication {
             final List<TripleArrayList> insertTriples = new ArrayList<>();
 
             final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateSingleDeleteExpr(getDeleteTripleRecentHeartBeat(), null);
-            System.out.println(sparqlUpdateDelete);
+//            System.out.println(sparqlUpdateDelete);
 
             // add initial instance "recentHeartBeat" with initial timestamp
             insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));

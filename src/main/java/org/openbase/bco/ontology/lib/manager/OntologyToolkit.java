@@ -173,7 +173,7 @@ public interface OntologyToolkit {
             try {
                 input = new FileInputStream(path);
             } catch (FileNotFoundException e) {
-                throw new IllegalArgumentException("File not found!");
+                throw new IllegalArgumentException("File in path " + path + " not found!");
             }
         }
 
