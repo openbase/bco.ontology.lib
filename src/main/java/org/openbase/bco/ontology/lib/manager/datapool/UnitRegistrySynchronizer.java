@@ -23,7 +23,8 @@ import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.manager.tbox.TBoxSynchronizer;
+import org.openbase.bco.ontology.lib.manager.tbox.OntClassMapping;
+import org.openbase.bco.ontology.lib.manager.tbox.OntClassMappingImpl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMappingImpl;
@@ -77,7 +78,7 @@ public class UnitRegistrySynchronizer {
     private UnitRegistryRemote unitRegistryRemote;
     private final TransactionBuffer transactionBufferImpl;
     private final Stopwatch stopwatch;
-    private final TBoxSynchronizer tBoxSynchronizer;
+    private final OntClassMapping ontClassMapping;
 
     /**
      * Constructor for UnitRegistrySynchronizer.
@@ -92,7 +93,7 @@ public class UnitRegistrySynchronizer {
         this.transactionBufferImpl = transactionBuffer;
         this.registryDiff = new ProtobufListDiff<>();
         this.stopwatch = new Stopwatch();
-        this.tBoxSynchronizer = new TBoxSynchronizer();
+        this.ontClassMapping = new OntClassMappingImpl();
 
         // for init get the whole unitConfigList
         final List<UnitConfig> unitConfigList = getUnitConfigList();
@@ -106,7 +107,7 @@ public class UnitRegistrySynchronizer {
     private void startInitialization(final List<UnitConfig> unitConfigList) throws InterruptedException, CouldNotPerformException, JPServiceException {
 
         // init: synchronize tbox based on server ontModel
-        final OntModel ontModel = tBoxSynchronizer.extendTBoxViaServerModel(unitConfigList);
+        final OntModel ontModel = ontClassMapping.extendTBoxViaOntModel(unitConfigList);
         // upload ontModel
         OntModelWeb.addOntModelViaRetry(ontModel);
 
@@ -195,7 +196,7 @@ public class UnitRegistrySynchronizer {
         deleteTriples.addAll(ontPropertyMapping.getDeletePropertyTriples(unitConfigs));
 
         // insert tbox changes
-        insertTriples.addAll(tBoxSynchronizer.extendTBoxViaTriples(unitConfigs));
+        insertTriples.addAll(ontClassMapping.extendTBoxViaTriple(unitConfigs));
         // insert instances
         insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriples(unitConfigs));
         // insert properties
@@ -210,7 +211,7 @@ public class UnitRegistrySynchronizer {
         final List<TripleArrayList> triples = new ArrayList<>();
 
         // insert tbox changes
-        triples.addAll(tBoxSynchronizer.extendTBoxViaTriples(unitConfigs));
+        triples.addAll(ontClassMapping.extendTBoxViaTriple(unitConfigs));
         // insert instances
         triples.addAll(ontInstanceMapping.getAllMissingConfigTriples(unitConfigs));
         // insert properties

@@ -18,27 +18,14 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.joda.time.DateTime;
-import org.openbase.bco.dal.remote.unit.Units;
+import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
-import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
-import org.openbase.bco.ontology.lib.testing.DuplicateData;
-import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -53,11 +40,9 @@ import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
-import rst.domotic.unit.UnitConfigType;
-import rst.domotic.unit.UnitTemplateType;
+import rst.domotic.service.ServiceTemplateType;
 
-import java.io.InputStream;
-import java.util.List;
+import java.util.Arrays;
 
 /**
  * @author agatting on 20.10.16.
@@ -102,8 +87,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
             new HeartBeatCommunication();
 
-            stopwatch.waitForStart(30000);
-            new Measurement();
+//            stopwatch.waitForStart(40000);
+//            new Measurement();
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

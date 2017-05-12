@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
+import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
@@ -91,6 +92,11 @@ public class TriggerImpl implements Trigger {
         };
         this.ontologyObserver = (Observable<OntologyChange> source, OntologyChange data) -> {
             if (!hasConnection.equals(ConnectionState.DISCONNECTED)) {
+//                if (Measurement.measurementWatch.isRunning()) {
+//                    Measurement.measurementWatch.stop();
+//                    Measurement.triggerImplFromRSB.add(Measurement.measurementWatch.getTime());
+//                    Measurement.measurementWatch.restart();
+//                }
                 notifyOntologyChange(data);
             }
         };

@@ -27,7 +27,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.jps.core.JPService;

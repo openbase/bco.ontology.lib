@@ -49,7 +49,7 @@ public class AskQueryExample {
                         + "?obs a NS:Observation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:ColorableLight . "
+                        + "?unit a NS:PowerSwitch . "
                         + "?obs NS:hasProviderService NS:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "

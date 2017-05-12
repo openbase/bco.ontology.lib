@@ -21,7 +21,6 @@ package org.openbase.bco.ontology.lib.manager.tbox;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -45,14 +44,11 @@ import java.util.stream.Collectors;
 /**
  * @author agatting on 20.02.17.
  */
-public class TBoxSynchronizer {
+public class OntClassMappingImpl implements OntClassMapping {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TBoxSynchronizer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntClassMappingImpl.class);
 
-    public OntModel extendTBoxViaServerModel(final List<UnitConfig> unitConfigList) throws InterruptedException, JPServiceException {
-
-        // get tbox from server. if no available: create new from dependency.
-//        OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+    public OntModel extendTBoxViaOntModel(final List<UnitConfig> unitConfigList) {
         OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
 
         // get missing unitTypes and serviceStates
@@ -62,7 +58,7 @@ public class TBoxSynchronizer {
         return ontModel;
     }
 
-    public List<TripleArrayList> extendTBoxViaTriples(final List<UnitConfig> unitConfigs) {
+    public List<TripleArrayList> extendTBoxViaTriple(final List<UnitConfig> unitConfigs) {
 
         List<TripleArrayList> triples = new ArrayList<>();
 

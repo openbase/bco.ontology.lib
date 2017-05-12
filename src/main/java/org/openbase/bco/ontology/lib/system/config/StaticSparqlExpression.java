@@ -210,13 +210,16 @@ public class StaticSparqlExpression {
                 + "}";
     }
 
-    public static final String deleteAllObservations =
+    public static final String deleteAllObservationsWithFilter =
             "PREFIX NS: <" + OntConfig.NS + "> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
             + "DELETE { "
                 + "?observation ?p ?o . "
             + "} WHERE { "
                 + "?observation ?p ?o . "
                 + "?observation a NS:Observation . "
+                + "?observation NS:hasTimeStamp ?timestamp . "
+                + "FILTER (?timestamp > \"2017-04-22T00:00:00.000+02:00\"^^xsd:dateTime) . "
             + "}";
 
 

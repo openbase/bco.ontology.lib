@@ -32,6 +32,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -125,7 +126,11 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     }
 
     private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException, JPServiceException {
-        
+//        if (Measurement.measurementWatch.isRunning()) {
+//            Measurement.measurementWatch.stop();
+//            Measurement.unitChange.add(Measurement.measurementWatch.getTime());
+//            Measurement.measurementWatch.restart();
+//        }
         final List<ServiceType> serviceList = new ArrayList<>();
         // main list, which contains complete observation instances
         final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
@@ -197,11 +202,20 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             }
             tripleArrayListsBuf.clear();
         }
-
         final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(tripleArrayLists);
 //        System.out.println(sparqlUpdateExpr);
 
+//        if (Measurement.measurementWatch.isRunning()) {
+//            Measurement.measurementWatch.stop();
+//            Measurement.sendSPARQL.add(Measurement.measurementWatch.getTime());
+//            Measurement.measurementWatch.restart();
+//        }
         final boolean isHttpSuccess = connectionPhase.sendToServer(transactionBuffer, sparqlUpdateExpr);
+//        if (Measurement.measurementWatch.isRunning()) {
+//            Measurement.measurementWatch.stop();
+//            Measurement.answerOfServerToOM.add(Measurement.measurementWatch.getTime());
+//            Measurement.measurementWatch.restart();
+//        }
         if (isHttpSuccess) {
             rsbNotification(serviceList);
         }
