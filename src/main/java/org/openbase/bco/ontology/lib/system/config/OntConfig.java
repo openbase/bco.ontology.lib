@@ -325,6 +325,11 @@ public final class OntConfig {
     public enum OntExpr {
 
         /**
+         * Keyword to insert a subject as subclass of the named object.
+         */
+        SUB_CLASS_OF("rdfs:subClassOf"),
+
+        /**
          * Pattern to insert an individual to a class: "is a" - scheme.
          */
         A("a"),

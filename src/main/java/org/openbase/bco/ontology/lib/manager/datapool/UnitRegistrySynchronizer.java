@@ -19,19 +19,19 @@
 package org.openbase.bco.ontology.lib.manager.datapool;
 
 import javafx.util.Pair;
-import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappingImpl;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMapping;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMappingImpl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMapping;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntInstanceMappingImpl;
-import org.openbase.bco.ontology.lib.manager.abox.configuration.OntPropertyMapping;
-import org.openbase.bco.ontology.lib.manager.abox.configuration.OntPropertyMappingImpl;
+import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMapping;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jps.exception.JPServiceException;
@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 public class UnitRegistrySynchronizer {
 
     //TODO set and list...standardize!
+    //TODO get notification about rst types if changed...?!
 
     public static final ObservableImpl<List<UnitConfig>> newUnitConfigObservable = new ObservableImpl<>();
     //TODO second observable for updated unitConfigs?
@@ -69,12 +70,12 @@ public class UnitRegistrySynchronizer {
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRegistrySynchronizer.class);
     private final ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
 
-    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMap;
-    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMap;
-//    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMap;
+    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMapUnitConfig;
+    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMapUnitConfig;
+//    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMapUnitConfig;
 
     private final OntInstanceMapping ontInstanceMapping = new OntInstanceMappingImpl();
-    private final OntPropertyMapping ontPropertyMapping = new OntPropertyMappingImpl();
+    private final OntRelationMapping ontRelationMapping = new OntRelationMappingImpl();
     private UnitRegistryRemote unitRegistryRemote;
     private final TransactionBuffer transactionBufferImpl;
     private final Stopwatch stopwatch;
@@ -89,7 +90,6 @@ public class UnitRegistrySynchronizer {
      * @throws JPServiceException JPServiceException
      */
     public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) throws InterruptedException, CouldNotPerformException, JPServiceException {
-
         this.transactionBufferImpl = transactionBuffer;
         this.registryDiff = new ProtobufListDiff<>();
         this.stopwatch = new Stopwatch();
@@ -97,22 +97,15 @@ public class UnitRegistrySynchronizer {
 
         // for init get the whole unitConfigList
         final List<UnitConfig> unitConfigList = getUnitConfigList();
-        // start thread to synch tbox and abox initial
-        startInitialization(unitConfigList);
+
+        // upload ontModel
+        OntModelWeb.addOntModelViaRetry(OntologyToolkit.loadOntModelFromFile(null, null));
+        // fill abox initial with whole registry unitConfigs
+        aBoxSynchInitUnits(unitConfigList); //TODO
+
         // start thread to synch tbox and abox changes by observer
         startUpdateObserver();
         LOGGER.info("UnitRegistrySynchronizer started successfully.");
-    }
-
-    private void startInitialization(final List<UnitConfig> unitConfigList) throws InterruptedException, CouldNotPerformException, JPServiceException {
-
-        // init: synchronize tbox based on server ontModel
-        final OntModel ontModel = ontClassMapping.extendTBoxViaOntModel(unitConfigList);
-        // upload ontModel
-        OntModelWeb.addOntModelViaRetry(ontModel);
-
-        // fill abox initial with whole registry unitConfigs
-        aBoxSynchInitUnits(unitConfigList, ontModel);
     }
 
     private List<UnitConfig> getUnitConfigList() throws NotAvailableException, InterruptedException {
@@ -137,24 +130,25 @@ public class UnitRegistrySynchronizer {
 
             final List<UnitConfig> unitConfigs = unitRegistryData.getUnitGroupUnitConfigList();
 
+
             registryDiff.diff(unitConfigs);
-            identifiableNewMessageMap = registryDiff.getNewMessageMap();
-            identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
+            identifiableNewMessageMapUnitConfig = registryDiff.getNewMessageMap();
+            identifiableUpdatedMessageMapUnitConfig = registryDiff.getUpdatedMessageMap();
 //            identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
 
             try {
-                if (!identifiableNewMessageMap.isEmpty()) {
-                    final List<UnitConfig> unitConfigsBuf = new ArrayList<>(identifiableNewMessageMap.getMessages());
+                if (!identifiableNewMessageMapUnitConfig.isEmpty()) {
+                    final List<UnitConfig> unitConfigsBuf = new ArrayList<>(identifiableNewMessageMapUnitConfig.getMessages());
                     aBoxSynchNewUnits(unitConfigsBuf);
                     newUnitConfigObservable.notifyObservers(unitConfigsBuf);
                 }
 
-                if (!identifiableUpdatedMessageMap.isEmpty()) {
-                    final List<UnitConfig> unitConfigsBuf = new ArrayList<>(identifiableUpdatedMessageMap.getMessages());
+                if (!identifiableUpdatedMessageMapUnitConfig.isEmpty()) {
+                    final List<UnitConfig> unitConfigsBuf = new ArrayList<>(identifiableUpdatedMessageMapUnitConfig.getMessages());
                     aBoxSynchUpdateUnits(unitConfigsBuf);
                 }
 
-            } catch (InterruptedException | JPServiceException | MultiException e) {
+            } catch (InterruptedException | JPServiceException | NotAvailableException | MultiException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
 //            if (!identifiableRemovedMessageMap.isEmpty()) {
@@ -166,41 +160,47 @@ public class UnitRegistrySynchronizer {
         this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
     }
 
-    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigs, final OntModel ontModel) throws InstantiationException {
+    private void aBoxSynchInitUnits(final List<UnitConfig> unitConfigs) throws InstantiationException {
         try {
-            final List<TripleArrayList> insertTriples = new ArrayList<>();
+            final List<RdfTriple> insertTriples = new ArrayList<>();
+
+            //TODO insert all config first...
 
             //TODO delete first
+            // insert tbox
+            insertTriples.addAll(ontClassMapping.getUnitTypeClasses());
             // insert instances
-            insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriplesViaOntModel(ontModel, unitConfigs));
-            // insert properties
-            insertTriples.addAll(ontPropertyMapping.getMissingPropertyTriples(unitConfigs));
+            insertTriples.addAll(ontInstanceMapping.getInsertConfigInstances(unitConfigs));
+            insertTriples.addAll(ontInstanceMapping.getInsertStateAndServiceInstances());
+            // insert relations
+            insertTriples.addAll(ontRelationMapping.getInsertConfigRelations(unitConfigs));
+            insertTriples.addAll(ontRelationMapping.getInsertStateRelations(null));
 
             // convert to sparql expression and upload...or save in buffer, if no server connection
             convertToSparqlExprAndUpload(null, insertTriples);
-        } catch (JPServiceException | IllegalArgumentException | CouldNotPerformException e) {
+        } catch (JPServiceException | IllegalArgumentException e) {
             throw new InstantiationException(this, e);
         }
     }
 
-    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException {
+    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException, NotAvailableException {
 
-        final List<TripleArrayList> deleteTriples = new ArrayList<>();
-        final List<TripleArrayList> insertTriples = new ArrayList<>();
+        final List<RdfTriple> deleteTriples = new ArrayList<>();
+        final List<RdfTriple> insertTriples = new ArrayList<>();
 
         // delete unit and states instances
-        deleteTriples.addAll(ontInstanceMapping.getDeleteTripleOfUnitsAndStates(unitConfigs));
+        deleteTriples.addAll(ontInstanceMapping.getDeleteUnitInstances(unitConfigs));
         // delete providerService instances
         //TODO delete providerService (?)
         // delete unit properties
-        deleteTriples.addAll(ontPropertyMapping.getDeletePropertyTriples(unitConfigs));
+        deleteTriples.addAll(ontRelationMapping.getDeleteUnitRelations(unitConfigs));
 
         // insert tbox changes
-        insertTriples.addAll(ontClassMapping.extendTBoxViaTriple(unitConfigs));
+        insertTriples.addAll(ontClassMapping.getUnitTypeClasses(unitConfigs));
         // insert instances
-        insertTriples.addAll(ontInstanceMapping.getAllMissingConfigTriples(unitConfigs));
+        insertTriples.addAll(ontInstanceMapping.getInsertConfigInstances(unitConfigs));
         // insert properties
-        insertTriples.addAll(ontPropertyMapping.getMissingPropertyTriples(unitConfigs));
+        insertTriples.addAll(ontRelationMapping.getInsertConfigRelations(unitConfigs));
 
         // convert to sparql expression and upload...or save in buffer, if no server connection
         convertToSparqlExprAndUpload(deleteTriples, insertTriples);
@@ -208,14 +208,14 @@ public class UnitRegistrySynchronizer {
 
     private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
         // insert tbox changes
-        triples.addAll(ontClassMapping.extendTBoxViaTriple(unitConfigs));
+        triples.addAll(ontClassMapping.getUnitTypeClasses(unitConfigs));
         // insert instances
-        triples.addAll(ontInstanceMapping.getAllMissingConfigTriples(unitConfigs));
+        triples.addAll(ontInstanceMapping.getInsertConfigInstances(unitConfigs));
         // insert properties
-        triples.addAll(ontPropertyMapping.getMissingPropertyTriples(unitConfigs));
+        triples.addAll(ontRelationMapping.getInsertConfigRelations(unitConfigs));
 
         // convert to sparql expression and upload...or save in buffer, if no server connection
         convertToSparqlExprAndUpload(null, triples);
@@ -223,20 +223,20 @@ public class UnitRegistrySynchronizer {
 
 //    private void aBoxSynchRemoveUnits(final List<UnitConfig> unitConfigList) {
 //
-//        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+//        final List<RdfTriple> tripleArrayLists = new ArrayList<>();
 //
 //        // delete unit and states instances
 //        tripleArrayLists.addAll(ontInstanceMapping.getDeleteTripleOfUnitsAndStates(unitConfigList));
 //        // delete providerService instances
 //        //TODO delete providerService (?)
 //        // delete unit properties
-//        tripleArrayLists.addAll(ontPropertyMapping.getDeletePropertyTriples(unitConfigList));
+//        tripleArrayLists.addAll(ontRelationMapping.getDeleteUnitRelations(unitConfigList));
 //
 //        //convert to sparql expression and upload...or save, if no server connection
 //        convertToSparqlExprAndUpload(tripleArrayLists, null);
 //    }
 
-    private void convertToSparqlExprAndUpload(final List<TripleArrayList> deleteTriple, final List<TripleArrayList> insertTriple) throws JPServiceException {
+    private void convertToSparqlExprAndUpload(final List<RdfTriple> deleteTriple, final List<RdfTriple> insertTriple) throws JPServiceException {
         String multiExprUpdate = "";
 
         try {

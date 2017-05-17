@@ -19,20 +19,17 @@
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
-import org.openbase.bco.ontology.lib.testing.Measurement;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -58,7 +55,6 @@ import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -133,9 +129,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 //        }
         final List<ServiceType> serviceList = new ArrayList<>();
         // main list, which contains complete observation instances
-        final List<TripleArrayList> tripleArrayLists = new ArrayList<>();
+        final List<RdfTriple> rdfTriples = new ArrayList<>();
         // first collect all components of the individual observation, then add to main list (integrity reason)
-        List<TripleArrayList> tripleArrayListsBuf = new ArrayList<>();
+        List<RdfTriple> rdfTripleArrayListsBuf = new ArrayList<>();
 
         // declaration of predicates and classes, which are static
         final String obj_Observation = OntCl.OBSERVATION.getName();
@@ -166,30 +162,30 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
                     final String obj_dateTime = "\"" + dateFormat.format(timestamp) + "\"^^xsd:dateTime";
 //                    final String obj_dateTime = "\"" + timestamp + "\"^^xsd:dateTime";
-                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasTimeStamp, obj_dateTime));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasTimeStamp, obj_dateTime));
 
                     //### add observation instance to observation class ###\\
-                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_IsA, obj_Observation));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_IsA, obj_Observation));
 
                     //### unitID triple ###\\
-                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasUnitId, remoteUnitId));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasUnitId, remoteUnitId));
 
                     //### serviceType triple ###\\
                     final String obj_serviceType = getServiceType(methodStateType.getName());
                     serviceList.add(serviceTypeMap.get(obj_serviceType));
-                    tripleArrayListsBuf.add(new TripleArrayList(subj_Observation, pred_HasService, obj_serviceType));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasService, obj_serviceType));
 
                     //### stateValue triple ###\\
-                    final int sizeBuf = tripleArrayListsBuf.size();
-                    tripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, tripleArrayListsBuf);
+                    final int sizeBuf = rdfTripleArrayListsBuf.size();
+                    rdfTripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
 
-                    if (tripleArrayListsBuf.size() == sizeBuf) {
+                    if (rdfTripleArrayListsBuf.size() == sizeBuf) {
                         // incomplete observation instance. dropped...
-                        tripleArrayListsBuf.clear();
+                        rdfTripleArrayListsBuf.clear();
                     }
 
                     // no exception produced: observation individual complete. add to main list
-                    tripleArrayLists.addAll(tripleArrayListsBuf);
+                    rdfTriples.addAll(rdfTripleArrayListsBuf);
                 }
             } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
                 // Could not collect all elements of observation instance
@@ -200,9 +196,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             } catch (NoSuchElementException e) {
 
             }
-            tripleArrayListsBuf.clear();
+            rdfTripleArrayListsBuf.clear();
         }
-        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(tripleArrayLists);
+        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(rdfTriples);
 //        System.out.println(sparqlUpdateExpr);
 
 //        if (Measurement.measurementWatch.isRunning()) {

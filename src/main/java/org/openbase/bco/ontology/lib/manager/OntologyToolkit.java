@@ -36,8 +36,13 @@ import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.processing.StringProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -112,18 +117,6 @@ public interface OntologyToolkit {
         } else {
             return ontElement;
         }
-    }
-
-    /**
-     * Method converts a string to noun syntax and add the ontology namespace. See {@link #convertToNounSyntax(String)} and {@link #addNamespace(String)} methods.
-     *
-     * @param ontElementExpr The string, which should be converted to noun syntax and the namespace is added.
-     * @return The converted and namespace added string.
-     * @throws IllegalArgumentException Exception is thrown, if the parameter is null.
-     */
-    static String convertToNounAndAddNS(final String ontElementExpr) throws IllegalArgumentException {
-        final String newExpr = convertToNounSyntax(ontElementExpr);
-        return addNamespace(newExpr);
     }
 
     /**
@@ -269,6 +262,59 @@ public interface OntologyToolkit {
 
     static String addXsdDateTime(final DateTime dateTime) {
         return "\"" + dateTime.toString() + "\"^^xsd:dateTime";
+    }
+
+    static String firstCharToLowerCase(final String input) {
+        return (input != null) ? Character.toLowerCase(input.charAt(0)) + input.substring(1) : null;
+    }
+
+    static String getServiceTypeName(final ServiceType serviceType) throws NotAvailableException {
+        try {
+            if (serviceType == null) {
+                assert false;
+                throw new NotAvailableException("Service");
+            }
+            return StringProcessor.transformUpperCaseToCamelCase(serviceType.name());
+        } catch (CouldNotPerformException e) {
+            throw new NotAvailableException("ServiceName", e);
+        }
+    }
+
+    /**
+     * Method returns the input string in camel case.
+     *
+     * @param input The input, which should be transformed.
+     * @return The input in camel case.
+     * @throws NotAvailableException is thrown in case the input is null.
+     */
+    static String getCamelCaseName(final String input) throws NotAvailableException {
+        try {
+            if (input == null) {
+                assert false;
+                throw new NotAvailableException("Input string is null.");
+            }
+            return StringProcessor.transformUpperCaseToCamelCase(input);
+        } catch (CouldNotPerformException e) {
+            throw new NotAvailableException("Input name", e);
+        }
+    }
+
+    /**
+     * Method returns the input string in literal form, means quotation marks (e.g. "input").
+     *
+     * @param input is the string, which should be transform to literal form.
+     * @return a literal string.
+     */
+    static String addQuotationMarks(final String input) {
+        if (!input.startsWith("\"") && !input.endsWith("\"")) {
+            return "\"" + input + "\"";
+        } else if (input.startsWith("\"") && !input.endsWith("\"")) {
+            return input + "\"";
+        } else if (!input.startsWith("\"") && input.endsWith("\"")) {
+            return "\"" + input;
+        } else {
+            return input;
+        }
     }
 
 }

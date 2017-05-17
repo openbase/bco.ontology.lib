@@ -23,8 +23,8 @@ import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -34,11 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.state.ActivationStateType.ActivationState;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author agatting on 16.03.17.
@@ -93,8 +90,8 @@ public class ConnectionPhase {
         final String obj_ConnectionPhase = OntConfig.OntCl.CONNECTION_PHASE.getName();
         final String obj_RecentHeartBeat = OntConfig.INSTANCE_RECENT_HEARTBEAT;
 
-        final List<TripleArrayList> insertTriples = new ArrayList<>();
-        final List<TripleArrayList> whereTriples = new ArrayList<>();
+        final List<RdfTriple> insertTriples = new ArrayList<>();
+        final List<RdfTriple> whereTriples = new ArrayList<>();
 
         if (activationState.equals(ActivationState.State.ACTIVE)) {
 //            final Date now = new Date();
@@ -103,10 +100,10 @@ public class ConnectionPhase {
             subj_CurConnectionPhase = "connectionPhase" + remoteUnitId + dateTime.substring(0, dateTime.indexOf("+")); // must be the same at start and close!
             final String obj_Timestamp = "\"" + dateTime + "\"^^xsd:dateTime";
 
-            insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-            insertTriples.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
-            insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
-            insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
+            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
+            insertTriples.add(new RdfTriple(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
+            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
+            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
 
             final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
             sendToServer(transactionBuffer, sparqlUpdate);
@@ -114,11 +111,11 @@ public class ConnectionPhase {
         } else if (activationState.equals(ActivationState.State.DEACTIVE)) {
 
             final String obj_Timestamp = "\"" + new DateTime().toString() + "\"^^xsd:dateTime";
-//            insertTriple.add(new TripleArrayList(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-//            insertTriple.add(new TripleArrayList(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
-            insertTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
+//            insertTriple.add(new RdfTriple(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
+//            insertTriple.add(new RdfTriple(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
+            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
 
-            whereTriples.add(new TripleArrayList(subj_CurConnectionPhase, pred_HasFirstConnection, null));
+            whereTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, null));
 
             final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertWhereBundleExpr(insertTriples, whereTriples);
             sendToServer(transactionBuffer, sparqlUpdate);

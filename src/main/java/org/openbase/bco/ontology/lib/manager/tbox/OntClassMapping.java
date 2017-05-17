@@ -18,9 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
-import rst.domotic.unit.UnitConfigType;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.List;
 
@@ -29,7 +28,18 @@ import java.util.List;
  */
 public interface OntClassMapping {
 
-    OntModel extendTBoxViaOntModel(final List<UnitConfigType.UnitConfig> unitConfigList);
+    /**
+     * Method returns the triple information to insert the ontology classes based on the given unitConfigs.
+     *
+     * @param unitConfigs The unitConfigs, which contains the unit types or rather ontology class information.
+     * @return A list of triples, which contains the ontology classes.
+     */
+    List<RdfTriple> getUnitTypeClasses(final List<UnitConfig> unitConfigs);
 
-    List<TripleArrayList> extendTBoxViaTriple(final List<UnitConfigType.UnitConfig> unitConfigs);
+    /**
+     * Method returns the triple information to insert ALL ontology classes.
+     *
+     * @return A list of triples, which contains the ontology classes.
+     */
+    List<RdfTriple> getUnitTypeClasses();
 }

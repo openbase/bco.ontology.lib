@@ -39,11 +39,11 @@ public interface SparqlUpdateExpression {
      * @return A list of strings, which are insert update expressions.
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    static List<String> getSparqlUpdateInsertSingleExpr(final List<TripleArrayList> insertTriples) throws IllegalArgumentException {
+    static List<String> getSparqlUpdateInsertSingleExpr(final List<RdfTriple> insertTriples) throws IllegalArgumentException {
 
         final List<String> expressionList = new ArrayList<>();
 
-        for (final TripleArrayList triple : insertTriples) {
+        for (final RdfTriple triple : insertTriples) {
             final String updateExpression =
                     "PREFIX NS: <" + OntConfig.NS + "> "
                     + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
@@ -64,15 +64,16 @@ public interface SparqlUpdateExpression {
      * @return A single sparql update insert expression (bundle).
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    static String getSparqlUpdateInsertBundleExpr(final List<TripleArrayList> insertTriples) throws IllegalArgumentException {
+    static String getSparqlUpdateInsertBundleExpr(final List<RdfTriple> insertTriples) throws IllegalArgumentException {
 
         // initial part of the large expression
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "INSERT DATA { ";
 
-        for (final TripleArrayList triple : insertTriples) {
+        for (final RdfTriple triple : insertTriples) {
             // add triples to the large expression
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
         }
@@ -81,23 +82,24 @@ public interface SparqlUpdateExpression {
         return multipleUpdateExpression + " } ";
     }
 
-    static String getSparqlUpdateInsertWhereBundleExpr(final List<TripleArrayList> insertTriples, final List<TripleArrayList> whereTriples)
+    static String getSparqlUpdateInsertWhereBundleExpr(final List<RdfTriple> insertTriples, final List<RdfTriple> whereTriples)
             throws IllegalArgumentException {
 
         // initial part of the large expression
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                        + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                         + "INSERT { ";
 
-        for (final TripleArrayList triple : insertTriples) {
+        for (final RdfTriple triple : insertTriples) {
             // add triples to the large expression
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
         }
 
         multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
 
-        for (final TripleArrayList triple : whereTriples) {
+        for (final RdfTriple triple : whereTriples) {
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(triple);
         }
 
@@ -121,34 +123,35 @@ public interface SparqlUpdateExpression {
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null (triple! not list!), to prevent a deletion
      * of whole ontology.
      */
-    static String getSparqlUpdateDeleteAndInsertBundleExpr(final List<TripleArrayList> deleteTriples, final List<TripleArrayList> insertTriples
-            , final List<TripleArrayList> whereTriples) throws IllegalArgumentException {
+    static String getSparqlUpdateDeleteAndInsertBundleExpr(final List<RdfTriple> deleteTriples, final List<RdfTriple> insertTriples
+            , final List<RdfTriple> whereTriples) throws IllegalArgumentException {
 
         String multipleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { ";
 
-        for (final TripleArrayList deleteTriple : deleteTriples) {
+        for (final RdfTriple deleteTriple : deleteTriples) {
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(deleteTriple);
         }
 
         multipleUpdateExpression = multipleUpdateExpression + "} INSERT { ";
 
-        for (final TripleArrayList insertTriple : insertTriples) {
+        for (final RdfTriple insertTriple : insertTriples) {
             multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(insertTriple);
         }
 
         if (whereTriples == null) { // same triples as delete (functional reasons)
             multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
-            for (final TripleArrayList deleteTriple : deleteTriples) {
+            for (final RdfTriple deleteTriple : deleteTriples) {
                 multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(deleteTriple);
             }
 
             multipleUpdateExpression = multipleUpdateExpression + "} ";
         } else {
             multipleUpdateExpression = multipleUpdateExpression + "} WHERE { ";
-            for (final TripleArrayList whereTriple : whereTriples) {
+            for (final RdfTriple whereTriple : whereTriples) {
                 multipleUpdateExpression = multipleUpdateExpression + getTripleCommand(whereTriple);
             }
             multipleUpdateExpression = multipleUpdateExpression + "} ";
@@ -171,11 +174,12 @@ public interface SparqlUpdateExpression {
      * @return A sparql update string to delete a triple.
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    static String getSparqlUpdateSingleDeleteExpr(final TripleArrayList deleteTriple, final String whereExpr) throws IllegalArgumentException {
+    static String getSparqlUpdateSingleDeleteExpr(final RdfTriple deleteTriple, final String whereExpr) throws IllegalArgumentException {
 
         String singleUpdateExpression =
                 "PREFIX NS: <" + OntConfig.NS + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { "
                     + getTripleCommand(deleteTriple);
 
@@ -199,7 +203,7 @@ public interface SparqlUpdateExpression {
      * @return A triple command without sparql update frame.
      * @throws IllegalArgumentException Exception is thrown, if whole triple is null or their elements are all null, to prevent a deletion of whole ontology.
      */
-    static String getTripleCommand(final TripleArrayList triple) throws IllegalArgumentException {
+    static String getTripleCommand(final RdfTriple triple) throws IllegalArgumentException {
 
         if (triple == null) {
             throw new IllegalArgumentException("Could not build delete triple command, cause input triple is null!");
@@ -221,8 +225,9 @@ public interface SparqlUpdateExpression {
 
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equalsIgnoreCase(OntExpr.A.getName()) && (!predicate.startsWith(OntExpr.NS.getName()) || !predicate.startsWith(OntConfig.NS))) {
-            // if predicate isn't an "a" then it's an property with namespace needed.
+        } else if (!predicate.equalsIgnoreCase(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName()) && !predicate.startsWith(OntConfig.NS)
+                && !predicate.startsWith("owl:") && !predicate.startsWith("rdfs:")) {
+//            else if (!predicate.equalsIgnoreCase(OntExpr.A.getName()) && (!predicate.startsWith(OntExpr.NS.getName()) || !predicate.startsWith(OntConfig.NS))) {
             predicate = OntExpr.NS.getName() + predicate;
         }
 
@@ -232,7 +237,6 @@ public interface SparqlUpdateExpression {
         } else if ((!object.startsWith(OntExpr.NS.getName()) || !object.startsWith(OntConfig.NS)) && !object.startsWith("\"")) {
             object = OntExpr.NS.getName() + object;
         }
-
         return subject + " " + predicate + " " + object + " . ";
     }
 }

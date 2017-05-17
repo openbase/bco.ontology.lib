@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -36,13 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,8 +70,8 @@ public class DataAssignation extends DataAggregation {
         this.stopwatch = new Stopwatch();
     }
 
-    protected List<TripleArrayList> identifyServiceType(final HashMap<String, ?> serviceDataMap, final long connectionTimeMilli, final String unitId) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    protected List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceDataMap, final long connectionTimeMilli, final String unitId) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String serviceTypeName : serviceDataMap.keySet()) {
 
@@ -181,9 +178,9 @@ public class DataAssignation extends DataAggregation {
     }
 
     // method only for serviceTypes with one stateValue (bco simpleDiscreteValues stateValues) - no individual distinction necessary
-    private List<TripleArrayList> bcoStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+    private List<RdfTriple> bcoStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -201,8 +198,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> batteryOrBlindOrSmokeStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> batteryOrBlindOrSmokeStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -251,8 +248,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> colorStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> colorStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -319,8 +316,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> handleStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> handleStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -337,8 +334,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> illuminanceStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> illuminanceStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -355,8 +352,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> powerConsumptionStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> powerConsumptionStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -415,8 +412,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> rfidStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> rfidStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -433,8 +430,8 @@ public class DataAssignation extends DataAggregation {
         return null;//TODO
     }
 
-    private List<TripleArrayList> switchStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> switchStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -453,8 +450,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<TripleArrayList> temperatureStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> temperatureStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         try {
             if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
@@ -503,10 +500,10 @@ public class DataAssignation extends DataAggregation {
         return hsbCountMap;
     }
 
-    private List<TripleArrayList> getColorTriple(final long connectionTimeMilli, final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap
+    private List<RdfTriple> getColorTriple(final long connectionTimeMilli, final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap
             , final String unitId, final String serviceType) throws InterruptedException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli / (double) (dateTimeUntil.getMillis() - dateTimeFrom.getMillis()));
         final Set<Triple<Integer, Integer, Integer>> hsbSet = hsbCountMap.keySet();
 
@@ -518,24 +515,24 @@ public class DataAssignation extends DataAggregation {
             final String brightnessValue = String.valueOf(hsb.getRight() * 10);
             final String quantity = String.valueOf(hsbCountMap.get(hsb));
 
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + timeWeighting + "\"^^xsd:double"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + quantity + "\"^^xsd:int"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + timeWeighting + "\"^^xsd:double"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + quantity + "\"^^xsd:int"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
         }
         return triples;
     }
 
-    private List<TripleArrayList> simpleDiscreteValues(final long connectionTimeMilli, final List<ServiceDataCollection> discreteList, final String unitId
+    private List<RdfTriple> simpleDiscreteValues(final long connectionTimeMilli, final List<ServiceDataCollection> discreteList, final String unitId
             , final String serviceType) throws CouldNotPerformException, InterruptedException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final DiscreteStateValues discreteStateValues = new DiscreteStateValues(connectionTimeMilli, discreteList);
 
         final HashMap<String, Long> activationTimeMap = discreteStateValues.getActiveTimePerStateValue();
@@ -546,23 +543,23 @@ public class DataAssignation extends DataAggregation {
             // every stateType has his own aggObs instance!
             final String subj_AggObs = getAggObsInstance(unitId);
 
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), bcoStateType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), bcoStateType));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
         }
         return triples;
     }
 
-    private List<TripleArrayList> simpleAggDiscreteValues(final List<ServiceAggDataCollection> aggDiscreteList, final String unitId, final String serviceType)
+    private List<RdfTriple> simpleAggDiscreteValues(final List<ServiceAggDataCollection> aggDiscreteList, final String unitId, final String serviceType)
             throws CouldNotPerformException, InterruptedException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
         final DiscreteStateValues discreteStateValues = new DiscreteStateValues(aggDiscreteList, toAggregatedPeriod);
 
@@ -574,62 +571,62 @@ public class DataAssignation extends DataAggregation {
             // every stateType has his own aggObs instance!
             final String subj_AggObs = getAggObsInstance(unitId);
 
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), bcoStateType));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
-            triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime")); //TODO generic timestamp...
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), bcoStateType));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(bcoStateType)) + "\"^^xsd:int"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(bcoStateType)) + "\"^^xsd:long"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime")); //TODO generic timestamp...
         }
         return triples;
     }
 
-    private List<TripleArrayList> simpleContinuousValues(final long connectionTimeMilli, final List<ServiceDataCollection> continuousList, final String unitId
+    private List<RdfTriple> simpleContinuousValues(final long connectionTimeMilli, final List<ServiceDataCollection> continuousList, final String unitId
             , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final ContinuousStateValues continuousStateValues = new ContinuousStateValues(connectionTimeMilli, continuousList);
         final String subj_AggObs = getAggObsInstance(unitId);
 
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
         // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
 
         return triples;
     }
 
-    private List<TripleArrayList> simpleAggContinuousValues(final List<ServiceAggDataCollection> aggContinuousList, final String unitId
+    private List<RdfTriple> simpleAggContinuousValues(final List<ServiceAggDataCollection> aggContinuousList, final String unitId
             , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
         final ContinuousStateValues continuousStateValues = new ContinuousStateValues(aggContinuousList, toAggregatedPeriod);
         final String subj_AggObs = getAggObsInstance(unitId);
 
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
         // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
-        triples.add(new TripleArrayList(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime")); //TODO generic timestamp...
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime")); //TODO generic timestamp...
 
         return triples;
     }

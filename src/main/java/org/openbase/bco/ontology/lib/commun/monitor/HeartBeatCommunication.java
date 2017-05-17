@@ -18,18 +18,17 @@
  */
 package org.openbase.bco.ontology.lib.commun.monitor;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -46,12 +45,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -109,14 +104,14 @@ public class HeartBeatCommunication {
 
         boolean isHttpSuccess = false;
 
-        final List<TripleArrayList> deleteTriples = new ArrayList<>();
-        final List<TripleArrayList> insertTriples = new ArrayList<>();
-        final List<TripleArrayList> whereTriples = new ArrayList<>();
+        final List<RdfTriple> deleteTriples = new ArrayList<>();
+        final List<RdfTriple> insertTriples = new ArrayList<>();
+        final List<RdfTriple> whereTriples = new ArrayList<>();
 
-        deleteTriples.add(new TripleArrayList(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
-        insertTriples.add(new TripleArrayList(null, OntProp.LAST_CONNECTION.getName(), null));
-        whereTriples.add(new TripleArrayList(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
-        whereTriples.add(new TripleArrayList(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
+        deleteTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
+        insertTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), null));
+        whereTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
+        whereTriples.add(new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
 
         final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriples, insertTriples, whereTriples);
 
@@ -135,23 +130,23 @@ public class HeartBeatCommunication {
         }
     }
 
-    private List<TripleArrayList> getInitRecentHeartBeat(final String heartBeatTimestamp) {
+    private List<RdfTriple> getInitRecentHeartBeat(final String heartBeatTimestamp) {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final String subj_recentHeartBeat = OntConfig.INSTANCE_RECENT_HEARTBEAT;
 
-        triples.add(new TripleArrayList(subj_recentHeartBeat, OntExpr.A.getName(), OntCl.RECENT_HEARTBEAT.getName()));
-        triples.add(new TripleArrayList(subj_recentHeartBeat, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp));
+        triples.add(new RdfTriple(subj_recentHeartBeat, OntExpr.A.getName(), OntCl.RECENT_HEARTBEAT.getName()));
+        triples.add(new RdfTriple(subj_recentHeartBeat, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp));
 
         return triples;
     }
 
-    private TripleArrayList getDeleteTripleRecentHeartBeat() {
-        return new TripleArrayList(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null);
+    private RdfTriple getDeleteTripleRecentHeartBeat() {
+        return new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null);
     }
 
-    private TripleArrayList getInsertTripleRecentHeartBeat(final String heartBeatTimestamp) {
-        return new TripleArrayList(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp);
+    private RdfTriple getInsertTripleRecentHeartBeat(final String heartBeatTimestamp) {
+        return new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp);
     }
 
     private void startHeartBeatThread() throws NotAvailableException {
@@ -177,14 +172,14 @@ public class HeartBeatCommunication {
 
                 if (dateLastTimestamp.compareTo(now) >= 0) {
                     // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
-                    final List<TripleArrayList> deleteTriple = new ArrayList<>();
-                    final List<TripleArrayList> insertTriple = new ArrayList<>();
+                    final List<RdfTriple> deleteTriple = new ArrayList<>();
+                    final List<RdfTriple> insertTriple = new ArrayList<>();
                     final String objectDateTimeNow = "\"" + now + "\"^^xsd:dateTime";
 
-                    deleteTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, null));
+                    deleteTriple.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, null));
                     deleteTriple.add(getDeleteTripleRecentHeartBeat());
 
-                    insertTriple.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
+                    insertTriple.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
                     insertTriple.add(getInsertTripleRecentHeartBeat(objectDateTimeNow));
 
                     // sparql update to replace last heartbeat timestamp
@@ -221,7 +216,7 @@ public class HeartBeatCommunication {
             final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
             final String obj_TimeStamp = "\"" + dateTime + "\"^^xsd:dateTime";
 
-            final List<TripleArrayList> insertTriples = new ArrayList<>();
+            final List<RdfTriple> insertTriples = new ArrayList<>();
 
             final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateSingleDeleteExpr(getDeleteTripleRecentHeartBeat(), null);
 //            System.out.println(sparqlUpdateDelete);
@@ -229,9 +224,9 @@ public class HeartBeatCommunication {
             // add initial instance "recentHeartBeat" with initial timestamp
             insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
             // set initial current heartbeat phase with first and last timestamp (identical)
-            insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
-            insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
-            insertTriples.add(new TripleArrayList(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
+            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
+            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
+            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
 
 //            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
             final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);

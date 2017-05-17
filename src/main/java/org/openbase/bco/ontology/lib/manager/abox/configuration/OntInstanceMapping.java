@@ -18,9 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.List;
@@ -30,110 +29,66 @@ import java.util.List;
  */
 public interface OntInstanceMapping {
 
-    //TODO illegalArgumentException?
+    /**
+     * Method returns instance information of units, services and states based on the input unitConfigs.
+     *
+     * @param unitConfigs contains the the units and their appropriate services + states.
+     * @return a list with rdf triples to insert the units, services and states.
+     */
+    List<RdfTriple> getInsertConfigInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method bundles {@link #getMissingUnitTriplesViaOntModel(OntModel, List)}, {@link #getMissingStateTriplesViaOntModel(OntModel, List)} and
-     * {@link #getMissingServiceTriplesViaOntModel(OntModel)} to one triple list.
+     * Method returns instance information of ALL services and states.
      *
-     * @param ontModel The ontModel for comparing of ontology elements.
-     * @param unitConfigs The unitConfigs.
-     * @return A list of triple to update the ontology with unit config data.
-     * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @return a list with rdf triples to insert the services and states.
      */
-    List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException;
+    List<RdfTriple> getInsertStateAndServiceInstances();
 
     /**
-     * Method bundles {@link #getMissingUnitTriples(List)}, {@link #getMissingStateTriples(List)} and {@link #getMissingServiceTriples(List)} to one triple list.
+     * Method returns instance information of units based on the input unitConfigs.
      *
-     * @param unitConfigs The unitConfigs.
-     * @return A list of triple to update the ontology with unit config data.
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param unitConfigs contains the units.
+     * @return a list with rdf triples to insert the units.
      */
-    List<TripleArrayList> getAllMissingConfigTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
+    List<RdfTriple> getInsertUnitInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method compares the unit(Config)s with the units (OntSuperClass Unit!) of the ontology model. The missing units are converted into triples and are
-     * stored in the returned list.
+     * Method returns instance information of services, which are taken from the input unitConfigs or from the rst environment.
      *
-     * @param ontModel The ontModel for comparing of ontology elements.
-     * @param unitConfigs The unit(Config)s, which are compared with the existing unit (OntSuperClass Unit!) instances in the ontology.
-     * @return A list with unit triple information.
-     * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param unitConfigs contains the services or if {@code null} all services are taken.
+     * @return a list with rdf triples to insert the services.
      */
-    List<TripleArrayList> getMissingUnitTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException;
+    List<RdfTriple> getInsertProviderServiceInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method compares the registry providerServices with the providerServices (OntSuperClass ProviderService!) in the
-     * ontology model. The missing providerServices are convert into triples and are stored in the returned list.
+     * Method returns instance information of states, which are taken from the input unitConfigs or from the rst environment.
      *
-     * @param ontModel The ontModel for comparing of ontology elements.
-     * @return A list with service triple information.
-     * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param unitConfigs contains the states or if {@code null} ALL states are taken.
+     * @return a list with rdf triples to insert the states.
      */
-    List<TripleArrayList> getMissingServiceTriplesViaOntModel(final OntModel ontModel) throws CouldNotPerformException, IllegalArgumentException;
+    List<RdfTriple> getInsertStateInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method compares the unit(Config)s with the units (OntSuperClass State!) in the ontology model. The missing units
-     * are convert into triples and are stored in the returning list.
+     * Method returns instance information to delete units, which are represented in the ontology.
      *
-     * @param ontModel The ontModel for comparing of ontology elements.
-     * @param unitConfigs The unit(Config)s, which are compared with the existing unitState (OntSuperClass State!) instances in the ontology.
-     * @return A list with unitState triple information.
-     * @throws CouldNotPerformException Exception is thrown, if the needed ontClass could not be extract from the ontModel (empty or not available).
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param unitConfigs contains the units, which should be deleted in the ontology.
+     * @return a list with rdf triples to delete the units.
      */
-    List<TripleArrayList> getMissingStateTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException;
+    List<RdfTriple> getDeleteUnitInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method converts the unit(Config)s into triples (OntSuperClass Unit!) and returns a triple list without comparing.
+     * Method returns instance information to delete services, which are represented in the ontology.
      *
-     * @param unitConfigs The unit(Config)s, which are converted into triples.
-     * @return A list with unit triple information.
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param serviceTypes contains the services, which should be deleted in the ontology.
+     * @return a list with rdf triples to delete the services.
      */
-    List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
+    List<RdfTriple> getDeleteProviderServiceInstances(final List<ServiceType> serviceTypes);
 
     /**
-     * Method converts the unit(Config)s into triples (OntSuperClass ProviderService!) and returns a triple list without comparing.
+     * Method returns instance information to delete states, which are represented in the ontology.
      *
-     * @param unitConfigs The unit(Config)s, which are converted into triples.
-     * @return A list with service triple information.
-     * @throws IllegalArgumentException IllegalArgumentException
+     * @param serviceTypes contains the states, which should be deleted in the ontology.
+     * @return a list with rdf triples to delete the states.
      */
-    List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
-
-    /**
-     * Method converts the unit(Config)s into triples (OntSuperClass State!) and returns a triple list.
-     *
-     * @param unitConfigs The unit(Config)s, which are converted into triples.
-     * @return A list with unitState triple information.
-     * @throws IllegalArgumentException IllegalArgumentException
-     */
-    List<TripleArrayList> getMissingStateTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
-
-    /**
-     * Method returns a list of triples, which contains delete triple to remove the unitConfigs instances in the ontology. Thereby the concrete units in
-     * unitType and unitState will be deleted.
-     *
-     * @param unitConfigs The unitConfig list, which are converted into delete triples.
-     * @return A list with delete triple information (unitTypes and unitStates).
-     * @throws IllegalArgumentException IllegalArgumentException
-     */
-    List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigs) throws IllegalArgumentException;
-
-    /**
-     * Method returns a list of triples, which contains delete triple to remove the unitConfig instance in the ontology.
-     *
-     * @param unitConfig The unitConfig, which is converted into delete triple.
-     * @return A delete triple (unitType and unitState).
-     * @throws IllegalArgumentException IllegalArgumentException
-     */
-    TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig) throws IllegalArgumentException;
+    List<RdfTriple> getDeleteStateInstances(final List<ServiceType> serviceTypes);
 }

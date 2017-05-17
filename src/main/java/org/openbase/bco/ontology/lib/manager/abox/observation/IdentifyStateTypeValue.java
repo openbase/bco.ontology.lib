@@ -22,7 +22,7 @@ import javafx.util.Pair;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -38,7 +38,6 @@ import rst.domotic.state.ContactStateType.ContactState;
 import rst.domotic.state.DoorStateType.DoorState;
 import rst.domotic.state.HandleStateType.HandleState;
 import rst.domotic.state.IlluminanceStateType.IlluminanceState;
-import rst.domotic.state.IntensityStateType.IntensityState;
 import rst.domotic.state.MotionStateType.MotionState;
 import rst.domotic.state.PassageStateType.PassageState;
 import rst.domotic.state.PowerConsumptionStateType.PowerConsumptionState;
@@ -67,8 +66,8 @@ public class IdentifyStateTypeValue extends StateTypeValue {
     private static final String pred_HasStateValue = OntProp.STATE_VALUE.getName();
     private static final String obj_stateValue = OntCl.STATE_VALUE.getName();
 
-    protected List<TripleArrayList> addStateValue(final ServiceType serviceType, final Object stateObject, final String subjectObservation
-            , final List<TripleArrayList> tripleArrayListsBuf) {
+    protected List<RdfTriple> addStateValue(final ServiceType serviceType, final Object stateObject, final String subjectObservation
+            , final List<RdfTriple> rdfTripleArrayListsBuf) {
 
         final Set<Pair<String, Boolean>> stateTypeAndIsLiteral = identifyState(serviceType, stateObject);
 
@@ -76,13 +75,14 @@ public class IdentifyStateTypeValue extends StateTypeValue {
             for (final Pair<String, Boolean> pair : stateTypeAndIsLiteral) {
                 // check if stateType is a literal or not. If yes = literal, if no = stateValue instance.
                 if (!pair.getValue()) { // stateValue instance
-                    tripleArrayListsBuf.add(new TripleArrayList(pair.getKey(), pred_IsA, obj_stateValue)); //TODO: redundant. another possibility?
+//                    System.out.println(Service.getServiceStateValues(ServiceTemplateType.ServiceTemplate.ServiceType.POWER_STATE_SERVICE));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(pair.getKey(), pred_IsA, obj_stateValue)); //TODO: redundant. another possibility?
                 }
-                tripleArrayListsBuf.add(new TripleArrayList(subjectObservation, pred_HasStateValue, pair.getKey()));
+                rdfTripleArrayListsBuf.add(new RdfTriple(subjectObservation, pred_HasStateValue, pair.getKey()));
             }
         }
 
-        return tripleArrayListsBuf;
+        return rdfTripleArrayListsBuf;
     }
 
     private Set<Pair<String, Boolean>> identifyState(final ServiceType serviceType, final Object stateObject) {

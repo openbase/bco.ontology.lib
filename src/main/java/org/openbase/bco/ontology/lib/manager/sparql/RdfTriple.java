@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.sparql;
 /**
  * @author agatting on 23.12.16.
  */
-public class TripleArrayList {
+public class RdfTriple {
     private final String subject;
     private final String predicate;
     private final String object;
@@ -33,7 +33,7 @@ public class TripleArrayList {
      * @param predicate SPARQL predicate.
      * @param object SPARQL object.
      */
-    public TripleArrayList(final String subject, final String predicate, final String object) {
+    public RdfTriple(final String subject, final String predicate, final String object) {
         this.subject = subject;
         this.predicate = predicate;
         this.object = object;

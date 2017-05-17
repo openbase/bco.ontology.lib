@@ -18,15 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -34,19 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
-import rst.domotic.unit.UnitConfigType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author agatting on 23.12.16.
  */
-public class OntInstanceMappingImpl extends OntInstanceInspection implements OntInstanceMapping {
+public class OntInstanceMappingImpl implements OntInstanceMapping {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
 
@@ -54,29 +48,13 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getAllMissingConfigTriples(List<UnitConfig> unitConfigs) throws IllegalArgumentException {
+    public List<RdfTriple> getInsertConfigInstances(List<UnitConfig> unitConfigs) {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        triples.addAll(getMissingUnitTriples(unitConfigs));
-        triples.addAll(getMissingStateTriples(unitConfigs));
-        triples.addAll(getMissingServiceTriples(unitConfigs));
-
-        return triples;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getAllMissingConfigTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException {
-
-        final List<TripleArrayList> triples = new ArrayList<>();
-
-        triples.addAll(getMissingUnitTriplesViaOntModel(ontModel, unitConfigs));
-        triples.addAll(getMissingStateTriplesViaOntModel(ontModel, unitConfigs));
-        triples.addAll(getMissingServiceTriplesViaOntModel(ontModel));
+        triples.addAll(getInsertUnitInstances(unitConfigs));
+        triples.addAll(getInsertStateInstances(unitConfigs));
+        triples.addAll(getInsertProviderServiceInstances(unitConfigs));
 
         return triples;
     }
@@ -85,196 +63,234 @@ public class OntInstanceMappingImpl extends OntInstanceInspection implements Ont
      * {@inheritDoc}
      */
     @Override
-    public List<TripleArrayList> getMissingUnitTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException {
+    public List<RdfTriple> getInsertStateAndServiceInstances() {
 
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        assert ontModel != null : "Could not get ontClass Unit, cause ontModel is null!";
-        // preparation: get all individuals of the class "Unit" which are currently in the model
-        final OntClass ontClassUnitType = ontModel.getOntClass(OntConfig.NS + OntCl.UNIT.getName());
+        triples.addAll(getInsertStateInstances(null));
+        triples.addAll(getInsertProviderServiceInstances(null));
 
-        if (ontClassUnitType == null) {
-            throw new CouldNotPerformException("Could not get missing unitConfigs, cause ontClass unitType can't be found.");
-        } else {
-
-            // a set of unitConfigs, which are missing in the ontology
-            final List<UnitConfig> missingUnitConfigs = inspectionOfUnits(unitConfigs, ontClassUnitType);
-            // the triples to insert the missing unitType instances into the ontology
-            return buildTriplesOfUnitTypes(missingUnitConfigs);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingUnitTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
-
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-        // the triples to insert the missing units into the ontology
-        return buildTriplesOfUnitTypes(unitConfigs);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingServiceTriplesViaOntModel(final OntModel ontModel) throws CouldNotPerformException, IllegalArgumentException {
-
-        assert ontModel != null : "Could not get ontClass ProviderService, cause ontModel is null!";
-        // preparation: get all individuals of the class "ProviderService" which are currently in the model
-        final OntClass ontClassServiceType = ontModel.getOntClass(OntConfig.NS + OntCl.PROVIDER_SERVICE.getName());
-
-        if (ontClassServiceType == null) {
-            throw new CouldNotPerformException("Could not get missing serviceTypes, cause ontClass ServiceType can't be find.");
-        } else {
-            // the set of serviceTypes, which are missing in the ontology
-            final Set<ServiceType> serviceTypes = inspectionOfServiceTypes(ontClassServiceType);
-            // the triples to insert the missing serviceType instances into the ontology
-            return buildTriplesOfServices(serviceTypes);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingServiceTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
-
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-
-        final Set<ServiceType> serviceTypes = new HashSet<>();
-
-        for (final UnitConfig unitConfig : unitConfigs) {
-            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-                final ServiceType serviceType = serviceConfig.getServiceTemplate().getType();
-                serviceTypes.add(serviceType);
-            }
-        }
-        return buildTriplesOfServices(serviceTypes);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingStateTriplesViaOntModel(final OntModel ontModel, final List<UnitConfig> unitConfigs)
-            throws CouldNotPerformException, IllegalArgumentException {
-
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-
-        assert ontModel != null : "Could not get ontClass State, cause ontModel is null!";
-        // preparation: get all individuals of the class "State" which are currently in the model
-        final OntClass ontClassUnitState = ontModel.getOntClass(OntConfig.NS + OntCl.STATE.getName());
-
-        if (ontClassUnitState == null) {
-            throw new CouldNotPerformException("Could not get missing unitConfigs, cause ontClass unitType can't be found.");
-        } else {
-            // a set of unitConfigs, which are missing in the ontology
-            final List<UnitConfig> missingUnitConfigs = inspectionOfUnits(unitConfigs, ontClassUnitState);
-            // the triples to insert the missing unitState instances into the ontology
-            return buildTriplesOfStates(missingUnitConfigs);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getMissingStateTriples(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
-
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-        // the triples to insert the missing states (services) into the ontology
-        return buildTriplesOfStates(unitConfigs);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<TripleArrayList> getDeleteTripleOfUnitsAndStates(final List<UnitConfig> unitConfigs) throws IllegalArgumentException {
-
-        if (unitConfigs == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-        return unitConfigs.stream().map(this::getDeleteTripleOfUnitsAndStates).collect(Collectors.toList());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TripleArrayList getDeleteTripleOfUnitsAndStates(final UnitConfig unitConfig) throws IllegalArgumentException {
-
-        if (unitConfig == null) {
-            throw new IllegalArgumentException("Could not perform unitConfig, cause parameter is null!");
-        }
-        // s, p, o pattern
-        return new TripleArrayList(unitConfig.getId(), OntExpr.A.getName(), null);
-    }
-
-    private List<TripleArrayList> buildTriplesOfUnitTypes(final List<UnitConfig> unitConfigs) {
-
-        final List<TripleArrayList> triples = new ArrayList<>();
-
-        // list all unitTypes and their unitIds of the unitConfigSet in a hashMap
-        for (final UnitConfig unitConfig : unitConfigs) {
-            String unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getType().name());
-
-            // is the current unitType a connection or location? set unitType variable with their type
-            if (unitType.equalsIgnoreCase(OntCl.CONNECTION.getName())) {
-                unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getConnectionConfig().getType().name());
-            } else if (unitType.equalsIgnoreCase(OntCl.LOCATION.getName())) {
-                unitType = OntologyToolkit.convertToNounSyntax(unitConfig.getLocationConfig().getType().name());
-            }
-
-            triples.add(new TripleArrayList(unitConfig.getId(), OntExpr.A.getName(), unitType));
-        }
         return triples;
     }
 
-    private List<TripleArrayList> buildTriplesOfStates(final List<UnitConfig> unitConfigs) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getInsertUnitInstances(final List<UnitConfig> unitConfigs) {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : unitConfigs) {
-            final String unitId = unitConfig.getId();
+        try {
+            for (final UnitConfig unitConfig : unitConfigs) {
+                if (unitConfig == null) {
+                    assert false;
+                    throw new NotAvailableException("UnitConfig is null");
+                }
 
-            for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                final String unitTypeName;
+
                 try {
-                    String serviceState = Service.getServiceStateName(serviceConfig.getServiceTemplate());
-                    serviceState = OntologyToolkit.convertToNounSyntax(serviceState);
+                    switch (unitConfig.getType()) {
+                        case LOCATION:
+                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getLocationConfig().getType().name());
+                            break;
+                        case CONNECTION:
+                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                            break;
+                        default:
+                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getType().name());
+                    }
 
-                    triples.add(new TripleArrayList(unitId, OntExpr.A.getName(), serviceState));
+                    triples.add(new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), unitTypeName));
                 } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
-                            , e, LOGGER, LogLevel.WARN);
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
+            }
+        } catch (CouldNotPerformException e) {
+            exceptionStack = MultiException.push(this, e, exceptionStack);
+        }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely unitTypes!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getInsertStateInstances(final List<UnitConfig> unitConfigs) {
+
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
+
+        if (unitConfigs == null) {
+            for (final ServiceType serviceType : ServiceType.values()) {
+                if (serviceType.equals(ServiceType.UNKNOWN)) {
+                    continue;
+                }
+
+                try {
+                    final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                    triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
+            }
+        } else {
+            for (final UnitConfig unitConfig : unitConfigs) {
+                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                    try {
+                        final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceConfig.getServiceTemplate()));
+                        triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
+                    } catch (NotAvailableException e) {
+                        exceptionStack = MultiException.push(this, e, exceptionStack);
+                    }
                 }
             }
         }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely stateTypes!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
         return triples;
     }
 
-    private List<TripleArrayList> buildTriplesOfServices(final Set<ServiceType> serviceTypeSet) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getInsertProviderServiceInstances(final List<UnitConfig> unitConfigs) {
 
-        final List<TripleArrayList> triples = new ArrayList<>();
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        // list all serviceTypes in a list
-        triples.addAll(serviceTypeSet.stream().map(serviceType -> {
-            final String serviceTypeName = OntologyToolkit.convertToNounSyntax(serviceType.name());
-            return new TripleArrayList(serviceTypeName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName());
-        }).collect(Collectors.toList()));
+        if (unitConfigs == null) {
+            for (final ServiceType serviceType : ServiceType.values()) {
+                if (serviceType.equals(ServiceType.UNKNOWN)) {
+                    continue;
+                }
+
+                try {
+                    final String serviceName = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceType));
+                    triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                }
+            }
+        } else {
+            for (final UnitConfig unitConfig : unitConfigs) {
+                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+                    try {
+                        final String serviceName
+                                = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceConfig.getServiceTemplate().getType()));
+                        triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
+                    } catch (NotAvailableException e) {
+                        exceptionStack = MultiException.push(this, e, exceptionStack);
+                    }
+                }
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely serviceTypes!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
         return triples;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getDeleteUnitInstances(final List<UnitConfig> unitConfigs) {
+
+        final List<RdfTriple> triples = new ArrayList<>();
+        MultiException.ExceptionStack exceptionStack = null;
+
+        for (final UnitConfig unitConfig : unitConfigs) {
+            try {
+                triples.add(getDeleteUnitInstance(unitConfig));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely units!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getDeleteProviderServiceInstances(final List<ServiceType> serviceTypes) {
+
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
+
+        for (final ServiceType serviceType : serviceTypes) {
+            try {
+                final String serviceName = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceType));
+                triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), null));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely services!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getDeleteStateInstances(final List<ServiceType> serviceTypes) {
+
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
+
+        for (final ServiceType serviceType : serviceTypes) {
+            try {
+                final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                triples.add(new RdfTriple(stateName, OntExpr.A.getName(), null));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("There are incompletely states!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
+    }
+
+    private RdfTriple getDeleteUnitInstance(final UnitConfig unitConfig) throws NotAvailableException {
+
+        if (unitConfig == null) {
+            assert false;
+            throw new NotAvailableException("UnitConfig is null");
+        }
+        return new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), null);
+    }
+
 }

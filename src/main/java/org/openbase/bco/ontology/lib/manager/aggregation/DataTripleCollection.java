@@ -25,8 +25,8 @@ import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAgg
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
@@ -100,7 +100,7 @@ public class DataTripleCollection extends DataAssignation {
         }
     }
 
-    private List<TripleArrayList> collectData() {
+    private List<RdfTriple> collectData() {
 //        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit(); //TODO
         final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
         final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnitForTesting(observationsEachUnit.keySet());
@@ -108,13 +108,13 @@ public class DataTripleCollection extends DataAssignation {
         return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
 
-    private List<TripleArrayList> collectAggData(final Period period) throws JPServiceException, InterruptedException {
+    private List<RdfTriple> collectAggData(final Period period) throws JPServiceException, InterruptedException {
         final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit(period);
         return relateAggDataForEachUnit(observationsEachUnit);
     }
 
-    private List<TripleArrayList> relateAggDataForEachUnit(final HashMap<String, List<ObservationAggDataCollection>> obsAggPerUnit) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> relateAggDataForEachUnit(final HashMap<String, List<ObservationAggDataCollection>> obsAggPerUnit) {
+        final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String unitId : obsAggPerUnit.keySet()) {
                 final List<ObservationAggDataCollection> obsDataCollList = obsAggPerUnit.get(unitId);
@@ -124,9 +124,9 @@ public class DataTripleCollection extends DataAssignation {
         return triples;
     }
 
-    private List<TripleArrayList> relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit
+    private List<RdfTriple> relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit
             , final HashMap<String, List<ObservationDataCollection>> observationsPerUnit) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String unitId : observationsPerUnit.keySet()) {
             if (connectionTimePerUnit.containsKey(unitId)) {
@@ -139,8 +139,8 @@ public class DataTripleCollection extends DataAssignation {
         return triples;
     }
 
-    private List<TripleArrayList> relateAggDataForEachServiceOfEachUnit(final String unitId, final List<ObservationAggDataCollection> obsAggDataCollList) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+    private List<RdfTriple> relateAggDataForEachServiceOfEachUnit(final String unitId, final List<ObservationAggDataCollection> obsAggDataCollList) {
+        final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, List<ServiceAggDataCollection>> serviceAggDataCollList = new HashMap<>();
 
         for (final ObservationAggDataCollection aggDataObs : obsAggDataCollList) {
@@ -164,9 +164,9 @@ public class DataTripleCollection extends DataAssignation {
         return triples;
     }
 
-    private List<TripleArrayList> relateDataForEachServiceOfEachUnit(final String unitId, final long connectionTimeMilli
+    private List<RdfTriple> relateDataForEachServiceOfEachUnit(final String unitId, final long connectionTimeMilli
             , final List<ObservationDataCollection> obsDataCollList) {
-        final List<TripleArrayList> triples = new ArrayList<>();
+        final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, List<ServiceDataCollection>> serviceDataCollList = new HashMap<>();
 
         for (final ObservationDataCollection dataObs : obsDataCollList) {

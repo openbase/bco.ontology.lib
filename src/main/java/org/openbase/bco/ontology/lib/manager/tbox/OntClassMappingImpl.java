@@ -18,28 +18,24 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import org.apache.jena.ontology.OntClass;
-import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.sparql.TripleArrayList;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
-import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
+import rst.domotic.unit.connection.ConnectionConfigType.ConnectionConfig.ConnectionType;
+import rst.domotic.unit.location.LocationConfigType.LocationConfig.LocationType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author agatting on 20.02.17.
@@ -48,184 +44,170 @@ public class OntClassMappingImpl implements OntClassMapping {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntClassMappingImpl.class);
 
-    public OntModel extendTBoxViaOntModel(final List<UnitConfig> unitConfigList) {
-        OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getUnitTypeClasses(final List<UnitConfig> unitConfigs) {
 
-        // get missing unitTypes and serviceStates
-        ontModel = compareMissingUnitsWithModel(unitConfigList, ontModel);
-        ontModel = compareMissingStatesWithModel(unitConfigList, ontModel);
+        final List<RdfTriple> triples = new ArrayList<>();
+        MultiException.ExceptionStack exceptionStack = null;
 
-        return ontModel;
-    }
+        for (final UnitConfig unitConfig : unitConfigs) {
+            try {
+                if (unitConfig == null) {
+                    assert false;
+                    throw new NotAvailableException("UnitConfig is null");
+                }
+                if (unitConfig.getType().equals(UnitType.UNKNOWN)) {
+                    continue;
+                }
 
-    public List<TripleArrayList> extendTBoxViaTriple(final List<UnitConfig> unitConfigs) {
+                triples.add(getUnitTypeClass(unitConfig.getType()));
 
-        List<TripleArrayList> triples = new ArrayList<>();
+                switch (unitConfig.getType()) {
+                    case LOCATION:
+                        triples.addAll(getLocationTypeClasses(unitConfig));
+                        break;
+                    case CONNECTION:
+                        triples.addAll(getConnectionTypeClasses(unitConfig));
+                        break;
+                }
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+        }
 
-        triples = getMissingUnitsAsTriples(unitConfigs, triples);
-        triples = getMissingServiceStatesAsTriples(unitConfigs, triples);
-
+        try {
+            MultiException.checkAndThrow("There are incompletely unit types!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
         return triples;
     }
 
-    private OntModel compareMissingUnitsWithModel(final List<UnitConfig> unitConfigs, final OntModel ontModel) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getUnitTypeClasses() {
 
-        final OntClass unitOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.UNIT.getName()));
-        final Set<UnitType> missingUnitTypes = new HashSet<>();
-        Set<OntClass> unitSubOntClasses = new HashSet<>();
+        MultiException.ExceptionStack exceptionStack = null;
+        final List<RdfTriple> triples = new ArrayList<>();
+        final UnitType[] unitTypes = UnitType.values();
 
-        unitSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(unitSubOntClasses, unitOntClass, false);
+        for (final UnitType unitType : unitTypes) {
+            try {
+                if (unitType.equals(UnitType.UNKNOWN)) {
+                    continue;
+                }
 
-        for (final UnitConfig unitConfig : unitConfigs) {
-            if (!isUnitTypePresent(unitConfig, unitSubOntClasses)) {
-                missingUnitTypes.add(unitConfig.getType());
+                triples.add(getUnitTypeClass(unitType));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
             }
         }
-        return addMissingUnitsToModel(missingUnitTypes, ontModel);
+
+        triples.addAll(getLocationTypeClasses(null));
+        triples.addAll(getConnectionTypeClasses(null));
+
+        try {
+            MultiException.checkAndThrow("There are incompletely unit types!", exceptionStack);
+        } catch (MultiException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
     }
 
-    private List<TripleArrayList> getMissingUnitsAsTriples(final List<UnitConfig> unitConfigs, final List<TripleArrayList> triples) {
+    private RdfTriple getUnitTypeClass(final UnitType unitType) throws NotAvailableException {
 
-        final Set<UnitType> missingUnitTypes = unitConfigs.stream().map(UnitConfig::getType).collect(Collectors.toSet());
+        final RdfTriple triple;
+        final String unitTypeName = OntologyToolkit.getCamelCaseName(unitType.name());
 
-        return addMissingUnitsToTriples(missingUnitTypes, triples);
+        if (UnitConfigProcessor.isDalUnit(unitType)) {
+            triple = new RdfTriple(unitTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.DAL_UNIT.getName());
+        } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
+            triple = new RdfTriple(unitTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.BASE_UNIT.getName());
+        } else if (UnitConfigProcessor.isHostUnit(unitType))  {
+            triple = new RdfTriple(unitTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.HOST_UNIT.getName());
+        } else {
+            throw new NotAvailableException("Could not identify unit type: " + unitType);
+        }
+        return triple;
     }
 
-    private OntModel compareMissingStatesWithModel(final List<UnitConfig> unitConfigs, final OntModel ontModel) {
+    private List<RdfTriple> getLocationTypeClasses(final UnitConfig unitConfig) {
 
-        final OntClass stateOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
-        final Set<String> missingServiceStateTypes = new HashSet<>();
-        Set<OntClass> stateSubOntClasses = new HashSet<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        stateSubOntClasses = TBoxVerification.listSubclassesOfOntSuperclass(stateSubOntClasses, stateOntClass, false);
+        if (unitConfig == null) {
+            MultiException.ExceptionStack exceptionStack = null;
+            final LocationType[] locationTypes = LocationType.values();
 
-        for (final UnitConfig unitConfig : unitConfigs) {
-            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+            for (final LocationType locationType : locationTypes) {
                 try {
-                    final String serviceStateName = Service.getServiceStateName(serviceConfig.getServiceTemplate());
-
-                    if (!isStateTypePresent(serviceStateName, stateSubOntClasses)) {
-                        missingServiceStateTypes.add(serviceStateName);
+                    if (locationType.equals(LocationType.UNKNOWN)) {
+                        continue;
                     }
+
+                    final String locationTypeName = OntologyToolkit.getCamelCaseName(locationType.name());
+                    triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
                 } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
-                            , e, LOGGER, LogLevel.WARN);
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }
+
+            try {
+                MultiException.checkAndThrow("There are incompletely location types!", exceptionStack);
+            } catch (MultiException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+        } else {
+            try {
+                final String locationTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
         }
-        return addMissingStatesToModel(missingServiceStateTypes, ontModel);
+        return triples;
     }
 
-    private List<TripleArrayList> getMissingServiceStatesAsTriples(final List<UnitConfig> unitConfigs, final List<TripleArrayList> triples) {
+    private List<RdfTriple> getConnectionTypeClasses(final UnitConfig unitConfig) {
 
-        final Set<String> missingServiceStateTypes = new HashSet<>();
+        final List<RdfTriple> triples = new ArrayList<>();
 
-        for (final UnitConfig unitConfig : unitConfigs) {
-            for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
+        if (unitConfig == null) {
+            MultiException.ExceptionStack exceptionStack = null;
+            final ConnectionType[] connectionTypes = ConnectionType.values();
+
+            for (final ConnectionType connectionType : connectionTypes) {
                 try {
-                    final String serviceStateName = Service.getServiceStateName(serviceConfig.getServiceTemplate());
-                    missingServiceStateTypes.add(serviceStateName);
+                    if (connectionType.equals(ConnectionType.UNKNOWN)) {
+                        continue;
+                    }
+
+                    final String connectionTypeName = OntologyToolkit.getCamelCaseName(connectionType.name());
+                    triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
                 } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory("Could not identify service state name of serviceConfig: " + serviceConfig.toString() + ". Dropped."
-                            , e, LOGGER, LogLevel.WARN);
+                    exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
             }
-        }
-        return addMissingStatesToTriples(missingServiceStateTypes, triples);
-    }
 
-    private OntModel addMissingUnitsToModel(final Set<UnitType> missingUnitTypes, final OntModel ontModel) {
-
-        final OntClass dalOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.DAL_UNIT.getName()));
-        final OntClass baseOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.BASE_UNIT.getName()));
-        final OntClass hostOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.HOST_UNIT.getName()));
-
-        for (final UnitType unitType : missingUnitTypes) {
-            final String missingUnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
-            final OntClass newOntClassUnitType = ontModel.createClass(missingUnitType);
-
-            // find correct subclass of unit (e.g. baseUnit, DalUnit)
-            if (UnitConfigProcessor.isDalUnit(unitType)) {
-                ontModel.getOntClass(dalOntClass.getURI()).addSubClass(newOntClassUnitType);
-            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
-                if (UnitConfigProcessor.isHostUnit(unitType)) {
-                    ontModel.getOntClass(hostOntClass.getURI()).addSubClass(newOntClassUnitType);
-                } else {
-                    ontModel.getOntClass(baseOntClass.getURI()).addSubClass(newOntClassUnitType);
-                }
+            try {
+                MultiException.checkAndThrow("There are incompletely connection types!", exceptionStack);
+            } catch (MultiException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
-        }
-        return ontModel;
-    }
-
-    private List<TripleArrayList> addMissingUnitsToTriples(final Set<UnitType> missingUnitTypes, final List<TripleArrayList> triples) {
-
-        final String pred_isA = OntConfig.OntExpr.A.getName();
-
-        for (final UnitType unitType : missingUnitTypes) {
-            final String subj_UnitType = OntologyToolkit.convertToNounAndAddNS(unitType.name());
-
-            // find correct subclass of unit (e.g. baseUnit, dalUnit)
-            if (UnitConfigProcessor.isDalUnit(unitType)) {
-                triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.DAL_UNIT.getName()));
-            } else if (UnitConfigProcessor.isBaseUnit(unitType)) {
-                if (UnitConfigProcessor.isHostUnit(unitType)) {
-                    triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.HOST_UNIT.getName()));
-                } else {
-                    triples.add(new TripleArrayList(subj_UnitType, pred_isA, OntConfig.OntCl.BASE_UNIT.getName()));
-                }
+        } else {
+            try {
+                final String connectionTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }
         return triples;
-    }
-
-    private OntModel addMissingStatesToModel(final Set<String> missingStateTypes, final OntModel ontModel) {
-
-        final OntClass stateOntClass = ontModel.getOntClass(OntologyToolkit.addNamespace(OntConfig.OntCl.STATE.getName()));
-
-        for (final String missingState : missingStateTypes) {
-
-            final String missingStateType = OntologyToolkit.convertToNounAndAddNS(missingState);
-            final OntClass newOntClassStateType = ontModel.createClass(missingStateType);
-
-            ontModel.getOntClass(stateOntClass.getURI()).addSubClass(newOntClassStateType);
-        }
-        return ontModel;
-    }
-
-    private List<TripleArrayList> addMissingStatesToTriples(final Set<String> missingStateTypes, final List<TripleArrayList> triples) {
-
-        final String predicate = OntConfig.OntExpr.A.getName();
-        final String object = OntConfig.OntCl.STATE.getName();
-
-        for (final String missingState : missingStateTypes) {
-
-            final String missingStateType = OntologyToolkit.convertToNounAndAddNS(missingState);
-            triples.add(new TripleArrayList(missingStateType, predicate, object));
-        }
-        return triples;
-    }
-
-    private boolean isUnitTypePresent(final UnitConfig unitConfig, final Set<OntClass> unitSubOntClasses) {
-
-        final String unitTypeName = unitConfig.getType().name();
-
-        for (final OntClass ontClass : unitSubOntClasses) {
-            if (ontClass.getLocalName().equalsIgnoreCase(unitTypeName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isStateTypePresent(final String serviceStateName, final Set<OntClass> stateSubOntClasses) {
-
-        for (final OntClass ontClass : stateSubOntClasses) {
-            if (ontClass.getLocalName().equalsIgnoreCase(serviceStateName)) {
-                return true;
-            }
-        }
-        return false;
     }
 
 }

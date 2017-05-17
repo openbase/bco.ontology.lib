@@ -21,11 +21,12 @@ package org.openbase.bco.ontology.lib;
 import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
+import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
+import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
-import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
@@ -39,8 +40,11 @@ import org.openbase.jul.iface.VoidInitializable;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
-import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.ontology.OntologyChangeType;
 import rst.domotic.service.ServiceTemplateType;
+import rst.domotic.unit.UnitTemplateType;
+import rst.domotic.unit.connection.ConnectionConfigType;
+import rst.domotic.unit.location.LocationConfigType;
 
 import java.util.Arrays;
 
@@ -56,39 +60,17 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         final Stopwatch stopwatch = new Stopwatch();
 //        stopwatch.waitForStart(60000);
 
-//        System.out.println(Units.getUnitRegistry().getUnitConfigs(UnitTemplateType.UnitTemplate.UnitType.POWER_SWITCH));
-
-//        try {
-//            final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-//            OntModelWeb.addOntModelViaRetry(ontModel);
-//            new AggregationImpl();
-//        } catch (JPServiceException e) {
-//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-//        }
-
-//        final DateTime dateTimeFrom = new DateTime(2017, 4, 21, 19, 0, 0, 0);
-//        final DateTime dateTimeUntil = new DateTime(2017, 4, 22, 0, 0, 0, 0);
-//        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteObservationOfTimeFrame(OntologyToolkit.addXsdDateTime(dateTimeFrom), OntologyToolkit.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
-//
-//        // delete unused connectionPhases (old)
-//        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(OntologyToolkit.addXsdDateTime(dateTimeFrom)), OntConfig.ServerServiceForm.UPDATE);
-//        // delete unused heartBeatPhases (old)
-//        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(OntologyToolkit.addXsdDateTime(dateTimeFrom)), OntConfig.ServerServiceForm.UPDATE);
-
         try {
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
                 LOGGER.info("Debug Mode");
             }
 
-            final RSBInformer<OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPOntologyScope.class).getValue());
+            final RSBInformer<OntologyChangeType.OntologyChange> rsbInformer = RsbCommunication.createRsbInformer(JPService.getProperty(JPOntologyScope.class).getValue());
             final TransactionBuffer transactionBuffer = new TransactionBufferImpl();
             transactionBuffer.createAndStartQueue(rsbInformer);
             new UnitRegistrySynchronizer(transactionBuffer);
             new UnitRemoteSynchronizer(transactionBuffer, rsbInformer);
             new HeartBeatCommunication();
-
-//            stopwatch.waitForStart(40000);
-//            new Measurement();
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
