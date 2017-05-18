@@ -24,12 +24,14 @@ import org.apache.jena.query.DatasetAccessor;
 import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.OntModelUtility;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.Stopwatch;
@@ -86,8 +88,9 @@ public interface OntModelWeb {
      * returned.
      * @throws InterruptedException Exception is thrown, if the application is interrupted.
      * @throws JPServiceException Exception is thrown, if the JPService is not available.
+     * @throws NotAvailableException NotAvailableException
      */
-    static OntModel getTBoxModelViaRetry() throws InterruptedException, JPServiceException {
+    static OntModel getTBoxModelViaRetry() throws InterruptedException, JPServiceException, NotAvailableException {
         OntModel ontModel = null;
 
         while (ontModel == null) {
@@ -95,7 +98,7 @@ public interface OntModelWeb {
                 ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
 
                 if (ontModel.isEmpty()) {
-                    ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
+                    ontModel = OntModelUtility.loadOntModelFromFile(null, null);
                 }
             } catch (IOException e) {
                 //retry

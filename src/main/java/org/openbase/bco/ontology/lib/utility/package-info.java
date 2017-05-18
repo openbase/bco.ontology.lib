@@ -18,6 +18,6 @@
  */
 
 /**
- * @author agatting on 11.01.17.
+ * @author agatting on 18.05.17.
  */
-package org.openbase.bco.ontology.lib.manager.sparql;
+package org.openbase.bco.ontology.lib.utility;

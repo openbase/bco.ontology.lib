@@ -23,13 +23,13 @@ import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
-import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -198,7 +198,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             }
             rdfTripleArrayListsBuf.clear();
         }
-        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(rdfTriples);
+        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(rdfTriples);
 //        System.out.println(sparqlUpdateExpr);
 
 //        if (Measurement.measurementWatch.isRunning()) {

@@ -18,11 +18,9 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBufferImpl;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
@@ -41,12 +39,6 @@ import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import rst.domotic.ontology.OntologyChangeType;
-import rst.domotic.service.ServiceTemplateType;
-import rst.domotic.unit.UnitTemplateType;
-import rst.domotic.unit.connection.ConnectionConfigType;
-import rst.domotic.unit.location.LocationConfigType;
-
-import java.util.Arrays;
 
 /**
  * @author agatting on 20.10.16.

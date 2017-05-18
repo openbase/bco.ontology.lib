@@ -49,7 +49,7 @@ public class QueryParser {
 
     private static final String uriQuery =
             "PREFIX sp: <http://spinrdf.org/sp#> "
-            + "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?y WHERE { "
                 + "{ "
                     + "?x sp:object ?y . "
@@ -58,9 +58,9 @@ public class QueryParser {
                 + "} "
                 + "FILTER(isURI(?y)) . "
                 + "FILTER (regex(str(?y), \"http://www.openbase.org/bco/ontology#\")) . "
-                + "FILTER NOT EXISTS { ?x sp:predicate NS:hasStateValue } "
-                + "FILTER NOT EXISTS { ?x sp:object NS:Observation } "
-                + "FILTER NOT EXISTS { ?x sp:subject NS:Observation } "
+                + "FILTER NOT EXISTS { ?x sp:predicate NAMESPACE:hasStateValue } "
+                + "FILTER NOT EXISTS { ?x sp:object NAMESPACE:Observation } "
+                + "FILTER NOT EXISTS { ?x sp:subject NAMESPACE:Observation } "
                     // more filter criteria can be placed here ...
             + "} ";
 
@@ -175,7 +175,7 @@ public class QueryParser {
 
             final String resultUri = querySolution.toString();
             String resourceResult = resultUri.substring(resultUri.indexOf(" <") + 1, resultUri.indexOf("> "));
-            resourceResult = resourceResult.substring(OntConfig.NS.length() + 1);
+            resourceResult = resourceResult.substring(OntConfig.NAMESPACE.length() + 1);
 
             resourceList.add(resourceResult);
         }

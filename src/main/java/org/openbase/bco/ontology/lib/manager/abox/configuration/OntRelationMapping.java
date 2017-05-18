@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.jul.exception.NotAvailableException;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
@@ -31,20 +31,20 @@ import java.util.List;
 public interface OntRelationMapping {
 
     /**
-     * Method returns triple information to insert relations of the config data into the ontology.
+     * Method returns triple information to insert relations of the units into the ontology.
      *
      * @param unitConfigs contains the units, which should be linked (relations).
-     * @return a list of triple information to insert relations of config data.
+     * @return a list of triple information to insert relations of units.
      */
-    List<RdfTriple> getInsertConfigRelations(final List<UnitConfig> unitConfigs);
+    List<RdfTriple> getInsertUnitRelations(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method returns triple information to insert relations of the config data into the ontology.
+     * Method returns triple information to insert relations of the unit into the ontology.
      *
      * @param unitConfig contains the unit, which should be linked (relations).
-     * @return a list of triple information to insert relations of config data.
+     * @return a list of triple information to insert relations of a unit.
      */
-    List<RdfTriple> getInsertConfigRelations(final UnitConfig unitConfig);
+    List<RdfTriple> getInsertUnitRelations(final UnitConfig unitConfig);
 
     /**
      * Method returns triple information to delete relations of the units from the ontology.

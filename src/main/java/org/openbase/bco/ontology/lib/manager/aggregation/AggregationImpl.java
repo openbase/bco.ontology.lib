@@ -18,18 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -59,9 +49,9 @@ public class AggregationImpl implements Aggregation {
 //        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
 //        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
 
-//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-//        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
-//        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+//        final String timestampFrom = StringUtility.addXsdDateTime(dateTimeFrom);
+//        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();

@@ -16,7 +16,9 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.system.config;
+package org.openbase.bco.ontology.lib.utility.sparql;
+
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 
 /**
  * This class contains static sparql expressions, which are important for the ontology update and ontology query. Please do not modify!
@@ -135,7 +137,7 @@ public class StaticSparqlExpression {
     }
 
     public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NS + "> "
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + "?connectionPhase ?p ?o . "
@@ -153,7 +155,7 @@ public class StaticSparqlExpression {
     }
 
     public static String deleteUnusedHeartBeatPhases(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NS + "> "
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + "?heartBeatPhase ?p ?o . "
@@ -166,7 +168,7 @@ public class StaticSparqlExpression {
     }
 
     public static String deleteUnusedObservations(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NS + "> "
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + "?obs ?p ?o . "
@@ -197,7 +199,7 @@ public class StaticSparqlExpression {
 
     public static String deleteUnusedAggObs(String period, final String dateTimeFrom, final String dateTimeUntil) {
         period = period.toLowerCase();
-        return "PREFIX NS: <" + OntConfig.NS + "> "
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + "?aggObs ?p ?o . "
@@ -211,7 +213,7 @@ public class StaticSparqlExpression {
     }
 
     public static final String deleteAllObservationsWithFilter =
-            "PREFIX NS: <" + OntConfig.NS + "> "
+            "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
             + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
             + "DELETE { "
                 + "?observation ?p ?o . "
@@ -224,7 +226,7 @@ public class StaticSparqlExpression {
 
 
     public static String deleteObservationOfTimeFrame(final String dateTimeFrom, final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NS + "> "
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
                     + "?obs ?p ?o . "

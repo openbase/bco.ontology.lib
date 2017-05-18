@@ -19,8 +19,8 @@
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -30,7 +30,6 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rst.domotic.service.ServiceConfigType.ServiceConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -53,8 +52,8 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
         final List<RdfTriple> triples = new ArrayList<>();
 
         triples.addAll(getInsertUnitInstances(unitConfigs));
-        triples.addAll(getInsertStateInstances(unitConfigs));
-        triples.addAll(getInsertProviderServiceInstances(unitConfigs));
+        triples.addAll(getInsertStateInstances());
+        triples.addAll(getInsertProviderServiceInstances());
 
         return triples;
     }
@@ -67,8 +66,8 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         final List<RdfTriple> triples = new ArrayList<>();
 
-        triples.addAll(getInsertStateInstances(null));
-        triples.addAll(getInsertProviderServiceInstances(null));
+        triples.addAll(getInsertStateInstances());
+        triples.addAll(getInsertProviderServiceInstances());
 
         return triples;
     }
@@ -94,13 +93,13 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                 try {
                     switch (unitConfig.getType()) {
                         case LOCATION:
-                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getLocationConfig().getType().name());
+                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getLocationConfig().getType().name());
                             break;
                         case CONNECTION:
-                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                             break;
                         default:
-                            unitTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getType().name());
+                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getType().name());
                     }
 
                     triples.add(new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), unitTypeName));
@@ -124,34 +123,21 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
      * {@inheritDoc}
      */
     @Override
-    public List<RdfTriple> getInsertStateInstances(final List<UnitConfig> unitConfigs) {
+    public List<RdfTriple> getInsertStateInstances() {
 
         MultiException.ExceptionStack exceptionStack = null;
         final List<RdfTriple> triples = new ArrayList<>();
 
-        if (unitConfigs == null) {
-            for (final ServiceType serviceType : ServiceType.values()) {
-                if (serviceType.equals(ServiceType.UNKNOWN)) {
-                    continue;
-                }
-
-                try {
-                    final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceType));
-                    triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                }
+        for (final ServiceType serviceType : ServiceType.values()) {
+            if (serviceType.equals(ServiceType.UNKNOWN)) {
+                continue;
             }
-        } else {
-            for (final UnitConfig unitConfig : unitConfigs) {
-                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-                    try {
-                        final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceConfig.getServiceTemplate()));
-                        triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
-                    } catch (NotAvailableException e) {
-                        exceptionStack = MultiException.push(this, e, exceptionStack);
-                    }
-                }
+
+            try {
+                final String stateName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
             }
         }
 
@@ -167,35 +153,21 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
      * {@inheritDoc}
      */
     @Override
-    public List<RdfTriple> getInsertProviderServiceInstances(final List<UnitConfig> unitConfigs) {
+    public List<RdfTriple> getInsertProviderServiceInstances() {
 
         MultiException.ExceptionStack exceptionStack = null;
         final List<RdfTriple> triples = new ArrayList<>();
 
-        if (unitConfigs == null) {
-            for (final ServiceType serviceType : ServiceType.values()) {
-                if (serviceType.equals(ServiceType.UNKNOWN)) {
-                    continue;
-                }
-
-                try {
-                    final String serviceName = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceType));
-                    triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                }
+        for (final ServiceType serviceType : ServiceType.values()) {
+            if (serviceType.equals(ServiceType.UNKNOWN)) {
+                continue;
             }
-        } else {
-            for (final UnitConfig unitConfig : unitConfigs) {
-                for (ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
-                    try {
-                        final String serviceName
-                                = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceConfig.getServiceTemplate().getType()));
-                        triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
-                    } catch (NotAvailableException e) {
-                        exceptionStack = MultiException.push(this, e, exceptionStack);
-                    }
-                }
+
+            try {
+                final String serviceName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
+                triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
             }
         }
 
@@ -243,7 +215,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         for (final ServiceType serviceType : serviceTypes) {
             try {
-                final String serviceName = OntologyToolkit.firstCharToLowerCase(OntologyToolkit.getServiceTypeName(serviceType));
+                final String serviceName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
                 triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -269,7 +241,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         for (final ServiceType serviceType : serviceTypes) {
             try {
-                final String stateName = OntologyToolkit.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                final String stateName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);

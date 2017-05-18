@@ -17,14 +17,11 @@
  * ==================================================================
  */
 
-package org.openbase.bco.ontology.lib.manager.sparql;
+package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.apache.commons.lang.time.DateUtils;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * @author agatting on 16.11.16.
@@ -59,20 +56,20 @@ public final class CompetencyQuestions {
      * Wurde jemals ein Sabotagekontakt ausgelöst und wenn ja, wo?
      */
     public static final String REQ_1 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?unitLabel ?stateValue ?locationLabel WHERE { "
                 // get all units tamperDetector
-                + "?unit a NS:TamperDetector . "
-                + "?unit NS:hasLabel ?unitLabel . "
+                + "?unit a NAMESPACE:TamperDetector . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
                 // get all observations of the units
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue NS:OPEN, ?stateValue FILTER (?stateValue = NS:OPEN) . "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "?observation NAMESPACE:hasStateValue NAMESPACE:OPEN, ?stateValue FILTER (?stateValue = NAMESPACE:OPEN) . "
                 // get locations of the units
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel ?locationLabel . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel ?locationLabel . "
                 // filter all locations with specific literal
                 + "FILTER NOT EXISTS { "
-                    + "?location NS:hasLabel \"Home\" . "
+                    + "?location NAMESPACE:hasLabel \"Home\" . "
                 + "} . "
             + "} ";
 
@@ -80,38 +77,38 @@ public final class CompetencyQuestions {
      * Welche units befinden sich im Wohnzimmer und sind sie erreichbar?
      */
     public static final String REQ_2 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?unitLabel ?isAvailable WHERE { "
                 // get units with location "living"
-                + "?location NS:hasLabel \"Living\" . "
-                + "?location NS:hasUnit ?unit . "
-                + "?unit NS:hasLabel ?unitLabel . "
+                + "?location NAMESPACE:hasLabel \"Living\" . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
                 // get the value of the units
-                + "?unit NS:isAvailable ?isAvailable . "
+                + "?unit NAMESPACE:isAvailable ?isAvailable . "
             + "}";
 
     /**
      * Welche Lampe wurden im Apartment bisher am häufigsten verwendet?
      */
     public static final String REQ_3 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?lampLabel (COUNT(?unit) as ?count) ?locationLabel WHERE { "
                 // get all lamp units and their labels
-                + "{ { ?unit a NS:ColorableLight . } "
+                + "{ { ?unit a NAMESPACE:ColorableLight . } "
                     + "UNION "
-                + "{ ?unit a NS:DimmableLight . } } "
-                + "?unit NS:hasLabel ?lampLabel . "
+                + "{ ?unit a NAMESPACE:DimmableLight . } } "
+                + "?unit NAMESPACE:hasLabel ?lampLabel . "
                 // get the observations with value ON or OFF
-                + "?observation NS:hasUnitId ?unit . "
-                + "{ { ?observation NS:hasStateValue NS:ON . } "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "{ { ?observation NAMESPACE:hasStateValue NAMESPACE:ON . } "
                     + "UNION "
-                + "{ ?observation NS:hasStateValue NS:OFF . } } "
+                + "{ ?observation NAMESPACE:hasStateValue NAMESPACE:OFF . } } "
                 // get optional their label and location
                 + "OPTIONAL { "
-                    + "?location NS:hasUnit ?unit . "
-                    + "?location NS:hasLabel ?locationLabel . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
+                    + "?location NAMESPACE:hasLabel ?locationLabel . "
                     + "FILTER not exists { "
-                        + "?location NS:hasLabel \"Home\" "
+                        + "?location NAMESPACE:hasLabel \"Home\" "
                     + "} . "
                 + "} "
             + "} "
@@ -124,38 +121,38 @@ public final class CompetencyQuestions {
      * Welche Lampen sind diese?
      */
     public static final String REQ_4 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             // select lamps only, if conditions of the question apply
             + "SELECT (IF(?isRolUP = false && ?time = true, ?lampLabel, 0) as ?labelLamp) WHERE { "
                 // get the current observation of the lamp units
                 + "{ SELECT (MAX(?timeLamp) AS ?currentTimeLamp) ?lamp WHERE { "
-                    + "{ { ?lamp a NS:ColorableLight . } "
+                    + "{ { ?lamp a NAMESPACE:ColorableLight . } "
                         + "UNION "
-                    + "{ ?lamp a NS:DimmableLight . } } "
-                    + "?location NS:hasLabel \"Living\" . "
-                    + "?location NS:hasUnit ?lamp . "
-                    + "?currentObsLamp NS:hasUnitId ?lamp . "
-                    + "?currentObsLamp NS:hasTimeStamp ?timeLamp . "
+                    + "{ ?lamp a NAMESPACE:DimmableLight . } } "
+                    + "?location NAMESPACE:hasLabel \"Living\" . "
+                    + "?location NAMESPACE:hasUnit ?lamp . "
+                    + "?currentObsLamp NAMESPACE:hasUnitId ?lamp . "
+                    + "?currentObsLamp NAMESPACE:hasTimeStamp ?timeLamp . "
                 + "} GROUP BY ?currentTimeLamp ?lamp } "
 
                 // is there a lamp with current value ON?
-                + "?observationLamp NS:hasUnitId ?lamp . "
-                + "?observationLamp NS:hasStateValue NS:ON . "
+                + "?observationLamp NAMESPACE:hasUnitId ?lamp . "
+                + "?observationLamp NAMESPACE:hasStateValue NAMESPACE:ON . "
                 // get the labels of the lamps
-                + "?lamp NS:hasLabel ?lampLabel . "
+                + "?lamp NAMESPACE:hasLabel ?lampLabel . "
 
                 // get current observation of rollerShutter units
                 + "{ SELECT (MAX(?rolTime) AS ?currentRolTime) ?rol WHERE { "
-                    + "?rol a NS:RollerShutter . "
-                    + "?currentObsRol NS:hasUnitId ?rol . "
-                    + "?currentObsRol NS:hasTimeStamp ?rolTime . "
+                    + "?rol a NAMESPACE:RollerShutter . "
+                    + "?currentObsRol NAMESPACE:hasUnitId ?rol . "
+                    + "?currentObsRol NAMESPACE:hasTimeStamp ?rolTime . "
                 + "} GROUP BY ?rol ?currentRolTime } "
                 // is there a rollerShutter with current value UP or UNKNOWN?
                 + "BIND (EXISTS { "
-                    + "?observationRol NS:hasUnitId ?rol . "
-                    + "?observationRol NS:hasStateValue ?rolVal . "
-                    + "FILTER (?rolVal = NS:UP || NS:UNKNOWN) } "
+                    + "?observationRol NAMESPACE:hasUnitId ?rol . "
+                    + "?observationRol NAMESPACE:hasStateValue ?rolVal . "
+                    + "FILTER (?rolVal = NAMESPACE:UP || NAMESPACE:UNKNOWN) } "
                 + "AS ?isRolUP ) . "
 
                 // get current dateTime
@@ -172,59 +169,59 @@ public final class CompetencyQuestions {
      * Befindet sich momentan mindestens eine Person im Apartment und wenn nicht, sind alle Lampen ausgeschaltet?
      */
     public static final String REQ_5 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT (IF(?isMotion = true, ?motionLabel, 0) AS ?labelMotion) "
                 + "(IF(?isMotion = true, ?locMotionLabel, 0) AS ?locationLabelMotion) "
-                + "(IF(?isMotion = true, NS:MOTION, NS:NO_MOTION) AS ?motionValue) "
+                + "(IF(?isMotion = true, NAMESPACE:MOTION, NAMESPACE:NO_MOTION) AS ?motionValue) "
                 + "(IF(?isMotion = false && ?isLampOn = true, ?lampLabel, 0) AS ?labelLamp) "
                 + "(IF(?isMotion = false && ?isLampOn = true, ?locLabelOfLamp, 0) AS ?locationLabelLamp) "
-                + "(IF(?isMotion = false, NS:ON, NS:OFF) AS ?lampValue) WHERE { "
+                + "(IF(?isMotion = false, NAMESPACE:ON, NAMESPACE:OFF) AS ?lampValue) WHERE { "
 
                 // get current observation of motion units
                 + "{ SELECT (MAX(?timeMotion) AS ?currentTimeMotion) ?motionUnit WHERE { "
-                    + "?motionUnit a NS:MotionDetector . "
-                    + "?currentObsMotion NS:hasUnitId ?motionUnit . "
-                    + "?currentObsMotion NS:hasTimeStamp ?timeMotion . "
+                    + "?motionUnit a NAMESPACE:MotionDetector . "
+                    + "?currentObsMotion NAMESPACE:hasUnitId ?motionUnit . "
+                    + "?currentObsMotion NAMESPACE:hasTimeStamp ?timeMotion . "
                 + "} GROUP BY ?currentTimeMotion ?motionUnit } "
 
                 // get location- and unit labels of motion unit
                 + "OPTIONAL { "
-                    + "?motionUnit NS:hasLabel ?motionLabel . "
-                    + "?locMotion NS:hasUnit ?motionUnit . "
-                    + "?locMotion NS:hasLabel ?locMotionLabel . "
+                    + "?motionUnit NAMESPACE:hasLabel ?motionLabel . "
+                    + "?locMotion NAMESPACE:hasUnit ?motionUnit . "
+                    + "?locMotion NAMESPACE:hasLabel ?locMotionLabel . "
                     + "FILTER not exists { "
-                        + "?locMotion NS:hasLabel \"Home\" "
+                        + "?locMotion NAMESPACE:hasLabel \"Home\" "
                     + "} . "
                 + "} "
 
                 // is there a motion unit with current value MOTION?
                 + "BIND (EXISTS { "
-                    + "?obsMotion NS:hasUnitId ?motionUnit . "
-                    + "?obsMotion NS:hasStateValue NS:MOTION } "
+                    + "?obsMotion NAMESPACE:hasUnitId ?motionUnit . "
+                    + "?obsMotion NAMESPACE:hasStateValue NAMESPACE:MOTION } "
                 + "AS ?isMotion) . "
 
                 // get current observation of lamp units
                 + "{ SELECT (MAX(?timeLamp) AS ?currentTimeLamp) ?lampUnit WHERE { "
-                    + "{ { ?lampUnit a NS:ColorableLight . } "
+                    + "{ { ?lampUnit a NAMESPACE:ColorableLight . } "
                         + "UNION "
-                    + "{ ?lampUnit a NS:DimmableLight . } } "
-                    + "?currentObsLamp NS:hasUnitId ?lampUnit . "
-                    + "?currentObsLamp NS:hasTimeStamp ?timeLamp . "
+                    + "{ ?lampUnit a NAMESPACE:DimmableLight . } } "
+                    + "?currentObsLamp NAMESPACE:hasUnitId ?lampUnit . "
+                    + "?currentObsLamp NAMESPACE:hasTimeStamp ?timeLamp . "
                 + "} GROUP BY ?currentTimeLamp ?lampUnit } "
 
                 // get location- and unit labels of lamp unit
                 + "OPTIONAL { "
-                    + "?lampUnit NS:hasLabel ?lampLabel . "
-                    + "?locLamp NS:hasUnit ?lampUnit . "
-                    + "?locLamp NS:hasLabel ?locLabelOfLamp . "
+                    + "?lampUnit NAMESPACE:hasLabel ?lampLabel . "
+                    + "?locLamp NAMESPACE:hasUnit ?lampUnit . "
+                    + "?locLamp NAMESPACE:hasLabel ?locLabelOfLamp . "
                     + "FILTER not exists { "
-                        + "?locLamp NS:hasLabel \"Home\" "
+                        + "?locLamp NAMESPACE:hasLabel \"Home\" "
                     + "} . "
                 + "} "
 
                 // is there a lamp unit with current value ON?
                 + "BIND (EXISTS {"
-                    + " ?currentObsLamp NS:hasStateValue NS:ON } "
+                    + " ?currentObsLamp NAMESPACE:hasStateValue NAMESPACE:ON } "
                 + "AS ?isLampOn) . "
             + "} ";
 
@@ -232,19 +229,19 @@ public final class CompetencyQuestions {
      * Welcher Raum ist anhand der Häufigkeit der Gerätebenutzung am beliebtesten?
      */
     public static final String REQ_6 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>"
             // count the frequency of all locations by appearance via observations
             + "SELECT ?label (COUNT(?location) as ?count) WHERE { "
                 // get all units which are dalUnits
-                + "?unitType rdfs:subClassOf NS:DalUnit . "
+                + "?unitType rdfs:subClassOf NAMESPACE:DalUnit . "
                 + "?unit a ?unitType . "
                 // get the location and the label via usage of units
-                + "?observation NS:hasUnitId ?unit . "
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel ?label . "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel ?label . "
                 + "FILTER not exists { "
-                    + "?location NS:hasLabel \"Home\" "
+                    + "?location NAMESPACE:hasLabel \"Home\" "
                 + "} . "
             + "} "
             + "GROUP BY ?label ?location "
@@ -254,29 +251,29 @@ public final class CompetencyQuestions {
      * Welche unitTypen wurden in den letzten 3 Stunden manipuliert (z.B. ein/ausschalten) und wo befinden sich diese?
      */
     public static final String REQ_7 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>"
             + "SELECT ?unitLabel ?unitType (COUNT(?unit) AS ?unitCount) ?locationLabel WHERE { "
                     // get all timestamps of observations, which are not older than 3 hours from now
-                    + "?observation NS:hasTimeStamp ?time . "
+                    + "?observation NAMESPACE:hasTimeStamp ?time . "
                     + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get all units, which are dalUnits or Doors or Windows from the observations
-                    + "?observation NS:hasUnitId ?unit . "
-                    + "?unit NS:hasLabel ?unitLabel . "
+                    + "?observation NAMESPACE:hasUnitId ?unit . "
+                    + "?unit NAMESPACE:hasLabel ?unitLabel . "
                     + "{ { ?unit a ?unitType . } "
                         + "UNION "
-                    + "{ ?unit a NS:Door . }"
+                    + "{ ?unit a NAMESPACE:Door . }"
                         + "UNION "
-                    + "{ ?unit a NS:Window . } } "
-                    + "?unitType rdfs:subClassOf NS:DalUnit . "
+                    + "{ ?unit a NAMESPACE:Window . } } "
+                    + "?unitType rdfs:subClassOf NAMESPACE:DalUnit . "
 
                     // get the locations of the ?units without "Home"
-                    + "?location NS:hasUnit ?unit . "
-                    + "?location NS:hasLabel ?locationLabel . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
+                    + "?location NAMESPACE:hasLabel ?locationLabel . "
                     + "FILTER not exists { "
-                        + "?location NS:hasLabel \"Home\" "
+                        + "?location NAMESPACE:hasLabel \"Home\" "
                     + "} . "
                 + "} "
                 + "GROUP BY ?unitLabel ?unitType ?unitCount ?locationLabel ";
@@ -285,32 +282,32 @@ public final class CompetencyQuestions {
      * Wie viel Energie wurde in den letzten 3 Stunden im Apartment und wie viel im Wohnzimmer verbraucht?
      */
     public static final String REQ_8 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
             + "SELECT ?locationLabel (SUM(?currentValue - ?oldValue) AS ?consumption) ?physicalType WHERE { "
 
                 // get oldest (within 3 hours) and current timestamp of units with powerConsumption
                 + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
                     + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?unit a NS:PowerConsumptionState . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?unit a NAMESPACE:PowerConsumptionState . "
                 + "} "
                 + "GROUP BY ?oldTime ?currentTime ?unit } "
 
                 // get units in location "home" or "living" (or ...) only
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel \"Living\", ?locationLabel FILTER (?locationLabel = \"Living\") . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel \"Living\", ?locationLabel FILTER (?locationLabel = \"Living\") . "
 
                 // get state value of observation with oldest timestamp
-                + "?obsOld NS:hasUnitId ?unit . "
-                + "?obsOld NS:hasTimeStamp ?oldTime . "
-                + "?obsOld NS:hasStateValue ?oldVal . "
+                + "?obsOld NAMESPACE:hasUnitId ?unit . "
+                + "?obsOld NAMESPACE:hasTimeStamp ?oldTime . "
+                + "?obsOld NAMESPACE:hasStateValue ?oldVal . "
 
                 // get state value of observation with current timestamp
-                + "?obsCurrent NS:hasUnitId ?unit . "
-                + "?obsCurrent NS:hasTimeStamp ?currentTime . "
-                + "?obsCurrent NS:hasStateValue ?currentVal . "
+                + "?obsCurrent NAMESPACE:hasUnitId ?unit . "
+                + "?obsCurrent NAMESPACE:hasTimeStamp ?currentTime . "
+                + "?obsCurrent NAMESPACE:hasStateValue ?currentVal . "
 
                 // assign values to operate type (double) and physical type
                 + "BIND (xsd:double(?oldVal) AS ?oldValue) . "
@@ -323,32 +320,32 @@ public final class CompetencyQuestions {
      * Wie ist die Temperaturdifferenz im Badezimmer von jetzt zu vor 3 Stunden?
      */
     public static final String REQ_9 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
                 + "SELECT ?labelLoc (AVG(?currentValue) - AVG(?oldValue) AS ?temperatureDiff) ?physicalType WHERE { "
 
                     // get oldest (within 3 hours) and current timestamp of units with temperature
                     + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                        + "?obs NS:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
                         + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:TemperatureState . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:TemperatureState . "
                     + "} "
                     + "GROUP BY ?oldTime ?currentTime ?unit } "
 
                     // get units in location "bath"
-                    + "?location NS:hasUnit ?unit . "
-                    + "?location NS:hasLabel \"Bath\", ?labelLoc FILTER (?labelLoc = \"Bath\") . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
+                    + "?location NAMESPACE:hasLabel \"Bath\", ?labelLoc FILTER (?labelLoc = \"Bath\") . "
 
                     // get state value of observation with oldest timestamp
-                    + "?obsOld NS:hasUnitId ?unit . "
-                    + "?obsOld NS:hasTimeStamp ?oldTime . "
-                    + "?obsOld NS:hasStateValue ?oldVal . "
+                    + "?obsOld NAMESPACE:hasUnitId ?unit . "
+                    + "?obsOld NAMESPACE:hasTimeStamp ?oldTime . "
+                    + "?obsOld NAMESPACE:hasStateValue ?oldVal . "
 
                     // get state value of observation with current timestamp
-                    + "?obsCurrent NS:hasUnitId ?unit . "
-                    + "?obsCurrent NS:hasTimeStamp ?currentTime . "
-                    + "?obsCurrent NS:hasStateValue ?currentVal . "
+                    + "?obsCurrent NAMESPACE:hasUnitId ?unit . "
+                    + "?obsCurrent NAMESPACE:hasTimeStamp ?currentTime . "
+                    + "?obsCurrent NAMESPACE:hasStateValue ?currentVal . "
 
                     // assign values to operate type (double) and physical type
                     + "BIND (xsd:double(?oldVal) AS ?oldValue) . "
@@ -362,16 +359,16 @@ public final class CompetencyQuestions {
      */
     // if result should be two lists, the query should be split with different conditions (>= 80 and < 20)
     public static final String REQ_10 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>"
             + "SELECT ?label ?value ?scaleType WHERE { "
                 // get battery unit
-                + "?unit a NS:BatteryState . "
-                + "?unit NS:hasLabel ?label . "
+                + "?unit a NAMESPACE:BatteryState . "
+                + "?unit NAMESPACE:hasLabel ?label . "
 
                 // get observations of units
-                + "?obs NS:hasUnitId ?unit . "
-                + "?obs NS:hasStateValue ?val . "
+                + "?obs NAMESPACE:hasUnitId ?unit . "
+                + "?obs NAMESPACE:hasStateValue ?val . "
 
                 // assign values to operate type (double) and physical type
                 + "BIND (xsd:double(?val) AS ?value) . "
@@ -386,7 +383,7 @@ public final class CompetencyQuestions {
      */
     //Hint: no information about future events in ontology...
     public static final String REQ_11 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT * WHERE { "
                 + " "
             + "} ";
@@ -396,23 +393,23 @@ public final class CompetencyQuestions {
      * (zeitliche Pausen zw. den Bewegungen)?
      */
     public static final String REQ_12 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?label ?multipleMotion WHERE { "
 
                 // get oldest observation timestamp (within 3 hours) and current timestamp of motion units
                 + "{ SELECT (MIN(?time) AS ?oldTime) (MAX(?time) AS ?currentTime) ?label WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasStateValue NS:MOTION . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:MOTION . "
                     + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get location with MOTION value
-                    + "?unit a NS:MotionState . "
-                    + "?location NS:hasUnit ?unit . "
-                    + "?location NS:hasLabel ?label . "
+                    + "?unit a NAMESPACE:MotionState . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
+                    + "?location NAMESPACE:hasLabel ?label . "
                     + "FILTER NOT EXISTS { "
-                        + "?location NS:hasLabel \"Home\" "
+                        + "?location NAMESPACE:hasLabel \"Home\" "
                     + "} . "
                 + "} "
                 + "GROUP BY ?oldTime ?currentTime ?label } "
@@ -426,14 +423,14 @@ public final class CompetencyQuestions {
      * Wurden Türen zwischen 22:00 und 6:00 geöffnet und welche sind diese?
      */
     public static final String REQ_13 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT * WHERE { "
-                + "?door a NS:Door . "
-                + "?door NS:hasLabel ?label . "
-                + "?observation NS:hasUnitId ?door . "
-                + "?observation NS:hasStateValue NS:OPEN ,?stateValue FILTER (?stateValue = NS:OPEN) . "
-                + "?observation NS:hasTimeStamp ?time . "
+                + "?door a NAMESPACE:Door . "
+                + "?door NAMESPACE:hasLabel ?label . "
+                + "?observation NAMESPACE:hasUnitId ?door . "
+                + "?observation NAMESPACE:hasStateValue NAMESPACE:OPEN ,?stateValue FILTER (?stateValue = NAMESPACE:OPEN) . "
+                + "?observation NAMESPACE:hasTimeStamp ?time . "
                 + "FILTER ( "
                     + "hours(?time) >= \"22\"^^xsd:double || hours(?time) <= \"06\"^^xsd:double "
                 + ") . "
@@ -443,34 +440,34 @@ public final class CompetencyQuestions {
      * Wie ist die momentane Temperatur im Badezimmer und sind die Türen zu den Nachbarräumen geschlossen?
      */
     public static final String REQ_14 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT (AVG(?value) AS ?temperature) ?physicalType ?connectionLabel ?stateValue WHERE { "
 
                 // get current timestamp of units with temperature
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?unit a NS:TemperatureState . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?unit a NAMESPACE:TemperatureState . "
                 + "} "
                 + "GROUP BY ?currentTime ?unit } "
 
                 // get units with location "Bath"
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel \"Bath\" . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel \"Bath\" . "
 
                 // get temperature value of units via observations
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue ?val . "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "?observation NAMESPACE:hasStateValue ?val . "
 
                 // assign values to operate type (double) and physical type
                 + "BIND (xsd:double(?val) AS ?value) . "
                 + "BIND (datatype(?val) AS ?physicalType) . "
 
                 // get connections via location "Bath"
-                + "?location NS:hasConnection ?connection . "
-                + "?connection NS:hasLabel ?connectionLabel . "
-                + "?connection NS:hasCurrentStateValue ?stateValue . "
+                + "?location NAMESPACE:hasConnection ?connection . "
+                + "?connection NAMESPACE:hasLabel ?connectionLabel . "
+                + "?connection NAMESPACE:hasCurrentStateValue ?stateValue . "
             + "} "
             + "GROUP BY ?stateValue ?physicalType ?val ?connectionLabel ";
 
@@ -478,51 +475,51 @@ public final class CompetencyQuestions {
      * Welche Geräte beziehen seit mindestens 3 Stunden Strom (power consumption) im Wohnzimmer?
      */
     public static final String REQ_15 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT * WHERE { "
 
                 // get units with timestamp within 3 hours via powerConsumptionState
                 + "{ SELECT ?unit WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
                     + "FILTER (?time > \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?unit a NS:PowerConsumptionState . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?unit a NAMESPACE:PowerConsumptionState . "
                 + "} "
                 + "GROUP BY ?unit } "
 
                 // get units from living room only. units are dalUnits because of powerConsumptionState (see above)
-                + "?location NS:hasLabel \"Living\" . "
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel ?locationLabel . "
-                + "?unit NS:hasLabel ?unitLabel . "
+                + "?location NAMESPACE:hasLabel \"Living\" . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel ?locationLabel . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
             + "} ";
 
     /**
      * Welche Geräte beziehen aktuell Strom (power consumption) und wie viel jeweils?
      */
     public static final String REQ_16 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?unitLabel ?value ?physicalType WHERE { "
 
                 // get units with current timestamp via powerConsumptionState
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasProviderService NS:POWER_CONSUMPTION_STATE_SERVICE . "
-                    + "?unit a NS:PowerConsumptionState . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasProviderService NAMESPACE:POWER_CONSUMPTION_STATE_SERVICE . "
+                    + "?unit a NAMESPACE:PowerConsumptionState . "
                 + "} "
                 + "GROUP BY ?currentTime ?unit } "
 
                 // get the correct and unique observations from the units
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasTimeStamp ?currentTime . "
-                + "?observation NS:hasProviderService NS:POWER_CONSUMPTION_STATE_SERVICE . "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "?observation NAMESPACE:hasTimeStamp ?currentTime . "
+                + "?observation NAMESPACE:hasProviderService NAMESPACE:POWER_CONSUMPTION_STATE_SERVICE . "
 
                 // get label and value of the units with current timestamp
-                + "?unit NS:hasLabel ?unitLabel . "
-                + "?observation NS:hasStateValue ?val . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
+                + "?observation NAMESPACE:hasStateValue ?val . "
 
                 // assign values to operate type (double) and physical type
                 + "BIND (xsd:double(?val) AS ?value) . "
@@ -534,24 +531,24 @@ public final class CompetencyQuestions {
      */
     // hint: situation true, if one sensor has a value of min. 1000.0lx. alternative is a average over all sensor values
     public static final String REQ_17 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?locationLabel ?unitLabel ?value ?physicalType WHERE { "
 
                 // get units with current timestamp via brightnessState
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                    + "?obs NS:hasTimeStamp ?time . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                    + "?unit a NS:BrightnessState . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasProviderService NAMESPACE:BRIGHTNESS_STATE_SERVICE . "
+                    + "?unit a NAMESPACE:BrightnessState . "
                 + "} "
                 + "GROUP BY ?currentTime ?unit } "
 
                 // get all units with min. 1000.0lx brightness via observation
-                + "?observation NS:hasTimeStamp ?currentTime . "
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                + "?observation NS:hasStateValue ?val . "
+                + "?observation NAMESPACE:hasTimeStamp ?currentTime . "
+                + "?observation NAMESPACE:hasUnitId ?unit . "
+                + "?observation NAMESPACE:hasProviderService NAMESPACE:BRIGHTNESS_STATE_SERVICE . "
+                + "?observation NAMESPACE:hasStateValue ?val . "
                 + "FILTER (?value >= \"1000.0\"^^xsd:double) . "
 
                 // assign values to operate type (double) and physical type
@@ -559,51 +556,51 @@ public final class CompetencyQuestions {
                 + "BIND (datatype(?val) AS ?physicalType) . "
 
                 // get the location of the positive units (without "home")
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel ?locationLabel . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel ?locationLabel . "
                 + "FILTER NOT EXISTS { "
-                    + "?location NS:hasLabel \"Home\" "
+                    + "?location NAMESPACE:hasLabel \"Home\" "
                 + "} . "
 
                 // get unit label
-                + "?unit NS:hasLabel ?unitLabel . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
             + "} ";
 
     /**
      * Welche FarbLampen sind aktuell im Flur eingeschaltet und welche Werte haben diese?
      */
     public static final String REQ_18 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?locationLabel ?unitLabel ?valueColor ?valueBrightness WHERE { "
 
                 // get lamps with current timestamp based on powerState
                 + "{ SELECT (MAX(?timePower) AS ?currentTimePower) ?unitPower WHERE { "
-                    + "?obsPower NS:hasTimeStamp ?timePower . "
-                    + "?obsPower NS:hasUnitId ?unitPower . "
-                    + "?obsPower NS:hasProviderService NS:POWER_STATE_SERVICE . "
-                    + "?unitPower a NS:ColorableLight . "
-                    + "?unitPower a NS:PowerState . "
-                    + "?obsPower NS:hasStateValue NS:ON . "
+                    + "?obsPower NAMESPACE:hasTimeStamp ?timePower . "
+                    + "?obsPower NAMESPACE:hasUnitId ?unitPower . "
+                    + "?obsPower NAMESPACE:hasProviderService NAMESPACE:POWER_STATE_SERVICE . "
+                    + "?unitPower a NAMESPACE:ColorableLight . "
+                    + "?unitPower a NAMESPACE:PowerState . "
+                    + "?obsPower NAMESPACE:hasStateValue NAMESPACE:ON . "
                 + "} "
                 + "GROUP BY ?currentTimePower ?unitPower } "
 
                 // get lamps with current timestamp based on colorState
                 + "{ SELECT (MAX(?timeColor) AS ?currentTimeColor) ?unitColor WHERE { "
-                    + "?obsColor NS:hasTimeStamp ?timeColor . "
-                    + "?obsColor NS:hasUnitId ?unitColor . "
-                    + "?obsColor NS:hasProviderService NS:COLOR_STATE_SERVICE . "
-                    + "?unitColor a NS:ColorableLight . "
-                    + "?unitColor a NS:ColorState . "
+                    + "?obsColor NAMESPACE:hasTimeStamp ?timeColor . "
+                    + "?obsColor NAMESPACE:hasUnitId ?unitColor . "
+                    + "?obsColor NAMESPACE:hasProviderService NAMESPACE:COLOR_STATE_SERVICE . "
+                    + "?unitColor a NAMESPACE:ColorableLight . "
+                    + "?unitColor a NAMESPACE:ColorState . "
                 + "} "
                 + "GROUP BY ?currentTimeColor ?unitColor } "
 
                 // get lamps with current timestamp based on brightnessState
                 + "{ SELECT (MAX(?timeBrightness) AS ?currentTimeBrightness) ?unitBrightness WHERE { "
-                    + "?obsBrightness NS:hasTimeStamp ?timeBrightness . "
-                    + "?obsBrightness NS:hasUnitId ?unitBrightness . "
-                    + "?obsBrightness NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                    + "?unitBrightness a NS:ColorableLight . "
-                    + "?unitBrightness a NS:BrightnessState . "
+                    + "?obsBrightness NAMESPACE:hasTimeStamp ?timeBrightness . "
+                    + "?obsBrightness NAMESPACE:hasUnitId ?unitBrightness . "
+                    + "?obsBrightness NAMESPACE:hasProviderService NAMESPACE:BRIGHTNESS_STATE_SERVICE . "
+                    + "?unitBrightness a NAMESPACE:ColorableLight . "
+                    + "?unitBrightness a NAMESPACE:BrightnessState . "
                 + "} "
                 + "GROUP BY ?currentTimeBrightness ?unitBrightness } "
 
@@ -611,23 +608,23 @@ public final class CompetencyQuestions {
                 + "FILTER (?unitColor = ?unitPower && ?unitColor = ?unitBrightness) . "
 
                 // get color value of lamps
-                + "?observationColor NS:hasTimeStamp ?currentTimeColor . "
-                + "?observationColor NS:hasUnitId ?unitColor . "
-                + "?observationColor NS:hasProviderService NS:COLOR_STATE_SERVICE . "
-                + "?observationColor NS:hasStateValue ?valueColor . "
+                + "?observationColor NAMESPACE:hasTimeStamp ?currentTimeColor . "
+                + "?observationColor NAMESPACE:hasUnitId ?unitColor . "
+                + "?observationColor NAMESPACE:hasProviderService NAMESPACE:COLOR_STATE_SERVICE . "
+                + "?observationColor NAMESPACE:hasStateValue ?valueColor . "
 
                 // get brightness value of lamps
-                + "?observationBrightness NS:hasTimeStamp ?currentTimeBrightness . "
-                + "?observationBrightness NS:hasUnitId ?unitBrightness . "
-                + "?observationBrightness NS:hasProviderService NS:BRIGHTNESS_STATE_SERVICE . "
-                + "?observationBrightness NS:hasStateValue ?valueBrightness . "
+                + "?observationBrightness NAMESPACE:hasTimeStamp ?currentTimeBrightness . "
+                + "?observationBrightness NAMESPACE:hasUnitId ?unitBrightness . "
+                + "?observationBrightness NAMESPACE:hasProviderService NAMESPACE:BRIGHTNESS_STATE_SERVICE . "
+                + "?observationBrightness NAMESPACE:hasStateValue ?valueBrightness . "
 
                 // get labels of lamps and their locations
-                + "?unitPower NS:hasLabel ?unitLabel . "
-                + "?location NS:hasUnit ?unitPower . "
-                + "?location NS:hasLabel ?locationLabel . "
+                + "?unitPower NAMESPACE:hasLabel ?unitLabel . "
+                + "?location NAMESPACE:hasUnit ?unitPower . "
+                + "?location NAMESPACE:hasLabel ?locationLabel . "
                 + "FILTER NOT EXISTS { "
-                    + "?location NS:hasLabel \"Home\" "
+                    + "?location NAMESPACE:hasLabel \"Home\" "
                 + "} . "
             + "} ";
 
@@ -636,48 +633,48 @@ public final class CompetencyQuestions {
      */
     // Hint: query via motion units. alternative query in REQ_20
     public static final String REQ_19 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?motionLabel ?isMotion ?lampLabel ?isLampOn WHERE { "
 
                 // get motion units via current observation
                 + "{ SELECT (MAX(?timeMotion) AS ?currentTimeMotion) ?motionUnit WHERE { "
-                    + "?motionUnit a NS:MotionState . "
-                    + "?obsMotion NS:hasUnitId ?motionUnit . "
-                    + "?obsMotion NS:hasTimeStamp ?timeMotion . "
-                    + "?obsMotion NS:hasProviderService NS:MOTION_STATE_SERVICE . "
+                    + "?motionUnit a NAMESPACE:MotionState . "
+                    + "?obsMotion NAMESPACE:hasUnitId ?motionUnit . "
+                    + "?obsMotion NAMESPACE:hasTimeStamp ?timeMotion . "
+                    + "?obsMotion NAMESPACE:hasProviderService NAMESPACE:MOTION_STATE_SERVICE . "
                 + "} GROUP BY ?currentTimeMotion ?motionUnit } "
 
                 // is there a motion unit with current value MOTION?
                 + "BIND (EXISTS { "
-                    + "?motionObs NS:hasUnitId ?motionUnit . "
-                    + "?motionObs NS:hasTimeStamp ?currentTimeMotion . "
-                    + "?motionObs NS:hasProviderService NS:MOTION_STATE_SERVICE . "
-                    + "?motionObs NS:hasStateValue NS:MOTION } "
+                    + "?motionObs NAMESPACE:hasUnitId ?motionUnit . "
+                    + "?motionObs NAMESPACE:hasTimeStamp ?currentTimeMotion . "
+                    + "?motionObs NAMESPACE:hasProviderService NAMESPACE:MOTION_STATE_SERVICE . "
+                    + "?motionObs NAMESPACE:hasStateValue NAMESPACE:MOTION } "
                 + "AS ?isMotion) . "
 
                 // get lamp units via current observation
                 + "{ SELECT (MAX(?timeLamp) AS ?currentTimeLamp) ?lampUnit WHERE { "
-                    + "{ { ?lampUnit a NS:ColorableLight . } "
+                    + "{ { ?lampUnit a NAMESPACE:ColorableLight . } "
                         + "UNION "
-                    + "{ ?lampUnit a NS:DimmableLight . } } "
-                    + "?obsLamp NS:hasUnitId ?lampUnit . "
-                    + "?obsLamp NS:hasTimeStamp ?timeLamp . "
-                    + "?obsLamp NS:hasProviderService NS:POWER_STATE_SERVICE . "
+                    + "{ ?lampUnit a NAMESPACE:DimmableLight . } } "
+                    + "?obsLamp NAMESPACE:hasUnitId ?lampUnit . "
+                    + "?obsLamp NAMESPACE:hasTimeStamp ?timeLamp . "
+                    + "?obsLamp NAMESPACE:hasProviderService NAMESPACE:POWER_STATE_SERVICE . "
                 + "} GROUP BY ?currentTimeLamp ?lampUnit } "
 
                 // get motion and lamp labels of location "living"
-                + "?lampUnit NS:hasLabel ?lampLabel . "
-                + "?motionUnit NS:hasLabel ?motionLabel . "
-                + "?location NS:hasUnit ?lampUnit . "
-                + "?location NS:hasUnit ?motionUnit . "
-                + "?location NS:hasLabel \"Living\" . "
+                + "?lampUnit NAMESPACE:hasLabel ?lampLabel . "
+                + "?motionUnit NAMESPACE:hasLabel ?motionLabel . "
+                + "?location NAMESPACE:hasUnit ?lampUnit . "
+                + "?location NAMESPACE:hasUnit ?motionUnit . "
+                + "?location NAMESPACE:hasLabel \"Living\" . "
 
                 // is there a lamp unit with current value ON?
                 + "BIND (EXISTS { "
-                    + "?observation NS:hasTimeStamp ?currentTimeLamp . "
-                    + "?observation NS:hasUnitId ?lampUnit . "
-                    + "?observation NS:hasProviderService ?POWER_STATE_SERVICE . "
-                    + "?observation NS:hasStateValue NS:ON . } "
+                    + "?observation NAMESPACE:hasTimeStamp ?currentTimeLamp . "
+                    + "?observation NAMESPACE:hasUnitId ?lampUnit . "
+                    + "?observation NAMESPACE:hasProviderService ?POWER_STATE_SERVICE . "
+                    + "?observation NAMESPACE:hasStateValue NAMESPACE:ON . } "
                 + "AS ?isLampOn) . "
             + "} ";
 
@@ -686,24 +683,24 @@ public final class CompetencyQuestions {
      */
     // Hint: query via userPresenceState
     public static final String REQ_20 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
                 + "SELECT ?unitLabel ?locationLabel WHERE { "
 
                 // get all user units via current observation
                 + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                    + "?unit a NS:UserPresenceState . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?time . "
-                    + "?obs NS:hasStateValue NS:AT_HOME . "
-//                    + "?obs NS:hasProviderService NS: . " //unknown state_service...
+                    + "?unit a NAMESPACE:UserPresenceState . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?time . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:AT_HOME . "
+//                    + "?obs NAMESPACE:hasProviderService NAMESPACE: . " //unknown state_service...
                 + "} GROUP BY ?currentTime ?unit } "
 
                 // get labels of units and their locations
-                + "?unit NS:hasLabel ?unitLabel . "
-                + "?location NS:hasUnit ?unit . "
-                + "?location NS:hasLabel ?locationLabel . "
+                + "?unit NAMESPACE:hasLabel ?unitLabel . "
+                + "?location NAMESPACE:hasUnit ?unit . "
+                + "?location NAMESPACE:hasLabel ?locationLabel . "
                 + "FILTER NOT EXISTS { "
-                    + "?location NS:hasLabel \"Home\" "
+                    + "?location NAMESPACE:hasLabel \"Home\" "
                 + "} . "
             + "} ";
 
@@ -712,47 +709,47 @@ public final class CompetencyQuestions {
      * 10°C aufweisen?
      */
     public static final String REQ_21 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "SELECT ?door ((MAX(?average) - MIN(?average)) AS ?diffTemperature) ?physicalType WHERE { "
 
                 // get all door units via current observation
                 + "{ SELECT (MAX(?timeDoor) AS ?currentTimeDoor) ?door WHERE { "
-                    + "?door a NS:DoorState . "
-                    + "?obsDoor NS:hasUnitId ?door . "
-                    + "?obsDoor NS:hasTimeStamp ?timeDoor . "
-                    + "?obsDoor NS:hasStateValue NS:OPEN . "
-                    + "?obsDoor NS:hasProviderService NS:DOOR_STATE_SERVICE . "
+                    + "?door a NAMESPACE:DoorState . "
+                    + "?obsDoor NAMESPACE:hasUnitId ?door . "
+                    + "?obsDoor NAMESPACE:hasTimeStamp ?timeDoor . "
+                    + "?obsDoor NAMESPACE:hasStateValue NAMESPACE:OPEN . "
+                    + "?obsDoor NAMESPACE:hasProviderService NAMESPACE:DOOR_STATE_SERVICE . "
                 + "} GROUP BY ?currentTimeDoor ?door } "
 
                 // get all locations with the average temperature
                 + "{ SELECT (AVG(?val) AS ?average) ?location ?physicalType WHERE { "
-                    + "?observation NS:hasUnitId ?tempUnit . "
-                    + "?observation NS:hasTimeStamp ?currentTimeTemp . "
-                    + "?observation NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
-                    + "?observation NS:hasStateValue ?value . "
+                    + "?observation NAMESPACE:hasUnitId ?tempUnit . "
+                    + "?observation NAMESPACE:hasTimeStamp ?currentTimeTemp . "
+                    + "?observation NAMESPACE:hasProviderService NAMESPACE:TEMPERATURE_STATE_SERVICE . "
+                    + "?observation NAMESPACE:hasStateValue ?value . "
 
                     // assign values to operate type (double) and physical type
                     + "BIND (xsd:double(?value) AS ?val) . "
                     + "BIND (datatype(?value) AS ?physicalType) . "
 
                     // get locations of temperature units
-                    + "?location NS:hasUnit ?tempUnit . "
+                    + "?location NAMESPACE:hasUnit ?tempUnit . "
                     + "FILTER NOT EXISTS { "
-                        + "?location NS:hasLabel \"Home\" "
+                        + "?location NAMESPACE:hasLabel \"Home\" "
                     + "} . "
 
                     // get all temperature units via current observation
                     + "{ SELECT (MAX(?timeTemp) AS ?currentTimeTemp) ?tempUnit WHERE { "
-                        + "?tempUnit a NS:TemperatureState . "
-                        + "?obsTemp NS:hasUnitId ?tempUnit . "
-                        + "?obsTemp NS:hasTimeStamp ?timeTemp . "
-                        + "?obsTemp NS:hasProviderService NS:TEMPERATURE_STATE_SERVICE . "
+                        + "?tempUnit a NAMESPACE:TemperatureState . "
+                        + "?obsTemp NAMESPACE:hasUnitId ?tempUnit . "
+                        + "?obsTemp NAMESPACE:hasTimeStamp ?timeTemp . "
+                        + "?obsTemp NAMESPACE:hasProviderService NAMESPACE:TEMPERATURE_STATE_SERVICE . "
                     + "} GROUP BY ?currentTimeTemp ?tempUnit } "
                 + "} GROUP BY ?location ?average ?physicalType } "
 
                 // get the door connection between two adjacent-rooms
-                + "?location NS:hasConnection ?door . "
+                + "?location NAMESPACE:hasConnection ?door . "
             + "} "
             + "GROUP BY ?door ?diffTemperature ?physicalType ";
 
@@ -760,25 +757,25 @@ public final class CompetencyQuestions {
      * Gibt es Geräte in der Küche, die länger als 3 Stunden eingeschaltet sind und welche sind diese?
      */
     public static final String REQ_22 =
-            "PREFIX NS:   <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE:   <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
             + "PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>"
             + "SELECT ?unitLabel WHERE { "
 
                     // get the observations which have additionally stateValue ON
-                    + "?observation NS:hasTimeStamp ?currentTime . "
-                    + "?observation NS:hasUnitId ?unit . "
-                    + "?observation NS:hasProviderService NS:POWER_STATE_SERVICE . "
-                    + "?observation NS:hasStateValue NS:ON . "
+                    + "?observation NAMESPACE:hasTimeStamp ?currentTime . "
+                    + "?observation NAMESPACE:hasUnitId ?unit . "
+                    + "?observation NAMESPACE:hasProviderService NAMESPACE:POWER_STATE_SERVICE . "
+                    + "?observation NAMESPACE:hasStateValue NAMESPACE:ON . "
 
                     // get the current time and unit of all unitTypes which have a powerState
                     + "{ SELECT (MAX(?time) AS ?currentTime) ?unit WHERE { "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?obs NS:hasProviderService NS:POWER_STATE_SERVICE . "
-                        + "?unit a NS:PowerState . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:POWER_STATE_SERVICE . "
+                        + "?unit a NAMESPACE:PowerState . "
                         + "?unit a ?unitType . "
-                        + "?unitType rdfs:subClassOf NS:DalUnit . "
+                        + "?unitType rdfs:subClassOf NAMESPACE:DalUnit . "
                     + "} "
                     + "GROUP BY ?currentTime ?unit } "
 
@@ -786,12 +783,12 @@ public final class CompetencyQuestions {
                     + "FILTER (?currentTime <= \"" + addTimeToCurrentDateTime(0, -3, 0, 0, 0) + "\"^^xsd:dateTime) . "
 
                     // get location "kitchen" and labels of the units
-                    + "?location NS:hasLabel \"Kitchen\" . "
+                    + "?location NAMESPACE:hasLabel \"Kitchen\" . "
                     + "FILTER NOT EXISTS { "
-                        + "?location NS:hasLabel \"Home\" "
+                        + "?location NAMESPACE:hasLabel \"Home\" "
                     + "} . "
-                    + "?location NS:hasUnit ?unit . "
-                    + "?unit NS:hasLabel ?unitLabel . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
+                    + "?unit NAMESPACE:hasLabel ?unitLabel . "
             + "} ";
 
     /**

@@ -23,8 +23,8 @@ import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
-import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -59,7 +59,7 @@ public class ConnectionPhase {
 
     }
 
-    public void identifyConnection(final ConnectionState connectionState) throws JPServiceException {
+    public void identifyConnection(final ConnectionState connectionState) throws JPServiceException, NotAvailableException {
         if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
             // was NOT connected and now is connected - start connection phase
             updateConnectionPhase(ActivationState.State.ACTIVE);
@@ -71,7 +71,7 @@ public class ConnectionPhase {
         }
     }
 
-    private void initConnectionState(final UnitRemote unitRemote) throws JPServiceException {
+    private void initConnectionState(final UnitRemote unitRemote) throws JPServiceException, NotAvailableException {
         // reduce connectionState to binary classification - connected and not connected
         if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
             wasConnected = true;
@@ -81,7 +81,7 @@ public class ConnectionPhase {
         }
     }
 
-    private void updateConnectionPhase(final ActivationState.State activationState) throws JPServiceException {
+    private void updateConnectionPhase(final ActivationState.State activationState) throws JPServiceException, NotAvailableException {
 
         final String pred_IsA = OntConfig.OntExpr.A.getName();
         final String pred_HasFirstConnection = OntConfig.OntProp.FIRST_CONNECTION.getName();
@@ -105,7 +105,7 @@ public class ConnectionPhase {
             insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
             insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
 
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
+            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
             sendToServer(transactionBuffer, sparqlUpdate);
 
         } else if (activationState.equals(ActivationState.State.DEACTIVE)) {
@@ -117,7 +117,7 @@ public class ConnectionPhase {
 
             whereTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, null));
 
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertWhereBundleExpr(insertTriples, whereTriples);
+            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples, whereTriples);
             sendToServer(transactionBuffer, sparqlUpdate);
 
         } else {

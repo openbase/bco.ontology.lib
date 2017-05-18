@@ -22,7 +22,7 @@ import javafx.util.Pair;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -150,7 +150,7 @@ public class DataAggregation {
             return activityTimeList.stream().mapToLong(Long::longValue).sum();
         }
 
-        private HashMap<String, Pair<Long, Integer>> getActiveTimeAndQuantityPerStateValue(final List<ServiceDataCollection> bcoValuesAndTimestamps) {
+        private HashMap<String, Pair<Long, Integer>> getActiveTimeAndQuantityPerStateValue(final List<ServiceDataCollection> bcoValuesAndTimestamps) throws NotAvailableException {
 
             final HashMap<String, Pair<Long, Integer>> hashMap = new HashMap<>();
 
@@ -188,7 +188,7 @@ public class DataAggregation {
                 }
 
 //                if (!stateValueDataCollection.getStateValue().isLiteral()) {
-                    lastStateValue = OntologyToolkit.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
+                    lastStateValue = StringUtility.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
 //                } else {
 //                    lastStateValue = "UNKNOWN"; //TODO (bad hack)
 //                }
@@ -272,12 +272,17 @@ public class DataAggregation {
 
         private List<Integer> getQuantity(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
             final List<String> aggQuantityBuf = aggDataList.stream().map(ServiceAggDataCollection::getQuantity).collect(Collectors.toList());
-            return  convertStringToInteger(aggQuantityBuf);
+            return convertStringToInteger(aggQuantityBuf);
         }
 
-        private List<String> getStateValues(final List<ServiceDataCollection> stateValueDataCollectionList) {
-            return stateValueDataCollectionList.stream().map(serviceDataCollection
-                    -> OntologyToolkit.getLocalName(serviceDataCollection.getStateValue().asLiteral().getLexicalForm())).collect(Collectors.toList());
+        private List<String> getStateValues(final List<ServiceDataCollection> stateValueDataCollectionList) throws NotAvailableException {
+            return stateValueDataCollectionList.stream().map(serviceDataCollection -> {
+                try {
+                    return StringUtility.getLocalName(serviceDataCollection.getStateValue().asLiteral().getLexicalForm());
+                } catch (NotAvailableException e) {
+                    return ""; //TODO
+                }
+            }).collect(Collectors.toList());
         }
 
 //        private ValueConfidenceRange percentCalculation() throws CouldNotPerformException {

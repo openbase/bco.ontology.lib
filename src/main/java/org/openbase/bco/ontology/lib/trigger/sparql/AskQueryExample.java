@@ -42,67 +42,67 @@ public class AskQueryExample {
      * Ist die zuletzt geschaltete Lampe (colorableLight) eingeschaltet?
      */
     public static final String QUERY_0 =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get all colorableLights with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:PowerSwitch . "
-                        + "?obs NS:hasProviderService NS:PowerStateService . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:PowerSwitch . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // refer to the observation and check if the state value is on
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?lastTime . "
-                    + "?obs NS:hasStateValue NS:ON . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?lastTime . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:ON . "
                 + "}";
 
     /**
      * Ist mindestens eine Person im Wohnzimmer anwesend?
      */
     public static final String QUERY_1 =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get all tile units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:Tile . "
-                        + "?obs NS:hasProviderService NS:PresenceStateService . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:Tile . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
-                    + "?obs NS:hasStateValue NS:PRESENT . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?lastTime . "
-                    + "?unit NS:hasLabel \"Living\" . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:PRESENT . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?lastTime . "
+                    + "?unit NAMESPACE:hasLabel \"Living\" . "
                 + "}";
 
     /**
      * Ist ein Fernseher im Apartment (außer im Badezimmer) eingeschaltet?
      */
     public static final String QUERY_2 =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get all television units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:Television . "
-                        + "?obs NS:hasProviderService NS:PowerStateService . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:Television . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:PowerStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
-                    + "?obs NS:hasStateValue NS:ON . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?lastTime . "
-                    + "?location NS:hasUnit ?unit . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:ON . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?lastTime . "
+                    + "?location NAMESPACE:hasUnit ?unit . "
                     + "FILTER NOT EXISTS { "
-                        + "?location NS:hasLabel \"Bath\" "
+                        + "?location NAMESPACE:hasLabel \"Bath\" "
                     + "} . "
             + "}";
 
@@ -110,53 +110,53 @@ public class AskQueryExample {
      * Ist der Einwohner abwesend?
      */
     public static final String QUERY_3 =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get all user units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:User . "
-                        + "?obs NS:hasProviderService NS:PresenceStateService . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:User . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:PresenceStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
-                    + "?obs NS:hasStateValue NS:ABSENT . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?lastTime . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:ABSENT . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?lastTime . "
                 + "}";
 
     /**
      * Meldet der Rauchmelder Rauch??
      */
     public static final String QUERY_4 =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                 + "ASK { "
                     // get all smokeDetector units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasTimeStamp ?time . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?unit a NS:SmokeDetector . "
-                        + "?obs NS:hasProviderService NS:SmokeStateService . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasTimeStamp ?time . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?unit a NAMESPACE:SmokeDetector . "
+                        + "?obs NAMESPACE:hasProviderService NAMESPACE:SmokeStateService . "
                     + "} "
                     + "GROUP BY ?lastTime ?unit } "
                     // take the units or rather observation and filter...
-                    + "?obs NS:hasStateValue NS:SMOKE . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasTimeStamp ?lastTime . "
+                    + "?obs NAMESPACE:hasStateValue NAMESPACE:SMOKE . "
+                    + "?obs NAMESPACE:hasUnitId ?unit . "
+                    + "?obs NAMESPACE:hasTimeStamp ?lastTime . "
                 + "}";
 
 
     public static final String queryToLastConnectionPhaseTimeStamp =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
             + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT * WHERE { "
-                    + "?conn a NS:ConnectionPhase . "
+                    + "?conn a NAMESPACE:ConnectionPhase . "
                     // get times, which are stored in different cases
-                    + "?conn NS:hasLastConnection ?time . "
-                    + "OPTIONAL { ?time NS:hasLastConnection ?lastHeartBeat . } . "
+                    + "?conn NAMESPACE:hasLastConnection ?time . "
+                    + "OPTIONAL { ?time NAMESPACE:hasLastConnection ?lastHeartBeat . } . "
                     // reduce times to one variable via if condition
                     + "bind(if(isLiteral(?time), ?time, ?lastHeartBeat) as ?resultTime)"
                 + "} ";

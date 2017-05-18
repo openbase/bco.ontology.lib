@@ -29,7 +29,6 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
@@ -38,12 +37,14 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.OntModelUtility;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,11 +71,11 @@ public class DataProviding {
         this.intervalTimeFrame = new Interval(dateTimeFrom, dateTimeUntil);
     }
 
-    public HashMap<String, Long> getConnectionTimeForEachUnit() {
+    public HashMap<String, Long> getConnectionTimeForEachUnit() throws NotAvailableException {
 
         final HashMap<String, Long> hashMap = new HashMap<>();
 
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/normalData.owl");
+        final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, "src/normalData.owl");
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
@@ -84,7 +85,7 @@ public class DataProviding {
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
 
-            final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
+            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
             final String startTimestamp = querySolution.getLiteral("firstTimestamp").getLexicalForm();
             final String endTimestamp = querySolution.getLiteral("lastTimestamp").getLexicalForm();
 
@@ -120,15 +121,15 @@ public class DataProviding {
     }
 
 
-    public HashMap<String, List<ObservationDataCollection>> getObservationsForEachUnit() {
+    public HashMap<String, List<ObservationDataCollection>> getObservationsForEachUnit() throws NotAvailableException {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
-//        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+//        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
 
         final InputStream input = DataProviding.class.getResourceAsStream("/apartmentDataSimple.owl");
         final OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
-//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "/apartmentDataSimple.owl");
+//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "/apartmentDataSimple.owl");
         //TODO for each stateValue one observation (from sparql query) in resultSet bad idea: values are inverted.... need alternative
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
@@ -137,11 +138,11 @@ public class DataProviding {
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
         //TODO jena solution as alternative for testing
-        final OntClass observationClass = ontModel.getOntClass(OntConfig.NS + OntConfig.OntCl.OBSERVATION.getName());
-        final OntProperty hasUnitIdProp = ontModel.getOntProperty(OntConfig.NS + OntConfig.OntProp.UNIT_ID.getName());
-        final OntProperty hasStateValueProp = ontModel.getOntProperty(OntConfig.NS + OntConfig.OntProp.STATE_VALUE.getName());
-        final OntProperty hasServiceProp = ontModel.getOntProperty(OntConfig.NS + OntConfig.OntProp.PROVIDER_SERVICE.getName());
-        final OntProperty hasTimestampProp = ontModel.getOntProperty(OntConfig.NS + OntConfig.OntProp.TIME_STAMP.getName());
+        final OntClass observationClass = ontModel.getOntClass(OntConfig.NAMESPACE + OntConfig.OntCl.OBSERVATION.getName());
+        final OntProperty hasUnitIdProp = ontModel.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.UNIT_ID.getName());
+        final OntProperty hasStateValueProp = ontModel.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.STATE_VALUE.getName());
+        final OntProperty hasServiceProp = ontModel.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.PROVIDER_SERVICE.getName());
+        final OntProperty hasTimestampProp = ontModel.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.TIME_STAMP.getName());
 
         final ExtendedIterator observationInstances = observationClass.listInstances();
 
@@ -154,8 +155,8 @@ public class DataProviding {
             final RDFNode timestampNode = individual.getProperty(hasTimestampProp).getObject();
 
             final String timestamp = timestampNode.asLiteral().getLexicalForm();
-            final String unitId = OntologyToolkit.getLocalName(unitIdNode.asResource().toString());
-            final String providerService = OntologyToolkit.getLocalName(serviceNode.asResource().toString());
+            final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
+            final String providerService = StringUtility.getLocalName(serviceNode.asResource().toString());
 
             while (stateValues.hasNext()) {
                 final Statement statement = stateValues.next();
@@ -186,8 +187,8 @@ public class DataProviding {
 //            final QuerySolution querySolution = resultSet.nextSolution();
 //
 //            final String timestamp = querySolution.getLiteral("timestamp").getLexicalForm();
-//            final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
-//            final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("providerService").toString());
+//            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
+//            final String providerService = StringUtility.getLocalName(querySolution.getResource("providerService").toString());
 //            final RDFNode rdfNode = querySolution.get("stateValue");
 //
 ////            if (rdfNode.toString().equals("96.5811996459961^^http://www.openbase.org/bco/ontology#Saturation")) {
@@ -212,13 +213,14 @@ public class DataProviding {
         return hashMap;
     }
 
-    public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit(final OntConfig.Period period) throws JPServiceException, InterruptedException {
+    public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit(final OntConfig.Period period) throws JPServiceException
+            , InterruptedException, NotAvailableException {
 
         final HashMap<String, List<ObservationAggDataCollection>> hashMap = new HashMap<>();
 
-//        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-        final String timestampFrom = OntologyToolkit.addXsdDateTime(dateTimeFrom);
-        final String timestampUntil = OntologyToolkit.addXsdDateTime(dateTimeUntil);
+//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+        final String timestampFrom = StringUtility.addXsdDateTime(dateTimeFrom);
+        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(OntConfig.Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
@@ -229,8 +231,8 @@ public class DataProviding {
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
 
-            final String unitId = OntologyToolkit.getLocalName(querySolution.getResource("unit").toString());
-            final String providerService = OntologyToolkit.getLocalName(querySolution.getResource("service").toString());
+            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
+            final String providerService = StringUtility.getLocalName(querySolution.getResource("service").toString());
             final String timeWeighting = querySolution.getLiteral("timeWeighting").getLexicalForm();
             final String quantity = getLiteral(querySolution, "quantity");
             final String activityTime = getLiteral(querySolution, "activityTime");

@@ -22,14 +22,14 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
-import org.openbase.bco.ontology.lib.manager.sparql.SparqlUpdateExpression;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
@@ -100,7 +100,7 @@ public class HeartBeatCommunication {
 //                + "NS:recentHeartBeat NS:hasLastConnection ?time . "
 //            + "}";
 
-    private void closeOldConnectionPhases() throws JPServiceException, InterruptedException {
+    private void closeOldConnectionPhases() throws JPServiceException, InterruptedException, NotAvailableException {
 
         boolean isHttpSuccess = false;
 
@@ -113,7 +113,7 @@ public class HeartBeatCommunication {
         whereTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
         whereTriples.add(new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
 
-        final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriples, insertTriples, whereTriples);
+        final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriples, insertTriples, whereTriples);
 
         while (!isHttpSuccess) {
             try {
@@ -162,7 +162,7 @@ public class HeartBeatCommunication {
                 }
                 final QuerySolution querySolution = resultSet.next();
 
-                final String subj_HeartBeatPhase = OntologyToolkit.getLocalName(querySolution.getResource("blackout").toString());
+                final String subj_HeartBeatPhase = StringUtility.getLocalName(querySolution.getResource("blackout").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
                 final DateTime now = new DateTime();
 
@@ -183,7 +183,7 @@ public class HeartBeatCommunication {
                     insertTriple.add(getInsertTripleRecentHeartBeat(objectDateTimeNow));
 
                     // sparql update to replace last heartbeat timestamp
-                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateDeleteAndInsertBundleExpr(deleteTriple, insertTriple, null);
+                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
 //                    System.out.println(sparqlUpdate);
 
                     if (!SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
@@ -201,7 +201,7 @@ public class HeartBeatCommunication {
         }, 3, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void setNewHeartBeatPhase() throws InterruptedException, JPServiceException {
+    private void setNewHeartBeatPhase() throws InterruptedException, JPServiceException, NotAvailableException {
 
         boolean isHttpSuccess = false;
 
@@ -218,7 +218,7 @@ public class HeartBeatCommunication {
 
             final List<RdfTriple> insertTriples = new ArrayList<>();
 
-            final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateSingleDeleteExpr(getDeleteTripleRecentHeartBeat(), null);
+            final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateExpression(getDeleteTripleRecentHeartBeat(), null);
 //            System.out.println(sparqlUpdateDelete);
 
             // add initial instance "recentHeartBeat" with initial timestamp
@@ -228,8 +228,8 @@ public class HeartBeatCommunication {
             insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
             insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
 
-//            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
-            final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateInsertBundleExpr(insertTriples);
+//            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
+            final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
 
             try {
                 isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateDelete, OntConfig.ServerServiceForm.UPDATE);

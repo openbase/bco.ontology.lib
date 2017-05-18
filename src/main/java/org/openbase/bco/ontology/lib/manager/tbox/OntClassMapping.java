@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.List;

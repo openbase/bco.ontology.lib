@@ -18,13 +18,11 @@
  */
 package org.openbase.bco.ontology.lib.trigger.sparql;
 
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,7 +45,7 @@ public interface TypeAlignment {
 
         for (final UnitType unitType : UnitType.values()) {
 
-            final String alignedUnitType = OntologyToolkit.convertToNounSyntax(unitType.name());
+            final String alignedUnitType = StringUtility.convertToNounSyntax(unitType.name());
             alignedUnitTypes.put(alignedUnitType, unitType);
         }
         return alignedUnitTypes;
@@ -65,7 +63,7 @@ public interface TypeAlignment {
 
         for (final ServiceType serviceType : ServiceType.values()) {
 
-            final String alignedServiceType = OntologyToolkit.convertToNounSyntax(serviceType.name());
+            final String alignedServiceType = StringUtility.convertToNounSyntax(serviceType.name());
             alignedServiceTypes.put(alignedServiceType, serviceType);
         }
         return alignedServiceTypes;

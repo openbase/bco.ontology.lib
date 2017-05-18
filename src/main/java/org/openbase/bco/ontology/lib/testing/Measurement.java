@@ -37,7 +37,7 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.bco.ontology.lib.trigger.sparql.AskQueryExample;
@@ -97,42 +97,42 @@ public class Measurement {
     public static List<Long> triggerEnd = new ArrayList<>();
 
     private static final String SIMPLE_QUERY =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                     + "ASK { "
-                        + "?obs a NS:Observation . "
-                        + "?obs NS:hasUnitId ?unit . "
-                        + "?obs NS:hasStateValue NS:ON . "
-                        + "?unit a NS:ColorableLight . "
+                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs NAMESPACE:hasUnitId ?unit . "
+                        + "?obs NAMESPACE:hasStateValue NAMESPACE:ON . "
+                        + "?unit a NAMESPACE:ColorableLight . "
                     + "}";
 
 //    public static final String COMPLEX_QUERY =
-//            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+//            "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
 //            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
 //                + "ASK { "
 //                    + "{ SELECT ?timeA ?unitA WHERE { "
-//                        + "?obsA a NS:Observation . "
-//                        + "?obsA NS:hasTimeStamp ?timeA . "
-//                        + "?obsA NS:hasUnitId ?unitA . "
-//                        + "?unitA a NS:PowerSwitch . "
-//                        + "?obsA NS:hasProviderService NS:PowerStateService . "
-//                        + "?obsA NS:hasStateValue NS:OFF . "
+//                        + "?obsA a NAMESPACE:Observation . "
+//                        + "?obsA NAMESPACE:hasTimeStamp ?timeA . "
+//                        + "?obsA NAMESPACE:hasUnitId ?unitA . "
+//                        + "?unitA a NAMESPACE:PowerSwitch . "
+//                        + "?obsA NAMESPACE:hasProviderService NAMESPACE:PowerStateService . "
+//                        + "?obsA NAMESPACE:hasStateValue NAMESPACE:OFF . "
 //                    + "} "
 //                    + "ORDER BY DESC(?timeA) "
 //                    + "LIMIT 10 } . "
 //                    + "{ SELECT ?timeB ?unitB WHERE { "
-//                        + "?obsB a NS:Observation . "
-//                        + "?obsB NS:hasTimeStamp ?timeB . "
-//                        + "?obsB NS:hasUnitId ?unitB . "
-//                        + "?unitB a NS:ColorableLight . "
-//                        + "?obsB NS:hasProviderService NS:PowerStateService . "
-//                        + "?obsB NS:hasStateValue NS:ON . "
+//                        + "?obsB a NAMESPACE:Observation . "
+//                        + "?obsB NAMESPACE:hasTimeStamp ?timeB . "
+//                        + "?obsB NAMESPACE:hasUnitId ?unitB . "
+//                        + "?unitB a NAMESPACE:ColorableLight . "
+//                        + "?obsB NAMESPACE:hasProviderService NAMESPACE:PowerStateService . "
+//                        + "?obsB NAMESPACE:hasStateValue NAMESPACE:ON . "
 //                    + "} "
 //                    + "ORDER BY DESC(?timeB) "
 //                    + "LIMIT 10 } . "
-//                    + "?obsA NS:hasUnitId ?unitA . "
-//                    + "?obsA NS:hasTimeStamp ?timeA . "
-//                    + "?obsB NS:hasUnitId ?unitB . "
-//                    + "?obsB NS:hasTimeStamp ?timeB . "
+//                    + "?obsA NAMESPACE:hasUnitId ?unitA . "
+//                    + "?obsA NAMESPACE:hasTimeStamp ?timeA . "
+//                    + "?obsB NAMESPACE:hasUnitId ?unitB . "
+//                    + "?obsB NAMESPACE:hasTimeStamp ?timeB . "
 //                    + "BIND(minutes(xsd:dateTime(?timeA)) as ?minuteA) . "
 //                    + "BIND(minutes(xsd:dateTime(?timeB)) as ?minuteB) . "
 //                    + "FILTER (?minuteA = ?minuteB) . "
@@ -385,7 +385,7 @@ public class Measurement {
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
-//        final OntModel baseOntModel = OntologyToolkit.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
+//        final OntModel baseOntModel = StringUtility.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
         OntModelWeb.addOntModelViaRetry(ontModel);
     }
 

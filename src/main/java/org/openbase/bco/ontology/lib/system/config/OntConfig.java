@@ -20,8 +20,7 @@
 package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -35,8 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.NumberFormat;
-import java.util.Locale;
 
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the ontology. Furthermore a method tests the
@@ -55,7 +52,7 @@ public final class OntConfig {
     /**
      * Namespace of the ontology.
      */
-    public static final String NS = "http://www.openbase.org/bco/ontology#";
+    public static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
 
     /**
      * Namespace of the xsd schema (w3c). Don't modify.
@@ -337,12 +334,7 @@ public final class OntConfig {
         /**
          * Pattern for SPARQL namespace: "NS:".
          */
-        NS("NS:"),
-
-        /**
-         * Pattern to remove all special signs in a string.
-         */
-        REMOVE("[^\\p{Alpha}\\p{Digit}]+");
+        NS("NS:");
 
         private final String pattern;
 
@@ -438,11 +430,11 @@ public final class OntConfig {
      * @throws InterruptedException Exception is thrown, if the stopwatch is interrupted.
      */
     @SuppressWarnings("PMD.ExceptionAsFlowControl")
-    public void initialTestConfig() throws JPServiceException, InterruptedException {
+    public void initialTestConfig() throws JPServiceException, InterruptedException, NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
 //        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
-        final OntModel ontModel = OntologyToolkit.loadOntModelFromFile(null, null);
+        final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, null);
 
 
         try {
@@ -472,8 +464,8 @@ public final class OntConfig {
 
             try {
                 // test availability of ontology namespace
-                if (!(ontModel.getNsPrefixURI("") + "#").equals(OntConfig.NS)) {
-                    throw new NotAvailableException("Namespace \"" + OntConfig.NS
+                if (!(ontModel.getNsPrefixURI("") + "#").equals(OntConfig.NAMESPACE)) {
+                    throw new NotAvailableException("Namespace \"" + OntConfig.NAMESPACE
                             + "\" doesn't match with ontology namespace! Wrong String or ontology!");
                 }
             } catch (NotAvailableException e) {

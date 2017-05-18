@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
@@ -30,9 +30,10 @@ import java.util.List;
 public interface OntInstanceMapping {
 
     /**
-     * Method returns instance information of units, services and states based on the input unitConfigs.
+     * Method returns instance information of units, services and states.
      *
-     * @param unitConfigs contains the the units and their appropriate services + states.
+     * @param unitConfigs contains the the units. Services and states are taken from the rst environment.
+     *                    If {@code null} services and states triple are returned only.
      * @return a list with rdf triples to insert the units, services and states.
      */
     List<RdfTriple> getInsertConfigInstances(final List<UnitConfig> unitConfigs);
@@ -53,20 +54,18 @@ public interface OntInstanceMapping {
     List<RdfTriple> getInsertUnitInstances(final List<UnitConfig> unitConfigs);
 
     /**
-     * Method returns instance information of services, which are taken from the input unitConfigs or from the rst environment.
+     * Method returns instance information of all services, which are taken from the rst environment.
      *
-     * @param unitConfigs contains the services or if {@code null} all services are taken.
      * @return a list with rdf triples to insert the services.
      */
-    List<RdfTriple> getInsertProviderServiceInstances(final List<UnitConfig> unitConfigs);
+    List<RdfTriple> getInsertProviderServiceInstances();
 
     /**
-     * Method returns instance information of states, which are taken from the input unitConfigs or from the rst environment.
+     * Method returns instance information of states, which are taken from the rst environment.
      *
-     * @param unitConfigs contains the states or if {@code null} ALL states are taken.
      * @return a list with rdf triples to insert the states.
      */
-    List<RdfTriple> getInsertStateInstances(final List<UnitConfig> unitConfigs);
+    List<RdfTriple> getInsertStateInstances();
 
     /**
      * Method returns instance information to delete units, which are represented in the ontology.

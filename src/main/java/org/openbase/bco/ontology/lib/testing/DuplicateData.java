@@ -27,18 +27,16 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.util.ResourceUtils;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.schedule.Stopwatch;
+import org.openbase.jul.exception.NotAvailableException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +53,7 @@ public class DuplicateData {
 
     public DuplicateData() throws InterruptedException, JPServiceException {
 //        this.stopwatch = new Stopwatch();
-//        this.ontModelApartmentDataSimple = OntologyToolkit.loadOntModelFromFile(null, "src/apartmentDataSimple.owl");
+//        this.ontModelApartmentDataSimple = StringUtility.loadOntModelFromFile(null, "src/apartmentDataSimple.owl");
 //        this.dateTimeZone = DateTimeZone.forOffsetMillis(DateTimeZone.forID("Europe/Berlin").getOffset(DateTime.now()));
 
         InputStream inputSimpleData = DuplicateData.class.getResourceAsStream("/apartmentDataSimple.owl");
@@ -68,31 +66,31 @@ public class DuplicateData {
         this.ontModelApartmentDataSimpleAggObsDay = ontModelAggObsDay;
     }
 
-    public void duplicateDataOfAggObs(final int numberOfDays) throws InterruptedException, JPServiceException {
+    public void duplicateDataOfAggObs(final int numberOfDays) throws InterruptedException, JPServiceException, NotAvailableException {
 
         final OntModel ontModelDuplicatedData = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 
-        final OntClass aggObsClass = ontModelApartmentDataSimpleAggObsDay.getOntClass(OntConfig.NS + OntConfig.OntCl.AGGREGATION_OBSERVATION.getName());
-        final OntProperty hasUnitIdProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.UNIT_ID.getName());
-        final OntProperty hasPeriodProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.PERIOD.getName());
-        final OntProperty hasServiceProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.PROVIDER_SERVICE.getName());
-        final OntProperty hasTimestampProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.TIME_STAMP.getName());
-        final OntProperty hasStateValueProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.STATE_VALUE.getName());
-        final OntProperty hasQuantityProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.QUANTITY.getName());
-        final OntProperty hasTimeWeightingProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.TIME_WEIGHTING.getName());
+        final OntClass aggObsClass = ontModelApartmentDataSimpleAggObsDay.getOntClass(OntConfig.NAMESPACE + OntConfig.OntCl.AGGREGATION_OBSERVATION.getName());
+        final OntProperty hasUnitIdProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.UNIT_ID.getName());
+        final OntProperty hasPeriodProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.PERIOD.getName());
+        final OntProperty hasServiceProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.PROVIDER_SERVICE.getName());
+        final OntProperty hasTimestampProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.TIME_STAMP.getName());
+        final OntProperty hasStateValueProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.STATE_VALUE.getName());
+        final OntProperty hasQuantityProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.QUANTITY.getName());
+        final OntProperty hasTimeWeightingProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.TIME_WEIGHTING.getName());
         // discrete values
-        final OntProperty hasActivityProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.ACTIVITY_TIME.getName());
+        final OntProperty hasActivityProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.ACTIVITY_TIME.getName());
         // continuous values
-        final OntProperty hasVarianceProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.VARIANCE.getName());
-        final OntProperty hasStandardDeviationProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.STANDARD_DEVIATION.getName());
-        final OntProperty hasMeanProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NS + OntConfig.OntProp.MEAN.getName());
+        final OntProperty hasVarianceProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.VARIANCE.getName());
+        final OntProperty hasStandardDeviationProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.STANDARD_DEVIATION.getName());
+        final OntProperty hasMeanProp = ontModelApartmentDataSimpleAggObsDay.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.MEAN.getName());
 
         final ExtendedIterator observationInstances = aggObsClass.listInstances();
 
         while (observationInstances.hasNext()) {
             final Individual individual = (Individual) observationInstances.next();
-            final String subj_AggObs = OntologyToolkit.getLocalName(individual.toString()) + numberOfDays;
-            final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NS + subj_AggObs, aggObsClass);
+            final String subj_AggObs = StringUtility.getLocalName(individual.toString()) + numberOfDays;
+            final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NAMESPACE + subj_AggObs, aggObsClass);
 
             final RDFNode unitIdNode = individual.getProperty(hasUnitIdProp).getObject();
             final RDFNode periodNode = individual.getProperty(hasPeriodProp).getObject();
@@ -128,15 +126,15 @@ public class DuplicateData {
         OntModelWeb.addOntModelViaRetry(ontModelDuplicatedData);
     }
 
-    public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, JPServiceException {
+    public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, JPServiceException, NotAvailableException {
 
         final OntModel ontModelDuplicatedData = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 
-        final OntClass observationClass = ontModelApartmentDataSimple.getOntClass(OntConfig.NS + OntConfig.OntCl.OBSERVATION.getName());
-        final OntProperty hasUnitIdProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.UNIT_ID.getName());
-        final OntProperty hasStateValueProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.STATE_VALUE.getName());
-        final OntProperty hasServiceProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.PROVIDER_SERVICE.getName());
-        final OntProperty hasTimestampProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.TIME_STAMP.getName());
+        final OntClass observationClass = ontModelApartmentDataSimple.getOntClass(OntConfig.NAMESPACE + OntConfig.OntCl.OBSERVATION.getName());
+        final OntProperty hasUnitIdProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.UNIT_ID.getName());
+        final OntProperty hasStateValueProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.STATE_VALUE.getName());
+        final OntProperty hasServiceProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.PROVIDER_SERVICE.getName());
+        final OntProperty hasTimestampProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.TIME_STAMP.getName());
 
         final ExtendedIterator observationInstances = observationClass.listInstances();
 
@@ -157,11 +155,11 @@ public class DuplicateData {
 //            duplicateDateTime = duplicateDateTime.plusDays(numberOfDays);
 
 //            final String dateTimeNow = new DateTime().toString();
-//            final String unitId = OntologyToolkit.getLocalName(unitIdNode.asResource().toString());
+//            final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
 //            final String subj_Observation = "obs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
-            final String subj_Observation = OntologyToolkit.getLocalName(individual.toString()) + numberOfDays;
+            final String subj_Observation = StringUtility.getLocalName(individual.toString()) + numberOfDays;
 
-            final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NS + subj_Observation, observationClass);
+            final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NAMESPACE + subj_Observation, observationClass);
             newIndividual.addProperty(hasUnitIdProp, unitIdNode);
             newIndividual.addProperty(hasServiceProp, serviceNode);
             newIndividual.addProperty(hasTimestampProp, timestampNode);
@@ -178,13 +176,13 @@ public class DuplicateData {
 
     private void generateDataFromOneDayToOneYear() throws InterruptedException, IOException {
 
-//        final OntModel ontModelApartmentDataSimple = OntologyToolkit.loadOntModelFromFile(null, "");
+//        final OntModel ontModelApartmentDataSimple = StringUtility.loadOntModelFromFile(null, "");
 //
-//        final OntClass observationClass = ontModelApartmentDataSimple.getOntClass(OntConfig.NS + OntConfig.OntCl.OBSERVATION.getName());
-//        final OntProperty hasUnitIdProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.UNIT_ID.getName());
-//        final OntProperty hasStateValueProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.STATE_VALUE.getName());
-//        final OntProperty hasServiceProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.PROVIDER_SERVICE.getName());
-//        final OntProperty hasTimestampProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NS + OntConfig.OntProp.TIME_STAMP.getName());
+//        final OntClass observationClass = ontModelApartmentDataSimple.getOntClass(OntConfig.NAMESPACE + OntConfig.OntCl.OBSERVATION.getName());
+//        final OntProperty hasUnitIdProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.UNIT_ID.getName());
+//        final OntProperty hasStateValueProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.STATE_VALUE.getName());
+//        final OntProperty hasServiceProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.PROVIDER_SERVICE.getName());
+//        final OntProperty hasTimestampProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.TIME_STAMP.getName());
 //
 //        final ExtendedIterator observationInstances = observationClass.listInstances();
 //
@@ -205,13 +203,13 @@ public class DuplicateData {
 //
 //                    stopwatch.waitForStart(1);
 //                    final String dateTimeNow = new DateTime().toString();
-//                    final String unitId = OntologyToolkit.getLocalName(unitIdNode.asResource().toString());
+//                    final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
 //                    final String subj_Observation = "obs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
 //
-//                    final String newTimestamp = OntologyToolkit.addXsdDateTime(iteratorDateTime);
+//                    final String newTimestamp = StringUtility.addXsdDateTime(iteratorDateTime);
 //                    final Literal timestampLiteral = ontModelApartmentDataSimple.createTypedLiteral(newTimestamp);
 //
-//                    final Individual newIndividual = ontModelApartmentDataSimple.createIndividual(OntConfig.NS + subj_Observation, observationClass);
+//                    final Individual newIndividual = ontModelApartmentDataSimple.createIndividual(OntConfig.NAMESPACE + subj_Observation, observationClass);
 //                    newIndividual.addProperty(hasUnitIdProp, unitIdNode);
 //                    newIndividual.addProperty(hasStateValueProp, stateValueNode);
 //                    newIndividual.addProperty(hasServiceProp, serviceNode);
@@ -221,13 +219,13 @@ public class DuplicateData {
 //                }
 //            }
 //        }
-//        OntologyToolkit.saveOntModel(ontModelApartmentDataSimple, "evaluationData");
+//        StringUtility.saveOntModel(ontModelApartmentDataSimple, "evaluationData");
     }
 
     private void deleteObservations() throws CouldNotPerformException {
         //TODO
-        final String dateTimeFrom = OntologyToolkit.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
-        final String dateTimeUntil = OntologyToolkit.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
+        final String dateTimeFrom = StringUtility.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
+        final String dateTimeUntil = StringUtility.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
 
         SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ServerServiceForm.UPDATE);
     }

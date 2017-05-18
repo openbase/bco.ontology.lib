@@ -21,10 +21,10 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -207,12 +207,12 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> batteryLevelList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-//                    final String dataType = OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (!serviceDataColl.getStateValue().isLiteral()) {
                         //battery/blind/smoke value
                         batteryValueList.add(serviceDataColl);
-                    } else if (OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
+                    } else if (StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
                         // battery/blind/smoke level
                         batteryLevelList.add(serviceDataColl);
                     }
@@ -258,7 +258,7 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> saturationList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (dataType.equalsIgnoreCase("brightness")) {
                         //brightness value
@@ -362,7 +362,7 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> ampereList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = OntologyToolkit.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (dataType.equalsIgnoreCase("voltage")) {
                         //voltage value
@@ -520,9 +520,9 @@ public class DataAssignation extends DataAggregation {
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_WEIGHTING.getName(), "\"" + timeWeighting + "\"^^xsd:double"));
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NAMESPACE:Hue"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NAMESPACE:Saturation"));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NAMESPACE:Brightness"));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.QUANTITY.getName(), "\"" + quantity + "\"^^xsd:int"));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
         }

@@ -18,57 +18,20 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
 import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jul.exception.NotAvailableException;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author agatting on 13.02.17.
  */
 public interface TBoxVerification {
-
-    /**
-     * Method delivers all subclasses of the given ontClass via recursion.
-     *
-     * @param ontClassSet The (empty) set to itemize the ontClasses.
-     * @param ontSuperClass The superclass.
-     * @param inclusiveSuperclass If {@code true} the superclass is piece of the set of results. Otherwise not.
-     * @return A set with class results.
-     * @throws IllegalArgumentException Exception is thrown, if the superClass has no subClasses.
-     */
-    static Set<OntClass> listSubclassesOfOntSuperclass(Set<OntClass> ontClassSet, final OntClass ontSuperClass, final boolean inclusiveSuperclass) {
-
-        if (ontClassSet == null) {
-            ontClassSet = new HashSet<>();
-        }
-        // add initial superclass
-        if (inclusiveSuperclass) {
-            ontClassSet.add(ontSuperClass);
-        }
-
-        // get all subclasses of current superclass
-        final ExtendedIterator ontClassExIt = ontSuperClass.listSubClasses();
-
-        // add subclass(es) and if subclass has subclass(es) goto next layer via recursion
-        while (ontClassExIt.hasNext()) {
-            final OntClass ontClass = (OntClass) ontClassExIt.next();
-            ontClassSet.add(ontClass);
-
-            if (ontSuperClass.hasSubClass()) {
-                listSubclassesOfOntSuperclass(ontClassSet, ontClass, false);
-            }
-        }
-        return ontClassSet;
-    }
 
     /**
      * Method verifies, if the input className is a valid class element of the ontology. Namespace prefix is automatically added, if missing. Consider case
@@ -79,12 +42,12 @@ public interface TBoxVerification {
      * @return {@code true} if parameter is a valid ontClass name of the ontology. Otherwise {@code false}.
      * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws IOException Exception is thrown, if their is no connection to the server.
-     * @throws IllegalArgumentException Exception is thrown, if the className is null.
+     * @throws NotAvailableException Exception is thrown, if the className is null.
      */
-    static boolean isOntClassExisting(final String className, OntModel ontModel) throws JPServiceException, IOException, IllegalArgumentException {
+    static boolean isOntClassExisting(final String className, OntModel ontModel) throws JPServiceException, IOException, NotAvailableException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
-        final String classNameWithNS = OntologyToolkit.addNamespace(className);
+        final String classNameWithNS = StringUtility.addBcoNamespace(className, true);
 
         if (ontModel == null) {
 //            ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
@@ -101,12 +64,12 @@ public interface TBoxVerification {
      * @return {@code true} if parameter is a valid ontProperty name of the ontology. Otherwise {@code false}.
      * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws IOException Exception is thrown, if their is no connection to the server.
-     * @throws IllegalArgumentException Exception is thrown, if the propertyName is null.
+     * @throws NotAvailableException Exception is thrown, if the propertyName is null.
      */
-    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws IllegalArgumentException, IOException, JPServiceException {
+    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws NotAvailableException, IOException, JPServiceException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
-        final String propertyNameWithNS = OntologyToolkit.addNamespace(propertyName);
+        final String propertyNameWithNS = StringUtility.addBcoNamespace(propertyName, true);
 
         if (ontModel == null) {
             ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());

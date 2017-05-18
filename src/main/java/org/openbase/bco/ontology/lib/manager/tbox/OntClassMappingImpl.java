@@ -18,8 +18,8 @@
  */
 package org.openbase.bco.ontology.lib.manager.tbox;
 
-import org.openbase.bco.ontology.lib.manager.OntologyToolkit;
-import org.openbase.bco.ontology.lib.manager.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.registry.lib.util.UnitConfigProcessor;
@@ -122,7 +122,7 @@ public class OntClassMappingImpl implements OntClassMapping {
     private RdfTriple getUnitTypeClass(final UnitType unitType) throws NotAvailableException {
 
         final RdfTriple triple;
-        final String unitTypeName = OntologyToolkit.getCamelCaseName(unitType.name());
+        final String unitTypeName = StringUtility.getCamelCaseName(unitType.name());
 
         if (UnitConfigProcessor.isDalUnit(unitType)) {
             triple = new RdfTriple(unitTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.DAL_UNIT.getName());
@@ -150,7 +150,7 @@ public class OntClassMappingImpl implements OntClassMapping {
                         continue;
                     }
 
-                    final String locationTypeName = OntologyToolkit.getCamelCaseName(locationType.name());
+                    final String locationTypeName = StringUtility.getCamelCaseName(locationType.name());
                     triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
                 } catch (NotAvailableException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -164,7 +164,7 @@ public class OntClassMappingImpl implements OntClassMapping {
             }
         } else {
             try {
-                final String locationTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                final String locationTypeName = StringUtility.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                 triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
             } catch (NotAvailableException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -187,7 +187,7 @@ public class OntClassMappingImpl implements OntClassMapping {
                         continue;
                     }
 
-                    final String connectionTypeName = OntologyToolkit.getCamelCaseName(connectionType.name());
+                    final String connectionTypeName = StringUtility.getCamelCaseName(connectionType.name());
                     triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
                 } catch (NotAvailableException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -201,7 +201,7 @@ public class OntClassMappingImpl implements OntClassMapping {
             }
         } else {
             try {
-                final String connectionTypeName = OntologyToolkit.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                final String connectionTypeName = StringUtility.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                 triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
             } catch (NotAvailableException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
