@@ -443,6 +443,7 @@ public final class OntConfig {
      *
      * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws InterruptedException Exception is thrown, if the stopwatch is interrupted.
+     * @throws NotAvailableException NotAvailableException
      */
     @SuppressWarnings("PMD.ExceptionAsFlowControl")
     public void initialTestConfig() throws JPServiceException, InterruptedException, NotAvailableException {

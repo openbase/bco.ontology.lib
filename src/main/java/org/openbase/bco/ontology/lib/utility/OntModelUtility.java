@@ -82,7 +82,7 @@ public interface OntModelUtility {
      *
      * @param ontModel is the ontModel, which should be saved.
      * @param fileName is the name of the file.
-     * @param filePath is the file path. If {@code null} the path is default: src/<fileName>.owl.
+     * @param filePath is the file path. If {@code null} the path is default: src/fileName.owl.
      * @throws IOException is thrown in case the ontModel could not be saved.
      */
     static void saveOntModel(final OntModel ontModel, final String fileName, String filePath) throws IOException {
@@ -120,7 +120,6 @@ public interface OntModelUtility {
      *
      * @param query is the SELECT query.
      * @param ontModel is the local ontModel, which should be asked.
-     * @return the solution boolean.
      * @throws JenaException is thrown in case the SELECT query could not executed.
      */
     static void selectQuery(final String query, final OntModel ontModel) throws JenaException {

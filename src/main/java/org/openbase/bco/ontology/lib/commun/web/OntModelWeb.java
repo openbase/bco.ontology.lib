@@ -18,6 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.commun.web;
 
+import javafx.scene.paint.Stop;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.DatasetAccessor;
@@ -32,11 +33,13 @@ import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 19.01.17.
@@ -56,7 +59,7 @@ public interface OntModelWeb {
     Stopwatch stopwatch = new Stopwatch();
 
     /**
-     * Method returns the ontology model from the ontology server. Consider correct url.
+     * Method returns the ontology model from the ontology server. Consider correct url. Consider the possible big size of the ontology (and download time).
      *
      * @param url is the url of the ontology server without suffix (server service form).
      * @return the ontModel from the server.
@@ -83,6 +86,8 @@ public interface OntModelWeb {
      * Method tries to download the tbox from the ontology server. If there is no connection, the method retries in a specific interval with the download. If
      * the ontModel from the server is empty, the ontModel from the dependency is taken. Consider, if there is no connection, the method blocks.
      *
+     * @param url url
+     * @param timeout timeout
      * @return The TBox ontModel from the server or from the dependency, if the server ontModel is empty. If the file is not found, an empty ontModel is
      * returned.
      * @throws InterruptedException Exception is thrown, if the application is interrupted.
@@ -90,9 +95,6 @@ public interface OntModelWeb {
      * @throws NotAvailableException NotAvailableException
      */
     static OntModel waitForOntModel(final String url, final int timeout) throws InterruptedException, JPServiceException, NotAvailableException {
-
-
-
 
         OntModel ontModel = null;
 
