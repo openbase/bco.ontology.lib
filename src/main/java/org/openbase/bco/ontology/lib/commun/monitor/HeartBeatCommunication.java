@@ -81,10 +81,8 @@ public class HeartBeatCommunication {
             isInitObservable.notifyObservers(true);
 
             startHeartBeatThread();
-        } catch (NotAvailableException | InterruptedException | JPServiceException e) {
+        } catch (CouldNotPerformException | InterruptedException | JPServiceException e) {
             throw new InitializationException(this, e);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 

@@ -25,10 +25,8 @@ import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
-import org.openbase.bco.ontology.lib.jp.JPOntologyTBoxDatabaseURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -58,23 +56,24 @@ public interface OntModelWeb {
     Stopwatch stopwatch = new Stopwatch();
 
     /**
-     * Method returns the ontology model from the ontology server. Consider correct uri.
+     * Method returns the ontology model from the ontology server. Consider correct url.
      *
-     * @param uri The uri to the ontology server. Consider the different uri's to the services and dataSets!
-     * @return The ontology model from the server. An empty ontModel, if the server model is defect (Avoid nullPointer).
-     * @throws IOException Exception is thrown, if the ontModel could not uploaded (cause e.g. no connection - server offline).
+     * @param url is the url of the ontology server without suffix (server service form).
+     * @return the ontModel from the server.
+     * @throws IOException is thrown in case the ontModel could not downloaded (cause e.g. no connection - server offline).
+     * @throws NotAvailableException is thrown in case the server does not contain an ontModel.
      */
-    static OntModel getOntologyModel(final String uri) throws IOException {
-
+    static OntModel downloadOntModel(final String url) throws IOException, NotAvailableException {
         try {
-            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(uri + "data");
+            final DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(url + OntConfig.ServerServiceForm.DATA.getName());
             final Model model = datasetAccessor.getModel();
 
             if (model == null) {
-                return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
-            } else {
-                return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+                throw new NotAvailableException("The server contains no ontModel!");
             }
+            return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
+        } catch (NotAvailableException e) {
+            throw new NotAvailableException(e);
         } catch (Exception e) {
             throw new IOException("Could not get model from ontology server!", e);
         }
@@ -90,12 +89,16 @@ public interface OntModelWeb {
      * @throws JPServiceException Exception is thrown, if the JPService is not available.
      * @throws NotAvailableException NotAvailableException
      */
-    static OntModel getTBoxModelViaRetry() throws InterruptedException, JPServiceException, NotAvailableException {
+    static OntModel waitForOntModel(final String url, final int timeout) throws InterruptedException, JPServiceException, NotAvailableException {
+
+
+
+
         OntModel ontModel = null;
 
         while (ontModel == null) {
             try {
-                ontModel = OntModelWeb.getOntologyModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
+                ontModel = OntModelWeb.downloadOntModel(url);
 
                 if (ontModel.isEmpty()) {
                     ontModel = OntModelUtility.loadOntModelFromFile(null, null);
@@ -115,28 +118,20 @@ public interface OntModelWeb {
      * Method adds (NOT replaces) the ontology model to the server databases. Normally both databases are extended with the same ontModel to ensure consistency.
      *
      * @param ontModel The ontModel, which should be uploaded to the ontology databases.
-     * @param mainUri The main uri to the main ontology database.
-     * @param tboxUri The tbox uri to the tbox ontology database.
+     * @param url The main uri to the main ontology database.
      * @throws IOException Exception is thrown, if the ontModel could not uploaded (cause e.g. no connection - server offline).
      * @throws IllegalArgumentException Exception is thrown, if min. one uri is null.
      */
-    static void addOntModel(final OntModel ontModel, final String mainUri, final String tboxUri) throws IOException, IllegalArgumentException {
+    static void addOntModel(final OntModel ontModel, final String url) throws IOException, IllegalArgumentException {
 
         if (ontModel == null) {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main ontModel is null!");
-        } else if (mainUri == null) {
+        } else if (url == null) {
             throw new IllegalArgumentException("Could not add model to ontology server, cause main uri is null!");
         }
-//        } else if (tboxUri == null) {
-//            throw new IllegalArgumentException("Could not add model to ontology server, cause tbox uri is null!");
-//        }
         try {
-            DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(mainUri + "data");
+            DatasetAccessor datasetAccessor = DatasetAccessorFactory.createHTTP(url + "data");
             datasetAccessor.add(ontModel);
-
-//            datasetAccessor = DatasetAccessorFactory.createHTTP(tboxUri + "data");
-//            datasetAccessor.add(ontModel);
-
         } catch (Exception e) {
             throw new IOException("Could not add model to ontology server!", e);
         }
@@ -155,8 +150,7 @@ public interface OntModelWeb {
 
         while (!isUploaded) {
             try {
-                OntModelWeb.addOntModel(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
-                        , JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
+                OntModelWeb.addOntModel(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
                 isUploaded = true;
             } catch (IOException e) {
                 //retry

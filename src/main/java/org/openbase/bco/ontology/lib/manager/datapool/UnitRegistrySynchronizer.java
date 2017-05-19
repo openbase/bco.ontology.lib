@@ -119,7 +119,7 @@ public class UnitRegistrySynchronizer {
             insertTriples.addAll(ontRelationMapping.getInsertStateRelations(null));
 
             // convert to sparql expression and upload...or save in buffer, if no server connection
-            transformationAndUpdateSynchronization(null, insertTriples);
+            transformAndSynchronize(null, insertTriples);
         } catch (JPServiceException | InterruptedException | NotAvailableException e) {
             throw new InstantiationException(this, e);
         }
@@ -168,7 +168,7 @@ public class UnitRegistrySynchronizer {
                     aBoxSynchUpdateUnits(unitConfigsBuf);
                 }
 
-            } catch (InterruptedException | JPServiceException | NotAvailableException | MultiException e) {
+            } catch (InterruptedException | JPServiceException | CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
 //            if (!identifiableRemovedMessageMap.isEmpty()) {
@@ -197,7 +197,7 @@ public class UnitRegistrySynchronizer {
 //            insertTriples.addAll(ontRelationMapping.getInsertStateRelations(null));
 //
 //            // convert to sparql expression and upload...or save in buffer, if no server connection
-//            transformationAndUpdateSynchronization(null, insertTriples);
+//            transformAndSynchronize(null, insertTriples);
 //        } catch (JPServiceException | IllegalArgumentException e) {
 //            throw new InstantiationException(this, e);
 //        }
@@ -223,7 +223,7 @@ public class UnitRegistrySynchronizer {
         insertTriples.addAll(ontRelationMapping.getInsertUnitRelations(unitConfigs));
 
         // convert to sparql expression and upload...or save in buffer, if no server connection
-        transformationAndUpdateSynchronization(deleteTriples, insertTriples);
+        transformAndSynchronize(deleteTriples, insertTriples);
     }
 
     private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException {
@@ -238,7 +238,7 @@ public class UnitRegistrySynchronizer {
         triples.addAll(ontRelationMapping.getInsertUnitRelations(unitConfigs));
 
         // convert to sparql expression and upload...or save in buffer, if no server connection
-        transformationAndUpdateSynchronization(null, triples);
+        transformAndSynchronize(null, triples);
     }
 
 //    private void aBoxSynchRemoveUnits(final List<UnitConfig> unitConfigList) {
@@ -253,35 +253,35 @@ public class UnitRegistrySynchronizer {
 //        tripleArrayLists.addAll(ontRelationMapping.getDeleteUnitRelations(unitConfigList));
 //
 //        //convert to sparql expression and upload...or save, if no server connection
-//        transformationAndUpdateSynchronization(tripleArrayLists, null);
+//        transformAndSynchronize(tripleArrayLists, null);
 //    }
 
 
-    private void transformationAndUpdateSynchronization(final List<RdfTriple> deleteTriple, final List<RdfTriple> insertTriple) throws JPServiceException {
+    private void transformAndSynchronize(final List<RdfTriple> delete, final List<RdfTriple> insert) throws JPServiceException {
         String multiExprUpdate = "";
 
         try {
-            if (deleteTriple == null) {
-                // convert triples to single sparql update expression (insert)
-                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriple);
-            } else if (insertTriple == null) {
-                // convert triples to single sparql update expression (delete)
-                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, null, null);
+            if (delete == null) {
+                // convert triples to sparql update expression (insert)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+            } else if (insert == null) {
+                // convert triples to sparql update expression (delete)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, null);
             } else {
-                // convert triples to single sparql update expression (delete and insert)
-                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
+                // convert triples to sparql update expression (delete and insert)
+                multiExprUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, null);
             }
 
             // upload to ontology server
             final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
-                transactionBuffer.insertData(new Pair<>(multiExprUpdate, true));
+                transactionBuffer.insertData(multiExprUpdate);
             } else {
-                //TODO rsb notification
+                //TODO rsb notification?
             }
         } catch (CouldNotPerformException e) {
-            transactionBuffer.insertData(new Pair<>(multiExprUpdate, true));
+            transactionBuffer.insertData(multiExprUpdate);
         } catch (IllegalArgumentException e) {
             ExceptionPrinter.printHistory("Defect sparql update expression! Dropped.", e, LOGGER, LogLevel.ERROR);
         }

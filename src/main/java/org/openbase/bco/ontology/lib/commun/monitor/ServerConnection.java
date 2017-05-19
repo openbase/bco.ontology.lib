@@ -25,6 +25,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -79,7 +80,7 @@ public class ServerConnection {
                     connectionStateObservable.notifyObservers(ConnectionState.DISCONNECTED);
                     lastConnectionState = ConnectionState.DISCONNECTED;
                 }
-            } catch (MultiException e) {
+            } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }, 0, 1, TimeUnit.SECONDS);

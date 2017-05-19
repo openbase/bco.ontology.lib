@@ -131,12 +131,12 @@ public class ConnectionPhase {
 
             if (!isHttpSuccess) {
                 // could not send to server - insert sparql update expression to buffer queue
-                transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
+                transactionBuffer.insertData(sparqlUpdateExpr);
             }
             return isHttpSuccess;
         } catch (CouldNotPerformException e) {
             // could not send to server - insert sparql update expression to buffer queue
-            transactionBuffer.insertData(new Pair<>(sparqlUpdateExpr, false));
+            transactionBuffer.insertData(sparqlUpdateExpr);
         }
         return false;
     }

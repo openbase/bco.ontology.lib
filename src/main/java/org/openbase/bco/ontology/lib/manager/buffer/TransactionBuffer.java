@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.manager.buffer;
 
-import javafx.util.Pair;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
@@ -42,10 +41,9 @@ public interface TransactionBuffer {
      * Method inserts data in the queue. The data is a pair, which contains the sparql update string and a boolean, if the update should be send to all
      * databases or send to the main database only.
      *
-     * @param sparqlUpdateAndToAllDataBasesPair Pair with the sparql update and a boolean, which means {@code true} send the sparql update to all databases.
-     *                                          Otherwise {@code false} the sparql update is send to the main database only.
+     * @param updateExpression is the sparql update expression.
      * @throws CouldNotProcessException If the string can't be insert into the queue.
      */
-    void insertData(final Pair<String, Boolean> sparqlUpdateAndToAllDataBasesPair) throws CouldNotProcessException;
+    void insertData(final String updateExpression) throws CouldNotProcessException;
 
 }

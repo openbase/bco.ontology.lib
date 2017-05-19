@@ -79,7 +79,7 @@ public class RsbCommunication {
         rsbListener.addHandler(event -> {
             try {
                 changeCategoryObservable.notifyObservers((OntologyChange) event.getData());
-            } catch (MultiException e) {
+            } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }, false);

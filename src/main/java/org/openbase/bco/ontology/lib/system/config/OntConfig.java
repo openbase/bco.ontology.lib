@@ -60,12 +60,27 @@ public final class OntConfig {
     public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
 
     /**
-     * An enum with service forms of the fuseki ontology server.
+     * Enum contains the service forms of the fuseki server. They are components of the url (suffix).
      */
     public enum ServerServiceForm {
-        DATA,
-        UPDATE,
-        SPARQL
+        DATA("data"),
+        UPDATE("update"),
+        SPARQL("sparql");
+
+        private final String serverServiceForm;
+
+        ServerServiceForm(final String serverServiceForm) {
+            this.serverServiceForm = serverServiceForm;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return the name of an enum element as string.
+         */
+        public String getName() {
+            return this.serverServiceForm;
+        }
     }
 
     public static final int BACKDATED_BEGINNING_OF_PERIOD = 1;

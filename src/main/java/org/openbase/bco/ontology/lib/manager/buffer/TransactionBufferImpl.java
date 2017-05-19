@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.manager.buffer;
 
-import javafx.util.Pair;
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -46,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 public class TransactionBufferImpl implements TransactionBuffer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBufferImpl.class);
-    private final Queue<Pair<String, Boolean>> queue;
+    private final Queue<String> queue;
     private final OntologyChange.Category category;
     private final Stopwatch stopwatch;
     private Future future;
@@ -67,18 +66,11 @@ public class TransactionBufferImpl implements TransactionBuffer {
             future = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
 
                 while (!queue.isEmpty()) {
-                    final Pair<String, Boolean> pair = queue.peek();
-                    final String sparqlUpdateExpr = pair.getKey();
+                    final String updateExpression = queue.peek();
                     final boolean isHttpSuccess;
 
                     try {
-                        if (pair.getValue()) {
-                            // send to all databases
-                            isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
-                        } else {
-                            // send to main database only
-                            isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
-                        }
+                        isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(updateExpression, OntConfig.ServerServiceForm.UPDATE);
 
                         if (isHttpSuccess) {
                             queue.poll();
@@ -91,7 +83,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     } catch (CouldNotPerformException e) {
                         queue.poll();
                         ExceptionPrinter.printHistory("Dropped broken queue entry. Server could not perform, cause of client error... wrong update?" +
-                                " Queue entry is: " + sparqlUpdateExpr, e, LOGGER, LogLevel.ERROR);
+                                " Queue entry is: " + updateExpression, e, LOGGER, LogLevel.ERROR);
                     }
 
                     if (queue.isEmpty() && synchronizedInformer != null) {
@@ -111,8 +103,8 @@ public class TransactionBufferImpl implements TransactionBuffer {
      * {@inheritDoc}
      */
     @Override
-    public void insertData(final Pair<String, Boolean> stringBooleanPair) throws CouldNotProcessException {
-        boolean isElementInQueue = queue.offer(stringBooleanPair);
+    public void insertData(final String updateExpression) throws CouldNotProcessException {
+        boolean isElementInQueue = queue.offer(updateExpression);
 
         if (!isElementInQueue) {
             throw new CouldNotProcessException("Could not add element to queue!");
