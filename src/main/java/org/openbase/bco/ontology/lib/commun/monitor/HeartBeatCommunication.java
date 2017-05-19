@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.commun.monitor;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
@@ -34,7 +34,6 @@ import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.InitializationException;
-import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -115,7 +114,7 @@ public class HeartBeatCommunication {
 
         while (!isHttpSuccess) {
             try {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(closeOldConnectionPhases, OntConfig.ServerServiceForm.UPDATE);
+                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(closeOldConnectionPhases, OntConfig.ServerServiceForm.UPDATE);
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
@@ -153,7 +152,7 @@ public class HeartBeatCommunication {
 
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+                final ResultSet resultSet = SparqlHttp.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
 
                 if (resultSet == null || !resultSet.hasNext()) {
                     throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
@@ -184,7 +183,7 @@ public class HeartBeatCommunication {
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
 //                    System.out.println(sparqlUpdate);
 
-                    if (!SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
+                    if (!SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
                         throw new CouldNotProcessException("Dropped heartbeat update. Server offline?");
                     }
                 } else {
@@ -230,12 +229,12 @@ public class HeartBeatCommunication {
             final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
 
             try {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateDelete, OntConfig.ServerServiceForm.UPDATE);
+                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateDelete, OntConfig.ServerServiceForm.UPDATE);
 
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 } else {
-                    isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateInsert, OntConfig.ServerServiceForm.UPDATE);
+                    isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateInsert, OntConfig.ServerServiceForm.UPDATE);
 
                     if (!isHttpSuccess) {
                         stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);

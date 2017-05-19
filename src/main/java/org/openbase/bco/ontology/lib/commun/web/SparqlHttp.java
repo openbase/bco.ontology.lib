@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * @author agatting on 12.12.16.
  */
-public interface SparqlUpdateWeb {
+public interface SparqlHttp {
 
     /**
      * Logger.
@@ -100,7 +100,7 @@ public interface SparqlUpdateWeb {
             boolean isHttpSuccess = false;
 
             while (!isHttpSuccess) {
-                isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, serviceForm);
+                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateExpr, serviceForm);
 
                 if (!isHttpSuccess) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);

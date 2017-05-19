@@ -29,11 +29,13 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -123,7 +125,7 @@ public class DuplicateData {
             newIndividual.addProperty(hasTimeWeightingProp, timeWeightingNode);
         }
         System.out.println("send data to fuseki...");
-        OntModelWeb.addOntModelViaRetry(ontModelDuplicatedData);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 
     public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, JPServiceException, NotAvailableException {
@@ -171,7 +173,7 @@ public class DuplicateData {
             }
         }
         System.out.println("send data to fuseki...");
-        OntModelWeb.addOntModelViaRetry(ontModelDuplicatedData);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 
     private void generateDataFromOneDayToOneYear() throws InterruptedException, IOException {
@@ -227,6 +229,6 @@ public class DuplicateData {
         final String dateTimeFrom = StringUtility.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
         final String dateTimeUntil = StringUtility.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
 
-        SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ServerServiceForm.UPDATE);
+        SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ServerServiceForm.UPDATE);
     }
 }

@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
@@ -62,14 +62,14 @@ public class DataTripleCollection extends DataAssignation {
             final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(collectData());
 
             // send aggregated values ...
-            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
 //            // delete unused connectionPhases (old)
-//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
 //            // delete unused heartBeatPhases (old)
-//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
 //            // delete unused observations (old)
-//            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
 
         } else {
             final Period oldPeriod;
@@ -93,10 +93,10 @@ public class DataTripleCollection extends DataAssignation {
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");
-            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
             // delete unused aggregations (old)
-            SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringUtility.addXsdDateTime(dateTimeFrom)
+            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringUtility.addXsdDateTime(dateTimeFrom)
                     , StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
         }
     }

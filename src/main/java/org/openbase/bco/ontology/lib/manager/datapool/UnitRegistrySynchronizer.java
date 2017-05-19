@@ -18,9 +18,9 @@
  */
 package org.openbase.bco.ontology.lib.manager.datapool;
 
-import javafx.util.Pair;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappingImpl;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
@@ -34,10 +34,10 @@ import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappi
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
-import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -104,7 +104,7 @@ public class UnitRegistrySynchronizer {
     private void initSynchConfigData() throws InstantiationException {
         try {
             // upload ontModel
-            OntModelWeb.addOntModelViaRetry(OntModelUtility.loadOntModelFromFile(null, null));
+            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
 
             final List<UnitConfig> unitConfigs = getUnitConfigList();
             final List<RdfTriple> insertTriples = new ArrayList<>();
@@ -273,7 +273,7 @@ public class UnitRegistrySynchronizer {
             }
 
             // upload to ontology server
-            final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
+            final boolean isHttpSuccess = SparqlHttp.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
                 transactionBuffer.insertData(multiExprUpdate);

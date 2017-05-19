@@ -449,7 +449,7 @@ public final class OntConfig {
     public void initialTestConfig() throws JPServiceException, InterruptedException, NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
-//        final OntModel ontModel = OntModelWeb.getTBoxModelViaRetry();
+//        final OntModel ontModel = OntModelHttp.getTBoxModelViaRetry();
         final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, null);
 
 

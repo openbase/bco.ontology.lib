@@ -18,10 +18,9 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
-import javafx.util.Pair;
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
@@ -127,7 +126,7 @@ public class ConnectionPhase {
 
     boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparqlUpdateExpr) throws JPServiceException {
         try {
-            final boolean isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            final boolean isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
 
             if (!isHttpSuccess) {
                 // could not send to server - insert sparql update expression to buffer queue

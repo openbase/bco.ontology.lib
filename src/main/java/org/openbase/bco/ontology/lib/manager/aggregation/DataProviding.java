@@ -36,7 +36,7 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.utility.StringUtility;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
@@ -79,7 +79,7 @@ public class DataProviding {
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
-//        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllConnectionPhases);
+//        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllConnectionPhases);
 
 
         while (resultSet.hasNext()) {
@@ -134,7 +134,7 @@ public class DataProviding {
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
-//        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
+//        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
         //TODO jena solution as alternative for testing
@@ -225,7 +225,7 @@ public class DataProviding {
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
-        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil));
+        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
         while (resultSet.hasNext()) {

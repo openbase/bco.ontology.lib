@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.buffer;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -70,7 +70,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     final boolean isHttpSuccess;
 
                     try {
-                        isHttpSuccess = SparqlUpdateWeb.sparqlUpdateToAllDataBases(updateExpression, OntConfig.ServerServiceForm.UPDATE);
+                        isHttpSuccess = SparqlHttp.sparqlUpdateToAllDataBases(updateExpression, OntConfig.ServerServiceForm.UPDATE);
 
                         if (isHttpSuccess) {
                             queue.poll();

@@ -32,8 +32,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openbase.bco.dal.remote.unit.ColorableLightRemote;
 import org.openbase.bco.dal.remote.unit.PowerSwitchRemote;
 import org.openbase.bco.dal.remote.unit.Units;
-import org.openbase.bco.ontology.lib.commun.web.OntModelWeb;
-import org.openbase.bco.ontology.lib.commun.web.SparqlUpdateWeb;
+import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -41,8 +42,10 @@ import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.bco.ontology.lib.trigger.sparql.AskQueryExample;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.ObservableImpl;
@@ -307,7 +310,7 @@ public class Measurement {
             complexQuMeasuredValues.clear();
 
             if (daysCurCount < DAYS_MAX_COUNT) {
-                SparqlUpdateWeb.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ServerServiceForm.UPDATE);
+                SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ServerServiceForm.UPDATE);
                 aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
@@ -380,21 +383,21 @@ public class Measurement {
         }
     }
 
-    private void init() throws InterruptedException, JPServiceException {
+    private void init() throws InterruptedException, JPServiceException, NotAvailableException {
         InputStream input = Measurement.class.getResourceAsStream("/apartmentDataSimpleWithoutObs.owl");
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
 //        final OntModel baseOntModel = StringUtility.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
-        OntModelWeb.addOntModelViaRetry(ontModel);
+        OntModelHttp.addModelToServer(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 
-    private void addNormalDataSetToServer() throws InterruptedException, JPServiceException  {
+    private void addNormalDataSetToServer() throws InterruptedException, JPServiceException, NotAvailableException {
         InputStream input = Measurement.class.getResourceAsStream("/apartmentDataSimple.owl");
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
-        OntModelWeb.addOntModelViaRetry(ontModel);
+        OntModelHttp.addModelToServer(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 
     private void startAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
@@ -421,7 +424,7 @@ public class Measurement {
 
     private long askNumberOfTriple() throws InterruptedException, JPServiceException {
 
-        final ResultSet resultSet = SparqlUpdateWeb.sparqlQuerySelectViaRetry(StaticSparqlExpression.countAllTriples);
+        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.countAllTriples);
         Long numTriples = 0L;
 
         if (resultSet.hasNext()) {

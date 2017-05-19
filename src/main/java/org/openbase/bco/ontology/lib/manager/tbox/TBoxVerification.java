@@ -47,7 +47,7 @@ public interface TBoxVerification {
         final String classNameWithNS = StringUtility.addBcoNamespace(className, true);
 
         if (ontModel == null) {
-//            ontModel = OntModelWeb.downloadOntModel(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
+//            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
         }
         return ontModel.getOntClass(classNameWithNS) != null;
     }
@@ -69,7 +69,7 @@ public interface TBoxVerification {
         final String propertyNameWithNS = StringUtility.addBcoNamespace(propertyName, true);
 
         if (ontModel == null) {
-//            ontModel = OntModelWeb.downloadOntModel(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
+//            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
         }
         return ontModel.getOntProperty(propertyNameWithNS) != null;
     }
