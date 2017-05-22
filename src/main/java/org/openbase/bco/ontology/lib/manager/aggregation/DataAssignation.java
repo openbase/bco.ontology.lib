@@ -21,10 +21,10 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -207,12 +207,12 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> batteryLevelList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-//                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (!serviceDataColl.getStateValue().isLiteral()) {
                         //battery/blind/smoke value
                         batteryValueList.add(serviceDataColl);
-                    } else if (StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
+                    } else if (StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
                         // battery/blind/smoke level
                         batteryLevelList.add(serviceDataColl);
                     }
@@ -258,7 +258,7 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> saturationList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (dataType.equalsIgnoreCase("brightness")) {
                         //brightness value
@@ -362,7 +362,7 @@ public class DataAssignation extends DataAggregation {
                 List<ServiceDataCollection> ampereList = new ArrayList<>();
 
                 for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = StringUtility.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
 
                     if (dataType.equalsIgnoreCase("voltage")) {
                         //voltage value

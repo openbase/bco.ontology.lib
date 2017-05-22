@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.utility.sparql;
+package org.openbase.bco.ontology.lib.utility;
 
 /**
  * @author agatting on 23.12.16.
@@ -27,11 +27,11 @@ public class RdfTriple {
     private final String object;
 
     /**
-     * Methods creates an array of objects in form of subject, predicate, object.
+     * Methods creates a triple with subject, predicate and object.
      *
-     * @param subject SPARQL subject.
-     * @param predicate SPARQL predicate.
-     * @param object SPARQL object.
+     * @param subject is the SPARQL subject.
+     * @param predicate is the SPARQL predicate.
+     * @param object is the SPARQL object.
      */
     public RdfTriple(final String subject, final String predicate, final String object) {
         this.subject = subject;
@@ -42,7 +42,7 @@ public class RdfTriple {
     /**
      * Getter for SPARQL subject.
      *
-     * @return SPARQL subject.
+     * @return the SPARQL subject.
      */
     public String getSubject() {
         return subject; }
@@ -50,7 +50,7 @@ public class RdfTriple {
     /**
      * Getter for SPARQL predicate.
      *
-     * @return SPARQL predicate.
+     * @return the SPARQL predicate.
      */
     public String getPredicate() {
         return predicate; }
@@ -58,7 +58,7 @@ public class RdfTriple {
     /**
      * Getter for SPARQL object.
      *
-     * @return SPARQL object.
+     * @return the SPARQL object.
      */
     public String getObject() {
         return object; }

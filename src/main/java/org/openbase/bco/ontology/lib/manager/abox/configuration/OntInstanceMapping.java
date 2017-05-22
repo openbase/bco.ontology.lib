@@ -18,7 +18,7 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 

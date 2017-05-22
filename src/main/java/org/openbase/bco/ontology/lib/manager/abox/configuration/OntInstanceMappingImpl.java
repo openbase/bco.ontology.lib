@@ -19,8 +19,8 @@
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -93,13 +93,13 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                 try {
                     switch (unitConfig.getType()) {
                         case LOCATION:
-                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getLocationConfig().getType().name());
+                            unitTypeName = StringModifier.getCamelCaseName(unitConfig.getLocationConfig().getType().name());
                             break;
                         case CONNECTION:
-                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
+                            unitTypeName = StringModifier.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                             break;
                         default:
-                            unitTypeName = StringUtility.getCamelCaseName(unitConfig.getType().name());
+                            unitTypeName = StringModifier.getCamelCaseName(unitConfig.getType().name());
                     }
 
                     triples.add(new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), unitTypeName));
@@ -134,7 +134,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             }
 
             try {
-                final String stateName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -164,7 +164,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             }
 
             try {
-                final String serviceName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
+                final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
                 triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -215,7 +215,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         for (final ServiceType serviceType : serviceTypes) {
             try {
-                final String serviceName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
+                final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
                 triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -241,7 +241,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         for (final ServiceType serviceType : serviceTypes) {
             try {
-                final String stateName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);

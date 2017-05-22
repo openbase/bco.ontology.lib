@@ -24,12 +24,12 @@ import org.apache.jena.query.DatasetAccessorFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.ThreadUtility;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
-import org.openbase.jul.schedule.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +63,7 @@ public interface OntModelHttp {
      */
     static OntModel downloadModelFromServer(final String url) throws IOException, NotAvailableException {
         try {
-            Model model = DatasetAccessorFactory.createHTTP(url + OntConfig.ServerServiceForm.DATA.getName()).getModel();
+            Model model = DatasetAccessorFactory.createHTTP(url + OntConfig.ServerService.DATA.getName()).getModel();
 
             if (model.isEmpty()) {
                 throw new NotAvailableException("The server contains no ontology!");
@@ -91,7 +91,6 @@ public interface OntModelHttp {
     static OntModel downloadModelFromServer(final String url, final long timeout) throws InterruptedException, NotAvailableException, CancellationException {
 
         Future<OntModel> future = GlobalCachedExecutorService.submit(() -> {
-
             while (true) {
                 try {
                     return OntModelHttp.downloadModelFromServer(url);
@@ -103,34 +102,10 @@ public interface OntModelHttp {
             }
         });
 
-        if (timeout != 0) {
-            Timeout timeoutThread = new Timeout(timeout) {
-                @Override
-                public void expired() throws InterruptedException {
-                    if (!future.isDone()) {
-                        future.cancel(true);
-                    }
-                }
-            };
-
-            try {
-                timeoutThread.start();
-                OntModel ontModel = future.get();
-
-                if (timeoutThread.isActive()) {
-                    timeoutThread.cancel();
-                }
-                return ontModel;
-            } catch (ExecutionException e) {
-                timeoutThread.cancel();
-                throw new NotAvailableException(e);
-            }
-        } else {
-            try {
-                return future.get();
-            } catch (ExecutionException e) {
-                throw new NotAvailableException(e);
-            }
+        try {
+            return (OntModel) ThreadUtility.setTimeoutToCallable(timeout, future);
+        } catch (ExecutionException e) {
+            throw new NotAvailableException(e);
         }
     }
 
@@ -150,7 +125,7 @@ public interface OntModelHttp {
         }
 
         try {
-            DatasetAccessorFactory.createHTTP(url + OntConfig.ServerServiceForm.DATA.getName()).add(ontModel);
+            DatasetAccessorFactory.createHTTP(url + OntConfig.ServerService.DATA.getName()).add(ontModel);
         } catch (Exception e) {
             throw new IOException("Could not add model to ontology server!", e);
         }
@@ -167,11 +142,9 @@ public interface OntModelHttp {
      * @throws NotAvailableException is thrown in case the ontModel is null.
      * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
-    static void addModelToServer(final OntModel ontModel, final String url, final long timeout) throws InterruptedException, NotAvailableException
-            , CancellationException {
+    static void addModelToServer(final OntModel ontModel, final String url, final long timeout) throws InterruptedException, NotAvailableException, CancellationException {
 
         Future<Boolean> future = GlobalCachedExecutorService.submit(() -> {
-
             while (true) {
                 try {
                     OntModelHttp.addModelToServer(ontModel, url);
@@ -184,32 +157,10 @@ public interface OntModelHttp {
             }
         });
 
-        if (timeout != 0) {
-            Timeout timeoutThread = new Timeout(timeout) {
-                @Override
-                public void expired() throws InterruptedException {
-                    if (!future.isDone()) {
-                        future.cancel(true);
-                    }
-                }
-            };
-
-            try {
-                timeoutThread.start();
-                future.get();
-                if (timeoutThread.isActive()) {
-                    timeoutThread.cancel();
-                }
-            } catch (ExecutionException e) {
-                timeoutThread.cancel();
-                throw new NotAvailableException(e);
-            }
-        } else {
-            try {
-                future.get();
-            } catch (ExecutionException e) {
-                throw new NotAvailableException(e);
-            }
+        try {
+            ThreadUtility.setTimeoutToCallable(timeout, future);
+        } catch (ExecutionException e) {
+            throw new NotAvailableException(e);
         }
     }
 

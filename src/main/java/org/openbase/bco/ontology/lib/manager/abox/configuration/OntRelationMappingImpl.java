@@ -19,8 +19,8 @@
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -123,8 +123,8 @@ public class OntRelationMappingImpl implements OntRelationMapping {
     @Override
     public RdfTriple getInsertStateRelation(final ServiceType serviceType) throws NotAvailableException {
 
-        final String serviceTypeName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
-        final String stateTypeName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+        final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
+        final String stateTypeName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
 
         return new RdfTriple(serviceTypeName, OntProp.STATE.getName(), stateTypeName);
     }
@@ -171,8 +171,8 @@ public class OntRelationMappingImpl implements OntRelationMapping {
     @Override
     public RdfTriple getDeleteStateRelation(final ServiceType serviceType) throws NotAvailableException {
 
-        final String serviceTypeName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceType));
-        final String stateTypeName = StringUtility.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+        final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
+        final String stateTypeName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
 
         return new RdfTriple(serviceTypeName, OntProp.STATE.getName(), stateTypeName);
     }
@@ -248,7 +248,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
     }
 
     private RdfTriple getInsertLabelRelation(final UnitConfig unitConfig) {
-        return new RdfTriple(unitConfig.getId(), OntProp.LABEL.getName(), StringUtility.addQuotationMarks(unitConfig.getLabel()));
+        return new RdfTriple(unitConfig.getId(), OntProp.LABEL.getName(), StringModifier.addQuotationMarks(unitConfig.getLabel()));
     }
 
     private RdfTriple getDeleteLabelRelation(final UnitConfig unitConfig) {
@@ -258,9 +258,9 @@ public class OntRelationMappingImpl implements OntRelationMapping {
     private RdfTriple getInsertIsEnabledRelation(final UnitConfig unitConfig) {
 
         if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
-            return new RdfTriple(unitConfig.getId(), OntProp.IS_ENABLED.getName(), StringUtility.addQuotationMarks("true"));
+            return new RdfTriple(unitConfig.getId(), OntProp.IS_ENABLED.getName(), StringModifier.addQuotationMarks("true"));
         } else {
-            return new RdfTriple(unitConfig.getId(), OntProp.IS_ENABLED.getName(), StringUtility.addQuotationMarks("false"));
+            return new RdfTriple(unitConfig.getId(), OntProp.IS_ENABLED.getName(), StringModifier.addQuotationMarks("false"));
         }
     }
 
@@ -275,7 +275,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
 
         for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
             try {
-                final String serviceTypeName = StringUtility.firstCharToLowerCase(StringUtility.getServiceTypeName(serviceConfig.getServiceTemplate().getType()));
+                final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceConfig.getServiceTemplate().getType()));
 
                 triples.add(new RdfTriple(unitConfig.getId(), OntProp.PROVIDER_SERVICE.getName(), serviceTypeName));
             } catch (NotAvailableException e) {

@@ -37,7 +37,6 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
@@ -47,6 +46,7 @@ import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Observable;
 import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.pattern.Observer;
@@ -66,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author agatting on 17.04.17.
@@ -310,7 +311,7 @@ public class Measurement {
             complexQuMeasuredValues.clear();
 
             if (daysCurCount < DAYS_MAX_COUNT) {
-                SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ServerServiceForm.UPDATE);
+                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteAllObservationsWithFilter, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
                 aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
@@ -388,7 +389,7 @@ public class Measurement {
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
-//        final OntModel baseOntModel = StringUtility.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
+//        final OntModel baseOntModel = StringModifier.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
         OntModelHttp.addModelToServer(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 
@@ -424,19 +425,24 @@ public class Measurement {
 
     private long askNumberOfTriple() throws InterruptedException, JPServiceException {
 
-        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.countAllTriples);
-        Long numTriples = 0L;
+        try {
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.countAllTriples, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            Long numTriples = 0L;
 
-        if (resultSet.hasNext()) {
-            final QuerySolution querySolution = resultSet.next();
-            final String count = querySolution.get("count").asLiteral().getLexicalForm();
-            numTriples = Long.parseLong(count);
-        } else {
-            LOGGER.error("There is no resultSet to identify the number of triples! Set to 0.");
-        }
-        numberOfTriple = numTriples;
+            if (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.next();
+                final String count = querySolution.get("count").asLiteral().getLexicalForm();
+                numTriples = Long.parseLong(count);
+            } else {
+                LOGGER.error("There is no resultSet to identify the number of triples! Set to 0.");
+            }
+            numberOfTriple = numTriples;
 //        measuredValues[daysCurCount][0] = numTriples;
-        return numTriples;
+            return numTriples;
+        } catch (ExecutionException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return 0L;
     }
 
     private void Trigger() throws InterruptedException {
@@ -468,7 +474,7 @@ public class Measurement {
                 }
             });
         } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER);
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
 
         try {

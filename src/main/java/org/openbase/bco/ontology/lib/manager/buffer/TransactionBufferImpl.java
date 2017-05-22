@@ -20,7 +20,9 @@ package org.openbase.bco.ontology.lib.manager.buffer;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
@@ -28,11 +30,11 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
+import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -47,13 +49,11 @@ public class TransactionBufferImpl implements TransactionBuffer {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBufferImpl.class);
     private final Queue<String> queue;
     private final OntologyChange.Category category;
-    private final Stopwatch stopwatch;
     private Future future;
 
     public TransactionBufferImpl() {
         this.queue = new ConcurrentLinkedQueue<>();
         this.category = OntologyChange.Category.UNKNOWN;
-        this.stopwatch = new Stopwatch();
     }
 
     /**
@@ -67,23 +67,19 @@ public class TransactionBufferImpl implements TransactionBuffer {
 
                 while (!queue.isEmpty()) {
                     final String updateExpression = queue.peek();
-                    final boolean isHttpSuccess;
 
                     try {
-                        isHttpSuccess = SparqlHttp.sparqlUpdateToAllDataBases(updateExpression, OntConfig.ServerServiceForm.UPDATE);
-
-                        if (isHttpSuccess) {
-                            queue.poll();
-                        } else {
-                            stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                        }
-                    } catch (InterruptedException | JPServiceException e) {
+                        SparqlHttp.uploadSparqlRequest(updateExpression, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+                        queue.poll();
+                    } catch (JPServiceException e) {
                         future.cancel(true);
                         ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     } catch (CouldNotPerformException e) {
                         queue.poll();
-                        ExceptionPrinter.printHistory("Dropped broken queue entry. Server could not perform, cause of client error... wrong update?" +
-                                " Queue entry is: " + updateExpression, e, LOGGER, LogLevel.ERROR);
+                        ExceptionPrinter.printHistory("Dropped broken queue entry.", e, LOGGER, LogLevel.ERROR);
+                    } catch (IOException e) {
+                        LOGGER.warn("IOException: no connection...Retry...");
+                        break;
                     }
 
                     if (queue.isEmpty() && synchronizedInformer != null) {
@@ -92,7 +88,7 @@ public class TransactionBufferImpl implements TransactionBuffer {
                         RsbCommunication.startNotification(synchronizedInformer, ontologyChange);
                     }
                 }
-            }, 0, 1, TimeUnit.SECONDS);
+            }, 0, 2, TimeUnit.SECONDS);
 
         } catch (RejectedExecutionException | IllegalArgumentException | CouldNotPerformException e) {
             throw new CouldNotProcessException("Could not process transactionBuffer thread!", e);

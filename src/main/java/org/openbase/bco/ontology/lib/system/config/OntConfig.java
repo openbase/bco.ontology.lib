@@ -60,17 +60,34 @@ public final class OntConfig {
     public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
 
     /**
-     * Enum contains the service forms of the fuseki server. They are components of the url (suffix).
+     * Enum contains the server services of the fuseki server. They are components of the url (suffix).
      */
-    public enum ServerServiceForm {
+    public enum ServerService {
+
+        /**
+         * Element addresses the graph store protocol service. Up- and download of the ontology data (e.g. ontModel).
+         */
         DATA("data"),
+
+        /**
+         * Element addresses the SPARQL update service. Send updates (manipulate) the ontology model (e.g. insert, delete, where, ... triple).
+         */
         UPDATE("update"),
-        SPARQL("sparql");
 
-        private final String serverServiceForm;
+        /**
+         * Element addresses the SPARQL query service. Provide a query request (e.g. ASK, SELECT, ...)
+         */
+        SPARQL("sparql"),
 
-        ServerServiceForm(final String serverServiceForm) {
-            this.serverServiceForm = serverServiceForm;
+        /**
+         * Element addresses the SPARQL query service. Provide a query request (e.g. ASK, SELECT, ...)
+         */
+        QUERY("query");
+
+        private final String serverService;
+
+        ServerService(final String serverService) {
+            this.serverService = serverService;
         }
 
         /**
@@ -79,7 +96,7 @@ public final class OntConfig {
          * @return the name of an enum element as string.
          */
         public String getName() {
-            return this.serverServiceForm;
+            return this.serverService;
         }
     }
 

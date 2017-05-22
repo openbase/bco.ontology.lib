@@ -21,18 +21,23 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.state.ActivationStateType.ActivationState;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,18 +129,17 @@ public class ConnectionPhase {
         }
     }
 
-    boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparqlUpdateExpr) throws JPServiceException {
+    boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparql) throws JPServiceException {
         try {
-            final boolean isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
-
-            if (!isHttpSuccess) {
-                // could not send to server - insert sparql update expression to buffer queue
-                transactionBuffer.insertData(sparqlUpdateExpr);
-            }
-            return isHttpSuccess;
-        } catch (CouldNotPerformException e) {
+            SparqlHttp.uploadSparqlRequest(sparql, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
             // could not send to server - insert sparql update expression to buffer queue
-            transactionBuffer.insertData(sparqlUpdateExpr);
+            transactionBuffer.insertData(sparql);
+            return true;
+        } catch (IOException e) {
+            // could not send to server - insert sparql update expression to buffer queue
+            transactionBuffer.insertData(sparql);
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, LOGGER, LogLevel.ERROR);
         }
         return false;
     }

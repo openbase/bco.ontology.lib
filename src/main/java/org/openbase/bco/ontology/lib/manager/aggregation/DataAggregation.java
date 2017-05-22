@@ -22,7 +22,7 @@ import javafx.util.Pair;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.joda.time.DateTime;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -188,7 +188,7 @@ public class DataAggregation {
                 }
 
 //                if (!stateValueDataCollection.getStateValue().isLiteral()) {
-                    lastStateValue = StringUtility.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
+                    lastStateValue = StringModifier.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
 //                } else {
 //                    lastStateValue = "UNKNOWN"; //TODO (bad hack)
 //                }
@@ -278,7 +278,7 @@ public class DataAggregation {
         private List<String> getStateValues(final List<ServiceDataCollection> stateValueDataCollectionList) throws NotAvailableException {
             return stateValueDataCollectionList.stream().map(serviceDataCollection -> {
                 try {
-                    return StringUtility.getLocalName(serviceDataCollection.getStateValue().asLiteral().getLexicalForm());
+                    return StringModifier.getLocalName(serviceDataCollection.getStateValue().asLiteral().getLexicalForm());
                 } catch (NotAvailableException e) {
                     return ""; //TODO
                 }

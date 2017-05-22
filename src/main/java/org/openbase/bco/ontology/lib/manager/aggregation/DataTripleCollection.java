@@ -20,16 +20,18 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -62,14 +64,14 @@ public class DataTripleCollection extends DataAssignation {
             final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(collectData());
 
             // send aggregated values ...
-            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
 
 //            // delete unused connectionPhases (old)
-//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 //            // delete unused heartBeatPhases (old)
-//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 //            // delete unused observations (old)
-//            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedObservations(StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedObservations(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 
         } else {
             final Period oldPeriod;
@@ -93,11 +95,11 @@ public class DataTripleCollection extends DataAssignation {
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");
-            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(sparqlUpdateExpr, OntConfig.ServerServiceForm.UPDATE);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
 
             // delete unused aggregations (old)
-            SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringUtility.addXsdDateTime(dateTimeFrom)
-                    , StringUtility.addXsdDateTime(dateTimeUntil)), OntConfig.ServerServiceForm.UPDATE);
+            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom), StringModifier.addXsdDateTime(dateTimeUntil));
+            SparqlHttp.uploadSparqlRequest(sparql, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
         }
     }
 

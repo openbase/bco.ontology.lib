@@ -32,7 +32,7 @@ import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jps.core.JPService;
@@ -55,7 +55,7 @@ public class DuplicateData {
 
     public DuplicateData() throws InterruptedException, JPServiceException {
 //        this.stopwatch = new Stopwatch();
-//        this.ontModelApartmentDataSimple = StringUtility.loadOntModelFromFile(null, "src/apartmentDataSimple.owl");
+//        this.ontModelApartmentDataSimple = StringModifier.loadOntModelFromFile(null, "src/apartmentDataSimple.owl");
 //        this.dateTimeZone = DateTimeZone.forOffsetMillis(DateTimeZone.forID("Europe/Berlin").getOffset(DateTime.now()));
 
         InputStream inputSimpleData = DuplicateData.class.getResourceAsStream("/apartmentDataSimple.owl");
@@ -91,7 +91,7 @@ public class DuplicateData {
 
         while (observationInstances.hasNext()) {
             final Individual individual = (Individual) observationInstances.next();
-            final String subj_AggObs = StringUtility.getLocalName(individual.toString()) + numberOfDays;
+            final String subj_AggObs = StringModifier.getLocalName(individual.toString()) + numberOfDays;
             final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NAMESPACE + subj_AggObs, aggObsClass);
 
             final RDFNode unitIdNode = individual.getProperty(hasUnitIdProp).getObject();
@@ -157,9 +157,9 @@ public class DuplicateData {
 //            duplicateDateTime = duplicateDateTime.plusDays(numberOfDays);
 
 //            final String dateTimeNow = new DateTime().toString();
-//            final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
+//            final String unitId = StringModifier.getLocalName(unitIdNode.asResource().toString());
 //            final String subj_Observation = "obs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
-            final String subj_Observation = StringUtility.getLocalName(individual.toString()) + numberOfDays;
+            final String subj_Observation = StringModifier.getLocalName(individual.toString()) + numberOfDays;
 
             final Individual newIndividual = ontModelDuplicatedData.createIndividual(OntConfig.NAMESPACE + subj_Observation, observationClass);
             newIndividual.addProperty(hasUnitIdProp, unitIdNode);
@@ -178,7 +178,7 @@ public class DuplicateData {
 
     private void generateDataFromOneDayToOneYear() throws InterruptedException, IOException {
 
-//        final OntModel ontModelApartmentDataSimple = StringUtility.loadOntModelFromFile(null, "");
+//        final OntModel ontModelApartmentDataSimple = StringModifier.loadOntModelFromFile(null, "");
 //
 //        final OntClass observationClass = ontModelApartmentDataSimple.getOntClass(OntConfig.NAMESPACE + OntConfig.OntCl.OBSERVATION.getName());
 //        final OntProperty hasUnitIdProp = ontModelApartmentDataSimple.getOntProperty(OntConfig.NAMESPACE + OntConfig.OntProp.UNIT_ID.getName());
@@ -205,10 +205,10 @@ public class DuplicateData {
 //
 //                    stopwatch.waitForStart(1);
 //                    final String dateTimeNow = new DateTime().toString();
-//                    final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
+//                    final String unitId = StringModifier.getLocalName(unitIdNode.asResource().toString());
 //                    final String subj_Observation = "obs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
 //
-//                    final String newTimestamp = StringUtility.addXsdDateTime(iteratorDateTime);
+//                    final String newTimestamp = StringModifier.addXsdDateTime(iteratorDateTime);
 //                    final Literal timestampLiteral = ontModelApartmentDataSimple.createTypedLiteral(newTimestamp);
 //
 //                    final Individual newIndividual = ontModelApartmentDataSimple.createIndividual(OntConfig.NAMESPACE + subj_Observation, observationClass);
@@ -221,14 +221,15 @@ public class DuplicateData {
 //                }
 //            }
 //        }
-//        StringUtility.saveOntModel(ontModelApartmentDataSimple, "evaluationData");
+//        StringModifier.saveOntModel(ontModelApartmentDataSimple, "evaluationData");
     }
 
-    private void deleteObservations() throws CouldNotPerformException {
+    private void deleteObservations() throws CouldNotPerformException, JPServiceException, InterruptedException {
         //TODO
-        final String dateTimeFrom = StringUtility.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
-        final String dateTimeUntil = StringUtility.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
+        final String dateTimeFrom = StringModifier.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
+        final String dateTimeUntil = StringModifier.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
 
-        SparqlHttp.sparqlUpdateToMainOntologyViaRetry(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ServerServiceForm.UPDATE);
+        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil)
+                , JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
     }
 }

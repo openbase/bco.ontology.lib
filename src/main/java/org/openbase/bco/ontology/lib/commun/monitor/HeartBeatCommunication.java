@@ -22,14 +22,16 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
@@ -99,8 +101,6 @@ public class HeartBeatCommunication {
 
     private void closeOldConnectionPhases() throws JPServiceException, InterruptedException, NotAvailableException {
 
-        boolean isHttpSuccess = false;
-
         final List<RdfTriple> deleteTriples = new ArrayList<>();
         final List<RdfTriple> insertTriples = new ArrayList<>();
         final List<RdfTriple> whereTriples = new ArrayList<>();
@@ -112,17 +112,15 @@ public class HeartBeatCommunication {
 
         final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriples, insertTriples, whereTriples);
 
-        while (!isHttpSuccess) {
+        while (true) {
             try {
-                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(closeOldConnectionPhases, OntConfig.ServerServiceForm.UPDATE);
-                if (!isHttpSuccess) {
-                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                }
+                SparqlHttp.uploadSparqlRequest(closeOldConnectionPhases, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+                break;
+            } catch (IOException e) {
+                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory("Update to close old connectionPhases is bad and could not be performed by ontology server." +
-                                " Please check implementation.", e, LOGGER
-                        , LogLevel.ERROR);
-                return;
+                ExceptionPrinter.printHistory("Dropped heartbeat update! Wrong sparql update?!", e, LOGGER, LogLevel.ERROR);
+                break;
             }
         }
     }
@@ -149,17 +147,16 @@ public class HeartBeatCommunication {
     private void startHeartBeatThread() throws NotAvailableException {
         //observe current heartbeat now, refresh or start new heartbeat phase
         future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
-
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = SparqlHttp.sparqlQuerySelect(StaticSparqlExpression.getLastTimestampOfHeartBeat);
+                final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getLastTimestampOfHeartBeat, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
 
                 if (resultSet == null || !resultSet.hasNext()) {
-                    throw new CouldNotPerformException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
+                    throw new CouldNotProcessException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
                 }
                 final QuerySolution querySolution = resultSet.next();
 
-                final String subj_HeartBeatPhase = StringUtility.getLocalName(querySolution.getResource("blackout").toString());
+                final String subj_HeartBeatPhase = StringModifier.getLocalName(querySolution.getResource("blackout").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
                 final DateTime now = new DateTime();
 
@@ -171,7 +168,7 @@ public class HeartBeatCommunication {
                     // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
                     final List<RdfTriple> deleteTriple = new ArrayList<>();
                     final List<RdfTriple> insertTriple = new ArrayList<>();
-                    final String objectDateTimeNow = "\"" + now + "\"^^xsd:dateTime";
+                    final String objectDateTimeNow = StringModifier.addXsdDateTime(now);
 
                     deleteTriple.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, null));
                     deleteTriple.add(getDeleteTripleRecentHeartBeat());
@@ -181,16 +178,15 @@ public class HeartBeatCommunication {
 
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
-//                    System.out.println(sparqlUpdate);
 
-                    if (!SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdate, OntConfig.ServerServiceForm.UPDATE)) {
-                        throw new CouldNotProcessException("Dropped heartbeat update. Server offline?");
-                    }
+                    SparqlHttp.uploadSparqlRequest(sparqlUpdate, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
                 } else {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
                 }
-            } catch (CouldNotProcessException | CouldNotPerformException | IllegalArgumentException | IOException e) {
+            } catch (IOException e) {
+                LOGGER.warn("IOException: no connection...Retry...");
+            } catch (CouldNotPerformException | CouldNotProcessException e) {
                 ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
             } catch (InterruptedException | JPServiceException e) {
                 future.cancel(true);
@@ -198,51 +194,42 @@ public class HeartBeatCommunication {
         }, 3, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
-    private void setNewHeartBeatPhase() throws InterruptedException, JPServiceException, NotAvailableException {
+    private void setNewHeartBeatPhase() throws InterruptedException, JPServiceException {
 
-        boolean isHttpSuccess = false;
-
-        while (!isHttpSuccess) {
+        while (true) {
             // both timestamp strings must contain the SAME date
 //            final Date now = new Date();
-            final String dateTime = new DateTime().toString();
-
-            final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
-            final String pred_isA = OntExpr.A.getName();
-
-            final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
-            final String obj_TimeStamp = "\"" + dateTime + "\"^^xsd:dateTime";
-
-            final List<RdfTriple> insertTriples = new ArrayList<>();
-
-            final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateExpression(getDeleteTripleRecentHeartBeat(), null);
-//            System.out.println(sparqlUpdateDelete);
-
-            // add initial instance "recentHeartBeat" with initial timestamp
-            insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
-            // set initial current heartbeat phase with first and last timestamp (identical)
-            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
-            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
-            insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
-
-//            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
-            final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
-
             try {
-                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateDelete, OntConfig.ServerServiceForm.UPDATE);
+                final String dateTime = new DateTime().toString();
 
-                if (!isHttpSuccess) {
-                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                } else {
-                    isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateInsert, OntConfig.ServerServiceForm.UPDATE);
+                final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
+                final String pred_isA = OntExpr.A.getName();
 
-                    if (!isHttpSuccess) {
-                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                    }
-                }
+                final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
+                final String obj_TimeStamp = "\"" + dateTime + "\"^^xsd:dateTime";
+
+                final List<RdfTriple> insertTriples = new ArrayList<>();
+
+                final String sparqlUpdateDelete = SparqlUpdateExpression.getSparqlUpdateExpression(getDeleteTripleRecentHeartBeat(), null);
+
+                // add initial instance "recentHeartBeat" with initial timestamp
+                insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
+                // set initial current heartbeat phase with first and last timestamp (identical)
+                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
+                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
+                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
+
+                final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
+
+                //TODO one update string
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateInsert, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+
+                return;
+            } catch (IOException e) {
+                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory("HeartBeat update is bad and could not be performed by ontology server. Please check implementation.", e, LOGGER
-                        , LogLevel.ERROR);
+                ExceptionPrinter.printHistory("Dropped heartbeat update! Wrong sparql update?!", e, LOGGER, LogLevel.ERROR);
                 return;
             }
         }

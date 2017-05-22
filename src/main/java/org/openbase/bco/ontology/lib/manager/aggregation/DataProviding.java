@@ -37,14 +37,18 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +57,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author agatting on 24.03.17.
@@ -79,13 +84,13 @@ public class DataProviding {
         final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
-//        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllConnectionPhases);
+//        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllConnectionPhases);
 
 
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
 
-            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
+            final String unitId = StringModifier.getLocalName(querySolution.getResource("unit").toString());
             final String startTimestamp = querySolution.getLiteral("firstTimestamp").getLexicalForm();
             final String endTimestamp = querySolution.getLiteral("lastTimestamp").getLexicalForm();
 
@@ -124,17 +129,17 @@ public class DataProviding {
     public HashMap<String, List<ObservationDataCollection>> getObservationsForEachUnit() throws NotAvailableException {
 
         final HashMap<String, List<ObservationDataCollection>> hashMap = new HashMap<>();
-//        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
+//        final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil);
 
         final InputStream input = DataProviding.class.getResourceAsStream("/apartmentDataSimple.owl");
         final OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
-//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "/apartmentDataSimple.owl");
+//        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "/apartmentDataSimple.owl");
         //TODO for each stateValue one observation (from sparql query) in resultSet bad idea: values are inverted.... need alternative
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllObservations(timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
-//        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
+//        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllObservations(timestampFrom, timestampUntil));
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
         //TODO jena solution as alternative for testing
@@ -155,8 +160,8 @@ public class DataProviding {
             final RDFNode timestampNode = individual.getProperty(hasTimestampProp).getObject();
 
             final String timestamp = timestampNode.asLiteral().getLexicalForm();
-            final String unitId = StringUtility.getLocalName(unitIdNode.asResource().toString());
-            final String providerService = StringUtility.getLocalName(serviceNode.asResource().toString());
+            final String unitId = StringModifier.getLocalName(unitIdNode.asResource().toString());
+            final String providerService = StringModifier.getLocalName(serviceNode.asResource().toString());
 
             while (stateValues.hasNext()) {
                 final Statement statement = stateValues.next();
@@ -187,8 +192,8 @@ public class DataProviding {
 //            final QuerySolution querySolution = resultSet.nextSolution();
 //
 //            final String timestamp = querySolution.getLiteral("timestamp").getLexicalForm();
-//            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
-//            final String providerService = StringUtility.getLocalName(querySolution.getResource("providerService").toString());
+//            final String unitId = StringModifier.getLocalName(querySolution.getResource("unit").toString());
+//            final String providerService = StringModifier.getLocalName(querySolution.getResource("providerService").toString());
 //            final RDFNode rdfNode = querySolution.get("stateValue");
 //
 ////            if (rdfNode.toString().equals("96.5811996459961^^http://www.openbase.org/bco/ontology#Saturation")) {
@@ -215,50 +220,55 @@ public class DataProviding {
 
     public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit(final OntConfig.Period period) throws JPServiceException
             , InterruptedException, NotAvailableException {
-
         final HashMap<String, List<ObservationAggDataCollection>> hashMap = new HashMap<>();
 
-//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-        final String timestampFrom = StringUtility.addXsdDateTime(dateTimeFrom);
-        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
+        try {
+
+//        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+            final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom);
+            final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil);
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(OntConfig.Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
-        final ResultSet resultSet = SparqlHttp.sparqlQuerySelectViaRetry(StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil));
+            final String query = StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(query, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
-        while (resultSet.hasNext()) {
-            final QuerySolution querySolution = resultSet.nextSolution();
+            while (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.nextSolution();
 
-            final String unitId = StringUtility.getLocalName(querySolution.getResource("unit").toString());
-            final String providerService = StringUtility.getLocalName(querySolution.getResource("service").toString());
-            final String timeWeighting = querySolution.getLiteral("timeWeighting").getLexicalForm();
-            final String quantity = getLiteral(querySolution, "quantity");
-            final String activityTime = getLiteral(querySolution, "activityTime");
-            final String variance = getLiteral(querySolution, "variance");
-            final String standardDeviation = getLiteral(querySolution, "standardDeviation");
-            final String mean = getLiteral(querySolution, "mean");
-            final RDFNode rdfNode = querySolution.get("stateValue");
+                final String unitId = StringModifier.getLocalName(querySolution.getResource("unit").toString());
+                final String providerService = StringModifier.getLocalName(querySolution.getResource("service").toString());
+                final String timeWeighting = querySolution.getLiteral("timeWeighting").getLexicalForm();
+                final String quantity = getLiteral(querySolution, "quantity");
+                final String activityTime = getLiteral(querySolution, "activityTime");
+                final String variance = getLiteral(querySolution, "variance");
+                final String standardDeviation = getLiteral(querySolution, "standardDeviation");
+                final String mean = getLiteral(querySolution, "mean");
+                final RDFNode rdfNode = querySolution.get("stateValue");
 //            final String stateValue = rdfNode.isLiteral() ? rdfNode.asLiteral().getLexicalForm() : rdfNode.asResource().toString();
 //            final boolean isLiteral = rdfNode.isLiteral();
 
-            final ObservationAggDataCollection obsAggDataColl = new ObservationAggDataCollection(providerService, rdfNode, quantity, activityTime, variance
-                    , standardDeviation, mean, timeWeighting);
+                final ObservationAggDataCollection obsAggDataColl = new ObservationAggDataCollection(providerService, rdfNode, quantity, activityTime, variance
+                        , standardDeviation, mean, timeWeighting);
 
-            if (hashMap.containsKey(unitId)) {
-                // there is an entry: add data
-                final List<ObservationAggDataCollection> tripleAggObsList = hashMap.get(unitId);
-                tripleAggObsList.add(obsAggDataColl);
-                hashMap.put(unitId, tripleAggObsList);
-            } else {
-                // there is no entry: put data
-                final List<ObservationAggDataCollection> tripleAggObsList = new ArrayList<>();
-                tripleAggObsList.add(obsAggDataColl);
-                hashMap.put(unitId, tripleAggObsList);
+                if (hashMap.containsKey(unitId)) {
+                    // there is an entry: add data
+                    final List<ObservationAggDataCollection> tripleAggObsList = hashMap.get(unitId);
+                    tripleAggObsList.add(obsAggDataColl);
+                    hashMap.put(unitId, tripleAggObsList);
+                } else {
+                    // there is no entry: put data
+                    final List<ObservationAggDataCollection> tripleAggObsList = new ArrayList<>();
+                    tripleAggObsList.add(obsAggDataColl);
+                    hashMap.put(unitId, tripleAggObsList);
+                }
             }
+//          queryExecution.close();
+        } catch (ExecutionException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
-//        queryExecution.close();
         return hashMap;
     }
 

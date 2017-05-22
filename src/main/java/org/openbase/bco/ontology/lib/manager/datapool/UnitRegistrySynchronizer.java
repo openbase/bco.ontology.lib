@@ -23,7 +23,7 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappingImpl;
-import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMapping;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMappingImpl;
@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -273,17 +274,11 @@ public class UnitRegistrySynchronizer {
             }
 
             // upload to ontology server
-            final boolean isHttpSuccess = SparqlHttp.sparqlUpdateToAllDataBases(multiExprUpdate, OntConfig.ServerServiceForm.UPDATE);
-
-            if (!isHttpSuccess) {
-                transactionBuffer.insertData(multiExprUpdate);
-            } else {
-                //TODO rsb notification?
-            }
+            SparqlHttp.uploadSparqlRequest(multiExprUpdate, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
         } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (IOException e) {
             transactionBuffer.insertData(multiExprUpdate);
-        } catch (IllegalArgumentException e) {
-            ExceptionPrinter.printHistory("Defect sparql update expression! Dropped.", e, LOGGER, LogLevel.ERROR);
         }
     }
 

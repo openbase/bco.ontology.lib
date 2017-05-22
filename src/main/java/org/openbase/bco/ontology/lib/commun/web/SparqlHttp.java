@@ -32,21 +32,18 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerServiceForm;
-import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerService;
+import org.openbase.bco.ontology.lib.utility.ThreadUtility;
 import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author agatting on 12.12.16.
@@ -54,178 +51,130 @@ import java.util.List;
 public interface SparqlHttp {
 
     /**
-     * Logger.
-     */
-    Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
-
-    /**
-     * Stopwatch for retries.
-     */
-    Stopwatch stopwatch = new Stopwatch();
-
-    /**
-     * Method processes a sparql update (update string) to the main database of the ontology server.
+     * Method executes a sparql update/query to the ontology server.
      *
-     * @param updateString The sparql update string.
-     * @param serviceForm The service form.
-     * @return {@code true} if upload to the main database was successful. Otherwise {@code false}.
-     * @throws CouldNotPerformException CouldNotPerformException
-     * @throws JPServiceException JPServiceException
+     * @param sparql is the sparql update/request string.
+     * @param url is the url of the ontology database server without suffix (server service form).
+     * @throws IOException is thrown in case there is no connection to the ontology server.
+     * @throws CouldNotPerformException is thrown in case the httpResponse was not successfully (e.g. wrong sparql string...).
      */
-    static boolean sparqlUpdateToMainOntology(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
-            , JPServiceException {
+    static void uploadSparqlRequest(final String sparql, final String url) throws IOException, CouldNotPerformException {
 
-        final String serverServiceForm = getServerServiceForm(serviceForm);
-
+        final String serverServiceName = ServerService.UPDATE.getName();
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
+        final HttpPost httpPost = new HttpPost(url + serverServiceName);
 
         final List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair(serverServiceForm, updateString));
+        params.add(new BasicNameValuePair(serverServiceName, sparql));
 
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            final HttpResponse httpResponse = httpclient.execute(httpPost);
-            final int responseCode = httpResponse.getStatusLine().getStatusCode();
-
-            return isHttpRequestSuccess(responseCode);
-        } catch (IOException e) {
-            ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
-            return false;
-        }
+        httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        final HttpResponse httpResponse = httpclient.execute(httpPost);
+        checkHttpRequest(httpResponse, sparql);
     }
 
-    static void sparqlUpdateToMainOntologyViaRetry(final String sparqlUpdateExpr, final ServerServiceForm serviceForm) throws CouldNotPerformException {
-        try {
-            boolean isHttpSuccess = false;
+    /**
+     * Method executes a sparql update/query to the ontology server via retries (timeout), if the upload could not be done in the first try.
+     *
+     * @param sparql is the sparql update/request string.
+     * @param url is the url of the ontology database server without suffix (server service form).
+     * @param timeout is the timeout to limit the time. If {@code 0} the method retries permanently until there is a result (maybe blocks forever!).
+     * @throws CouldNotPerformException is thrown in case the httpResponse was not successfully (e.g. wrong sparql string...).
+     * @throws InterruptedException is thrown in case the application is interrupted.
+     * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
+     */
+    static void uploadSparqlRequest(final String sparql, final String url, final long timeout) throws CouldNotPerformException, InterruptedException, CancellationException {
+        final Stopwatch stopwatch = new Stopwatch();
 
-            while (!isHttpSuccess) {
-                isHttpSuccess = SparqlHttp.sparqlUpdateToMainOntology(sparqlUpdateExpr, serviceForm);
-
-                if (!isHttpSuccess) {
+        Future<Boolean> future = GlobalCachedExecutorService.submit(() -> {
+            while (true) {
+                try {
+                    SparqlHttp.uploadSparqlRequest(sparql, url);
+                    return true;
+                } catch (IOException e) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
             }
-        } catch (JPServiceException | CouldNotPerformException | InterruptedException e) {
-            throw new CouldNotPerformException("Could not send aggregation to server... ");
+        });
+
+        try {
+            ThreadUtility.setTimeoutToCallable(timeout, future);
+        } catch (ExecutionException e) {
+            throw new CouldNotPerformException(e);
         }
     }
 
     /**
-     * Method processes a sparql update (update string) to all databases of the ontology server (main and tbox databases).
+     * Method returns the result of a sparql SELECT query, which is send to the ontology server.
      *
-     * @param updateString The sparql update string.
-     * @param serviceForm The service form.
-     * @return {@code true} if upload to both databases was successful. Otherwise {@code false}.
-     * @throws CouldNotPerformException CouldNotPerformException is thrown if request was not successful, because of e.g. update string is broken.
-     * @throws JPServiceException JPServiceException
+     * @param query is the SELECT query.
+     * @param url is the url of the ontology database server without suffix (server service form).
+     * @return the result of the SELECT query.
+     * @throws IOException is thrown in case there is no connection to the ontology server.
      */
-    static boolean sparqlUpdateToAllDataBases(final String updateString, final ServerServiceForm serviceForm) throws CouldNotPerformException
-            , JPServiceException {
-
-        final String serverServiceForm = getServerServiceForm(serviceForm);
-
-        final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPostMain = new HttpPost(JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + serverServiceForm);
-//        final HttpPost httpPostTBox = new HttpPost(JPService.getProperty(JPTBoxDatabaseURL.class).getValue() + serverServiceForm);
-
-        final List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair(serverServiceForm, updateString));
-
+    static ResultSet sparqlQuery(final String query, final String url) throws IOException {
         try {
-            httpPostMain.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-//            httpPostTBox.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            final HttpResponse httpResponseMain = httpclient.execute(httpPostMain);
-//            final HttpResponse httpResponseTBox = httpclient.execute(httpPostTBox);
+            final String serverServiceName = ServerService.SPARQL.getName();
+            final Query queryObject = QueryFactory.create(query) ;
+            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(url + serverServiceName, queryObject);
 
-            final int codeMain = httpResponseMain.getStatusLine().getStatusCode();
-//            final int codeTBox = httpResponseTBox.getStatusLine().getStatusCode();
-
-            return isHttpRequestSuccess(codeMain);
-        } catch (IOException e) {
-            ExceptionPrinter.printHistory("Could not perform sparql update via http communication!", e, LOGGER, LogLevel.WARN);
-            return false;
-        }
-    }
-
-    /**
-     * Method processes a sparql query in select form and returns a resultSet. Query goes to ontology server.
-     *
-     * @param queryString The query String.
-     * @return A resultSet with potential solutions.
-     * @throws IOException IOException
-     * @throws JPServiceException JPServiceException
-     */
-    static ResultSet sparqlQuerySelect(final String queryString) throws IOException, JPServiceException {
-        try {
-            final Query query = QueryFactory.create(queryString) ;
-            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
-                    + "sparql", query);
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
-            throw new IOException("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
-                    + " failed. Connection establishment refused. Server offline?");
+            throw new IOException("Connection establishment refused. Server offline?");
         }
-    }
-
-    static ResultSet sparqlQuerySelectViaRetry(final String queryString) throws JPServiceException, InterruptedException {
-        ResultSet resultSet = null;
-
-        while (resultSet == null) {
-            try {
-                final Query query = QueryFactory.create(queryString) ;
-                final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(JPService.getProperty(JPOntologyDatabaseURL.class).getValue()
-                        + "sparql", query);
-                resultSet = queryExecution.execSelect();
-            } catch (QueryExceptionHTTP e) {
-                //retry
-                ExceptionPrinter.printHistory("Connect to " + JPService.getProperty(JPOntologyDatabaseURL.class).getValue() + "sparql"
-                        + " failed. Connection establishment refused. Server offline? Retry... ", e, LOGGER, LogLevel.WARN);
-                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-            }
-        }
-        return resultSet;
     }
 
     /**
-     * Method verifies the http response code. There are three returned answers to plan next steps to handle the http communication situation. First
-     * boolean true, if the request was successfully. Than boolean false, if the request was not successfully, because of a server error (e.g. server down).
-     * The third possibility is the thrown CouldNotPerformException to signal another error (e.g. client error). In the thrown error case, the data should be
-     * dropped (ontologyManager: sparql update is broken) and the developer should be analyse the reason of it...
+     * Method returns the result of a sparql SELECT query via retries (timeout), if the query could not be done in the first try.
      *
-     * @param responseCode The http response code.
-     * @return {@code true} if request was successfully. {@code false} if request was not successfully, cause of server error (e.g. server down).
-     * @throws CouldNotPerformException CouldNotPerformException is thrown, if the request was not successful, cause of another error.
+     * @param query is the SELECT query.
+     * @param url is the url of the ontology database server without suffix (server service form).
+     * @param timeout is the timeout to limit the time. If {@code 0} the method retries permanently until there is a result (maybe blocks forever!).
+     * @return the result of the SELECT query.
+     * @throws InterruptedException is thrown in case the application is interrupted.
+     * @throws ExecutionException is thrown in case the callable thread throws an unknown exception.
+     * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
-    static boolean isHttpRequestSuccess(final int responseCode) throws CouldNotPerformException {
+    static ResultSet sparqlQuery(final String query, final String url, final long timeout) throws InterruptedException, ExecutionException {
+        final Stopwatch stopwatch = new Stopwatch();
 
+        Future<ResultSet> future = GlobalCachedExecutorService.submit(() -> {
+            while (true) {
+                try {
+                    return sparqlQuery(query, url);
+                } catch (IOException e) {
+                    stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+                }
+            }
+        });
+
+        return (ResultSet) ThreadUtility.setTimeoutToCallable(timeout, future);
+    }
+
+    /**
+     * Method verifies the http response code. If the http request was not successfully an exception is thrown. Otherwise void. Consider that a httpResponse
+     * based on connection. That means the method do not identify an possibly IOException!
+     *
+     * @param httpResponse is the response of the http request.
+     * @param sparql is the sparql update string, which is used for terminal information in case of bad request.
+     * @throws CouldNotPerformException is thrown in case the http request was not successfully.
+     */
+    static void checkHttpRequest(final HttpResponse httpResponse, final String sparql) throws CouldNotPerformException {
+        //TODO maybe split client and server error code...
+        final int responseCode = httpResponse.getStatusLine().getStatusCode();
         final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
 
         switch (reducedCode) {
             case 2: // request successful
-                return true;
-            case 3: // request successful
-                throw new CouldNotPerformException("Http bypass code. Client must do something for successfully process of request...");
+                return;
+            case 3: // bypass
+                throw new CouldNotPerformException("Http bypass code. Client must do something... Sparql update string: " + sparql);
             case 4: // client error
-                throw new CouldNotPerformException("Client error by sending sparql update. String maybe wrong!");
+                throw new CouldNotPerformException("Client error code. Possibly sparql update string is wrong: " + sparql);
             case 5: // server error
-                LOGGER.error("Response code is bad, cause of server error! Maybe no connection?");
-                return false;
-            default:
-                throw new CouldNotPerformException("Unknown response code. Check communication!");
+                throw new CouldNotPerformException("Server error code. Possibly server is unavailable! Or sparql update bad?! " + sparql);
+            default: // unknown error
+                throw new CouldNotPerformException("Unknown status code. Sparql update string: " +sparql);
         }
     }
 
-    static String getServerServiceForm(final ServerServiceForm serviceForm) {
-        switch (serviceForm) {
-            case DATA:
-                return "data";
-            case SPARQL:
-                return "sparql";
-            case UPDATE:
-                return "update";
-            default:
-                return "";
-        }
-    }
 }

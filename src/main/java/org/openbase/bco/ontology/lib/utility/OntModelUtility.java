@@ -60,7 +60,7 @@ public interface OntModelUtility {
      */
     static OntModel loadOntModelFromFile(OntModel ontModel, final String path) throws  NotAvailableException {
         try {
-            final InputStream input = (path == null) ? StringUtility.class.getResourceAsStream("/Ontology.owl") : new FileInputStream(path);
+            final InputStream input = (path == null) ? StringModifier.class.getResourceAsStream("/Ontology.owl") : new FileInputStream(path);
             LOGGER.info("Ontology file loaded from " + input);
 
             if (ontModel == null) {

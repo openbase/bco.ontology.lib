@@ -49,9 +49,9 @@ public class AggregationImpl implements Aggregation {
 //        this.dateTimeFrom = getAdaptedDateTime(now, backDatedQuantity);
 //        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity - 1);
 
-//        final OntModel ontModel = StringUtility.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-//        final String timestampFrom = StringUtility.addXsdDateTime(dateTimeFrom);
-//        final String timestampUntil = StringUtility.addXsdDateTime(dateTimeUntil);
+//        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
+//        final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom);
+//        final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil);
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();

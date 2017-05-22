@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.tbox;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.utility.StringUtility;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
 
@@ -44,7 +44,7 @@ public interface TBoxVerification {
     static boolean isOntClassExisting(final String className, OntModel ontModel) throws JPServiceException, IOException, NotAvailableException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
-        final String classNameWithNS = StringUtility.addBcoNamespace(className, true);
+        final String classNameWithNS = StringModifier.addBcoNamespace(className, true);
 
         if (ontModel == null) {
 //            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
@@ -66,7 +66,7 @@ public interface TBoxVerification {
     static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws NotAvailableException, IOException, JPServiceException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
-        final String propertyNameWithNS = StringUtility.addBcoNamespace(propertyName, true);
+        final String propertyNameWithNS = StringModifier.addBcoNamespace(propertyName, true);
 
         if (ontModel == null) {
 //            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());

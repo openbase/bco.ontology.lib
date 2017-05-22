@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerService;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.processing.StringProcessor;
@@ -35,12 +36,12 @@ import java.util.regex.Pattern;
 /**
  * @author agatting on 17.02.17.
  */
-public interface StringUtility {
+public interface StringModifier {
 
     /**
      * Logger to print information.
      */
-    Logger LOGGER = LoggerFactory.getLogger(StringUtility.class);
+    Logger LOGGER = LoggerFactory.getLogger(StringModifier.class);
 
     /**
      * Method converts a given string to a string with noun syntax. Thereby substrings, which are separated by special characters(-+*=_#/), will be processed
