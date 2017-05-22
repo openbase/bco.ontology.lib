@@ -123,7 +123,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> batteryValuesPairSet = new HashSet<>();
         batteryValuesPairSet.add(new Pair<>(batteryState.getValue().toString(), false));
-        batteryValuesPairSet.add(new Pair<>("\"" + String.valueOf(batteryState.getLevel()) + "\"^^NAMESPACE:Percent", true));
+        batteryValuesPairSet.add(new Pair<>("\"" + String.valueOf(batteryState.getLevel()) + "\"^^NS:Percent", true));
 
         return batteryValuesPairSet;
     }
@@ -139,7 +139,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> blindValuePairSet = new HashSet<>();
         blindValuePairSet.add(new Pair<>(blindState.getMovementState().toString(), false));
-        blindValuePairSet.add(new Pair<>("\"" + String.valueOf(blindState.getOpeningRatio()) + "\"^^NAMESPACE:Percent", true));
+        blindValuePairSet.add(new Pair<>("\"" + String.valueOf(blindState.getOpeningRatio()) + "\"^^NS:Percent", true));
 
         return blindValuePairSet;
     }
@@ -158,7 +158,7 @@ public class StateTypeValue {
 
         switch (dataUnit) {
             case PERCENT:
-                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NAMESPACE:Percent", true));
+                brightnessValuePairSet.add(new Pair<>("\"" + String.valueOf(brightnessState.getBrightness()) + "\"^^NS:Percent", true));
                 break;
             case UNKNOWN:
                 LOGGER.warn("Dropped brightness state value, cause dataUnit is UNKNOWN.");
@@ -201,9 +201,9 @@ public class StateTypeValue {
             final double saturation = colorState.getColor().getHsbColor().getSaturation();
             final double hue = colorState.getColor().getHsbColor().getHue();
 
-            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NAMESPACE:Hue", true));
-            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NAMESPACE:Saturation", true));
-            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NAMESPACE:Brightness", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
 
         } else if (colorState.getColor().hasRgbColor()) {
             final int red = colorState.getColor().getRgbColor().getRed();
@@ -216,9 +216,9 @@ public class StateTypeValue {
             final double saturation = hsb[1];
             final double brightness = hsb[2];
 
-            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NAMESPACE:Hue", true));
-            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NAMESPACE:Saturation", true));
-            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NAMESPACE:Brightness", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + hue + "\"^^NS:Hue", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + saturation + "\"^^NS:Saturation", true));
+            hsbValuesPairSet.add(new Pair<>("\"" + brightness + "\"^^NS:Brightness", true));
 
         } else {
             LOGGER.error("Could not set colorValue of colorState. Color is not set!");
@@ -301,7 +301,7 @@ public class StateTypeValue {
 
         switch (dataUnit) {
             case LUX:
-                illuminanceValuePairSet.add(new Pair<>("\"" + String.valueOf(illuminanceState.getIlluminance()) + "\"^^NAMESPACE:Lux", true));
+                illuminanceValuePairSet.add(new Pair<>("\"" + String.valueOf(illuminanceState.getIlluminance()) + "\"^^NS:Lux", true));
                 break;
             case UNKNOWN:
                 LOGGER.warn("Dropped illuminance state value, cause dataUnit is UNKNOWN.");
@@ -329,7 +329,7 @@ public class StateTypeValue {
 
         switch (dataUnit) {
             case PERCENT:
-                intensityValuePairSet.add(new Pair<>("\"" + String.valueOf(intensityState.getIntensity()) + "\"^^NAMESPACE:Percent", true));
+                intensityValuePairSet.add(new Pair<>("\"" + String.valueOf(intensityState.getIntensity()) + "\"^^NS:Percent", true));
                 break;
             case UNKNOWN:
                 LOGGER.warn("Dropped intensity state value, cause dataUnit is UNKNOWN.");
@@ -399,9 +399,9 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> powerConsumptionStateValue(final PowerConsumptionState powerConsumptionState) {
 
         final Set<Pair<String, Boolean>> powerConsumptionValuePairSet = new HashSet<>();
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NAMESPACE:Voltage", true));
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NAMESPACE:Watt", true));
-        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NAMESPACE:Ampere", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NS:Voltage", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getConsumption()) + "\"^^NS:Watt", true));
+        powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getCurrent()) + "\"^^NS:Ampere", true));
 
         return powerConsumptionValuePairSet;
     }
@@ -462,7 +462,7 @@ public class StateTypeValue {
 
         final Set<Pair<String, Boolean>> smokeValuePairSet = new HashSet<>();
         smokeValuePairSet.add(new Pair<>(smokeState.getValue().toString(), false));
-        smokeValuePairSet.add(new Pair<>("\"" + String.valueOf(smokeState.getSmokeLevel()) + "\"^^NAMESPACE:Percent", true));
+        smokeValuePairSet.add(new Pair<>("\"" + String.valueOf(smokeState.getSmokeLevel()) + "\"^^NS:Percent", true));
 
         return smokeValuePairSet;
     }
@@ -528,15 +528,15 @@ public class StateTypeValue {
         switch (dataUnit) {
             case CELSIUS:
                 temperature = temperatureState.getTemperature();
-                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NAMESPACE:Celsius", true));
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
                 break;
             case FAHRENHEIT:
                 temperature = ((temperatureState.getTemperature() - OntConfig.FREEZING_POINT_FAHRENHEIT) / 1.8);
-                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NAMESPACE:Celsius", true));
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
                 break;
             case KELVIN:
                 temperature = temperatureState.getTemperature() - OntConfig.ABSOLUTE_ZERO_POINT_CELSIUS;
-                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NAMESPACE:Celsius", true));
+                temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
                 break;
             case UNKNOWN:
                 LOGGER.warn("Dropped temperature state value, cause dataUnit is UNKNOWN.");
@@ -558,8 +558,8 @@ public class StateTypeValue {
     protected Set<Pair<String, Boolean>> userActivityStateValue(final UserActivityState userActivityState) {
 
         final Set<Pair<String, Boolean>> userActivityValuePairSet = new HashSet<>();
-        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getCurrentActivity().toString() + "\"^^NAMESPACE:CurrentActivity", true));
-        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getNextActivity().toString() + "\"^^NAMESPACE:NextActivity", true));
+        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getCurrentActivity().toString() + "\"^^NS:CurrentActivity", true));
+        userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getNextActivity().toString() + "\"^^NS:NextActivity", true));
 
         return userActivityValuePairSet;
     }

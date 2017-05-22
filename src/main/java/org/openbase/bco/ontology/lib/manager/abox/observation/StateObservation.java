@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
+import rst.domotic.unit.dal.ColorableLightDataType;
 import rst.timing.TimestampType;
 
 import java.lang.reflect.InvocationTargetException;
@@ -103,7 +104,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             this.remoteUnitId = unitRemote.getId().toString();
             this.connectionPhase = new ConnectionPhase(unitRemote, transactionBuffer);
             this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
-//            this.dateTimeFormatter = DateTimeFormat.forPattern(OntConfig.DATE_TIME);
 
             final Observer<T> unitRemoteStateObserver = (final Observable<T> observable, final T remoteData) -> {
                 this.observerData = remoteData;

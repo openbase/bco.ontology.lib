@@ -234,7 +234,7 @@ public interface SparqlUpdateExpression {
 
         if (object == null) {
             object = "?object";
-        } else if ((!object.startsWith(OntExpr.NS.getName()) || !object.startsWith(OntConfig.NAMESPACE)) && !object.startsWith("\"")) {
+        } else if (!object.startsWith(OntExpr.NS.getName()) && !object.startsWith(OntConfig.NAMESPACE) && !object.startsWith("\"")) {
             object = OntExpr.NS.getName() + object;
         }
         return subject + " " + predicate + " " + object + " . ";
