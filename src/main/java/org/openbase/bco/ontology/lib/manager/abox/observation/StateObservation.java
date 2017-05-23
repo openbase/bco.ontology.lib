@@ -29,8 +29,8 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-import rst.domotic.unit.dal.ColorableLightDataType;
 import rst.timing.TimestampType;
 
 import java.lang.reflect.InvocationTargetException;
@@ -58,7 +57,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -70,7 +68,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
 //    private final DateTimeFormatter dateTimeFormatter;
     private final SimpleDateFormat dateFormat;
-    private Map<String, ServiceType> serviceTypeMap;
     private String remoteUnitId;
     private final Stopwatch stopwatch;
     private final TransactionBuffer transactionBuffer;
@@ -100,7 +97,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             this.rsbInformer = rsbInformer;
             this.transactionBuffer = transactionBuffer;
             this.stopwatch = new Stopwatch();
-            this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
             this.remoteUnitId = unitRemote.getId().toString();
             this.connectionPhase = new ConnectionPhase(unitRemote, transactionBuffer);
             this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
@@ -171,13 +167,13 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasUnitId, remoteUnitId));
 
                     //### serviceType triple ###\\
-                    final String obj_serviceType = getServiceType(methodStateType.getName());
-                    serviceList.add(serviceTypeMap.get(obj_serviceType));
-                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasService, obj_serviceType));
+                    final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());
+                    serviceList.add(OntConfig.serviceNameMap.get(serviceTypeName));
+                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasService, serviceTypeName));
 
                     //### stateValue triple ###\\
                     final int sizeBuf = rdfTripleArrayListsBuf.size();
-                    rdfTripleArrayListsBuf = addStateValue(serviceTypeMap.get(obj_serviceType), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
+                    rdfTripleArrayListsBuf = addStateValue(OntConfig.serviceNameMap.get(serviceTypeName), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
 
                     if (rdfTripleArrayListsBuf.size() == sizeBuf) {
                         // incomplete observation instance. dropped...
@@ -222,19 +218,5 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         final OntologyChange ontologyChange = OntologyChange.newBuilder().addUnitType(unitType).addAllServiceType(serviceList).build();
         // publish notification via rsb
         RsbCommunication.startNotification(rsbInformer, ontologyChange);
-    }
-
-    private String getServiceType(final String methodStateType) throws NoSuchElementException {
-
-        // standardized string to allow comparison
-        final String stateTypeBuf = methodStateType.replaceFirst(MethodRegEx.GET.getName(), "");
-        for (final String serviceType : serviceTypeMap.keySet()) {
-            if (serviceType.toLowerCase().startsWith(stateTypeBuf.toLowerCase())) {
-                // successful compared - return correct serviceType name (aligned)
-                return serviceType;
-            }
-        }
-        LOGGER.warn("Could not identify methodState, cause there is no element, which contains " + methodStateType);
-        throw new NoSuchElementException();
     }
 }

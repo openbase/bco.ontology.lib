@@ -26,7 +26,6 @@ import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggData
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.trigger.sparql.TypeAlignment;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -34,13 +33,11 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -50,7 +47,6 @@ import java.util.Set;
 public class DataAssignation extends DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAssignation.class);
-    private final Map<String, ServiceType> serviceTypeMap;
     private final DateTime dateTimeFrom;
     private final DateTime dateTimeUntil;
     private final OntConfig.Period period;
@@ -62,7 +58,6 @@ public class DataAssignation extends DataAggregation {
     public DataAssignation(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final OntConfig.Period period) {
         super(dateTimeFrom, dateTimeUntil);
 
-        this.serviceTypeMap = TypeAlignment.getAlignedServiceTypes();
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
         this.period = period;
@@ -74,104 +69,107 @@ public class DataAssignation extends DataAggregation {
         final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String serviceTypeName : serviceDataMap.keySet()) {
-
-            switch (serviceTypeMap.get(serviceTypeName)) {
-                case UNKNOWN:
-                    LOGGER.warn("There is a serviceType UNKNOWN!");
-                    break;
-                case ACTIVATION_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case BATTERY_STATE_SERVICE:
-                    triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case BLIND_STATE_SERVICE:
-                    triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
-                    break;
-                case BRIGHTNESS_STATE_SERVICE:
-                    break;
-                case BUTTON_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case COLOR_STATE_SERVICE:
-                    triples.addAll(colorStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case CONTACT_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case DOOR_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case EARTHQUAKE_ALARM_STATE_SERVICE:
-                    break;
-                case FIRE_ALARM_STATE_SERVICE:
-                    break;
-                case HANDLE_STATE_SERVICE:
-                    triples.addAll(handleStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case ILLUMINANCE_STATE_SERVICE:
-                    triples.addAll(illuminanceStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case INTENSITY_STATE_SERVICE:
-                    break;
-                case INTRUSION_ALARM_STATE_SERVICE:
-                    break;
-                case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
-                    break;
-                case MOTION_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case PASSAGE_STATE_SERVICE:
-                    break;
-                case POWER_CONSUMPTION_STATE_SERVICE:
-                    triples.addAll(powerConsumptionStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case POWER_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case PRESENCE_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case RFID_STATE_SERVICE:
+            try {
+                switch (OntConfig.serviceNameMap.get(StringModifier.firstCharToLowerCase(serviceTypeName))) {
+                    case UNKNOWN:
+                        LOGGER.warn("There is a serviceType UNKNOWN!");
+                        break;
+                    case ACTIVATION_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case BATTERY_STATE_SERVICE:
+                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case BLIND_STATE_SERVICE:
+                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
+                        break;
+                    case BRIGHTNESS_STATE_SERVICE:
+                        break;
+                    case BUTTON_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case COLOR_STATE_SERVICE:
+                        triples.addAll(colorStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case CONTACT_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case DOOR_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case EARTHQUAKE_ALARM_STATE_SERVICE:
+                        break;
+                    case FIRE_ALARM_STATE_SERVICE:
+                        break;
+                    case HANDLE_STATE_SERVICE:
+                        triples.addAll(handleStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case ILLUMINANCE_STATE_SERVICE:
+                        triples.addAll(illuminanceStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case INTENSITY_STATE_SERVICE:
+                        break;
+                    case INTRUSION_ALARM_STATE_SERVICE:
+                        break;
+                    case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
+                        break;
+                    case MOTION_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case PASSAGE_STATE_SERVICE:
+                        break;
+                    case POWER_CONSUMPTION_STATE_SERVICE:
+                        triples.addAll(powerConsumptionStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case POWER_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case PRESENCE_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case RFID_STATE_SERVICE:
 //                    triples.addAll(rfidStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case SMOKE_ALARM_STATE_SERVICE:
-                    break;
-                case SMOKE_STATE_SERVICE:
-                    triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case STANDBY_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case SWITCH_STATE_SERVICE:
-                    triples.addAll(switchStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
-                    break;
-                case TAMPER_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case TARGET_TEMPERATURE_STATE_SERVICE:
-                    break;
-                case TEMPERATURE_ALARM_STATE_SERVICE:
-                    break;
-                case TEMPERATURE_STATE_SERVICE:
-                    triples.addAll(temperatureStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                case TEMPEST_ALARM_STATE_SERVICE:
-                    break;
-                case WATER_ALARM_STATE_SERVICE:
-                    break;
-                case WINDOW_STATE_SERVICE:
-                    triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
-                    break;
-                default:
-                    // no matched providerService
-                    try {
-                        throw new NotAvailableException("Could not assign to providerService. Please check implementation or rather integrate "
-                                + serviceTypeMap.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
-                    } catch (NotAvailableException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                    }
-                    break;
+                        break;
+                    case SMOKE_ALARM_STATE_SERVICE:
+                        break;
+                    case SMOKE_STATE_SERVICE:
+                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case STANDBY_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case SWITCH_STATE_SERVICE:
+                        triples.addAll(switchStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
+                        break;
+                    case TAMPER_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case TARGET_TEMPERATURE_STATE_SERVICE:
+                        break;
+                    case TEMPERATURE_ALARM_STATE_SERVICE:
+                        break;
+                    case TEMPERATURE_STATE_SERVICE:
+                        triples.addAll(temperatureStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    case TEMPEST_ALARM_STATE_SERVICE:
+                        break;
+                    case WATER_ALARM_STATE_SERVICE:
+                        break;
+                    case WINDOW_STATE_SERVICE:
+                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        break;
+                    default:
+                        // no matched providerService
+                        try {
+                            throw new NotAvailableException("Could not assign to providerService. Please check implementation or rather integrate "
+                                    + OntConfig.serviceNameMap.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
+                        } catch (NotAvailableException e) {
+                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                        }
+                        break;
+                }
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             }
         }
         return triples;

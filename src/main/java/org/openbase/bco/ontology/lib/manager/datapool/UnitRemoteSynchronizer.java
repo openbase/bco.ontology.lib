@@ -18,12 +18,14 @@
  */
 package org.openbase.bco.ontology.lib.manager.datapool;
 
+import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
@@ -38,6 +40,7 @@ import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
@@ -67,7 +70,6 @@ import rst.domotic.unit.dal.TemperatureControllerDataType.TemperatureControllerD
 import rst.domotic.unit.dal.TemperatureSensorDataType.TemperatureSensorData;
 import rst.domotic.unit.dal.VideoDepthSourceDataType.VideoDepthSourceData;
 import rst.domotic.unit.dal.VideoRgbSourceDataType.VideoRgbSourceData;
-import rst.domotic.unit.device.DeviceDataType.DeviceData;
 import rst.domotic.unit.app.AppDataType.AppData;
 import rst.domotic.unit.authorizationgroup.AuthorizationGroupDataType.AuthorizationGroupData;
 import rst.domotic.unit.scene.SceneDataType.SceneData;
@@ -75,8 +77,10 @@ import rst.domotic.unit.unitgroup.UnitGroupDataType.UnitGroupData;
 import rst.domotic.unit.user.UserDataType.UserData;
 import rst.domotic.unit.agent.AgentDataType.AgentData;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

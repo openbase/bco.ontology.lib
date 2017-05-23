@@ -122,7 +122,6 @@ public class OntRelationMappingImpl implements OntRelationMapping {
      */
     @Override
     public RdfTriple getInsertStateRelation(final ServiceType serviceType) throws NotAvailableException {
-
         final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
         final String stateTypeName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
 
@@ -141,7 +140,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         if (serviceTypes == null) {
             serviceTypes = new ArrayList<>();
 
-            for (final ServiceType serviceType : serviceTypes) {
+            for (final ServiceType serviceType : ServiceType.values()) {
                 if (serviceType.equals(ServiceType.UNKNOWN)) {
                     continue;
                 }

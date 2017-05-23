@@ -22,13 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
-import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerService;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.processing.StringProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,42 +42,6 @@ public interface StringModifier {
      * Logger to print information.
      */
     Logger LOGGER = LoggerFactory.getLogger(StringModifier.class);
-
-    /**
-     * Method converts a given string to a string with noun syntax. Thereby substrings, which are separated by special characters(-+*=_#/), will be processed
-     * as independent words. For example 'ACTION_STATE-Super+Service#word' = 'ActionStateSuperServiceWord'.
-     *
-     * @param expression The string, which should be converted.
-     * @return The converted string with noun syntax (each substring).
-     * @throws IllegalArgumentException Exception is thrown, if the parameter is null.
-     */
-    static String convertToNounSyntax(final String expression) throws IllegalArgumentException {
-
-        if (expression == null) {
-            throw new IllegalArgumentException("Could not convert string to noun syntax, cause string is null!");
-        }
-
-        final Pattern pattern = Pattern.compile("[-+*/=_#]");
-        final Matcher matcher = pattern.matcher(expression);
-
-        if (!matcher.find()) {
-            if (StringUtils.isAllUpperCase(expression) && (expression.length() > 0)) {
-                return expression.substring(0, 1).toUpperCase() + expression.substring(1).toLowerCase();
-            } else {
-                return expression;
-            }
-        }
-
-        final String[] stringParts = expression.toLowerCase().split("[-+*/=_#]");
-        String convertString = "";
-
-        for (final String buf : stringParts) {
-            if (buf.length() >= 1) {
-                convertString = convertString + buf.substring(0, 1).toUpperCase() + buf.substring(1);
-            }
-        }
-        return convertString;
-    }
 
     /**
      * Method returns the input string with the bco namespace prefix.
@@ -168,7 +132,22 @@ public interface StringModifier {
     }
 
     /**
-     * Method returns the service type name in camel case.
+     * Method transforms the first char of the input string to upper case.
+     *
+     * @param input is the string, which should be transformed.
+     * @return the input string with first char in upper case.
+     * @throws NotAvailableException is thrown in case the input is null.
+     */
+    static String firstCharToUpperCase(final String input) throws NotAvailableException {
+        if (input == null) {
+            assert false;
+            throw new NotAvailableException("Input string is null.");
+        }
+        return Character.toUpperCase(input.charAt(0)) + input.substring(1);
+    }
+
+    /**
+     * Method returns the service type name in camel case, e.g. PowerStateService.
      *
      * @param serviceType is the service type, which name should be returned.
      * @return the service type name in camel case.
@@ -182,7 +161,26 @@ public interface StringModifier {
             }
             return StringProcessor.transformUpperCaseToCamelCase(serviceType.name());
         } catch (CouldNotPerformException e) {
-            throw new NotAvailableException("ServiceName", e);
+            throw new NotAvailableException("Service name", e);
+        }
+    }
+
+    /**
+     * Method returns the unit type name in camel case, e.g. ColorableLight.
+     *
+     * @param unitType is the service type, which name should be returned.
+     * @return the unit type name in camel case.
+     * @throws NotAvailableException is thrown in case the input is null.
+     */
+    static String getUnitTypeName(final UnitType unitType) throws NotAvailableException {
+        try {
+            if (unitType == null) {
+                assert false;
+                throw new NotAvailableException("Unit type is null.");
+            }
+            return StringProcessor.transformUpperCaseToCamelCase(unitType.name());
+        } catch (CouldNotPerformException e) {
+            throw new NotAvailableException("Unit name", e);
         }
     }
 
@@ -220,6 +218,35 @@ public interface StringModifier {
             return "\"" + input;
         } else {
             return input;
+        }
+    }
+
+    /**
+     * Method returns the service type name of the state method name (e.g. getPowerState: powerStateService).
+     *
+     * @param stateMethodName is the state method name, which should be transformed.
+     * @return the service type name in camel case (first char lower case).
+     * @throws NotAvailableException is thrown in case the input is null or is no valid state (name).
+     */
+    static String getServiceTypeNameFromStateMethodName(String stateMethodName) throws NotAvailableException {
+        if (stateMethodName == null) {
+            assert false;
+            throw new NotAvailableException("Input string is null.");
+        }
+
+        if (stateMethodName.startsWith(OntConfig.MethodRegEx.GET.getName())) {
+            stateMethodName = stateMethodName.substring(OntConfig.MethodRegEx.GET.getName().length(), stateMethodName.length());
+            stateMethodName = firstCharToLowerCase(stateMethodName);
+        }
+
+        if (stateMethodName.endsWith(OntConfig.MethodRegEx.STATE.getName())) {
+            stateMethodName = stateMethodName + OntConfig.MethodRegEx.SERVICE.getName();
+        }
+
+        if (OntConfig.serviceNameMap.keySet().contains(stateMethodName)) {
+            return stateMethodName;
+        } else {
+            throw new NotAvailableException("Input string is no state (method) name! " + stateMethodName);
         }
     }
 

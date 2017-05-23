@@ -27,6 +27,12 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
+import org.openbase.jul.exception.NotAvailableException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.topbraid.spin.arq.ARQ2SPIN;
 import org.topbraid.spin.arq.ARQFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
@@ -35,6 +41,7 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,6 +51,7 @@ import java.util.stream.Collectors;
  */
 public class QueryParser {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     private final String triggerLabel;
     private final String triggerQuery;
 
@@ -69,6 +77,9 @@ public class QueryParser {
         this.triggerLabel = triggerLabel;
         this.triggerQuery = triggerQuery;
     }
+
+    String[] locationCategories = new String[] {"region", "tile", "zone"};
+    String[] connectionCategories = new String[] {"door", "passage", "window"};
 
     public OntologyChange getOntologyChange() throws IllegalArgumentException {
 
@@ -106,7 +117,6 @@ public class QueryParser {
     private List<UnitType> getUnitTypeChanges(final List<String> alignedResourceList) {
 
         final List<UnitType> unitTypeChanges = new ArrayList<>();
-        final Map<String, UnitType> alignedUnitTypes = TypeAlignment.getAlignedUnitTypes();
 
         if (containsLocation(alignedResourceList)) {
             unitTypeChanges.add(UnitType.LOCATION);
@@ -117,10 +127,13 @@ public class QueryParser {
 
         for (final String alignedResource : alignedResourceList) {
 
-            final UnitType unitType = alignedUnitTypes.get(alignedResource);
-
-            if (unitType != null) {
-                unitTypeChanges.add(unitType);
+            try {
+                final UnitType unitType = OntConfig.unitNameMap.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
+                if (unitType != null) {
+                    unitTypeChanges.add(unitType);
+                }
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }
         return unitTypeChanges;
@@ -128,7 +141,7 @@ public class QueryParser {
 
     private boolean containsLocation(final List<String> alignedResourceList) {
 
-        for (final String location : TypeAlignment.locationCategories) {
+        for (final String location : locationCategories) {
             if (alignedResourceList.contains(location)) {
                 return true;
             }
@@ -138,7 +151,7 @@ public class QueryParser {
 
     private boolean containsConnection(final List<String> alignedResourceList) {
 
-        for (final String connection : TypeAlignment.connectionCategories) {
+        for (final String connection : connectionCategories) {
             if (alignedResourceList.contains(connection)) {
                 return true;
             }
@@ -149,14 +162,16 @@ public class QueryParser {
     private List<ServiceType> getServiceTypeChanges(final List<String> alignedResourceList) {
 
         final List<ServiceType> serviceTypeChanges = new ArrayList<>();
-        final Map<String, ServiceType> alignedServiceTypes = TypeAlignment.getAlignedServiceTypes();
 
         for (final String alignedResource : alignedResourceList) {
 
-            final ServiceType serviceType = alignedServiceTypes.get(alignedResource);
-
-            if (serviceType != null) {
-                serviceTypeChanges.add(serviceType);
+            try {
+                final ServiceType serviceType = OntConfig.serviceNameMap.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
+                if (serviceType != null) {
+                    serviceTypeChanges.add(serviceType);
+                }
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }
         return serviceTypeChanges;

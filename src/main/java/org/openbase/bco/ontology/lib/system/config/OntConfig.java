@@ -22,6 +22,7 @@ package org.openbase.bco.ontology.lib.system.config;
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
@@ -30,10 +31,14 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
+import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This java class configures the ontology-system and set different elements like namespace or superclasses of the ontology. Furthermore a method tests the
@@ -58,6 +63,40 @@ public final class OntConfig {
      * Namespace of the xsd schema (w3c). Don't modify.
      */
     public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
+
+    /**
+     * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. POWER_STATE_SERVICE - powerStateService
+     */
+    public final static Map<String, ServiceType> serviceNameMap = new HashMap<>();
+
+    static {
+        for (final ServiceType serviceType : ServiceType.values()) {
+            try {
+                if (serviceType != null) {
+                    serviceNameMap.put(StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType)), serviceType);
+                }
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+        }
+    }
+
+    /**
+     * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. COLORABLE_LIGHT - colorableLight
+     */
+    public final static Map<String, UnitType> unitNameMap = new HashMap<>();
+
+    static {
+        for (final UnitType unitType : UnitType.values()) {
+            try {
+                if (unitType != null) {
+                    unitNameMap.put(StringModifier.firstCharToLowerCase(StringModifier.getUnitTypeName(unitType)), unitType);
+                }
+            } catch (NotAvailableException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+        }
+    }
 
     /**
      * Enum contains the server services of the fuseki server. They are components of the url (suffix).
@@ -397,7 +436,12 @@ public final class OntConfig {
         /**
          * Pattern for method name part.
          */
-        STATE("STATE"),
+        STATE("State"),
+
+        /**
+         * Pattern for method name part.
+         */
+        SERVICE("Service"),
 
         /**
          * Pattern for method name part.
