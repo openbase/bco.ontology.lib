@@ -34,8 +34,6 @@ import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappi
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -85,9 +83,8 @@ public class UnitRegistrySynchronizer {
      * @param transactionBuffer transactionBuffer
      * @throws InterruptedException InterruptedException
      * @throws CouldNotPerformException CouldNotPerformException
-     * @throws JPServiceException JPServiceException
      */
-    public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) throws InterruptedException, CouldNotPerformException, JPServiceException {
+    public UnitRegistrySynchronizer(final TransactionBuffer transactionBuffer) throws InterruptedException, CouldNotPerformException {
         this.transactionBuffer = transactionBuffer;
         this.registryDiff = new ProtobufListDiff<>();
         this.stopwatch = new Stopwatch();
@@ -105,7 +102,7 @@ public class UnitRegistrySynchronizer {
     private void initSynchConfigData() throws InstantiationException {
         try {
             // upload ontModel
-            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.ontologyDatabaseURL, 0);
 
             final List<UnitConfig> unitConfigs = getUnitConfigList();
             final List<RdfTriple> insertTriples = new ArrayList<>();
@@ -121,7 +118,7 @@ public class UnitRegistrySynchronizer {
 
             // convert to sparql expression and upload...or save in buffer, if no server connection
             transformAndSynchronize(null, insertTriples);
-        } catch (JPServiceException | InterruptedException | NotAvailableException e) {
+        } catch (InterruptedException | NotAvailableException e) {
             throw new InstantiationException(this, e);
         }
     }
@@ -169,7 +166,7 @@ public class UnitRegistrySynchronizer {
                     aBoxSynchUpdateUnits(unitConfigsBuf);
                 }
 
-            } catch (InterruptedException | JPServiceException | CouldNotPerformException e) {
+            } catch (InterruptedException | CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
 //            if (!identifiableRemovedMessageMap.isEmpty()) {
@@ -204,7 +201,7 @@ public class UnitRegistrySynchronizer {
 //        }
 //    }
 
-    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException, NotAvailableException {
+    private void aBoxSynchUpdateUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, NotAvailableException {
 
         final List<RdfTriple> deleteTriples = new ArrayList<>();
         final List<RdfTriple> insertTriples = new ArrayList<>();
@@ -227,7 +224,7 @@ public class UnitRegistrySynchronizer {
         transformAndSynchronize(deleteTriples, insertTriples);
     }
 
-    private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigs) throws InterruptedException, JPServiceException {
+    private void aBoxSynchNewUnits(final List<UnitConfig> unitConfigs) throws InterruptedException {
 
         final List<RdfTriple> triples = new ArrayList<>();
 
@@ -258,7 +255,7 @@ public class UnitRegistrySynchronizer {
 //    }
 
 
-    private void transformAndSynchronize(final List<RdfTriple> delete, final List<RdfTriple> insert) throws JPServiceException {
+    private void transformAndSynchronize(final List<RdfTriple> delete, final List<RdfTriple> insert) {
         String multiExprUpdate = "";
 
         try {
@@ -274,7 +271,7 @@ public class UnitRegistrySynchronizer {
             }
 
             // upload to ontology server
-            SparqlHttp.uploadSparqlRequest(multiExprUpdate, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+            SparqlHttp.uploadSparqlRequest(multiExprUpdate, OntConfig.ontologyDatabaseURL);
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         } catch (IOException e) {

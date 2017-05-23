@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.manager.tbox;
 
 import org.apache.jena.ontology.OntModel;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
 
 import java.io.IOException;
@@ -37,11 +36,10 @@ public interface TBoxVerification {
      * @param className The class name, which should be verified as OntClass (existing in ontology).
      * @param ontModel The ontology, which contains all elements. If {@code null}, the actual ontology is downloaded.
      * @return {@code true} if parameter is a valid ontClass name of the ontology. Otherwise {@code false}.
-     * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws IOException Exception is thrown, if their is no connection to the server.
      * @throws NotAvailableException Exception is thrown, if the className is null.
      */
-    static boolean isOntClassExisting(final String className, OntModel ontModel) throws JPServiceException, IOException, NotAvailableException {
+    static boolean isOntClassExisting(final String className, OntModel ontModel) throws IOException, NotAvailableException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
         final String classNameWithNS = StringModifier.addBcoNamespace(className, true);
@@ -59,11 +57,10 @@ public interface TBoxVerification {
      * @param propertyName The property name, which should be verified as OntProperty (existing in ontology).
      * @param ontModel The ontology, which contains all elements. If {@code null}, the actual ontology is downloaded.
      * @return {@code true} if parameter is a valid ontProperty name of the ontology. Otherwise {@code false}.
-     * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws IOException Exception is thrown, if their is no connection to the server.
      * @throws NotAvailableException Exception is thrown, if the propertyName is null.
      */
-    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws NotAvailableException, IOException, JPServiceException {
+    static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws NotAvailableException, IOException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
         final String propertyNameWithNS = StringModifier.addBcoNamespace(propertyName, true);

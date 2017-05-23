@@ -21,13 +21,10 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -53,7 +50,7 @@ public class ConnectionPhase {
     private boolean wasConnected;
     private final TransactionBuffer transactionBuffer;
 
-    public ConnectionPhase(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer) throws JPServiceException, NotAvailableException {
+    public ConnectionPhase(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer) throws NotAvailableException {
 
 //        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.remoteUnitId = unitRemote.getId().toString();
@@ -63,7 +60,7 @@ public class ConnectionPhase {
 
     }
 
-    public void identifyConnection(final ConnectionState connectionState) throws JPServiceException, NotAvailableException {
+    public void identifyConnection(final ConnectionState connectionState) throws NotAvailableException {
         if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
             // was NOT connected and now is connected - start connection phase
             updateConnectionPhase(ActivationState.State.ACTIVE);
@@ -75,7 +72,7 @@ public class ConnectionPhase {
         }
     }
 
-    private void initConnectionState(final UnitRemote unitRemote) throws JPServiceException, NotAvailableException {
+    private void initConnectionState(final UnitRemote unitRemote) throws NotAvailableException {
         // reduce connectionState to binary classification - connected and not connected
         if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
             wasConnected = true;
@@ -85,7 +82,7 @@ public class ConnectionPhase {
         }
     }
 
-    private void updateConnectionPhase(final ActivationState.State activationState) throws JPServiceException, NotAvailableException {
+    private void updateConnectionPhase(final ActivationState.State activationState) throws NotAvailableException {
 
         final String pred_IsA = OntConfig.OntExpr.A.getName();
         final String pred_HasFirstConnection = OntConfig.OntProp.FIRST_CONNECTION.getName();
@@ -129,9 +126,9 @@ public class ConnectionPhase {
         }
     }
 
-    boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparql) throws JPServiceException {
+    boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparql) {
         try {
-            SparqlHttp.uploadSparqlRequest(sparql, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ontologyDatabaseURL);
             // could not send to server - insert sparql update expression to buffer queue
             transactionBuffer.insertData(sparql);
             return true;

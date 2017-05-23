@@ -19,13 +19,11 @@
 package org.openbase.bco.ontology.lib.trigger;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemoteImpl;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.QueryParser;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.pattern.Factory;
@@ -46,8 +44,8 @@ public class TriggerFactory implements Factory {
         new ServerConnection();
 
         try {
-            RsbCommunication.startRsbListener(JPService.getProperty(JPOntologyScope.class).getValue(), changeCategoryObservable);
-        } catch (InterruptedException | JPNotAvailableException e) {
+            RsbCommunication.startRsbListener(OntConfig.ontologyScope, changeCategoryObservable);
+        } catch (InterruptedException e) {
             throw new CouldNotPerformException("Could not activate rsb listener!", e);
         }
     }

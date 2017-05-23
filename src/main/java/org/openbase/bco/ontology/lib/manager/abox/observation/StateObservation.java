@@ -31,7 +31,6 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -82,7 +81,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         public void relay() {
             try {
                 stateUpdate(observerData);
-            } catch (InterruptedException | CouldNotPerformException | JPServiceException e) {
+            } catch (InterruptedException | CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO handling?!
             }
         }
@@ -112,12 +111,12 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
 
-        } catch (JPServiceException | CouldNotPerformException e) {
+        } catch (CouldNotPerformException e) {
             throw new InstantiationException(this, e);
         }
     }
 
-    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
 //        if (Measurement.measurementWatch.isRunning()) {
 //            Measurement.measurementWatch.stop();
 //            Measurement.unitChange.add(Measurement.measurementWatch.getTime());

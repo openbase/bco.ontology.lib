@@ -34,15 +34,13 @@ import org.openbase.bco.dal.remote.unit.PowerSwitchRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.bco.ontology.lib.trigger.sparql.AskQueryExample;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -144,7 +142,7 @@ public class Measurement {
 
     private static final String COMPLEX_QUERY = AskQueryExample.QUERY_0;
 
-    public Measurement() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    public Measurement() throws InterruptedException, CouldNotPerformException {
 //        this.measurementWatch = new Stopwatch();
         this.triggerMeasurementObservable = new ObservableImpl<>(false, this);
 //        this.colorableLightRemote = (ColorableLightRemote) Units.getUnit("a0f2c9d8-41a6-45c6-9609-5686b6733d4e", true); //old db
@@ -171,7 +169,7 @@ public class Measurement {
         initSimplePerformanceMeasurement();
     }
 
-    private void initSimplePerformanceMeasurement() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void initSimplePerformanceMeasurement() throws InterruptedException, CouldNotPerformException {
         addNormalDataSetToServer();
 
         simpleTrigger();
@@ -180,7 +178,7 @@ public class Measurement {
         startSimplePerformanceMeasurement();
     }
 
-    private void startSimplePerformanceMeasurement() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void startSimplePerformanceMeasurement() throws InterruptedException, CouldNotPerformException {
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
 
@@ -263,7 +261,7 @@ public class Measurement {
         });
     }
 
-    private void startMeasurementData() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void startMeasurementData() throws InterruptedException, CouldNotPerformException {
 
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
@@ -294,7 +292,7 @@ public class Measurement {
         }
     }
 
-    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException {
 
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
@@ -311,7 +309,7 @@ public class Measurement {
             complexQuMeasuredValues.clear();
 
             if (daysCurCount < DAYS_MAX_COUNT) {
-                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteAllObservationsWithFilter, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ontologyDatabaseURL, 0);
                 aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
@@ -327,7 +325,7 @@ public class Measurement {
         }
     }
 
-    private void initMemoryTest() throws InterruptedException, CouldNotPerformException, JPServiceException  {
+    private void initMemoryTest() throws InterruptedException, CouldNotPerformException {
         init();
         System.out.println("TripleCount for configData only: " + askNumberOfTriple());
 
@@ -337,7 +335,7 @@ public class Measurement {
         startMeasurementMemoryTest();
     }
 
-    private void startMeasurementMemoryTest() throws InterruptedException, CouldNotPerformException, JPServiceException {
+    private void startMeasurementMemoryTest() throws InterruptedException, CouldNotPerformException {
 
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
@@ -384,24 +382,24 @@ public class Measurement {
         }
     }
 
-    private void init() throws InterruptedException, JPServiceException, NotAvailableException {
+    private void init() throws InterruptedException, NotAvailableException {
         InputStream input = Measurement.class.getResourceAsStream("/apartmentDataSimpleWithoutObs.owl");
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
 //        final OntModel baseOntModel = StringModifier.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
-        OntModelHttp.addModelToServer(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+        OntModelHttp.addModelToServer(ontModel, OntConfig.ontologyDatabaseURL, 0);
     }
 
-    private void addNormalDataSetToServer() throws InterruptedException, JPServiceException, NotAvailableException {
+    private void addNormalDataSetToServer() throws InterruptedException, NotAvailableException {
         InputStream input = Measurement.class.getResourceAsStream("/apartmentDataSimple.owl");
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
-        OntModelHttp.addModelToServer(ontModel, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+        OntModelHttp.addModelToServer(ontModel, OntConfig.ontologyDatabaseURL, 0);
     }
 
-    private void startAggregatedDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
+    private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException {
         System.out.println("Duplicate data...Day: 1");
         duplicateData.duplicateDataOfAggObs(daysCurCount);
         askNumberOfTriple();
@@ -412,7 +410,7 @@ public class Measurement {
         startMeasurementAggData();
     }
 
-    private void startDataMeasurement() throws InterruptedException, JPServiceException, CouldNotPerformException {
+    private void startDataMeasurement() throws InterruptedException, CouldNotPerformException {
         System.out.println("Duplicate data...Day: 1");
         duplicateData.duplicateDataOfOneDay(daysCurCount);
         askNumberOfTriple();
@@ -423,10 +421,10 @@ public class Measurement {
         startMeasurementData();
     }
 
-    private long askNumberOfTriple() throws InterruptedException, JPServiceException {
+    private long askNumberOfTriple() throws InterruptedException {
 
         try {
-            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.countAllTriples, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.countAllTriples, OntConfig.ontologyDatabaseURL, 0);
             Long numTriples = 0L;
 
             if (resultSet.hasNext()) {

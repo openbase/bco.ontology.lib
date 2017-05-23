@@ -22,11 +22,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
-import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPNotAvailableException;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -62,13 +59,13 @@ public class ServerConnection {
 
             try {
                 final HttpClient httpclient = HttpClients.createDefault();
-                final HttpGet httpGet = new HttpGet(JPService.getProperty(JPOntologyPingURL.class).getValue());
+                final HttpGet httpGet = new HttpGet(OntConfig.ontologyPingURL);
                 final HttpResponse httpResponse = httpclient.execute(httpGet);
                 // get response code and take the first number only
                 final int responseCodeShort = Integer.parseInt(Integer.toString(httpResponse.getStatusLine().getStatusCode()).substring(0, 1));
 
                 isReachable = responseCodeShort == 2;
-            } catch (IOException | JPNotAvailableException e) {
+            } catch (IOException e) {
                 isReachable = false;
             }
 

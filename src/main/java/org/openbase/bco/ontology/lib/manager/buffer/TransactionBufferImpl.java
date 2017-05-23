@@ -20,10 +20,7 @@ package org.openbase.bco.ontology.lib.manager.buffer;
 
 import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -69,11 +66,8 @@ public class TransactionBufferImpl implements TransactionBuffer {
                     final String updateExpression = queue.peek();
 
                     try {
-                        SparqlHttp.uploadSparqlRequest(updateExpression, JPService.getProperty(JPOntologyDatabaseURL.class).getValue());
+                        SparqlHttp.uploadSparqlRequest(updateExpression, OntConfig.ontologyDatabaseURL);
                         queue.poll();
-                    } catch (JPServiceException e) {
-                        future.cancel(true);
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                     } catch (CouldNotPerformException e) {
                         queue.poll();
                         ExceptionPrinter.printHistory("Dropped broken queue entry.", e, LOGGER, LogLevel.ERROR);

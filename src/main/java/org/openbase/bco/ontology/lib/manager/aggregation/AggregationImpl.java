@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ public class AggregationImpl implements Aggregation {
     private Period period;
     private int backDatedQuantity;
 
-    public AggregationImpl() throws CouldNotPerformException, InterruptedException, JPServiceException {
+    public AggregationImpl() throws CouldNotPerformException, InterruptedException {
 
 //        this.period = OntConfig.PERIOD_FOR_AGGREGATION;
 //        this.backDatedQuantity = OntConfig.BACKDATED_BEGINNING_OF_PERIOD;
@@ -79,7 +78,7 @@ public class AggregationImpl implements Aggregation {
 //        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
 //    }
 
-    public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, JPServiceException {
+    public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException {
         final DateTime dateTimeFromTest = new DateTime(2017, 1, 1, 0, 0, 0, 0);
         final DateTime dateTimeUntilTest = new DateTime(2018, 1, 1, 0, 0, 0, 0);
         currentDays += 1;

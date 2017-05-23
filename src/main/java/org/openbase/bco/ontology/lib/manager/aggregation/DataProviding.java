@@ -37,15 +37,12 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -218,8 +215,7 @@ public class DataProviding {
         return hashMap;
     }
 
-    public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit(final OntConfig.Period period) throws JPServiceException
-            , InterruptedException, NotAvailableException {
+    public HashMap<String, List<ObservationAggDataCollection>> getAggObsForEachUnit(final OntConfig.Period period) throws InterruptedException, NotAvailableException {
         final HashMap<String, List<ObservationAggDataCollection>> hashMap = new HashMap<>();
 
         try {
@@ -232,7 +228,7 @@ public class DataProviding {
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
             final String query = StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil);
-            final ResultSet resultSet = SparqlHttp.sparqlQuery(query, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(query, OntConfig.ontologyDatabaseURL, 0);
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
             while (resultSet.hasNext()) {

@@ -31,12 +31,9 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 
@@ -53,7 +50,7 @@ public class DuplicateData {
     private final OntModel ontModelApartmentDataSimple;
     private final OntModel ontModelApartmentDataSimpleAggObsDay;
 
-    public DuplicateData() throws InterruptedException, JPServiceException {
+    public DuplicateData() throws InterruptedException {
 //        this.stopwatch = new Stopwatch();
 //        this.ontModelApartmentDataSimple = StringModifier.loadOntModelFromFile(null, "src/apartmentDataSimple.owl");
 //        this.dateTimeZone = DateTimeZone.forOffsetMillis(DateTimeZone.forID("Europe/Berlin").getOffset(DateTime.now()));
@@ -68,7 +65,7 @@ public class DuplicateData {
         this.ontModelApartmentDataSimpleAggObsDay = ontModelAggObsDay;
     }
 
-    public void duplicateDataOfAggObs(final int numberOfDays) throws InterruptedException, JPServiceException, NotAvailableException {
+    public void duplicateDataOfAggObs(final int numberOfDays) throws InterruptedException, NotAvailableException {
 
         final OntModel ontModelDuplicatedData = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 
@@ -125,10 +122,10 @@ public class DuplicateData {
             newIndividual.addProperty(hasTimeWeightingProp, timeWeightingNode);
         }
         System.out.println("send data to fuseki...");
-        OntModelHttp.addModelToServer(ontModelDuplicatedData, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ontologyDatabaseURL, 0);
     }
 
-    public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, JPServiceException, NotAvailableException {
+    public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, NotAvailableException {
 
         final OntModel ontModelDuplicatedData = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
 
@@ -173,7 +170,7 @@ public class DuplicateData {
             }
         }
         System.out.println("send data to fuseki...");
-        OntModelHttp.addModelToServer(ontModelDuplicatedData, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ontologyDatabaseURL, 0);
     }
 
     private void generateDataFromOneDayToOneYear() throws InterruptedException, IOException {
@@ -224,12 +221,11 @@ public class DuplicateData {
 //        StringModifier.saveOntModel(ontModelApartmentDataSimple, "evaluationData");
     }
 
-    private void deleteObservations() throws CouldNotPerformException, JPServiceException, InterruptedException {
+    private void deleteObservations() throws CouldNotPerformException, InterruptedException {
         //TODO
         final String dateTimeFrom = StringModifier.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
         final String dateTimeUntil = StringModifier.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
 
-        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil)
-                , JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ontologyDatabaseURL, 0);
     }
 }

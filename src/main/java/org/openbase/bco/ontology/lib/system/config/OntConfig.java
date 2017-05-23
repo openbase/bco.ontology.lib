@@ -20,10 +20,14 @@
 package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.jps.exception.JPServiceException;
+import org.openbase.jps.core.JPService;
+import org.openbase.jps.exception.JPNotAvailableException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -136,6 +140,31 @@ public final class OntConfig {
          */
         public String getName() {
             return this.serverService;
+        }
+    }
+
+    /**
+     * The ontology database URL.
+     */
+    public static String ontologyDatabaseURL = "";
+
+    /**
+     * The ontology ping URL.
+     */
+    public static String ontologyPingURL = "";
+
+    /**
+     * The ontology scope (RSB).
+     */
+    public static String ontologyScope = "";
+
+    static {
+        try {
+            ontologyDatabaseURL = JPService.getProperty(JPOntologyDatabaseURL.class).getValue();
+            ontologyPingURL = JPService.getProperty(JPOntologyPingURL.class).getValue();
+            ontologyScope = JPService.getProperty(JPOntologyScope.class).getValue();
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -502,12 +531,11 @@ public final class OntConfig {
     /**
      * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.
      *
-     * @throws JPServiceException Exception is thrown, if the uri to the tbox server can't be taken.
      * @throws InterruptedException Exception is thrown, if the stopwatch is interrupted.
      * @throws NotAvailableException NotAvailableException
      */
     @SuppressWarnings("PMD.ExceptionAsFlowControl")
-    public void initialTestConfig() throws JPServiceException, InterruptedException, NotAvailableException {
+    public void initialTestConfig() throws InterruptedException, NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
 //        final OntModel ontModel = OntModelHttp.getTBoxModelViaRetry();

@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
@@ -31,8 +30,6 @@ import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
-import org.openbase.jps.core.JPService;
-import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.schedule.Stopwatch;
@@ -52,7 +49,7 @@ public class DataTripleCollection extends DataAssignation {
     private final DataProviding dataProviding;
     private final Period period;
 
-    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException, JPServiceException {
+    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException {
         super(dateTimeFrom, dateTimeUntil, period);
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
@@ -64,7 +61,7 @@ public class DataTripleCollection extends DataAssignation {
             final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(collectData());
 
             // send aggregated values ...
-            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ontologyDatabaseURL, 0);
 
 //            // delete unused connectionPhases (old)
 //            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
@@ -95,11 +92,11 @@ public class DataTripleCollection extends DataAssignation {
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");
-            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ontologyDatabaseURL, 0);
 
             // delete unused aggregations (old)
             final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom), StringModifier.addXsdDateTime(dateTimeUntil));
-            SparqlHttp.uploadSparqlRequest(sparql, JPService.getProperty(JPOntologyDatabaseURL.class).getValue(), 0);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ontologyDatabaseURL, 0);
         }
     }
 
@@ -111,7 +108,7 @@ public class DataTripleCollection extends DataAssignation {
         return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
 
-    private List<RdfTriple> collectAggData(final Period period) throws JPServiceException, InterruptedException, NotAvailableException {
+    private List<RdfTriple> collectAggData(final Period period) throws InterruptedException, NotAvailableException {
         final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit(period);
         return relateAggDataForEachUnit(observationsEachUnit);
     }
