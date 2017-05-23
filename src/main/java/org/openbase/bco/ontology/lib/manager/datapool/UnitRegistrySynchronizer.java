@@ -114,7 +114,7 @@ public class UnitRegistrySynchronizer {
             insertTriples.addAll(ontClassMapping.getUnitTypeClasses());
             // insert instances
             insertTriples.addAll(ontInstanceMapping.getInsertUnitInstances(unitConfigs));
-            insertTriples.addAll(ontInstanceMapping.getInsertStateAndServiceInstances());
+            insertTriples.addAll(ontInstanceMapping.getInsertStateAndServiceAndValueInstances());
             // insert relations
             insertTriples.addAll(ontRelationMapping.getInsertUnitRelations(unitConfigs));
             insertTriples.addAll(ontRelationMapping.getInsertStateRelations(null));
@@ -192,7 +192,7 @@ public class UnitRegistrySynchronizer {
 //            insertTriples.addAll(ontClassMapping.getUnitTypeClasses());
 //            // insert instances
 //            insertTriples.addAll(ontInstanceMapping.getInsertConfigInstances(unitConfigs));
-//            insertTriples.addAll(ontInstanceMapping.getInsertStateAndServiceInstances());
+//            insertTriples.addAll(ontInstanceMapping.getInsertStateAndServiceAndValueInstances());
 //            // insert relations
 //            insertTriples.addAll(ontRelationMapping.getInsertUnitRelations(unitConfigs));
 //            insertTriples.addAll(ontRelationMapping.getInsertStateRelations(null));

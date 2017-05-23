@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.utility;
 
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
@@ -29,9 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author agatting on 17.02.17.

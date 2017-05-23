@@ -54,6 +54,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
         triples.addAll(getInsertUnitInstances(unitConfigs));
         triples.addAll(getInsertStateInstances());
         triples.addAll(getInsertProviderServiceInstances());
+        triples.addAll(getInsertStateValueInstances());
 
         return triples;
     }
@@ -61,13 +62,13 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public List<RdfTriple> getInsertStateAndServiceInstances() {
+    public List<RdfTriple> getInsertStateAndServiceAndValueInstances() {
 
         final List<RdfTriple> triples = new ArrayList<>();
 
         triples.addAll(getInsertStateInstances());
         triples.addAll(getInsertProviderServiceInstances());
+        triples.addAll(getInsertStateValueInstances());
 
         return triples;
     }
@@ -175,6 +176,34 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             MultiException.checkAndThrow("There are incompletely serviceTypes!", exceptionStack);
         } catch (MultiException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+        return triples;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<RdfTriple> getInsertStateValueInstances() {
+
+        final List<RdfTriple> triples = new ArrayList<>();
+
+        for (final ServiceType serviceType : ServiceType.values()) {
+            if (serviceType.equals(ServiceType.UNKNOWN)) {
+                continue;
+            }
+            try {
+                for (final Object stateValue : Service.getServiceStateValues(serviceType).toArray()) {
+                    final String stateValueName = StringModifier.firstCharToLowerCase(StringModifier.getCamelCaseName(stateValue.toString()));
+
+                    if (stateValueName.equalsIgnoreCase("unknown")) {
+                        continue;
+                    }
+                    triples.add(new RdfTriple(stateValueName, OntExpr.A.getName(), OntCl.STATE_VALUE.getName()));
+                }
+            } catch (NotAvailableException e) {
+                // ignore, because existing state values are needed only
+            }
         }
         return triples;
     }

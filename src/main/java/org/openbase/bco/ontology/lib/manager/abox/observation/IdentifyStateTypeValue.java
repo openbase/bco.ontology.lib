@@ -23,6 +23,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -61,11 +62,6 @@ public class IdentifyStateTypeValue extends StateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdentifyStateTypeValue.class);
 
-    // declaration of predicates and classes, which are static
-    private static final String pred_IsA = OntExpr.A.getName();
-    private static final String pred_HasStateValue = OntProp.STATE_VALUE.getName();
-    private static final String obj_stateValue = OntCl.STATE_VALUE.getName();
-
     protected List<RdfTriple> addStateValue(final ServiceType serviceType, final Object stateObject, final String subjectObservation
             , final List<RdfTriple> rdfTripleArrayListsBuf) {
 
@@ -74,11 +70,16 @@ public class IdentifyStateTypeValue extends StateTypeValue {
         if (stateTypeAndIsLiteral != null) {
             for (final Pair<String, Boolean> pair : stateTypeAndIsLiteral) {
                 // check if stateType is a literal or not. If yes = literal, if no = stateValue instance.
-                if (!pair.getValue()) { // stateValue instance
-//                    System.out.println(Service.getServiceStateValues(ServiceTemplateType.ServiceTemplate.ServiceType.POWER_STATE_SERVICE));
-                    rdfTripleArrayListsBuf.add(new RdfTriple(pair.getKey(), pred_IsA, obj_stateValue)); //TODO: redundant. another possibility?
+                try {
+                    if (pair.getValue()) { // literal instance
+                        rdfTripleArrayListsBuf.add(new RdfTriple(subjectObservation, OntProp.STATE_VALUE.getName(), pair.getKey()));
+                    } else {
+                        final String stateValueName = StringModifier.firstCharToLowerCase(StringModifier.getCamelCaseName(pair.getKey()));
+                        rdfTripleArrayListsBuf.add(new RdfTriple(subjectObservation, OntProp.STATE_VALUE.getName(), stateValueName));
+                    }
+                } catch (NotAvailableException e) {
+                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
                 }
-                rdfTripleArrayListsBuf.add(new RdfTriple(subjectObservation, pred_HasStateValue, pair.getKey()));
             }
         }
 

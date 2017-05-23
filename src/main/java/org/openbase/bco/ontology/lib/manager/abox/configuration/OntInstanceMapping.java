@@ -43,7 +43,7 @@ public interface OntInstanceMapping {
      *
      * @return a list with rdf triples to insert the services and states.
      */
-    List<RdfTriple> getInsertStateAndServiceInstances();
+    List<RdfTriple> getInsertStateAndServiceAndValueInstances();
 
     /**
      * Method returns instance information of units based on the input unitConfigs.
@@ -66,6 +66,13 @@ public interface OntInstanceMapping {
      * @return a list with rdf triples to insert the states.
      */
     List<RdfTriple> getInsertStateInstances();
+
+    /**
+     * Method returns instance information of state values, which are taken from the rst environment.
+     *
+     * @return a list with rdf triples to insert the state values.
+     */
+    List<RdfTriple> getInsertStateValueInstances();
 
     /**
      * Method returns instance information to delete units, which are represented in the ontology.
