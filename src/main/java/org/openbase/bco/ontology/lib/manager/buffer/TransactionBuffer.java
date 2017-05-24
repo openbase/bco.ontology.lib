@@ -18,32 +18,92 @@
  */
 package org.openbase.bco.ontology.lib.manager.buffer;
 
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
+import org.openbase.jul.exception.InstantiationException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
+import org.openbase.jul.schedule.GlobalScheduledExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 
+import java.io.IOException;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+
 /**
- * @author agatting on 10.02.17.
+ * @author agatting on 17.01.17.
  */
-public interface TransactionBuffer {
+public class TransactionBuffer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBuffer.class);
+    private static final Queue<String> queue = new LinkedBlockingQueue<>();
+    private static RSBInformer<OntologyChange> rsbInformer;
+
+    static {
+        try {
+            rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_SCOPE, OntologyChange.class);
+        } catch (InstantiationException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+    }
+
+    public TransactionBuffer() throws CouldNotPerformException {
+        uploadQueueEntriesThread();
+    }
+
+    private void uploadQueueEntriesThread() throws CouldNotPerformException {
+        try {
+            GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
+                while (!queue.isEmpty()) {
+                    final String sparql = queue.peek();
+
+                    try {
+                        SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DATABASE_URL);
+                        queue.poll();
+                    } catch (CouldNotPerformException e) {
+                        queue.poll();
+                        ExceptionPrinter.printHistory("Dropped broken queue entry.", e, LOGGER, LogLevel.ERROR);
+                    } catch (IOException e) {
+                        LOGGER.warn("IOException: no connection...Retry...");
+                        break;
+                    }
+
+                    try {
+                        if (queue.isEmpty()) {
+                            final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
+
+                            rsbInformer.activate();
+                            rsbInformer.publish(ontologyChange);
+                            rsbInformer.deactivate();
+                            LOGGER.info("Transaction buffer is empty. All entries send to server.");
+                        }
+                    } catch (InterruptedException | CouldNotPerformException e) {
+                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    }
+                }
+            }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
+        } catch (RejectedExecutionException | IllegalArgumentException | CouldNotPerformException e) {
+            throw new CouldNotProcessException("Could not process transactionBuffer thread!", e);
+        }
+    }
 
     /**
-     * Method creates an ConcurrentLinkedQueue and starts to upload the entries of the queue to the ontology server. After successful upload, the informer
-     * is used to push a notification, if the synchronizedInformer is not null.
+     * Method inserts a sparql expression to the transaction buffer (queue). If the queue reaches the capacity than the first entry is removed to avoid overflow.
      *
-     * @param synchronizedInformer The RSB Informer to notify the trigger group. If {@code null}, than no notification via rsb (create and start queue only).
-     * @throws CouldNotPerformException CouldNotPerformException.
+     * @param sparql is the sparql update expression.
      */
-    void createAndStartQueue(final RSBInformer<OntologyChange> synchronizedInformer) throws CouldNotPerformException;
-
-    /**
-     * Method inserts data in the queue. The data is a pair, which contains the sparql update string and a boolean, if the update should be send to all
-     * databases or send to the main database only.
-     *
-     * @param updateExpression is the sparql update expression.
-     * @throws CouldNotProcessException If the string can't be insert into the queue.
-     */
-    void insertData(final String updateExpression) throws CouldNotProcessException;
-
+    public static void insertData(final String sparql) {
+        if (queue.size() > Integer.MAX_VALUE - 100) {
+            queue.poll();
+        }
+        queue.offer(sparql);
+    }
 }

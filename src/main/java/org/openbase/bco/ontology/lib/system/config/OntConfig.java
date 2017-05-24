@@ -71,13 +71,13 @@ public final class OntConfig {
     /**
      * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. POWER_STATE_SERVICE - powerStateService
      */
-    public final static Map<String, ServiceType> serviceNameMap = new HashMap<>();
+    public final static Map<String, ServiceType> SERVICE_NAME_MAP = new HashMap<>();
 
     static {
         for (final ServiceType serviceType : ServiceType.values()) {
             try {
                 if (serviceType != null) {
-                    serviceNameMap.put(StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType)), serviceType);
+                    SERVICE_NAME_MAP.put(StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType)), serviceType);
                 }
             } catch (NotAvailableException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -88,13 +88,13 @@ public final class OntConfig {
     /**
      * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. COLORABLE_LIGHT - colorableLight
      */
-    public final static Map<String, UnitType> unitNameMap = new HashMap<>();
+    public final static Map<String, UnitType> UNIT_NAME_MAP = new HashMap<>();
 
     static {
         for (final UnitType unitType : UnitType.values()) {
             try {
                 if (unitType != null) {
-                    unitNameMap.put(StringModifier.firstCharToLowerCase(StringModifier.getUnitTypeName(unitType)), unitType);
+                    UNIT_NAME_MAP.put(StringModifier.firstCharToLowerCase(StringModifier.getUnitTypeName(unitType)), unitType);
                 }
             } catch (NotAvailableException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -146,23 +146,23 @@ public final class OntConfig {
     /**
      * The ontology database URL.
      */
-    public static String ontologyDatabaseURL = "";
+    public static String ONTOLOGY_DATABASE_URL = "";
 
     /**
      * The ontology ping URL.
      */
-    public static String ontologyPingURL = "";
+    public static String ONTOLOGY_PING_URL = "";
 
     /**
      * The ontology scope (RSB).
      */
-    public static String ontologyScope = "";
+    public static String ONTOLOGY_SCOPE = "";
 
     static {
         try {
-            ontologyDatabaseURL = JPService.getProperty(JPOntologyDatabaseURL.class).getValue();
-            ontologyPingURL = JPService.getProperty(JPOntologyPingURL.class).getValue();
-            ontologyScope = JPService.getProperty(JPOntologyScope.class).getValue();
+            ONTOLOGY_DATABASE_URL = JPService.getProperty(JPOntologyDatabaseURL.class).getValue();
+            ONTOLOGY_PING_URL = JPService.getProperty(JPOntologyPingURL.class).getValue();
+            ONTOLOGY_SCOPE = JPService.getProperty(JPOntologyScope.class).getValue();
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }

@@ -48,16 +48,13 @@ public class ConnectionPhase {
     private final String remoteUnitId;
     private String subj_CurConnectionPhase;
     private boolean wasConnected;
-    private final TransactionBuffer transactionBuffer;
 
-    public ConnectionPhase(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer) throws NotAvailableException {
+    public ConnectionPhase(final UnitRemote unitRemote) throws NotAvailableException {
 
 //        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.remoteUnitId = unitRemote.getId().toString();
-        this.transactionBuffer = transactionBuffer;
 
         initConnectionState(unitRemote);
-
     }
 
     public void identifyConnection(final ConnectionState connectionState) throws NotAvailableException {
@@ -107,7 +104,7 @@ public class ConnectionPhase {
             insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
 
             final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
-            sendToServer(transactionBuffer, sparqlUpdate);
+            sendToServer(sparqlUpdate);
 
         } else if (activationState.equals(ActivationState.State.DEACTIVE)) {
 
@@ -119,22 +116,20 @@ public class ConnectionPhase {
             whereTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, null));
 
             final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples, whereTriples);
-            sendToServer(transactionBuffer, sparqlUpdate);
+            sendToServer(sparqlUpdate);
 
         } else {
             LOGGER.warn("Method updateConnectionPhase is called with wrong ActivationState parameter.");
         }
     }
 
-    boolean sendToServer(final TransactionBuffer transactionBuffer, final String sparql) {
+    boolean sendToServer(final String sparql) {
         try {
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ontologyDatabaseURL);
-            // could not send to server - insert sparql update expression to buffer queue
-            transactionBuffer.insertData(sparql);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DATABASE_URL);
             return true;
         } catch (IOException e) {
             // could not send to server - insert sparql update expression to buffer queue
-            transactionBuffer.insertData(sparql);
+            TransactionBuffer.insertData(sparql);
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, LOGGER, LogLevel.ERROR);
         }

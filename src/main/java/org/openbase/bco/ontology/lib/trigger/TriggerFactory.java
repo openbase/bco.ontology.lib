@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.trigger;
 
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemote;
 import org.openbase.bco.ontology.lib.commun.trigger.OntologyRemoteImpl;
 import org.openbase.bco.ontology.lib.commun.monitor.ServerConnection;
@@ -26,8 +25,14 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.QueryParser;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
+import org.openbase.jul.extension.rsb.iface.RSBListener;
 import org.openbase.jul.pattern.Factory;
 import org.openbase.jul.pattern.ObservableImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 
@@ -36,18 +41,15 @@ import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
  */
 public class TriggerFactory implements Factory {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(TriggerFactory.class);
+
     public static ObservableImpl<OntologyChange> changeCategoryObservable = null;
 
-    public TriggerFactory() throws CouldNotPerformException {
+    public TriggerFactory() throws CouldNotPerformException, InterruptedException {
 
         changeCategoryObservable = new ObservableImpl<>(false, this);
         new ServerConnection();
-
-        try {
-            RsbCommunication.startRsbListener(OntConfig.ontologyScope, changeCategoryObservable);
-        } catch (InterruptedException e) {
-            throw new CouldNotPerformException("Could not activate rsb listener!", e);
-        }
+        initRsb();
     }
 
     @Override
@@ -117,6 +119,19 @@ public class TriggerFactory implements Factory {
         } catch (CouldNotPerformException e) {
             throw new InstantiationException("Could not initiate trigger instance!", e);
         }
+    }
+
+    private void initRsb() throws CouldNotPerformException, InterruptedException {
+        final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(OntConfig.ONTOLOGY_SCOPE);
+
+        rsbListener.activate();
+        rsbListener.addHandler(event -> {
+            try {
+                changeCategoryObservable.notifyObservers((OntologyChange) event.getData());
+            } catch (CouldNotPerformException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+        }, false);
     }
     
 }

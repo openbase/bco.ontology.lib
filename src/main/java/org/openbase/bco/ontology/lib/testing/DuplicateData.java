@@ -122,7 +122,7 @@ public class DuplicateData {
             newIndividual.addProperty(hasTimeWeightingProp, timeWeightingNode);
         }
         System.out.println("send data to fuseki...");
-        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ontologyDatabaseURL, 0);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ONTOLOGY_DATABASE_URL, 0);
     }
 
     public void duplicateDataOfOneDay(final int numberOfDays) throws InterruptedException, NotAvailableException {
@@ -170,7 +170,7 @@ public class DuplicateData {
             }
         }
         System.out.println("send data to fuseki...");
-        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ontologyDatabaseURL, 0);
+        OntModelHttp.addModelToServer(ontModelDuplicatedData, OntConfig.ONTOLOGY_DATABASE_URL, 0);
     }
 
     private void generateDataFromOneDayToOneYear() throws InterruptedException, IOException {
@@ -226,6 +226,6 @@ public class DuplicateData {
         final String dateTimeFrom = StringModifier.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
         final String dateTimeUntil = StringModifier.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
 
-        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ontologyDatabaseURL, 0);
+        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ONTOLOGY_DATABASE_URL, 0);
     }
 }

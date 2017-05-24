@@ -70,7 +70,7 @@ public class DataAssignation extends DataAggregation {
 
         for (final String serviceTypeName : serviceDataMap.keySet()) {
             try {
-                switch (OntConfig.serviceNameMap.get(StringModifier.firstCharToLowerCase(serviceTypeName))) {
+                switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceTypeName))) {
                     case UNKNOWN:
                         LOGGER.warn("There is a serviceType UNKNOWN!");
                         break;
@@ -162,7 +162,7 @@ public class DataAssignation extends DataAggregation {
                         // no matched providerService
                         try {
                             throw new NotAvailableException("Could not assign to providerService. Please check implementation or rather integrate "
-                                    + OntConfig.serviceNameMap.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
+                                    + OntConfig.SERVICE_NAME_MAP.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
                         } catch (NotAvailableException e) {
                             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
                         }

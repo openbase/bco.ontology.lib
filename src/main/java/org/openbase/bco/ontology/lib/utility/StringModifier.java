@@ -239,7 +239,7 @@ public interface StringModifier {
             stateMethodName = stateMethodName + OntConfig.MethodRegEx.SERVICE.getName();
         }
 
-        if (OntConfig.serviceNameMap.keySet().contains(stateMethodName)) {
+        if (OntConfig.SERVICE_NAME_MAP.keySet().contains(stateMethodName)) {
             return stateMethodName;
         } else {
             throw new NotAvailableException("Input string is no state (method) name! " + stateMethodName);

@@ -20,8 +20,6 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
-import org.openbase.bco.ontology.lib.commun.rsb.RsbCommunication;
-import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -35,6 +33,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
 import org.openbase.jul.extension.rsb.iface.RSBInformer;
 import org.openbase.jul.extension.rst.processing.TimestampJavaTimeTransform;
 import org.openbase.jul.pattern.Observable;
@@ -65,11 +64,9 @@ import java.util.Set;
 public class StateObservation<T> extends IdentifyStateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
-//    private final DateTimeFormatter dateTimeFormatter;
     private final SimpleDateFormat dateFormat;
     private String remoteUnitId;
     private final Stopwatch stopwatch;
-    private final TransactionBuffer transactionBuffer;
     private Set<Method> methodSetStateType;
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
@@ -87,17 +84,14 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     };
 
-    public StateObservation(final UnitRemote unitRemote, final TransactionBuffer transactionBuffer, final RSBInformer<OntologyChange> rsbInformer
-            , final Class<T> data) throws InstantiationException {
-
+    public StateObservation(final UnitRemote unitRemote, final Class<T> data) throws InstantiationException {
         try {
             this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             this.unitType = unitRemote.getType();
-            this.rsbInformer = rsbInformer;
-            this.transactionBuffer = transactionBuffer;
+            this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_SCOPE, OntologyChange.class);
             this.stopwatch = new Stopwatch();
             this.remoteUnitId = unitRemote.getId().toString();
-            this.connectionPhase = new ConnectionPhase(unitRemote, transactionBuffer);
+            this.connectionPhase = new ConnectionPhase(unitRemote);
             this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
 
             final Observer<T> unitRemoteStateObserver = (final Observable<T> observable, final T remoteData) -> {
@@ -167,12 +161,12 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
                     //### serviceType triple ###\\
                     final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());
-                    serviceList.add(OntConfig.serviceNameMap.get(serviceTypeName));
+                    serviceList.add(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName));
                     rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasService, serviceTypeName));
 
                     //### stateValue triple ###\\
                     final int sizeBuf = rdfTripleArrayListsBuf.size();
-                    rdfTripleArrayListsBuf = addStateValue(OntConfig.serviceNameMap.get(serviceTypeName), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
+                    rdfTripleArrayListsBuf = addStateValue(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
 
                     if (rdfTripleArrayListsBuf.size() == sizeBuf) {
                         // incomplete observation instance. dropped...
@@ -195,27 +189,19 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
         final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(rdfTriples);
 //        System.out.println(sparqlUpdateExpr);
+        final boolean isHttpSuccess = connectionPhase.sendToServer(sparqlUpdateExpr); //TODO
 
-//        if (Measurement.measurementWatch.isRunning()) {
-//            Measurement.measurementWatch.stop();
-//            Measurement.sendSPARQL.add(Measurement.measurementWatch.getTime());
-//            Measurement.measurementWatch.restart();
-//        }
-        final boolean isHttpSuccess = connectionPhase.sendToServer(transactionBuffer, sparqlUpdateExpr);
-//        if (Measurement.measurementWatch.isRunning()) {
-//            Measurement.measurementWatch.stop();
-//            Measurement.answerOfServerToOM.add(Measurement.measurementWatch.getTime());
-//            Measurement.measurementWatch.restart();
-//        }
         if (isHttpSuccess) {
             rsbNotification(serviceList);
         }
     }
 
-    private void rsbNotification(final List<ServiceType> serviceList) {
+    private void rsbNotification(final List<ServiceType> serviceList) throws InterruptedException, CouldNotPerformException {
 
         final OntologyChange ontologyChange = OntologyChange.newBuilder().addUnitType(unitType).addAllServiceType(serviceList).build();
         // publish notification via rsb
-        RsbCommunication.startNotification(rsbInformer, ontologyChange);
+        rsbInformer.activate();
+        rsbInformer.publish(ontologyChange);
+        rsbInformer.deactivate();
     }
 }

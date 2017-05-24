@@ -59,7 +59,7 @@ public class ServerConnection {
 
             try {
                 final HttpClient httpclient = HttpClients.createDefault();
-                final HttpGet httpGet = new HttpGet(OntConfig.ontologyPingURL);
+                final HttpGet httpGet = new HttpGet(OntConfig.ONTOLOGY_PING_URL);
                 final HttpResponse httpResponse = httpclient.execute(httpGet);
                 // get response code and take the first number only
                 final int responseCodeShort = Integer.parseInt(Integer.toString(httpResponse.getStatusLine().getStatusCode()).substring(0, 1));

@@ -111,7 +111,7 @@ public class HeartBeatCommunication {
 
         while (true) {
             try {
-                SparqlHttp.uploadSparqlRequest(closeOldConnectionPhases, OntConfig.ontologyDatabaseURL);
+                SparqlHttp.uploadSparqlRequest(closeOldConnectionPhases, OntConfig.ONTOLOGY_DATABASE_URL);
                 break;
             } catch (IOException e) {
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
@@ -146,7 +146,7 @@ public class HeartBeatCommunication {
         future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getLastTimestampOfHeartBeat, OntConfig.ontologyDatabaseURL);
+                final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getLastTimestampOfHeartBeat, OntConfig.ONTOLOGY_DATABASE_URL);
 
                 if (resultSet == null || !resultSet.hasNext()) {
                     throw new CouldNotProcessException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
@@ -176,7 +176,7 @@ public class HeartBeatCommunication {
                     // sparql update to replace last heartbeat timestamp
                     final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
 
-                    SparqlHttp.uploadSparqlRequest(sparqlUpdate, OntConfig.ontologyDatabaseURL);
+                    SparqlHttp.uploadSparqlRequest(sparqlUpdate, OntConfig.ONTOLOGY_DATABASE_URL);
                 } else {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
@@ -219,8 +219,8 @@ public class HeartBeatCommunication {
                 final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
 
                 //TODO one update string
-                SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, OntConfig.ontologyDatabaseURL);
-                SparqlHttp.uploadSparqlRequest(sparqlUpdateInsert, OntConfig.ontologyDatabaseURL);
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, OntConfig.ONTOLOGY_DATABASE_URL);
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateInsert, OntConfig.ONTOLOGY_DATABASE_URL);
 
                 return;
             } catch (IOException e) {

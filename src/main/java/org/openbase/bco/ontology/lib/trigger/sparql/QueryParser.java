@@ -41,9 +41,7 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -128,7 +126,7 @@ public class QueryParser {
         for (final String alignedResource : alignedResourceList) {
 
             try {
-                final UnitType unitType = OntConfig.unitNameMap.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
+                final UnitType unitType = OntConfig.UNIT_NAME_MAP.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
                 if (unitType != null) {
                     unitTypeChanges.add(unitType);
                 }
@@ -166,7 +164,7 @@ public class QueryParser {
         for (final String alignedResource : alignedResourceList) {
 
             try {
-                final ServiceType serviceType = OntConfig.serviceNameMap.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
+                final ServiceType serviceType = OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToUpperCase(alignedResource)); //TODO check
                 if (serviceType != null) {
                     serviceTypeChanges.add(serviceType);
                 }

@@ -309,7 +309,7 @@ public class Measurement {
             complexQuMeasuredValues.clear();
 
             if (daysCurCount < DAYS_MAX_COUNT) {
-                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ontologyDatabaseURL, 0);
+                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteAllObservationsWithFilter, OntConfig.ONTOLOGY_DATABASE_URL, 0);
                 aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
@@ -388,7 +388,7 @@ public class Measurement {
         ontModel.read(input, null);
 
 //        final OntModel baseOntModel = StringModifier.loadOntModelFromFile(null, "src/apartmentDataSimpleWithoutObs.owl");
-        OntModelHttp.addModelToServer(ontModel, OntConfig.ontologyDatabaseURL, 0);
+        OntModelHttp.addModelToServer(ontModel, OntConfig.ONTOLOGY_DATABASE_URL, 0);
     }
 
     private void addNormalDataSetToServer() throws InterruptedException, NotAvailableException {
@@ -396,7 +396,7 @@ public class Measurement {
         OntModel ontModel = ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM);
         ontModel.read(input, null);
 
-        OntModelHttp.addModelToServer(ontModel, OntConfig.ontologyDatabaseURL, 0);
+        OntModelHttp.addModelToServer(ontModel, OntConfig.ONTOLOGY_DATABASE_URL, 0);
     }
 
     private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException {
@@ -424,7 +424,7 @@ public class Measurement {
     private long askNumberOfTriple() throws InterruptedException {
 
         try {
-            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.countAllTriples, OntConfig.ontologyDatabaseURL, 0);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.countAllTriples, OntConfig.ONTOLOGY_DATABASE_URL, 0);
             Long numTriples = 0L;
 
             if (resultSet.hasNext()) {

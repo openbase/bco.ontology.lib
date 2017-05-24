@@ -228,7 +228,7 @@ public class DataProviding {
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
             final String query = StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil);
-            final ResultSet resultSet = SparqlHttp.sparqlQuery(query, OntConfig.ontologyDatabaseURL, 0);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(query, OntConfig.ONTOLOGY_DATABASE_URL, 0);
 //        ResultSetFormatter.out(System.out, resultSet, query);
 
             while (resultSet.hasNext()) {
