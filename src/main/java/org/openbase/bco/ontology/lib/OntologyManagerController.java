@@ -19,24 +19,41 @@
 package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
+import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
+import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.OntModelUtility;
+import org.openbase.bco.registry.remote.Registries;
+import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jps.core.JPService;
 import org.openbase.jps.exception.JPServiceException;
 import org.openbase.jps.preset.JPDebugMode;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.extension.protobuf.IdentifiableMessageMap;
+import org.openbase.jul.extension.protobuf.ProtobufListDiff;
 import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
+import org.openbase.jul.pattern.ObservableImpl;
+import org.openbase.jul.pattern.Observer;
+import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import rsb.converter.DefaultConverterRepository;
 import rsb.converter.ProtocolBufferConverter;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
+import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
+import rst.domotic.unit.UnitConfigType.UnitConfig;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author agatting on 20.10.16.
@@ -47,14 +64,23 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         DefaultConverterRepository.getDefaultConverterRepository().addConverter(new ProtocolBufferConverter<>(OntologyChange.newBuilder().build()));
     }
 
+    public static final ObservableImpl<List<UnitConfig>> newUnitConfigObservable = new ObservableImpl<>();
+    public static final ObservableImpl<List<UnitConfig>> updatedUnitConfigObservable = new ObservableImpl<>();
+    public static final ObservableImpl<List<UnitConfig>> removedUnitConfigObservable = new ObservableImpl<>();
+
+    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMap;
+    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMap;
+    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMap;
     private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
+    private ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
+    private UnitRegistryRemote unitRegistryRemote;
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
-        final Stopwatch stopwatch = new Stopwatch();
-//        stopwatch.waitForStart(60000);
-
         try {
+            this.registryDiff = new ProtobufListDiff<>();
+//              stopwatch.waitForStart(60000);
+
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
                 LOGGER.info("Debug Mode");
             }
@@ -63,6 +89,14 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             new UnitRegistrySynchronizer();
             new UnitRemoteSynchronizer();
             new HeartBeatCommunication();
+
+            final List<UnitConfig> unitConfigs = getUnitConfigs();
+            newUnitConfigObservable.notifyObservers(unitConfigs);
+            //TODO notify unitRemoteSynchronizer...
+
+            final Observer<UnitRegistryData> unitRegistryObserver = (observable, unitRegistryData) -> startUpdateObserver(unitRegistryData);
+            this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
+
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -80,11 +114,68 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     @Override
     public void init() throws InitializationException, InterruptedException {
+        // upload ontModel
+        try {
+            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.ONTOLOGY_DATABASE_URL, 0);
+        } catch (NotAvailableException e) {
+            throw new InitializationException("Could not upload ontology model!", e);
+        }
+
 //        try {
 //            final OntConfig ontConfig = new OntConfig();
 //            ontConfig.initialTestConfig();
 //        } catch (JPServiceException e) {
 //            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
 //        }
+    }
+
+    private List<UnitConfig> getUnitConfigs() throws InterruptedException {
+
+        final Stopwatch stopwatch = new Stopwatch();
+
+        while (true) {
+            try {
+                if (Registries.isDataAvailable()) {
+                    unitRegistryRemote = Registries.getUnitRegistry();
+                    unitRegistryRemote.waitForData(OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
+                }
+
+                if (unitRegistryRemote != null && unitRegistryRemote.isDataAvailable()) {
+                    return unitRegistryRemote.getUnitConfigs();
+                }
+            } catch (CouldNotPerformException e) {
+                ExceptionPrinter.printHistory("Could not get unitConfigs. Retry...", e, LOGGER, LogLevel.ERROR);
+                stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
+            }
+        }
+    }
+
+    private void startUpdateObserver(final UnitRegistryData unitRegistryData) {
+
+        GlobalCachedExecutorService.submit(() -> {
+            registryDiff.diff(unitRegistryData.getUnitGroupUnitConfigList());
+
+            identifiableNewMessageMap = registryDiff.getNewMessageMap();
+            identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
+            identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
+
+            try {
+                if (!identifiableNewMessageMap.isEmpty()) {
+                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableNewMessageMap.getMessages());
+                    newUnitConfigObservable.notifyObservers(unitConfigs);
+                }
+
+                if (!identifiableUpdatedMessageMap.isEmpty()) {
+                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableUpdatedMessageMap.getMessages());
+                    updatedUnitConfigObservable.notifyObservers(unitConfigs);
+                }
+                if (!identifiableRemovedMessageMap.isEmpty()) {
+                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableRemovedMessageMap.getMessages());
+                    removedUnitConfigObservable.notifyObservers(unitConfigs);
+                }
+            } catch (CouldNotPerformException e) {
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            }
+        });
     }
 }

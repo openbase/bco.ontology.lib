@@ -84,7 +84,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     };
 
-    public StateObservation(final UnitRemote unitRemote, final Class<T> data) throws InstantiationException {
+    public StateObservation(final UnitRemote unitRemote, final Class data) throws InstantiationException {
         try {
             this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             this.unitType = unitRemote.getType();

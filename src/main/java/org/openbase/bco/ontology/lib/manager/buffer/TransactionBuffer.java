@@ -56,10 +56,10 @@ public class TransactionBuffer {
     }
 
     public TransactionBuffer() throws CouldNotPerformException {
-        uploadQueueEntriesThread();
+        startUploadQueueEntriesThread();
     }
 
-    private void uploadQueueEntriesThread() throws CouldNotPerformException {
+    private void startUploadQueueEntriesThread() throws CouldNotPerformException {
         try {
             GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
                 while (!queue.isEmpty()) {
