@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- *
+ * <p>
  * This file is part of org.openbase.bco.ontology.lib.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- *
+ * <p>
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -41,7 +41,6 @@ import org.openbase.jul.iface.Launchable;
 import org.openbase.jul.iface.VoidInitializable;
 import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -60,6 +59,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class OntologyManagerController implements Launchable<Void>, VoidInitializable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
+
     static {
         DefaultConverterRepository.getDefaultConverterRepository().addConverter(new ProtocolBufferConverter<>(OntologyChange.newBuilder().build()));
     }
@@ -68,35 +69,30 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public static final ObservableImpl<List<UnitConfig>> updatedUnitConfigObservable = new ObservableImpl<>();
     public static final ObservableImpl<List<UnitConfig>> removedUnitConfigObservable = new ObservableImpl<>();
 
-    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMap;
-    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMap;
-    private IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMap;
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
     private ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
     private UnitRegistryRemote unitRegistryRemote;
+    private Observer<UnitRegistryData> unitRegistryObserver;
 
     @Override
     public void activate() throws CouldNotPerformException, InterruptedException {
         try {
             this.registryDiff = new ProtobufListDiff<>();
-//              stopwatch.waitForStart(60000);
 
             if (JPService.getProperty(JPDebugMode.class).getValue()) {
                 LOGGER.info("Debug Mode");
             }
 
             new TransactionBuffer();
+            new HeartBeatCommunication();
             new UnitRegistrySynchronizer();
             new UnitRemoteSynchronizer();
-            new HeartBeatCommunication();
 
             final List<UnitConfig> unitConfigs = getUnitConfigs();
             newUnitConfigObservable.notifyObservers(unitConfigs);
             //TODO notify unitRemoteSynchronizer...
 
-            final Observer<UnitRegistryData> unitRegistryObserver = (observable, unitRegistryData) -> startUpdateObserver(unitRegistryData);
+            this.unitRegistryObserver = (observable, unitRegistryData) -> startUpdateObserver(unitRegistryData);
             this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
-
 
         } catch (JPServiceException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -152,30 +148,28 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
 
     private void startUpdateObserver(final UnitRegistryData unitRegistryData) {
 
-        GlobalCachedExecutorService.submit(() -> {
-            registryDiff.diff(unitRegistryData.getUnitGroupUnitConfigList());
+        registryDiff.diff(unitRegistryData.getUnitGroupUnitConfigList());
 
-            identifiableNewMessageMap = registryDiff.getNewMessageMap();
-            identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
-            identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
+        IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableNewMessageMap = registryDiff.getNewMessageMap();
+        IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableUpdatedMessageMap = registryDiff.getUpdatedMessageMap();
+        IdentifiableMessageMap<String, UnitConfig, UnitConfig.Builder> identifiableRemovedMessageMap = registryDiff.getRemovedMessageMap();
 
-            try {
-                if (!identifiableNewMessageMap.isEmpty()) {
-                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableNewMessageMap.getMessages());
-                    newUnitConfigObservable.notifyObservers(unitConfigs);
-                }
-
-                if (!identifiableUpdatedMessageMap.isEmpty()) {
-                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableUpdatedMessageMap.getMessages());
-                    updatedUnitConfigObservable.notifyObservers(unitConfigs);
-                }
-                if (!identifiableRemovedMessageMap.isEmpty()) {
-                    final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableRemovedMessageMap.getMessages());
-                    removedUnitConfigObservable.notifyObservers(unitConfigs);
-                }
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        try {
+            if (!identifiableNewMessageMap.isEmpty()) {
+                final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableNewMessageMap.getMessages());
+                newUnitConfigObservable.notifyObservers(unitConfigs);
             }
-        });
+
+            if (!identifiableUpdatedMessageMap.isEmpty()) {
+                final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableUpdatedMessageMap.getMessages());
+                updatedUnitConfigObservable.notifyObservers(unitConfigs);
+            }
+            if (!identifiableRemovedMessageMap.isEmpty()) {
+                final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableRemovedMessageMap.getMessages());
+                removedUnitConfigObservable.notifyObservers(unitConfigs);
+            }
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 }

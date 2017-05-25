@@ -21,32 +21,22 @@ package org.openbase.bco.ontology.lib.manager.datapool;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
-import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.NotAvailableException;
-import org.openbase.jul.exception.printer.ExceptionPrinter;
-import org.openbase.jul.exception.printer.LogLevel;
+import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.pattern.Observer;
-import org.openbase.jul.schedule.GlobalCachedExecutorService;
-import org.openbase.jul.schedule.GlobalScheduledExecutorService;
-import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author agatting on 07.02.17.
@@ -54,156 +44,106 @@ import java.util.concurrent.TimeoutException;
 public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
-    private Future task;
-    private Future taskRemaining;
+    private static final ObservableImpl<UnitConfig> unitRemoteObservable = new ObservableImpl<>();
 
-    //TODO incomplete units + observer, diff
+    private int successfullyRemotesNum = 0;
+    private int failedRemotesNum = 0;
+    private int potentialRemotesNum = 0;
 
     public UnitRemoteSynchronizer() throws InstantiationException, InitializationException {
-
-        final Observer<Boolean> activationObserver = (source, data) -> loadUnitRemotes(null); //TODO
         final Observer<List<UnitConfig>> newUnitConfigObserver = (source, unitConfigs) -> loadUnitRemotes(unitConfigs);
+        final Observer<List<UnitConfig>> removedUnitConfigObserver = (source, unitConfigs) -> removeUnitRemotes(unitConfigs);
+        final Observer<UnitConfig> unitRemoteObserver = (source, unitConfig) -> setStateObservation(unitConfig);
 
         OntologyManagerController.newUnitConfigObservable.addObserver(newUnitConfigObserver);
-        HeartBeatCommunication.isInitObservable.addObserver(activationObserver);
+        OntologyManagerController.removedUnitConfigObservable.addObserver(removedUnitConfigObserver);
+        UnitRemoteSynchronizer.unitRemoteObservable.addObserver(unitRemoteObserver);
     }
 
-    /**
-     * Method loads the unitRemotes from the given unitConfigs and starts the state observation.
-     *
-     * @param unitConfigs The unitConfigs. Can be set on {@code null} then all unitConfigs from the unitRegistry is taken. Otherwise the external unitConfigs
-     *                    is taken.
-     * @throws NotAvailableException Exception is thrown, if the threads are not available.
-     */
-    private void loadUnitRemotes(final List<UnitConfig> unitConfigs) throws NotAvailableException {
+    private void loadUnitRemotes(final List<UnitConfig> unitConfigs) throws InterruptedException, CouldNotPerformException {
+        this.potentialRemotesNum = 0;
+        this.successfullyRemotesNum = 0;
+        this.failedRemotesNum = 0;
 
-        task = GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-            try {
-                final Set<UnitConfig> missingUnitConfigs = new HashSet<>();
-                final List<UnitConfig> unitConfigsBuf;
+        final List<UnitConfig> unitConfigsBuf = new ArrayList<>();
 
-                if (unitConfigs == null) {
-                    unitConfigsBuf = Units.getUnitRegistry().getUnitConfigs();
-                } else {
-                    unitConfigsBuf = unitConfigs;
-                }
-
-                for (final UnitConfig unitConfig : unitConfigsBuf) {
-
-                    //filter device units
-                    if(unitConfig.getType() == UnitType.DEVICE) {
-                        continue;
-                    }
-
-                    if (unitConfig.getEnablingState().getValue() == State.ENABLED) {
-                        UnitRemote unitRemote = null;
-                        try {
-                            unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
-                            if (unitRemote.isDataAvailable()) {
-                                // unitRemote is ready. add stateObservation
-                                identifyUnitRemote(unitRemote);
-                                LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
-                            } else {
-                                missingUnitConfigs.add(unitConfig);
-                            }
-                        } catch (TimeoutException e) {
-                            // collect unitRemotes with missing data (wait for data timeout)
-                            missingUnitConfigs.add(unitConfig);
-                        } catch (ExecutionException | NotAvailableException e) {
-                            LOGGER.warn("Could not get unitRemote of " + unitConfig.getType());
-                        }
-                    }
-                }
-                if (missingUnitConfigs.isEmpty()) {
-                    LOGGER.info("All unitRemotes loaded successfully.");
-                } else {
-                    processRemainingUnitRemotes(missingUnitConfigs);
-                    LOGGER.info("There are " + missingUnitConfigs.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
-                }
-                task.cancel(true);
-            } catch (CouldNotPerformException e) {
-                // retry via scheduled thread
-                ExceptionPrinter.printHistory("Could not get unitRegistry! Retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds!", e, LOGGER, LogLevel.ERROR);
-            } catch (InterruptedException e) {
-                task.cancel(true);
+        for (final UnitConfig unitConfig : unitConfigs) {
+            if (unitConfig.getType() != UnitType.DEVICE && unitConfig.getEnablingState().getValue() == State.ENABLED) {
+                unitConfigsBuf.add(unitConfig);
+                potentialRemotesNum++;
             }
-        }, 0, OntConfig.BIG_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
+        }
+
+        LOGGER.info("Try to set state observation(s) of " + potentialRemotesNum + " potential unit remote(s).");
+
+        for (final UnitConfig unitConfig : unitConfigsBuf) {
+            unitRemoteObservable.notifyObservers(unitConfig);
+        }
+    }
+    
+    private synchronized void incrementFailedRemotesNum() {
+        failedRemotesNum++;
     }
 
-    private void processRemainingUnitRemotes(final Set<UnitConfig> unitConfigs) throws NotAvailableException {
-
-        taskRemaining = GlobalCachedExecutorService.submit(() -> {
-            try {
-
-                final Set<UnitConfig> missingUnitConfigs = new HashSet<>();
-                final Stopwatch stopwatch = new Stopwatch();
-
-                while (!unitConfigs.isEmpty()) {
-
-                    for (final UnitConfig unitConfig : unitConfigs) {
-                        UnitRemote unitRemote = null;
-                        try {
-                             unitRemote = Units.getFutureUnit(unitConfig, false).get(3, TimeUnit.SECONDS);
-
-                            if (unitRemote.isDataAvailable()) {
-                                // unitRemote is ready. add stateObservation
-                                identifyUnitRemote(unitRemote);
-                                LOGGER.info(unitRemote.getLabel() + " is loaded...state observation activated.");
-                            } else {
-                                missingUnitConfigs.add(unitConfig);
-                            }
-                        } catch (TimeoutException e) {
-                            // collect unitRemotes with missing data (wait for data timeout)
-                            missingUnitConfigs.add(unitConfig);
-                        } catch (NotAvailableException | ExecutionException e) {
-                            LOGGER.warn("Could not get unitRemote of " + unitConfig.getType());
-                        } catch (InstantiationException e) {
-                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-                        }
-                    }
-
-                    if (!missingUnitConfigs.isEmpty()) {
-                        unitConfigs.removeAll(missingUnitConfigs);
-                        missingUnitConfigs.clear();
-                        LOGGER.info("There are " + unitConfigs.size() + " unloaded unitRemotes... retry in " + OntConfig.BIG_RETRY_PERIOD_SECONDS + " seconds...");
-
-                        stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-                    } else {
-                        unitConfigs.clear();
-                    }
-                }
-            } catch (InterruptedException e) {
-                taskRemaining.cancel(true);
-            }
-        });
-
-        LOGGER.info("All unitRemotes loaded successfully.");
+    private synchronized int getFailedRemotesNum() {
+        return failedRemotesNum;
     }
 
-    private boolean identifyUnitRemote(final UnitRemote unitRemote) throws InstantiationException, NotAvailableException {
+    private synchronized void checkDone() {
+        if (getSuccessfullyRemotesNum() + getFailedRemotesNum() == potentialRemotesNum) {
+            LOGGER.info("UnitRemoteSynchronizer is finished with current unitConfigs! There are " + getFailedRemotesNum() + " failed unitRemotes.");
+        }
+    }
+
+    private synchronized int getSuccessfullyRemotesNum() {
+        return successfullyRemotesNum;
+    }
+
+    private synchronized int incrementSuccessfullyRemotesNum(final String unitLabel) {
+        successfullyRemotesNum++;
+        LOGGER.info(unitLabel + " is loaded. Number " + successfullyRemotesNum + " of " + potentialRemotesNum + " state observations successfully started.");
+        return successfullyRemotesNum;
+    }
+
+    private void setStateObservation(final UnitConfig unitConfig) throws InterruptedException {
+        try {
+            final UnitRemote unitRemote = Units.getFutureUnit(unitConfig, true).get();
+
+            identifyUnitRemote(unitRemote);
+            incrementSuccessfullyRemotesNum(unitRemote.getLabel());
+        } catch (ExecutionException | NotAvailableException | InstantiationException e) {
+            incrementFailedRemotesNum();
+            LOGGER.warn("Could not get unitRemote of " + unitConfig.getLabel() + ". Dropped.");
+        }
+        checkDone();
+    }
+
+    private void removeUnitRemotes(final List<UnitConfig> unitConfigs) {
+        //TODO
+    }
+
+    private void identifyUnitRemote(final UnitRemote unitRemote) throws InstantiationException, NotAvailableException {
 
         final UnitType unitType = unitRemote.getType();
 
         // currently problematic unitTypes...fix in future
         switch (unitType) {
             case AUDIO_SINK:
-//                new StateObservation(unitRemote, .class);
-                return false;
+//                new StateObservation(unitRemote, unitRemote.getDataClass());
+                return;
             case AUDIO_SOURCE:
-//                new StateObservation(unitRemote, .class);
-                return false;
+//                new StateObservation(unitRemote, unitRemote.getDataClass());
+                return;
             case CONNECTION:
-//                new StateObservation(unitRemote, ConnectionData.class);
-                return false;
+//                new StateObservation(unitRemote, unitRemote.getDataClass());
+                return;
             case DEVICE:
-//                new StateObservation(unitRemote, DeviceData.class);
-                return false;
+//                new StateObservation(unitRemote, unitRemote.getDataClass());
+                return;
             case LOCATION:
-//                new StateObservation(unitRemote, LocationData.class);
-                return false;
+//                new StateObservation(unitRemote, unitRemote.getDataClass());
+                return;
         }
-
         new StateObservation(unitRemote, unitRemote.getDataClass());
-        return true;
     }
 }
