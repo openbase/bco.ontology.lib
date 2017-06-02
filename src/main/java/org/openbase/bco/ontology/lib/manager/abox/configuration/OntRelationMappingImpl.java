@@ -18,10 +18,12 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.openbase.bco.dal.lib.layer.service.Service;
-import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -33,9 +35,6 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.state.EnablingStateType.EnablingState.State;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author agatting on 21.12.16.
@@ -274,7 +273,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
 
         for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
             try {
-                final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceConfig.getServiceTemplate().getType()));
+                final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceConfig.getServiceDescription().getType()));
 
                 triples.add(new RdfTriple(unitConfig.getId(), OntProp.PROVIDER_SERVICE.getName(), serviceTypeName));
             } catch (NotAvailableException e) {
