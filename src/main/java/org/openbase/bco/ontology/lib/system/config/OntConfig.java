@@ -20,9 +20,10 @@
 package org.openbase.bco.ontology.lib.system.config;
 
 import org.apache.jena.ontology.OntModel;
-import org.openbase.bco.ontology.lib.jp.JPOntologyDatabaseURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyDBURL;
+import org.openbase.bco.ontology.lib.jp.JPOntologyMode;
 import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
-import org.openbase.bco.ontology.lib.jp.JPOntologyScope;
+import org.openbase.bco.ontology.lib.jp.JPOntologyRSBScope;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
@@ -146,7 +147,7 @@ public final class OntConfig {
     /**
      * The ontology database URL.
      */
-    public static String ONTOLOGY_DATABASE_URL = "";
+    public static String ONTOLOGY_DB_URL = "";
 
     /**
      * The ontology ping URL.
@@ -156,13 +157,19 @@ public final class OntConfig {
     /**
      * The ontology scope (RSB).
      */
-    public static String ONTOLOGY_SCOPE = "";
+    public static String ONTOLOGY_RSB_SCOPE = "";
+
+    /**
+     * The ontology mode.
+     */
+    public static boolean ONTOLOGY_MODE_HISTORIC_DATA;
 
     static {
         try {
-            ONTOLOGY_DATABASE_URL = JPService.getProperty(JPOntologyDatabaseURL.class).getValue();
+            ONTOLOGY_DB_URL = JPService.getProperty(JPOntologyDBURL.class).getValue();
             ONTOLOGY_PING_URL = JPService.getProperty(JPOntologyPingURL.class).getValue();
-            ONTOLOGY_SCOPE = JPService.getProperty(JPOntologyScope.class).getValue();
+            ONTOLOGY_RSB_SCOPE = JPService.getProperty(JPOntologyRSBScope.class).getValue();
+            ONTOLOGY_MODE_HISTORIC_DATA = JPService.getProperty(JPOntologyMode.class).getValue();
         } catch (JPNotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -429,7 +436,7 @@ public final class OntConfig {
         /**
          * Pattern to insert an individual to a class: "is a" - scheme.
          */
-        A("a"),
+        IS_A("a"),
 
         /**
          * Pattern for SPARQL namespace: "NS:".
@@ -449,6 +456,32 @@ public final class OntConfig {
          */
         public String getName() {
             return this.pattern;
+        }
+    }
+
+    /**
+     * Enumeration for ontology instance prefixes.
+     */
+    public enum OntInstPrefix {
+
+        /**
+         * Prefix of observation instance.
+         */
+        OBSERVATION("Observation_");
+
+        private final String prefix;
+
+        OntInstPrefix(final String prefix) {
+            this.prefix = prefix;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return name of an enum element as string.
+         */
+        public String getPrefixName() {
+            return this.prefix;
         }
     }
 

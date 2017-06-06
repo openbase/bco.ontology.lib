@@ -88,7 +88,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         try {
             this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
             this.unitType = unitRemote.getType();
-            this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_SCOPE, OntologyChange.class);
+            this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_RSB_SCOPE, OntologyChange.class);
             this.stopwatch = new Stopwatch();
             this.remoteUnitId = unitRemote.getId().toString();
             this.connectionPhase = new ConnectionPhase(unitRemote);
@@ -111,23 +111,12 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     }
 
     private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
-//        if (Measurement.measurementWatch.isRunning()) {
-//            Measurement.measurementWatch.stop();
-//            Measurement.unitChange.add(Measurement.measurementWatch.getTime());
-//            Measurement.measurementWatch.restart();
-//        }
-        final List<ServiceType> serviceList = new ArrayList<>();
+        final List<ServiceType> services = new ArrayList<>();
         // main list, which contains complete observation instances
-        final List<RdfTriple> rdfTriples = new ArrayList<>();
+        final List<RdfTriple> insert = new ArrayList<>();
+        final List<RdfTriple> delete = new ArrayList<>();
         // first collect all components of the individual observation, then add to main list (integrity reason)
-        List<RdfTriple> rdfTripleArrayListsBuf = new ArrayList<>();
-
-        // declaration of predicates and classes, which are static
-        final String obj_Observation = OntCl.OBSERVATION.getName();
-        final String pred_IsA = OntExpr.A.getName();
-        final String pred_HasUnitId = OntProp.UNIT_ID.getName();
-        final String pred_HasService = OntProp.PROVIDER_SERVICE.getName();
-        final String pred_HasTimeStamp = OntProp.TIME_STAMP.getName();
+        List<RdfTriple> insertBuf = new ArrayList<>();
 
         //TODO get stateType only, which has changed...
         // foreach stateType ... every observation point represents an serviceType respectively stateValue
@@ -139,42 +128,47 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 // get method as invoked object
                 final Object obj_stateType = methodStateType.invoke(remoteData);
 
-//                final String dateTimeNow = dateFormat.format(new Date());
-                final String dateTimeNow = new DateTime().toString();
-                final String subj_Observation = "O" + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
-
                 //### timeStamp triple ###\\
                 final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ObjectReflection
                         .getInvokedObject(obj_stateType , MethodRegEx.GET_TIMESTAMP.getName());
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
+                    final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());
+                    final String obsInstName;
+
+                    if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
+                        final String dateTimeNow = new DateTime().toString();
+                        obsInstName = OntConfig.OntInstPrefix.OBSERVATION.getPrefixName() + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
+                    } else {
+                        obsInstName = OntConfig.OntInstPrefix.OBSERVATION.getPrefixName() + remoteUnitId + serviceTypeName;
+                        delete.add(new RdfTriple(obsInstName, null, null));
+                    }
+
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
-                    final String obj_dateTime = "\"" + dateFormat.format(timestamp) + "\"^^xsd:dateTime";
-//                    final String obj_dateTime = "\"" + timestamp + "\"^^xsd:dateTime";
-                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasTimeStamp, obj_dateTime));
+                    final String obj_dateTime = StringModifier.addXsdDateTime(dateFormat.format(timestamp));
+                    insertBuf.add(new RdfTriple(obsInstName, OntProp.TIME_STAMP.getName(), obj_dateTime));
 
                     //### add observation instance to observation class ###\\
-                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_IsA, obj_Observation));
+                    insertBuf.add(new RdfTriple(obsInstName, OntExpr.IS_A.getName(), OntCl.OBSERVATION.getName()));
 
                     //### unitID triple ###\\
-                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasUnitId, remoteUnitId));
+                    insertBuf.add(new RdfTriple(obsInstName, OntProp.UNIT_ID.getName(), remoteUnitId));
 
                     //### serviceType triple ###\\
-                    final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());
-                    serviceList.add(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName));
-                    rdfTripleArrayListsBuf.add(new RdfTriple(subj_Observation, pred_HasService, serviceTypeName));
+                    services.add(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName));
+                    insertBuf.add(new RdfTriple(obsInstName, OntProp.PROVIDER_SERVICE.getName(), serviceTypeName));
 
                     //### stateValue triple ###\\
-                    final int sizeBuf = rdfTripleArrayListsBuf.size();
-                    rdfTripleArrayListsBuf = addStateValue(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName), obj_stateType, subj_Observation, rdfTripleArrayListsBuf);
+                    final int sizeBuf = insertBuf.size(); //TODO
+                    insertBuf = addStateValue(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName), obj_stateType, obsInstName, insertBuf);
 
-                    if (rdfTripleArrayListsBuf.size() == sizeBuf) {
+                    if (insertBuf.size() == sizeBuf) {
                         // incomplete observation instance. dropped...
-                        rdfTripleArrayListsBuf.clear();
+                        insertBuf.clear();
                     }
 
                     // no exception produced: observation individual complete. add to main list
-                    rdfTriples.addAll(rdfTripleArrayListsBuf);
+                    insert.addAll(insertBuf);
                 }
             } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
                 // Could not collect all elements of observation instance
@@ -185,14 +179,25 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             } catch (NoSuchElementException e) {
 
             }
-            rdfTripleArrayListsBuf.clear();
+            insertBuf.clear();
         }
-        final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(rdfTriples);
-//        System.out.println(sparqlUpdateExpr);
+
+        String sparqlUpdateExpr;
+
+        if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
+            sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+        } else {
+            for (final RdfTriple rdfTriple : delete) {
+                sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(rdfTriple, null);
+                connectionPhase.sendToServer(sparqlUpdateExpr);
+            }
+            sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+        }
+
         final boolean isHttpSuccess = connectionPhase.sendToServer(sparqlUpdateExpr); //TODO
 
         if (isHttpSuccess) {
-            rsbNotification(serviceList);
+            rsbNotification(services);
         }
     }
 

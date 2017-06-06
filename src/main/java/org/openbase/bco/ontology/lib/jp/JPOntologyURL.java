@@ -32,7 +32,7 @@ public class JPOntologyURL extends AbstractJPString {
     public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-url"};
 
     /**
-     * Constructor for the JPOntologyDatabaseUri class.
+     * Constructor for the JPOntologyURL class.
      */
     public JPOntologyURL() {
         super(COMMAND_IDENTIFIERS);
@@ -45,7 +45,7 @@ public class JPOntologyURL extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
+        return "JPOntologyURL property is used to set the URL to the server application (without suffix of server services).";
     }
 
 }

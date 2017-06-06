@@ -36,7 +36,6 @@ import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
-import org.openbase.jul.pattern.ObservableImpl;
 import org.openbase.jul.schedule.GlobalScheduledExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
@@ -54,19 +53,11 @@ import java.util.concurrent.TimeUnit;
 public class HeartBeatCommunication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartBeatCommunication.class);
-    public static final ObservableImpl<Boolean> isInitObservable = new ObservableImpl<>();
-//    private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
     private Future future;
-    private final String pred_FirstHeartBeat;
-    private final String pred_LastHeartBeat;
 
     public HeartBeatCommunication() throws InitializationException {
-
-//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.stopwatch = new Stopwatch();
-        this.pred_FirstHeartBeat = OntProp.FIRST_CONNECTION.getName();
-        this.pred_LastHeartBeat = OntProp.LAST_CONNECTION.getName();
 
         try {
             // close old connectionPhases. Means set last timestamp of connectionPhases with timestamp pointer to heartbeat pointer
@@ -74,9 +65,6 @@ public class HeartBeatCommunication {
 
             //generate new heartbeat phase
             setNewHeartBeatPhase();
-
-            // init for connectionPhases ready (recentHeartBeat is set)...notify unitRemoteSynchronizer
-            isInitObservable.notifyObservers(true);
 
             startHeartBeatThread();
         } catch (CouldNotPerformException | InterruptedException e) {
@@ -98,20 +86,20 @@ public class HeartBeatCommunication {
 
     private void closeOldConnectionPhases() throws InterruptedException, NotAvailableException {
 
-        final List<RdfTriple> deleteTriples = new ArrayList<>();
-        final List<RdfTriple> insertTriples = new ArrayList<>();
-        final List<RdfTriple> whereTriples = new ArrayList<>();
+        final List<RdfTriple> delete = new ArrayList<>();
+        final List<RdfTriple> insert = new ArrayList<>();
+        final List<RdfTriple> where = new ArrayList<>();
 
-        deleteTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
-        insertTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), null));
-        whereTriples.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
-        whereTriples.add(new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
+        delete.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
+        insert.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), null));
+        where.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
+        where.add(new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
 
-        final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriples, insertTriples, whereTriples);
+        final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where);
 
         while (true) {
             try {
-                SparqlHttp.uploadSparqlRequest(closeOldConnectionPhases, OntConfig.ONTOLOGY_DATABASE_URL);
+                SparqlHttp.uploadSparqlRequest(closeOldConnectionPhases, OntConfig.ONTOLOGY_DB_URL);
                 break;
             } catch (IOException e) {
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
@@ -127,7 +115,7 @@ public class HeartBeatCommunication {
         final List<RdfTriple> triples = new ArrayList<>();
         final String subj_recentHeartBeat = OntConfig.INSTANCE_RECENT_HEARTBEAT;
 
-        triples.add(new RdfTriple(subj_recentHeartBeat, OntExpr.A.getName(), OntCl.RECENT_HEARTBEAT.getName()));
+        triples.add(new RdfTriple(subj_recentHeartBeat, OntExpr.IS_A.getName(), OntCl.RECENT_HEARTBEAT.getName()));
         triples.add(new RdfTriple(subj_recentHeartBeat, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp));
 
         return triples;
@@ -146,7 +134,7 @@ public class HeartBeatCommunication {
         future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getLastTimestampOfHeartBeat, OntConfig.ONTOLOGY_DATABASE_URL);
+                final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getLastTimestampOfHeartBeat, OntConfig.ONTOLOGY_DB_URL);
 
                 if (resultSet == null || !resultSet.hasNext()) {
                     throw new CouldNotProcessException("Could not process resultSet of heartbeat query, cause query result is invalid! Query wrong?");
@@ -167,16 +155,16 @@ public class HeartBeatCommunication {
                     final List<RdfTriple> insertTriple = new ArrayList<>();
                     final String objectDateTimeNow = StringModifier.addXsdDateTime(now);
 
-                    deleteTriple.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, null));
+                    deleteTriple.add(new RdfTriple(subj_HeartBeatPhase, OntProp.LAST_CONNECTION.getName(), null));
                     deleteTriple.add(getDeleteTripleRecentHeartBeat());
 
-                    insertTriple.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, objectDateTimeNow));
+                    insertTriple.add(new RdfTriple(subj_HeartBeatPhase, OntProp.LAST_CONNECTION.getName(), objectDateTimeNow));
                     insertTriple.add(getInsertTripleRecentHeartBeat(objectDateTimeNow));
 
                     // sparql update to replace last heartbeat timestamp
-                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
+                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, deleteTriple);
 
-                    SparqlHttp.uploadSparqlRequest(sparqlUpdate, OntConfig.ONTOLOGY_DATABASE_URL);
+                    SparqlHttp.uploadSparqlRequest(sparqlUpdate, OntConfig.ONTOLOGY_DB_URL);
                 } else {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
@@ -200,7 +188,7 @@ public class HeartBeatCommunication {
                 final String dateTime = new DateTime().toString();
 
                 final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
-                final String pred_isA = OntExpr.A.getName();
+                final String pred_isA = OntExpr.IS_A.getName();
 
                 final String obj_HeartBeat = OntCl.HEARTBEAT_PHASE.getName();
                 final String obj_TimeStamp = "\"" + dateTime + "\"^^xsd:dateTime";
@@ -213,14 +201,14 @@ public class HeartBeatCommunication {
                 insertTriples.addAll(getInitRecentHeartBeat(obj_TimeStamp));
                 // set initial current heartbeat phase with first and last timestamp (identical)
                 insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_isA, obj_HeartBeat));
-                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_FirstHeartBeat, obj_TimeStamp));
-                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, pred_LastHeartBeat, obj_TimeStamp));
+                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, OntProp.FIRST_CONNECTION.getName(), obj_TimeStamp));
+                insertTriples.add(new RdfTriple(subj_HeartBeatPhase, OntProp.LAST_CONNECTION.getName(), obj_TimeStamp));
 
                 final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
 
                 //TODO one update string
-                SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, OntConfig.ONTOLOGY_DATABASE_URL);
-                SparqlHttp.uploadSparqlRequest(sparqlUpdateInsert, OntConfig.ONTOLOGY_DATABASE_URL);
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, OntConfig.ONTOLOGY_DB_URL);
+                SparqlHttp.uploadSparqlRequest(sparqlUpdateInsert, OntConfig.ONTOLOGY_DB_URL);
 
                 return;
             } catch (IOException e) {

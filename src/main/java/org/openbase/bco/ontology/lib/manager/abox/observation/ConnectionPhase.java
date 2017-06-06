@@ -81,7 +81,7 @@ public class ConnectionPhase {
 
     private void updateConnectionPhase(final ActivationState.State activationState) throws NotAvailableException {
 
-        final String pred_IsA = OntConfig.OntExpr.A.getName();
+        final String pred_IsA = OntConfig.OntExpr.IS_A.getName();
         final String pred_HasFirstConnection = OntConfig.OntProp.FIRST_CONNECTION.getName();
         final String pred_HasLastConnection = OntConfig.OntProp.LAST_CONNECTION.getName();
         final String pred_HasConnectionPhase = OntConfig.OntProp.CONNECTION_PHASE.getName();
@@ -125,7 +125,7 @@ public class ConnectionPhase {
 
     boolean sendToServer(final String sparql) {
         try {
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DATABASE_URL);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
             return true;
         } catch (IOException e) {
             // could not send to server - insert sparql update expression to buffer queue

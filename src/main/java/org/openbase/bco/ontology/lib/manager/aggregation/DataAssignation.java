@@ -513,7 +513,7 @@ public class DataAssignation extends DataAggregation {
             final String brightnessValue = String.valueOf(hsb.getRight() * 10);
             final String quantity = String.valueOf(hsbCountMap.get(hsb));
 
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
@@ -541,7 +541,7 @@ public class DataAssignation extends DataAggregation {
             // every stateType has his own aggObs instance!
             final String subj_AggObs = getAggObsInstance(unitId);
 
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
@@ -569,7 +569,7 @@ public class DataAssignation extends DataAggregation {
             // every stateType has his own aggObs instance!
             final String subj_AggObs = getAggObsInstance(unitId);
 
-            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+            triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
@@ -589,7 +589,7 @@ public class DataAssignation extends DataAggregation {
         final ContinuousStateValues continuousStateValues = new ContinuousStateValues(connectionTimeMilli, continuousList);
         final String subj_AggObs = getAggObsInstance(unitId);
 
-        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
@@ -613,7 +613,7 @@ public class DataAssignation extends DataAggregation {
         final ContinuousStateValues continuousStateValues = new ContinuousStateValues(aggContinuousList, toAggregatedPeriod);
         final String subj_AggObs = getAggObsInstance(unitId);
 
-        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.UNIT_ID.getName(), unitId));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));

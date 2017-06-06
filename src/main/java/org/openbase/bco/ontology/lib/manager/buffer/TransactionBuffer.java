@@ -49,7 +49,7 @@ public class TransactionBuffer {
 
     static {
         try {
-            rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_SCOPE, OntologyChange.class);
+            rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_RSB_SCOPE, OntologyChange.class);
         } catch (InstantiationException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -66,7 +66,7 @@ public class TransactionBuffer {
                     final String sparql = queue.peek();
 
                     try {
-                        SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DATABASE_URL);
+                        SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
                         queue.poll();
                     } catch (CouldNotPerformException e) {
                         queue.poll();

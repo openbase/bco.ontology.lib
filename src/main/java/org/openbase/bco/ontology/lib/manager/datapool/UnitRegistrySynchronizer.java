@@ -150,14 +150,14 @@ public class UnitRegistrySynchronizer {
                 sparql = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
             } else if (insert == null) {
                 // convert triples to sparql update expression (delete)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, null);
+                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, delete);
             } else {
                 // convert triples to sparql update expression (delete and insert)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, null);
+                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, delete);
             }
 
             // upload to ontology server
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DATABASE_URL);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         } catch (IOException e) {

@@ -24,6 +24,7 @@ import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -143,24 +144,28 @@ public interface SparqlUpdateExpression {
 
         updateExpression = updateExpression + "} INSERT { ";
 
-        for (final RdfTriple triple : insert) {
-            try {
-                updateExpression = updateExpression + getTripleCommand(triple);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+        if (insert != null) {
+            for (final RdfTriple triple : insert) {
+                try {
+                    updateExpression = updateExpression + getTripleCommand(triple);
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(null, e, exceptionStack);
+                }
             }
         }
 
         updateExpression = updateExpression + "} WHERE { ";
-        final List<RdfTriple> tripleBuf = (where == null) ? delete : where;
 
-        for (final RdfTriple triple : tripleBuf) {
-            try {
-                updateExpression = updateExpression + getTripleCommand(triple);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+        if (where != null) {
+            for (final RdfTriple triple : where) {
+                try {
+                    updateExpression = updateExpression + getTripleCommand(triple);
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(null, e, exceptionStack);
+                }
             }
         }
+//        final List<RdfTriple> tripleBuf = (where == null) ? delete : where;
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
@@ -227,7 +232,7 @@ public interface SparqlUpdateExpression {
 
         if (predicate == null) {
             predicate = "?predicate";
-        } else if (!predicate.equalsIgnoreCase(OntExpr.A.getName()) && !predicate.startsWith(OntExpr.NS.getName()) && !predicate.startsWith(OntConfig.NAMESPACE)
+        } else if (!predicate.equalsIgnoreCase(OntExpr.IS_A.getName()) && !predicate.startsWith(OntExpr.NS.getName()) && !predicate.startsWith(OntConfig.NAMESPACE)
                 && !predicate.startsWith("owl:") && !predicate.startsWith("rdfs:")) {
             predicate = OntExpr.NS.getName() + predicate;
         }

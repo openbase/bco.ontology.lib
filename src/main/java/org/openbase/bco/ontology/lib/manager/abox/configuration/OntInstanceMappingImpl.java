@@ -103,7 +103,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                             unitTypeName = StringModifier.getCamelCaseName(unitConfig.getType().name());
                     }
 
-                    triples.add(new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), unitTypeName));
+                    triples.add(new RdfTriple(unitConfig.getId(), OntExpr.IS_A.getName(), unitTypeName));
                 } catch (NotAvailableException e) {
                     exceptionStack = MultiException.push(this, e, exceptionStack);
                 }
@@ -136,7 +136,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
             try {
                 final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
-                triples.add(new RdfTriple(stateName, OntExpr.A.getName(), OntCl.STATE.getName()));
+                triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), OntCl.STATE.getName()));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
@@ -166,7 +166,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
             try {
                 final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
-                triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), OntCl.PROVIDER_SERVICE.getName()));
+                triples.add(new RdfTriple(serviceName, OntExpr.IS_A.getName(), OntCl.PROVIDER_SERVICE.getName()));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
@@ -199,7 +199,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                     if (stateValueName.equalsIgnoreCase("unknown")) {
                         continue;
                     }
-                    triples.add(new RdfTriple(stateValueName, OntExpr.A.getName(), OntCl.STATE_VALUE.getName()));
+                    triples.add(new RdfTriple(stateValueName, OntExpr.IS_A.getName(), OntCl.STATE_VALUE.getName()));
                 }
             } catch (NotAvailableException e) {
                 // ignore, because existing state values are needed only
@@ -245,7 +245,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
         for (final ServiceType serviceType : serviceTypes) {
             try {
                 final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
-                triples.add(new RdfTriple(serviceName, OntExpr.A.getName(), null));
+                triples.add(new RdfTriple(serviceName, OntExpr.IS_A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
@@ -271,7 +271,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
         for (final ServiceType serviceType : serviceTypes) {
             try {
                 final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
-                triples.add(new RdfTriple(stateName, OntExpr.A.getName(), null));
+                triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
@@ -291,7 +291,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             assert false;
             throw new NotAvailableException("UnitConfig is null");
         }
-        return new RdfTriple(unitConfig.getId(), OntExpr.A.getName(), null);
+        return new RdfTriple(unitConfig.getId(), OntExpr.IS_A.getName(), null);
     }
 
 }

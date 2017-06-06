@@ -33,7 +33,7 @@ public class JPOntologyPingURL extends AbstractJPString {
     public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-ping-url"};
 
     /**
-     * Constructor for the JPServerPingUri class.
+     * Constructor for the JPServerPingURL class.
      */
     public JPOntologyPingURL() {
         super(COMMAND_IDENTIFIERS);
@@ -46,6 +46,6 @@ public class JPOntologyPingURL extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "ServerPingUri property is used to set the ping address of the ontology server, which has to be reached.";
+        return "ServerPingURL property is used to set the ping URL of the ontology server, which has to be reached.";
     }
 }

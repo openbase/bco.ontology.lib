@@ -44,13 +44,17 @@ import java.util.concurrent.ExecutionException;
 public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
+
     private static final ObservableImpl<UnitConfig> unitRemoteObservable = new ObservableImpl<>();
+    private final List<UnitRemote> loadedUnitRemotes;
 
     private int successfullyRemotesNum = 0;
     private int failedRemotesNum = 0;
     private int potentialRemotesNum = 0;
 
     public UnitRemoteSynchronizer() throws InstantiationException, InitializationException {
+        this.loadedUnitRemotes = new ArrayList<>();
+
         final Observer<List<UnitConfig>> newUnitConfigObserver = (source, unitConfigs) -> loadUnitRemotes(unitConfigs);
         final Observer<List<UnitConfig>> removedUnitConfigObserver = (source, unitConfigs) -> removeUnitRemotes(unitConfigs);
         final Observer<UnitConfig> unitRemoteObserver = (source, unitConfig) -> setStateObservation(unitConfig);
@@ -79,6 +83,14 @@ public class UnitRemoteSynchronizer {
         for (final UnitConfig unitConfig : unitConfigsBuf) {
             unitRemoteObservable.notifyObservers(unitConfig);
         }
+    }
+
+    private synchronized void addLoadedUnitRemote(final UnitRemote unitRemote) {
+        loadedUnitRemotes.add(unitRemote);
+    }
+
+    private synchronized List<UnitRemote> getLoadedUnitRemotes() {
+        return loadedUnitRemotes;
     }
     
     private synchronized void incrementFailedRemotesNum() {
@@ -109,6 +121,7 @@ public class UnitRemoteSynchronizer {
         try {
             final UnitRemote unitRemote = Units.getFutureUnit(unitConfig, true).get();
 
+            addLoadedUnitRemote(unitRemote);
             identifyUnitRemote(unitRemote);
             incrementSuccessfullyRemotesNum(unitRemote.getLabel());
         } catch (ExecutionException | NotAvailableException | InstantiationException e) {
@@ -118,15 +131,21 @@ public class UnitRemoteSynchronizer {
         checkDone();
     }
 
-    private void removeUnitRemotes(final List<UnitConfig> unitConfigs) {
-        //TODO
+    private void removeUnitRemotes(final List<UnitConfig> unitConfigs) throws NotAvailableException {
+        for (final UnitConfig unitConfig : unitConfigs) {
+            for (final UnitRemote unitRemote : getLoadedUnitRemotes()) {
+                if (unitRemote.getId().equals(unitConfig.getId())) {
+                    unitRemote.shutdown();
+                }
+            }
+        }
     }
 
     private void identifyUnitRemote(final UnitRemote unitRemote) throws InstantiationException, NotAvailableException {
 
         final UnitType unitType = unitRemote.getType();
 
-        // currently problematic unitTypes...fix in future
+        //TODO currently problematic unitTypes...fix in future
         switch (unitType) {
             case AUDIO_SINK:
 //                new StateObservation(unitRemote, unitRemote.getDataClass());

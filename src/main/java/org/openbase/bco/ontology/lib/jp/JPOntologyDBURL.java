@@ -25,7 +25,7 @@ import org.openbase.jps.preset.AbstractJPString;
 /**
  * @author agatting on 22.02.17.
  */
-public class JPOntologyDatabaseURL extends AbstractJPString {
+public class JPOntologyDBURL extends AbstractJPString {
 
     /**
      * Command line argument strings.
@@ -33,9 +33,9 @@ public class JPOntologyDatabaseURL extends AbstractJPString {
     public static final String[] COMMAND_IDENTIFIERS = {"--ontology-db-url"};
 
     /**
-     * Constructor for the JPOntologyDatabaseUri class.
+     * Constructor for the JPOntologyDBURL class.
      */
-    public JPOntologyDatabaseURL() {
+    public JPOntologyDBURL() {
         super(COMMAND_IDENTIFIERS);
     }
 
@@ -46,7 +46,7 @@ public class JPOntologyDatabaseURL extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "OntologyDatabaseUri property is used to set the uri to server with the main ontology database.";
+        return "OntologyDatabaseURL property is used to set the URL to the server, which contains the ontology database.";
     }
 
 }

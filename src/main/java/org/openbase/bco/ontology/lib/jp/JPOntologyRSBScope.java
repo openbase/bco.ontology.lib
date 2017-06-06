@@ -24,17 +24,17 @@ import org.openbase.jps.preset.AbstractJPString;
 /**
  * @author agatting on 27.02.17.
  */
-public class JPOntologyScope extends AbstractJPString {
+public class JPOntologyRSBScope extends AbstractJPString {
 
     /**
      * Command line argument strings.
      */
-    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-scope"};
+    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-rsb-scope"};
 
     /**
-     * Constructor for the JPOntologyDatabaseUri class.
+     * Constructor for the JPOntologyRSBScope class.
      */
-    public JPOntologyScope() {
+    public JPOntologyRSBScope() {
         super(COMMAND_IDENTIFIERS);
     }
 
@@ -45,6 +45,6 @@ public class JPOntologyScope extends AbstractJPString {
 
     @Override
     public String getDescription() {
-        return "RsbScope property is used to set the scope of the rsb communication based on informer and listener of ontology changes and their types.";
+        return "JPOntologyRSBScope property is used to set the scope of the RSB communication based on informer and listener of ontology changes and their types.";
     }
 }
