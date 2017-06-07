@@ -19,6 +19,10 @@
 package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.RdfTriple;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class contains static sparql expressions, which are important for the ontology update and ontology query. Please do not modify!
@@ -26,6 +30,12 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
  * @author agatting on 10.03.17.
  */
 public class StaticSparqlExpression {
+
+    public static List<RdfTriple> getNullWhereExpression() {
+        final List<RdfTriple> where = new ArrayList<>();
+        where.add(new RdfTriple(null, null, null));
+        return where;
+    }
 
     /**
      * Method returns a sparql update string, which identifies and fill the latest connectionPhase instance of each unit. If a connectionPhase is incomplete,

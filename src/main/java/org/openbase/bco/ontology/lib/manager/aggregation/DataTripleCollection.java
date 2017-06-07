@@ -58,7 +58,7 @@ public class DataTripleCollection extends DataAssignation {
         this.period = period;
 
         if (period.equals(Period.DAY)) {
-            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(collectData());
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectData());
 
             // send aggregated values ...
             SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ONTOLOGY_DB_URL, 0);
@@ -88,7 +88,7 @@ public class DataTripleCollection extends DataAssignation {
                     break;
             }
 
-            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(collectAggData(oldPeriod));
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectAggData(oldPeriod));
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");

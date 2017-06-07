@@ -103,7 +103,7 @@ public class ConnectionPhase {
             insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
             insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
 
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
+            final String sparqlUpdate = SparqlUpdateExpression.getSparqlInsertExpression(insertTriples);
             sendToServer(sparqlUpdate);
 
         } else if (activationState.equals(ActivationState.State.DEACTIVE)) {

@@ -147,13 +147,13 @@ public class UnitRegistrySynchronizer {
         try {
             if (delete == null) {
                 // convert triples to sparql update expression (insert)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+                sparql = SparqlUpdateExpression.getSparqlInsertExpression(insert);
             } else if (insert == null) {
                 // convert triples to sparql update expression (delete)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, delete);
+                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, null);
             } else {
                 // convert triples to sparql update expression (delete and insert)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, delete);
+                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, null);
             }
 
             // upload to ontology server

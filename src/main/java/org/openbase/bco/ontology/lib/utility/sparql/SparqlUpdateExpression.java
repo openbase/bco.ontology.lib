@@ -41,7 +41,7 @@ public interface SparqlUpdateExpression {
      * @return a sparql update string to insert proper triples.
      * @throws NotAvailableException is thrown in case the rdf triple is null.
      */
-    static String getSparqlUpdateExpression(final List<RdfTriple> insert) throws NotAvailableException {
+    static String getSparqlInsertExpression(final List<RdfTriple> insert) throws NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
         String updateExpression =
@@ -52,7 +52,7 @@ public interface SparqlUpdateExpression {
 
         for (final RdfTriple triple : insert) {
             try {
-                updateExpression = updateExpression + getTripleCommand(triple);
+                updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(null, e, exceptionStack);
             }
@@ -61,7 +61,7 @@ public interface SparqlUpdateExpression {
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
         } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.");
+            throw new NotAvailableException("Sparql update expression.", e);
         }
         return updateExpression + " } ";
     }
@@ -86,26 +86,28 @@ public interface SparqlUpdateExpression {
 
         for (final RdfTriple triple : insert) {
             try {
-                updateExpression = updateExpression + getTripleCommand(triple);
+                updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(null, e, exceptionStack);
             }
         }
 
-        updateExpression = updateExpression + "} WHERE { ";
+        updateExpression += "} WHERE { ";
 
-        for (final RdfTriple triple : where) {
-            try {
-                updateExpression = updateExpression + getTripleCommand(triple);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+        if (where != null) {
+            for (final RdfTriple triple : where) {
+                try {
+                    updateExpression += getTripleCommand(triple, false);
+                } catch (NotAvailableException e) {
+                    exceptionStack = MultiException.push(null, e, exceptionStack);
+                }
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
         } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.");
+            throw new NotAvailableException("Sparql update expression.", e);
         }
         return updateExpression + " } ";
     }
@@ -127,6 +129,16 @@ public interface SparqlUpdateExpression {
      */
     static String getSparqlUpdateExpression(final List<RdfTriple> delete, final List<RdfTriple> insert, final List<RdfTriple> where) throws NotAvailableException {
 
+        if (delete == null) {
+            assert false;
+            throw new NotAvailableException("Delete triple list is null.");
+        }
+
+        if (insert == null) {
+            assert false;
+            throw new NotAvailableException("Insert triple list is null.");
+        }
+
         MultiException.ExceptionStack exceptionStack = null;
         String updateExpression =
                 "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
@@ -136,41 +148,37 @@ public interface SparqlUpdateExpression {
 
         for (final RdfTriple triple : delete) {
             try {
-                updateExpression = updateExpression + getTripleCommand(triple);
+                updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(null, e, exceptionStack);
             }
         }
 
-        updateExpression = updateExpression + "} INSERT { ";
+        updateExpression += "} INSERT { ";
 
-        if (insert != null) {
-            for (final RdfTriple triple : insert) {
-                try {
-                    updateExpression = updateExpression + getTripleCommand(triple);
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(null, e, exceptionStack);
-                }
+        for (final RdfTriple triple : insert) {
+            try {
+                updateExpression += getTripleCommand(triple, false);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
             }
         }
 
-        updateExpression = updateExpression + "} WHERE { ";
+        updateExpression += "} WHERE { ";
+        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
 
-        if (where != null) {
-            for (final RdfTriple triple : where) {
-                try {
-                    updateExpression = updateExpression + getTripleCommand(triple);
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(null, e, exceptionStack);
-                }
+        for (final RdfTriple triple : whereExpression) {
+            try {
+                updateExpression += getTripleCommand(triple, true);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
             }
         }
-//        final List<RdfTriple> tripleBuf = (where == null) ? delete : where;
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
         } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.");
+            throw new NotAvailableException("Sparql update expression.", e);
         }
         return updateExpression + " } ";
     }
@@ -195,10 +203,60 @@ public interface SparqlUpdateExpression {
                 "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
-                + "DELETE { " + getTripleCommand(delete);
+                + "DELETE { " + getTripleCommand(delete, false);
         
-        final String whereBlock = (where == null) ? getTripleCommand(delete) : where;
-        return updateExpression + "} WHERE { " + whereBlock + " } ";
+        final String whereExpression = (where == null) ? getTripleCommand(delete, false) : where;
+        return updateExpression + "} WHERE { " + whereExpression + " } ";
+    }
+
+    /**
+     * Method creates an update sparql string with delete triple(s). Subject, predicate and object can be selected by a "name" (string). Missing namespace is
+     * added automatically. The where parameter is used to specify the triples, which should be deleted. Can be set to null, if not necessary.
+     *
+     * @param delete is the delete triple list (with or without namespace).
+     * @param where is an additional filter triple list. Can be set to {@code null}, if not necessary.
+     * @return a sparql update string to delete proper triples.
+     * @throws NotAvailableException is thrown in case the rdf triple is null or all triple elements are null (to prevent the deletion of whole ontology).
+     */
+    static String getSparqlDeleteExpression(final List<RdfTriple> delete, List<RdfTriple> where) throws NotAvailableException {
+
+        if (delete == null) {
+            assert false;
+            throw new NotAvailableException("Delete triple list is null.");
+        }
+
+        MultiException.ExceptionStack exceptionStack = null;
+        String updateExpression =
+                "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+                + "DELETE { ";
+
+        for (final RdfTriple triple : delete) {
+            try {
+                updateExpression += getTripleCommand(triple, false);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
+            }
+        }
+
+        updateExpression += "} WHERE { ";
+        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
+
+        for (final RdfTriple triple : whereExpression) {
+            try {
+                updateExpression += getTripleCommand(triple, false);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("Some triple are null!", exceptionStack);
+        } catch (MultiException e) {
+            throw new NotAvailableException("Sparql update expression.", e);
+        }
+        return updateExpression + " } ";
     }
 
     /**
@@ -206,10 +264,11 @@ public interface SparqlUpdateExpression {
      * sparql variable. Otherwise it is a specific ontology element and, if missing, the namespace is added.
      *
      * @param triple is the triple information: subject, predicate, object. If one ore two are {@code null} they are sparql variables.
+     * @param ignoreSafeguard is used to avoid an exception, if all elements of the triple are null. Beware! Maybe whole ontology can be deleted!
      * @return a sparql command with following pattern: "NS:subject NS:predicate NS:object .".
      * @throws NotAvailableException is thrown in case the rdf triple is null or all triple elements are null (to prevent the deletion of whole ontology).
      */
-    static String getTripleCommand(final RdfTriple triple) throws NotAvailableException {
+    static String getTripleCommand(final RdfTriple triple, final boolean ignoreSafeguard) throws NotAvailableException {
 
         if (triple == null) {
             assert false;
@@ -220,7 +279,7 @@ public interface SparqlUpdateExpression {
         String predicate = triple.getPredicate();
         String object = triple.getObject();
 
-        if (subject == null && predicate == null && object == null) {
+        if (subject == null && predicate == null && object == null && !ignoreSafeguard) {
             throw new NotAvailableException("Subject, predicate and object are null! Whole ontology can be deleted...!");
         }
 

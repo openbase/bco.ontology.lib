@@ -162,9 +162,10 @@ public class HeartBeatCommunication {
                     insertTriple.add(getInsertTripleRecentHeartBeat(objectDateTimeNow));
 
                     // sparql update to replace last heartbeat timestamp
-                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, deleteTriple);
+                    final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(deleteTriple, insertTriple, null);
 
                     SparqlHttp.uploadSparqlRequest(sparqlUpdate, OntConfig.ONTOLOGY_DB_URL);
+                    System.out.println(sparqlUpdate);
                 } else {
                     // lastHeartBeat timestamp isn't in time. start with new heartBeat phase
                     setNewHeartBeatPhase();
@@ -204,7 +205,7 @@ public class HeartBeatCommunication {
                 insertTriples.add(new RdfTriple(subj_HeartBeatPhase, OntProp.FIRST_CONNECTION.getName(), obj_TimeStamp));
                 insertTriples.add(new RdfTriple(subj_HeartBeatPhase, OntProp.LAST_CONNECTION.getName(), obj_TimeStamp));
 
-                final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples);
+                final String sparqlUpdateInsert = SparqlUpdateExpression.getSparqlInsertExpression(insertTriples);
 
                 //TODO one update string
                 SparqlHttp.uploadSparqlRequest(sparqlUpdateDelete, OntConfig.ONTOLOGY_DB_URL);

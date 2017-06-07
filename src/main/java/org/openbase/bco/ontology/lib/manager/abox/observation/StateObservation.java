@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 
 import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -29,6 +30,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
@@ -182,21 +184,16 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             insertBuf.clear();
         }
 
-        String sparqlUpdateExpr;
+        final String sparql;
 
         if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
-            sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+            sparql = SparqlUpdateExpression.getSparqlInsertExpression(insert);
         } else {
-            for (final RdfTriple rdfTriple : delete) {
-                sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(rdfTriple, null);
-                connectionPhase.sendToServer(sparqlUpdateExpr);
-            }
-            sparqlUpdateExpr = SparqlUpdateExpression.getSparqlUpdateExpression(insert);
+            sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, StaticSparqlExpression.getNullWhereExpression());
         }
+        System.out.println(sparql);
 
-        final boolean isHttpSuccess = connectionPhase.sendToServer(sparqlUpdateExpr); //TODO
-
-        if (isHttpSuccess) {
+        if (sendData(sparql)) {
             rsbNotification(services);
         }
     }
@@ -208,5 +205,14 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         rsbInformer.activate();
         rsbInformer.publish(ontologyChange);
         rsbInformer.deactivate();
+    }
+
+    private boolean sendData(final String sparql) {
+        try {
+            return SparqlHttp.uploadSparqlRequest(sparql);
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, LOGGER, LogLevel.ERROR);
+            return false;
+        }
     }
 }

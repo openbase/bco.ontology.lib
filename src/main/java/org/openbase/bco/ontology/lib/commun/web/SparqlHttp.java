@@ -31,10 +31,13 @@ import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
+import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.ServerService;
 import org.openbase.bco.ontology.lib.utility.ThreadUtility;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.printer.ExceptionPrinter;
+import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
 
@@ -70,6 +73,25 @@ public interface SparqlHttp {
         httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
         final HttpResponse httpResponse = httpclient.execute(httpPost);
         checkHttpRequest(httpResponse, sparql);
+    }
+
+    /**
+     * Method uploads a sparql expression via function {@link #uploadSparqlRequest(String, String)} and inserts the input sparql expression to the transactionBuffer
+     * in case of IOException.
+     *
+     * @param sparql is the sparql update/request string.
+     * @return true, if the upload was successfully. Otherwise false and inserts sparql expression to the transactionBuffer.
+     * @throws CouldNotPerformException is thrown in case the httpResponse was not successfully (e.g. wrong sparql string...).
+     */
+    static boolean uploadSparqlRequest(final String sparql) throws CouldNotPerformException {
+        try {
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
+            return true;
+        } catch (IOException e) {
+            // could not send to server - insert sparql update expression to buffer queue
+            TransactionBuffer.insertData(sparql);
+            return false;
+        }
     }
 
     /**
