@@ -18,14 +18,13 @@
  */
 package org.openbase.bco.ontology.lib;
 
-import org.openbase.bco.ontology.lib.commun.monitor.HeartBeatCommunication;
+import org.openbase.bco.ontology.lib.commun.monitor.HeartbeatPhase;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datapool.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
-import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jps.core.JPService;
@@ -51,9 +50,6 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -87,7 +83,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             }
 
             new TransactionBuffer();
-            new HeartBeatCommunication();
+            new HeartbeatPhase();
             new UnitRegistrySynchronizer();
             new UnitRemoteSynchronizer();
 

@@ -115,7 +115,10 @@ public interface SparqlUpdateExpression {
     /**
      * Method creates an update sparql string with delete and insert triple(s). Subject, predicate and object can be selected by a "name" (string) or can be
      * placed as control variable by a "null" parameter in the rdfTriple. Missing namespace is added automatically. The order in the update string
-     * is first delete and then insert. The where parameter can be used to filter the triples, which should be deleted. Otherwise the statement is set to null.
+     * is first delete and then insert. The where parameter can be used to filter the triples, which should be deleted. Otherwise the where parameter is set to
+     * null, which leads to the same parameter like the delete parameter in the method. Beware: This sparql expressions separates delete/where and insert, which
+     * means the sparql expression inserts triples as well there is NO match of the (delete/)where parameter! To insert triples dependent on the delete/where
+     * parameter use another method.
      *
      * Example in delete: "d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null"
      * leads to delete string: "NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object . "
@@ -127,8 +130,80 @@ public interface SparqlUpdateExpression {
      * @return a sparql update string to delete and insert proper triples.
      * @throws NotAvailableException is thrown in case the rdf triple is null or all triple elements are null (to prevent the deletion of whole ontology).
      */
-    static String getSparqlUpdateExpression(final List<RdfTriple> delete, final List<RdfTriple> insert, final List<RdfTriple> where) throws NotAvailableException {
+    static String getSeparatedSparqlUpdateExpression(final List<RdfTriple> delete, final List<RdfTriple> insert, final List<RdfTriple> where) throws NotAvailableException {
+        if (delete == null) {
+            assert false;
+            throw new NotAvailableException("Delete triple list is null.");
+        }
 
+        if (insert == null) {
+            assert false;
+            throw new NotAvailableException("Insert triple list is null.");
+        }
+
+        MultiException.ExceptionStack exceptionStack = null;
+        String updateExpression =
+                "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+                + "DELETE { ";
+
+        for (final RdfTriple triple : delete) {
+            try {
+                updateExpression += getTripleCommand(triple, false);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
+            }
+        }
+
+        updateExpression += "} WHERE { ";
+        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
+
+        for (final RdfTriple triple : whereExpression) {
+            try {
+                updateExpression += getTripleCommand(triple, true);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
+            }
+        }
+
+        updateExpression += "} ; INSERT DATA { ";
+
+        for (final RdfTriple triple : insert) {
+            try {
+                updateExpression += getTripleCommand(triple, false);
+            } catch (NotAvailableException e) {
+                exceptionStack = MultiException.push(null, e, exceptionStack);
+            }
+        }
+
+        try {
+            MultiException.checkAndThrow("Some triple are null!", exceptionStack);
+        } catch (MultiException e) {
+            throw new NotAvailableException("Sparql update expression.", e);
+        }
+        return updateExpression + " } ";
+    }
+
+    /**
+     * Method creates an update sparql string with delete and insert triple(s). Subject, predicate and object can be selected by a "name" (string) or can be
+     * placed as control variable by a "null" parameter in the rdfTriple. Missing namespace is added automatically. The order in the update string
+     * is first delete and then insert. The where parameter can be used to filter the triples, which should be deleted. Otherwise the where parameter is set to
+     * null, which leads to the same parameter like the delete parameter in the method. Beware: This sparql expressions connects all parameter, which means if
+     * there is no match with the where parameter (or rather delete parameter if where is set to null), the sparql expression doesn't insert any triples! To
+     * insert triples independent on the delete/where parameter use another method.
+     *
+     * Example in delete: "d930d217-02a8-4264-8d9f-240de7f0d0ca hasConnection null"
+     * leads to delete string: "NS:d930d217-02a8-4264-8d9f-240de7f0d0ca NS:hasConnection ?object . "
+     * and means: all triples with the named subject, named predicate and any object should be deleted.
+     *
+     * @param delete is the delete triple list (with or without namespace).
+     * @param insert is the insert triple list (with or without namespace).
+     * @param where is an additional filter triple list. Can be set to {@code null}, if not necessary.
+     * @return a sparql update string to delete and insert proper triples.
+     * @throws NotAvailableException is thrown in case the rdf triple is null or all triple elements are null (to prevent the deletion of whole ontology).
+     */
+    static String getConnectedSparqlUpdateExpression(final List<RdfTriple> delete, final List<RdfTriple> insert, final List<RdfTriple> where) throws NotAvailableException {
         if (delete == null) {
             assert false;
             throw new NotAvailableException("Delete triple list is null.");

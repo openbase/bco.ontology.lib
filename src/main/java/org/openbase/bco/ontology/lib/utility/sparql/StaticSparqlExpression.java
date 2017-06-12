@@ -70,16 +70,16 @@ public class StaticSparqlExpression {
     }
 
     /**
-     * Select query to get the last timestamp of the latest heartbeat phase. Please do not modify!
+     * Select query to get the last timestamp of the recent heartbeatPhase. Please do not modify!
      */
-    public final static String getLastTimestampOfHeartBeat =
+    public final static String getRecentTimestampOfHeartBeat =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?blackout ?lastTime { "
-                + "?blackout a NS:HeartBeatPhase . "
-                + "?blackout NS:hasFirstConnection ?firstTime . "
-                + "?blackout NS:hasLastConnection ?lastTime . "
+            + "SELECT ?heartbeatPhase ?lastConnection { "
+                + "?heartbeatPhase a NS:HeartBeatPhase . "
+                + "?heartbeatPhase NS:hasFirstConnection ?firstConnection . "
+                + "?heartbeatPhase NS:hasLastConnection ?lastConnection . "
             + "} "
-            + "ORDER BY DESC(?lastTime) LIMIT 1";
+            + "ORDER BY DESC(?lastConnection) LIMIT 1";
 
     public final static String getAllConnectionPhases =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "

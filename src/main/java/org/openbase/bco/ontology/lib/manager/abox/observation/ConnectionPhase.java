@@ -50,11 +50,11 @@ public class ConnectionPhase {
     private final String unitId;
     private String connectionPhaseInst;
     private boolean isConnected;
-    private boolean isHttpSuccess;
+    private boolean isSetConnectionPhaseSuccess;
 
     public ConnectionPhase(final UnitRemote unitRemote) throws NotAvailableException {
         this.unitId = unitRemote.getId().toString();
-        this.isHttpSuccess = false;
+        this.isSetConnectionPhaseSuccess = false;
         this.connectionPhaseInst = null;
 
         initConnectionPhase(unitRemote);
@@ -94,11 +94,11 @@ public class ConnectionPhase {
             connectionPhaseInst = OntPrefix.CONNECTION_PHASE.getName() + unitId + dateTime.toString();
 
             insert.add(new RdfTriple(connectionPhaseInst, OntExpr.IS_A.getName(), OntCl.CONNECTION_PHASE.getName()));
-            insert.add(new RdfTriple(unitId, OntProp.CONNECTION_PHASE.getName(), connectionPhaseInst));
             insert.add(new RdfTriple(connectionPhaseInst, OntProp.FIRST_CONNECTION.getName(), timestampLiteral));
             insert.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
+            insert.add(new RdfTriple(unitId, OntProp.CONNECTION_PHASE.getName(), connectionPhaseInst));
 
-            isHttpSuccess = SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlInsertExpression(insert));
+            isSetConnectionPhaseSuccess = SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlInsertExpression(insert));
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
@@ -122,11 +122,13 @@ public class ConnectionPhase {
 
             // there should be only an "close-update", if there was a "set-update". If "set-update" failed (no connection - transactionBuffer) the "close-update"
             // must be insert to the transactionBuffer too (order of updates).
-            if (isHttpSuccess) {
-                SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where));
+            if (isSetConnectionPhaseSuccess) {
+                SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, where));
             } else {
-                TransactionBuffer.insertData(SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where));
+                TransactionBuffer.insertData(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, where));
             }
+
+            connectionPhaseInst = null;
         } catch (NotAvailableException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }

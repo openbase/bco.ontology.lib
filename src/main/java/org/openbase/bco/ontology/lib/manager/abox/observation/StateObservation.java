@@ -189,9 +189,9 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
             sparql = SparqlUpdateExpression.getSparqlInsertExpression(insert);
         } else {
-            sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, StaticSparqlExpression.getNullWhereExpression());
+            sparql = SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, StaticSparqlExpression.getNullWhereExpression());
         }
-        System.out.println(sparql);
+        LOGGER.info(sparql);
 
         if (SparqlHttp.uploadSparqlRequest(sparql)) {
             rsbNotification(services);

@@ -150,10 +150,10 @@ public class UnitRegistrySynchronizer {
                 sparql = SparqlUpdateExpression.getSparqlInsertExpression(insert);
             } else if (insert == null) {
                 // convert triples to sparql update expression (delete)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, null, null);
+                sparql = SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, null, null);
             } else {
                 // convert triples to sparql update expression (delete and insert)
-                sparql = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, null);
+                sparql = SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, null);
             }
 
             // upload to ontology server

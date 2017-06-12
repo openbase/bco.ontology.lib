@@ -487,7 +487,12 @@ public final class OntConfig {
         /**
          * Prefix of observation instance.
          */
-        OBSERVATION("Observation_"),
+        OBSERVATION("observation_"),
+
+        /**
+         * Prefix of heartbeatPhase instance.
+         */
+        HEARTBEAT("heartbeatPhase_"),
 
         /**
          * Prefix of connectionPhase instance.

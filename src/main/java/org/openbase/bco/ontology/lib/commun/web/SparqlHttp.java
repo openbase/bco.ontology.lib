@@ -97,7 +97,7 @@ public interface SparqlHttp {
             // could not send to server - insert sparql update expression to buffer queue
             TransactionBuffer.insertData(sparql);
         } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, SparqlHttpLogger.LOGGER, LogLevel.ERROR);
+            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad! SPARQL String: " + sparql, e, SparqlHttpLogger.LOGGER, LogLevel.ERROR);
         }
         return false;
     }
