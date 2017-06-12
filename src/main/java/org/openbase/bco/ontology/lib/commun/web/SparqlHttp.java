@@ -40,6 +40,8 @@ import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.schedule.GlobalCachedExecutorService;
 import org.openbase.jul.schedule.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +49,10 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+final class SparqlHttpLogger {
+    static final Logger LOGGER = LoggerFactory.getLogger(SparqlHttpLogger.class);
+}
 
 /**
  * @author agatting on 12.12.16.
@@ -77,21 +83,23 @@ public interface SparqlHttp {
 
     /**
      * Method uploads a sparql expression via function {@link #uploadSparqlRequest(String, String)} and inserts the input sparql expression to the transactionBuffer
-     * in case of IOException.
+     * in case of IOException. The URL is set to the database path of the fuseki server.
      *
      * @param sparql is the sparql update/request string.
-     * @return true, if the upload was successfully. Otherwise false and inserts sparql expression to the transactionBuffer.
-     * @throws CouldNotPerformException is thrown in case the httpResponse was not successfully (e.g. wrong sparql string...).
+     * @return true, if the upload was successfully. Otherwise false and inserts sparql expression to the transactionBuffer (or prints an exception if update
+     * string is bad).
      */
-    static boolean uploadSparqlRequest(final String sparql) throws CouldNotPerformException {
+    static boolean uploadSparqlRequest(final String sparql) {
         try {
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
             return true;
         } catch (IOException e) {
             // could not send to server - insert sparql update expression to buffer queue
             TransactionBuffer.insertData(sparql);
-            return false;
+        } catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, SparqlHttpLogger.LOGGER, LogLevel.ERROR);
         }
+        return false;
     }
 
     /**

@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
-import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
@@ -54,6 +53,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -102,7 +102,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             };
 
             final Observer<ConnectionState> unitRemoteConnectionObserver = (final Observable<ConnectionState> observable
-                    , final ConnectionState connectionState) -> connectionPhase.identifyConnection(connectionState);
+                    , final ConnectionState connectionState) -> connectionPhase.identifyConnectionState(connectionState);
 
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
@@ -139,10 +139,10 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     final String obsInstName;
 
                     if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
-                        final String dateTimeNow = new DateTime().toString();
-                        obsInstName = OntConfig.OntInstPrefix.OBSERVATION.getPrefixName() + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
+                        final String dateTimeNow = OffsetDateTime.now().toString();
+                        obsInstName = OntConfig.OntPrefix.OBSERVATION.getName() + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
                     } else {
-                        obsInstName = OntConfig.OntInstPrefix.OBSERVATION.getPrefixName() + remoteUnitId + serviceTypeName;
+                        obsInstName = OntConfig.OntPrefix.OBSERVATION.getName() + remoteUnitId + serviceTypeName;
                         delete.add(new RdfTriple(obsInstName, null, null));
                     }
 
@@ -179,7 +179,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
             } catch (InterruptedException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
             } catch (NoSuchElementException e) {
-
+                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
             insertBuf.clear();
         }
@@ -193,7 +193,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
         System.out.println(sparql);
 
-        if (sendData(sparql)) {
+        if (SparqlHttp.uploadSparqlRequest(sparql)) {
             rsbNotification(services);
         }
     }
@@ -207,12 +207,4 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         rsbInformer.deactivate();
     }
 
-    private boolean sendData(final String sparql) {
-        try {
-            return SparqlHttp.uploadSparqlRequest(sparql);
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, LOGGER, LogLevel.ERROR);
-            return false;
-        }
-    }
 }

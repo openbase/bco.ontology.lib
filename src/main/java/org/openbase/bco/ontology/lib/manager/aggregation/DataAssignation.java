@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
@@ -34,6 +33,7 @@ import org.openbase.jul.schedule.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,15 +47,15 @@ import java.util.Set;
 public class DataAssignation extends DataAggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAssignation.class);
-    private final DateTime dateTimeFrom;
-    private final DateTime dateTimeUntil;
+    private final OffsetDateTime dateTimeFrom;
+    private final OffsetDateTime dateTimeUntil;
     private final OntConfig.Period period;
 //    private final SimpleDateFormat dateFormat;
     private final Stopwatch stopwatch;
 
     //TODO if a state has multiple continuous values, than an additionally distinction is needed
 
-    public DataAssignation(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final OntConfig.Period period) {
+    public DataAssignation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final OntConfig.Period period) {
         super(dateTimeFrom, dateTimeUntil);
 
         this.dateTimeFrom = dateTimeFrom;
@@ -502,7 +502,8 @@ public class DataAssignation extends DataAggregation {
             , final String unitId, final String serviceType) throws InterruptedException {
 
         final List<RdfTriple> triples = new ArrayList<>();
-        final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli / (double) (dateTimeUntil.getMillis() - dateTimeFrom.getMillis()));
+        final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli
+                / (double) (dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli()));
         final Set<Triple<Integer, Integer, Integer>> hsbSet = hsbCountMap.keySet();
 
         for (final Triple<Integer, Integer, Integer> hsb : hsbSet) {
@@ -633,7 +634,7 @@ public class DataAssignation extends DataAggregation {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
         stopwatch.waitForStop(1);
 
-        final String dateTimeNow = new DateTime().toString();
+        final String dateTimeNow = OffsetDateTime.now().toString();
 
         return "AggObs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
     }
@@ -647,10 +648,10 @@ public class DataAssignation extends DataAggregation {
         final List<ServiceDataCollection> bufDataList = new ArrayList<>();
         boolean insignificant = true;
         ServiceDataCollection bufData = null;
-        final long dateTimeFromMillis = dateTimeFrom.getMillis();
+        final long dateTimeFromMillis = dateTimeFrom.toInstant().toEpochMilli();
 
         for (final ServiceDataCollection stateValueDataCollection : stateValueDataCollectionList) {
-            final long stateValueMillis = new DateTime(stateValueDataCollection.getTimestamp()).getMillis();
+            final long stateValueMillis = OffsetDateTime.parse(stateValueDataCollection.getTimestamp()).toInstant().toEpochMilli();
 
             if (insignificant && stateValueMillis <= dateTimeFromMillis) {
                 bufData = stateValueDataCollection;

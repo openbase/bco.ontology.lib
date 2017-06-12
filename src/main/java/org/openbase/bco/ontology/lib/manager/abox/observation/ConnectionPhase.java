@@ -18,23 +18,26 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.observation;
 
-import org.joda.time.DateTime;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntInst;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rst.domotic.state.ActivationStateType.ActivationState;
 
-import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,95 +47,88 @@ import java.util.List;
 public class ConnectionPhase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPhase.class);
-//    private final SimpleDateFormat dateFormat;
-    private final String remoteUnitId;
-    private String subj_CurConnectionPhase;
-    private boolean wasConnected;
+    private final String unitId;
+    private String connectionPhaseInst;
+    private boolean isConnected;
+    private boolean isHttpSuccess;
 
     public ConnectionPhase(final UnitRemote unitRemote) throws NotAvailableException {
+        this.unitId = unitRemote.getId().toString();
+        this.isHttpSuccess = false;
+        this.connectionPhaseInst = null;
 
-//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
-        this.remoteUnitId = unitRemote.getId().toString();
-
-        initConnectionState(unitRemote);
+        initConnectionPhase(unitRemote);
     }
 
-    public void identifyConnection(final ConnectionState connectionState) throws NotAvailableException {
-        if (connectionState.equals(ConnectionState.CONNECTED) && !wasConnected) {
-            // was NOT connected and now is connected - start connection phase
-            updateConnectionPhase(ActivationState.State.ACTIVE);
-            wasConnected = !wasConnected;
-        } else if (!connectionState.equals(ConnectionState.CONNECTED) && wasConnected){
-            // was connected and now is NOT connected - close connection phase
-            updateConnectionPhase(ActivationState.State.DEACTIVE);
-            wasConnected = !wasConnected;
-        }
-    }
-
-    private void initConnectionState(final UnitRemote unitRemote) throws NotAvailableException {
-        // reduce connectionState to binary classification - connected and not connected
+    private void initConnectionPhase(final UnitRemote unitRemote) {
         if (unitRemote.getConnectionState().equals(ConnectionState.CONNECTED)) {
-            wasConnected = true;
-            updateConnectionPhase(ActivationState.State.ACTIVE);
+            setConnectionPhase();
+            this.isConnected = true;
         } else {
-            wasConnected = false;
+            this.isConnected = false;
         }
     }
 
-    private void updateConnectionPhase(final ActivationState.State activationState) throws NotAvailableException {
-
-        final String pred_IsA = OntConfig.OntExpr.IS_A.getName();
-        final String pred_HasFirstConnection = OntConfig.OntProp.FIRST_CONNECTION.getName();
-        final String pred_HasLastConnection = OntConfig.OntProp.LAST_CONNECTION.getName();
-        final String pred_HasConnectionPhase = OntConfig.OntProp.CONNECTION_PHASE.getName();
-        final String obj_ConnectionPhase = OntConfig.OntCl.CONNECTION_PHASE.getName();
-        final String obj_RecentHeartBeat = OntConfig.INSTANCE_RECENT_HEARTBEAT;
-
-        final List<RdfTriple> insertTriples = new ArrayList<>();
-        final List<RdfTriple> whereTriples = new ArrayList<>();
-
-        if (activationState.equals(ActivationState.State.ACTIVE)) {
-//            final Date now = new Date();
-//            final String dateTime = dateFormat.format(now);
-            final String dateTime = new DateTime().toString();
-            subj_CurConnectionPhase = "connectionPhase" + remoteUnitId + dateTime.substring(0, dateTime.indexOf("+")); // must be the same at start and close!
-            final String obj_Timestamp = "\"" + dateTime + "\"^^xsd:dateTime";
-
-            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-            insertTriples.add(new RdfTriple(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
-            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, obj_Timestamp));
-            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_RecentHeartBeat));
-
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlInsertExpression(insertTriples);
-            sendToServer(sparqlUpdate);
-
-        } else if (activationState.equals(ActivationState.State.DEACTIVE)) {
-
-            final String obj_Timestamp = "\"" + new DateTime().toString() + "\"^^xsd:dateTime";
-//            insertTriple.add(new RdfTriple(subj_CurConnectionPhase, pred_IsA, obj_ConnectionPhase));
-//            insertTriple.add(new RdfTriple(remoteUnitId, pred_HasConnectionPhase, subj_CurConnectionPhase));
-            insertTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasLastConnection, obj_Timestamp));
-
-            whereTriples.add(new RdfTriple(subj_CurConnectionPhase, pred_HasFirstConnection, null));
-
-            final String sparqlUpdate = SparqlUpdateExpression.getSparqlUpdateExpression(insertTriples, whereTriples);
-            sendToServer(sparqlUpdate);
-
-        } else {
-            LOGGER.warn("Method updateConnectionPhase is called with wrong ActivationState parameter.");
+    void identifyConnectionState(final ConnectionState connectionState) {
+        switch (connectionState) {
+            case CONNECTED:
+                if (!isConnected) {
+                    setConnectionPhase();
+                    isConnected = true;
+                }
+                break;
+            default:
+                if (isConnected) {
+                    closeConnectionPhase();
+                    isConnected = false;
+                }
         }
     }
 
-    boolean sendToServer(final String sparql) {
+    private void setConnectionPhase() {
         try {
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
-            return true;
-        } catch (IOException e) {
-            // could not send to server - insert sparql update expression to buffer queue
-            TransactionBuffer.insertData(sparql);
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad!", e, LOGGER, LogLevel.ERROR);
+            final List<RdfTriple> insert = new ArrayList<>();
+            final LocalDateTime dateTime = LocalDateTime.now();
+            final String timestampLiteral = StringModifier.addXsdDateTime(OffsetDateTime.of(dateTime, OffsetDateTime.now().getOffset()).toString());
+
+            connectionPhaseInst = OntPrefix.CONNECTION_PHASE.getName() + unitId + dateTime.toString();
+
+            insert.add(new RdfTriple(connectionPhaseInst, OntExpr.IS_A.getName(), OntCl.CONNECTION_PHASE.getName()));
+            insert.add(new RdfTriple(unitId, OntProp.CONNECTION_PHASE.getName(), connectionPhaseInst));
+            insert.add(new RdfTriple(connectionPhaseInst, OntProp.FIRST_CONNECTION.getName(), timestampLiteral));
+            insert.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
+
+            isHttpSuccess = SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlInsertExpression(insert));
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
-        return false;
+    }
+
+    private void closeConnectionPhase() {
+        try {
+            if (connectionPhaseInst == null) {
+                assert false;
+                throw new NotAvailableException("Tried to close a connectionPhase, which doesn't exist!");
+            }
+
+            final List<RdfTriple> delete = new ArrayList<>();
+            final List<RdfTriple> insert = new ArrayList<>();
+            final List<RdfTriple> where = new ArrayList<>();
+            final String timestampLiteral = StringModifier.addXsdDateTime(OffsetDateTime.now().toString());
+
+            delete.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
+            insert.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), timestampLiteral));
+            where.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
+
+            // there should be only an "close-update", if there was a "set-update". If "set-update" failed (no connection - transactionBuffer) the "close-update"
+            // must be insert to the transactionBuffer too (order of updates).
+            if (isHttpSuccess) {
+                SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where));
+            } else {
+                TransactionBuffer.insertData(SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where));
+            }
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
     }
 }

@@ -197,11 +197,31 @@ public final class OntConfig {
         return decimalFormat;
     }
 
-
     /**
-     * RecentHeartBeat (instance).
+     * Enumeration of ontology instances.
      */
-    public static final String INSTANCE_RECENT_HEARTBEAT = "recentHeartBeat";
+    public enum OntInst {
+
+        /**
+         * recentHeartBeat (instance).
+         */
+        RECENT_HEARTBEAT("recentHeartBeat");
+
+        private final String ontInst;
+
+        OntInst(final String ontInst) {
+            this.ontInst = ontInst;
+        }
+
+        /**
+         * Method returns the Name of an enum element.
+         *
+         * @return Name of an enum element as string.
+         */
+        public String getName() {
+            return this.ontInst;
+        }
+    }
 
     /**
      * Enumeration of ontology classes.
@@ -462,16 +482,21 @@ public final class OntConfig {
     /**
      * Enumeration for ontology instance prefixes.
      */
-    public enum OntInstPrefix {
+    public enum OntPrefix {
 
         /**
          * Prefix of observation instance.
          */
-        OBSERVATION("Observation_");
+        OBSERVATION("Observation_"),
+
+        /**
+         * Prefix of connectionPhase instance.
+         */
+        CONNECTION_PHASE("connectionPhase_");
 
         private final String prefix;
 
-        OntInstPrefix(final String prefix) {
+        OntPrefix(final String prefix) {
             this.prefix = prefix;
         }
 
@@ -480,7 +505,7 @@ public final class OntConfig {
          *
          * @return name of an enum element as string.
          */
-        public String getPrefixName() {
+        public String getName() {
             return this.prefix;
         }
     }

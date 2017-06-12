@@ -18,12 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * @author agatting on 25.03.17.
@@ -32,8 +33,8 @@ public class AggregationImpl implements Aggregation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProviding.class);
 
-    public DateTime dateTimeFrom;
-    public DateTime dateTimeUntil;
+    public OffsetDateTime dateTimeFrom;
+    public OffsetDateTime dateTimeUntil;
 
     private Period period;
     private int backDatedQuantity;
@@ -79,8 +80,8 @@ public class AggregationImpl implements Aggregation {
 //    }
 
     public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException {
-        final DateTime dateTimeFromTest = new DateTime(2017, 1, 1, 0, 0, 0, 0);
-        final DateTime dateTimeUntilTest = new DateTime(2018, 1, 1, 0, 0, 0, 0);
+        final OffsetDateTime dateTimeFromTest = OffsetDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
+        final OffsetDateTime dateTimeUntilTest = OffsetDateTime.of(LocalDateTime.parse("2018-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
         currentDays += 1;
 
         if (currentDays % 7 == 0) {
@@ -104,27 +105,27 @@ public class AggregationImpl implements Aggregation {
 //        new DataTripleCollection(dateTimeFromTest, dateTimeUntilTest, periodTest);
     }
 
-    private DateTime getAdaptedDateTime(DateTime dateTime, final int timeToReduce) throws NotAvailableException {
-
-        switch (period) {
-            case HOUR:
-                dateTime = dateTime.minusHours(timeToReduce);
-                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
-            case DAY:
-                dateTime = dateTime.minusDays(timeToReduce);
-                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 0, 0, 0);
-//            case WEEK:
-//                dateTime = dateTime.minusWeeks(timeToReduce);
-//                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
-            case MONTH:
-                dateTime = dateTime.minusMonths(timeToReduce);
-                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), 1, 0, 0, 0);
-            case YEAR:
-                dateTime = dateTime.minusYears(timeToReduce);
-                return new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0);
-            default:
-                throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
-                        + period.toString() + " could not be identified!");
-        }
-    }
+//    private OffsetDateTime getAdaptedDateTime(OffsetDateTime dateTime, final int timeToReduce) throws NotAvailableException {
+//
+//        switch (period) {
+//            case HOUR:
+//                dateTime = dateTime.minusHours(timeToReduce);
+//                return OffsetDateTime.of(dateTime.getYear(), dateTime.getMonthValue(), dateTime.getDayOfMonth(), dateTime.getHour(), 0, 0, 0, ZoneOffset.UTC);
+//            case DAY:
+//                dateTime = dateTime.minusDays(timeToReduce);
+//                return OffsetDateTime.of(dateTime.getYear(), dateTime.getMonthValue(), dateTime.getDayOfMonth(), 0, 0, 0, 0, ZoneOffset.UTC);
+////            case WEEK:
+////                dateTime = dateTime.minusWeeks(timeToReduce);
+////                return new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), dateTime.getHourOfDay(), 0, 0);
+//            case MONTH:
+//                dateTime = dateTime.minusMonths(timeToReduce);
+//                return OffsetDateTime.of(dateTime.getYear(), dateTime.getMonthValue(), 1, 0, 0, 0, 0, ZoneOffset.UTC);
+//            case YEAR:
+//                dateTime = dateTime.minusYears(timeToReduce);
+//                return OffsetDateTime.of(dateTime.getYear(), 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+//            default:
+//                throw new NotAvailableException("Could not perform adaption of dateTime for aggregation. Cause period time "
+//                        + period.toString() + " could not be identified!");
+//        }
+//    }
 }

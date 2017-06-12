@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
@@ -34,6 +33,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.schedule.Stopwatch;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,13 +43,13 @@ import java.util.List;
  */
 public class DataTripleCollection extends DataAssignation {
 
-    private final DateTime dateTimeFrom;
-    private final DateTime dateTimeUntil;
+    private final OffsetDateTime dateTimeFrom;
+    private final OffsetDateTime dateTimeUntil;
     private final Stopwatch stopwatch;
     private final DataProviding dataProviding;
     private final Period period;
 
-    public DataTripleCollection(final DateTime dateTimeFrom, final DateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException {
+    public DataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException {
         super(dateTimeFrom, dateTimeUntil, period);
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
@@ -95,7 +95,8 @@ public class DataTripleCollection extends DataAssignation {
             SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ONTOLOGY_DB_URL, 0);
 
             // delete unused aggregations (old)
-            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom), StringModifier.addXsdDateTime(dateTimeUntil));
+            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom.toString())
+                    , StringModifier.addXsdDateTime(dateTimeUntil.toString()));
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL, 0);
         }
     }

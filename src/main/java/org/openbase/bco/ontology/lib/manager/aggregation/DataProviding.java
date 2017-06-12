@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,14 +64,14 @@ public class DataProviding {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProviding.class);
 
-    private DateTime dateTimeFrom;
-    private DateTime dateTimeUntil;
-    private final Interval intervalTimeFrame;
+    private OffsetDateTime dateTimeFrom;
+    private OffsetDateTime dateTimeUntil;
+    private final Interval intervalTimeFrame; //TODO implement own interval class/method to remove joda-time dependency
 
-    public DataProviding(final DateTime dateTimeFrom, final DateTime dateTimeUntil) {
+    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
-        this.intervalTimeFrame = new Interval(dateTimeFrom, dateTimeUntil);
+        this.intervalTimeFrame = new Interval(dateTimeFrom.toInstant().toEpochMilli(), dateTimeUntil.toInstant().toEpochMilli());
     }
 
     public HashMap<String, Long> getConnectionTimeForEachUnit() throws NotAvailableException {
@@ -92,7 +93,6 @@ public class DataProviding {
             final String endTimestamp = querySolution.getLiteral("lastTimestamp").getLexicalForm();
 
             final Interval connectionInterval = new Interval(new DateTime(startTimestamp), new DateTime(endTimestamp));
-
             final Interval overlapInterval = intervalTimeFrame.overlap(connectionInterval);
 
             if (overlapInterval != null) {
@@ -221,8 +221,8 @@ public class DataProviding {
         try {
 
 //        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-            final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom);
-            final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil);
+            final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom.toString());
+            final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil.toString());
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(OntConfig.Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final Query query = QueryFactory.create(StaticSparqlExpression.getRecentObservationsBeforeTimeFrame(timestampFrom));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);

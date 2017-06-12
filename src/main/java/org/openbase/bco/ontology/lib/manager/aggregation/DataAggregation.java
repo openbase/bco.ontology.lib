@@ -21,7 +21,6 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import javafx.util.Pair;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
@@ -29,6 +28,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,17 +42,17 @@ import java.util.stream.DoubleStream;
  */
 public class DataAggregation {
 
-    private DateTime dateTimeFrom;
-    private DateTime dateTimeUntil;
+    private OffsetDateTime dateTimeFrom;
+    private OffsetDateTime dateTimeUntil;
     private long timeFrameMilli;
 
     //TODO corruption by youngest values before time frame -> handle in calculation
     //TODO general survey of calculation ...
 
-    public DataAggregation(final DateTime dateTimeFrom, final DateTime dateTimeUntil) {
+    public DataAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
-        this.timeFrameMilli = dateTimeUntil.getMillis() - dateTimeFrom.getMillis();
+        this.timeFrameMilli = dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli();
     }
 
     protected class DiscreteStateValues {
@@ -170,10 +170,10 @@ public class DataAggregation {
 
                     if (listIterator.hasNext()) {
                         final String currentTimestamp = stateValueDataCollection.getTimestamp();
-                        timeDiffMillis = new DateTime(currentTimestamp).getMillis() - new DateTime(lastTimestamp).getMillis();
+                        timeDiffMillis = OffsetDateTime.parse(currentTimestamp).toInstant().toEpochMilli() - OffsetDateTime.parse(lastTimestamp).toInstant().toEpochMilli();
                     } else {
                         // reached last entry: timestampUntil is the timestampUntil of the aggregationPeriod
-                        timeDiffMillis = new DateTime(dateTimeUntil).getMillis() - new DateTime(lastTimestamp).getMillis();
+                        timeDiffMillis = dateTimeUntil.toInstant().toEpochMilli() - OffsetDateTime.parse(lastTimestamp).toInstant().toEpochMilli();
                     }
 
                     if (hashMap.containsKey(lastStateValue)) {
@@ -195,7 +195,7 @@ public class DataAggregation {
 
                 lastTimestamp = stateValueDataCollection.getTimestamp();
 
-                if (new DateTime(lastTimestamp).getMillis() < dateTimeFrom.getMillis()) {
+                if (OffsetDateTime.parse(lastTimestamp).toInstant().toEpochMilli() < dateTimeFrom.toInstant().toEpochMilli()) {
                     lastTimestamp = dateTimeFrom.toString();
                 }
             }

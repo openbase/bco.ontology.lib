@@ -28,7 +28,6 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
@@ -39,6 +38,8 @@ import org.openbase.jul.exception.NotAvailableException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /**
  * @author agatting on 19.04.17.
@@ -223,8 +224,8 @@ public class DuplicateData {
 
     private void deleteObservations() throws CouldNotPerformException, InterruptedException {
         //TODO
-        final String dateTimeFrom = StringModifier.addXsdDateTime(new DateTime(2017, 4, 19, 0, 0, 0, 0));
-        final String dateTimeUntil = StringModifier.addXsdDateTime(new DateTime(2017, 4, 20, 0, 0, 0, 0));
+        final String dateTimeFrom = StringModifier.addXsdDateTime(OffsetDateTime.of(2017, 4, 19, 0, 0, 0, 0, ZoneOffset.UTC).toString());
+        final String dateTimeUntil = StringModifier.addXsdDateTime(OffsetDateTime.of(2017, 4, 20, 0, 0, 0, 0, ZoneOffset.UTC).toString());
 
         SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.ONTOLOGY_DB_URL, 0);
     }

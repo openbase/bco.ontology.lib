@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.utility;
 
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -95,21 +94,6 @@ public interface StringModifier {
         } else {
             return input;
         }
-    }
-
-    /**
-     * Method transforms the input dateTime to a literal with the data type "xsd:dateTime".
-     *
-     * @param dateTime is the dateTime, which should be transformed to a dateTime literal.
-     * @return a literal string with the data type "xsd:dateTime".
-     * @throws NotAvailableException is thrown in case the input is null.
-     */
-    static String addXsdDateTime(final DateTime dateTime) throws NotAvailableException {
-        if (dateTime == null) {
-            assert false;
-            throw new NotAvailableException("DateTime is null.");
-        }
-        return "\"" + dateTime.toString() + "\"^^xsd:dateTime";
     }
 
     /**

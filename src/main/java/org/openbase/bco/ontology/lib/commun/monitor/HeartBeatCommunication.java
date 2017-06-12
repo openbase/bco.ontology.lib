@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib.commun.monitor;
 
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.joda.time.DateTime;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.RdfTriple;
@@ -28,6 +27,7 @@ import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntInst;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -90,10 +91,10 @@ public class HeartBeatCommunication {
         final List<RdfTriple> insert = new ArrayList<>();
         final List<RdfTriple> where = new ArrayList<>();
 
-        delete.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
+        delete.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
         insert.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), null));
-        where.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntConfig.INSTANCE_RECENT_HEARTBEAT));
-        where.add(new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null));
+        where.add(new RdfTriple(null, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
+        where.add(new RdfTriple(OntInst.RECENT_HEARTBEAT.getName(), OntProp.LAST_CONNECTION.getName(), null));
 
         final String closeOldConnectionPhases = SparqlUpdateExpression.getSparqlUpdateExpression(delete, insert, where);
 
@@ -113,7 +114,7 @@ public class HeartBeatCommunication {
     private List<RdfTriple> getInitRecentHeartBeat(final String heartBeatTimestamp) {
 
         final List<RdfTriple> triples = new ArrayList<>();
-        final String subj_recentHeartBeat = OntConfig.INSTANCE_RECENT_HEARTBEAT;
+        final String subj_recentHeartBeat = OntInst.RECENT_HEARTBEAT.getName();
 
         triples.add(new RdfTriple(subj_recentHeartBeat, OntExpr.IS_A.getName(), OntCl.RECENT_HEARTBEAT.getName()));
         triples.add(new RdfTriple(subj_recentHeartBeat, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp));
@@ -122,11 +123,11 @@ public class HeartBeatCommunication {
     }
 
     private RdfTriple getDeleteTripleRecentHeartBeat() {
-        return new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), null);
+        return new RdfTriple(OntInst.RECENT_HEARTBEAT.getName(), OntProp.LAST_CONNECTION.getName(), null);
     }
 
     private RdfTriple getInsertTripleRecentHeartBeat(final String heartBeatTimestamp) {
-        return new RdfTriple(OntConfig.INSTANCE_RECENT_HEARTBEAT, OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp);
+        return new RdfTriple(OntInst.RECENT_HEARTBEAT.getName(), OntProp.LAST_CONNECTION.getName(), heartBeatTimestamp);
     }
 
     private void startHeartBeatThread() throws NotAvailableException {
@@ -143,17 +144,17 @@ public class HeartBeatCommunication {
 
                 final String subj_HeartBeatPhase = StringModifier.getLocalName(querySolution.getResource("blackout").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastTime").getLexicalForm();
-                final DateTime now = new DateTime();
+                final OffsetDateTime now = OffsetDateTime.now();
 
 //                Date dateLastTimeStamp = dateFormat.parse(lastTimeStamp);
-                DateTime dateLastTimestamp = new DateTime(lastTimeStamp).plusSeconds(OntConfig.HEART_BEAT_TOLERANCE);
+                final OffsetDateTime dateLastTimestamp = OffsetDateTime.parse(lastTimeStamp).plusSeconds(OntConfig.HEART_BEAT_TOLERANCE);
 //                dateLastTimeStamp = DateUtils.addSeconds(dateLastTimeStamp, OntConfig.HEART_BEAT_TOLERANCE);
 
                 if (dateLastTimestamp.compareTo(now) >= 0) {
                     // last heartbeat is within the frequency => replace last timestamp of current blackout with refreshed timestamp
                     final List<RdfTriple> deleteTriple = new ArrayList<>();
                     final List<RdfTriple> insertTriple = new ArrayList<>();
-                    final String objectDateTimeNow = StringModifier.addXsdDateTime(now);
+                    final String objectDateTimeNow = StringModifier.addXsdDateTime(now.toString());
 
                     deleteTriple.add(new RdfTriple(subj_HeartBeatPhase, OntProp.LAST_CONNECTION.getName(), null));
                     deleteTriple.add(getDeleteTripleRecentHeartBeat());
@@ -186,7 +187,7 @@ public class HeartBeatCommunication {
             // both timestamp strings must contain the SAME date
 //            final Date now = new Date();
             try {
-                final String dateTime = new DateTime().toString();
+                final String dateTime = OffsetDateTime.now().toString();
 
                 final String subj_HeartBeatPhase = "heartBeatPhase" + dateTime.substring(0, dateTime.indexOf("+"));
                 final String pred_isA = OntExpr.IS_A.getName();
