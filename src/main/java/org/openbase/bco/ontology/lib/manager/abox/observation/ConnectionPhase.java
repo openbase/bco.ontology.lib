@@ -52,6 +52,12 @@ public class ConnectionPhase {
     private boolean isConnected;
     private boolean isSetConnectionPhaseSuccess;
 
+    /**
+     * Constructor initiates the connectionPhase of an unit.
+     *
+     * @param unitRemote is the unitRemote to identify the unit.
+     * @throws NotAvailableException is thrown in case the id of the unitRemote is not available.
+     */
     public ConnectionPhase(final UnitRemote unitRemote) throws NotAvailableException {
         this.unitId = unitRemote.getId().toString();
         this.isSetConnectionPhaseSuccess = false;

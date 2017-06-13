@@ -92,7 +92,7 @@ public class OntologyRemoteImpl implements OntologyRemote {
         params.add(new BasicNameValuePair("query", query));
 
         final HttpClient httpclient = HttpClients.createDefault();
-        final HttpGet httpGet = new HttpGet(OntConfig.ONTOLOGY_DB_URL + "sparql?" + URLEncodedUtils.format(params, "UTF-8"));
+        final HttpGet httpGet = new HttpGet(OntConfig.getOntologyDbUrl() + "sparql?" + URLEncodedUtils.format(params, "UTF-8"));
 
         final HttpEntity httpEntity = httpclient.execute(httpGet).getEntity();
 

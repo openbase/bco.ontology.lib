@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- * <p>
+ *
  * This file is part of org.openbase.bco.ontology.lib.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -23,7 +23,6 @@ import org.openbase.bco.dal.remote.unit.Units;
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.manager.abox.observation.StateObservation;
 import org.openbase.jul.exception.CouldNotPerformException;
-import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.pattern.ObservableImpl;
@@ -45,23 +44,26 @@ public class UnitRemoteSynchronizer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnitRemoteSynchronizer.class);
 
-    private static final ObservableImpl<UnitConfig> unitRemoteObservable = new ObservableImpl<>();
+    private static final ObservableImpl<UnitConfig> UNIT_REMOTE_OBSERVABLE = new ObservableImpl<>();
     private final List<UnitRemote> loadedUnitRemotes;
 
     private int successfullyRemotesNum = 0;
     private int failedRemotesNum = 0;
     private int potentialRemotesNum = 0;
 
-    public UnitRemoteSynchronizer() throws InstantiationException, InitializationException {
+    /**
+     * Constructor initiates the observers, which are used to create for each unit an observation of their state data.
+     */
+    public UnitRemoteSynchronizer() {
         this.loadedUnitRemotes = new ArrayList<>();
 
         final Observer<List<UnitConfig>> newUnitConfigObserver = (source, unitConfigs) -> loadUnitRemotes(unitConfigs);
         final Observer<List<UnitConfig>> removedUnitConfigObserver = (source, unitConfigs) -> removeUnitRemotes(unitConfigs);
         final Observer<UnitConfig> unitRemoteObserver = (source, unitConfig) -> setStateObservation(unitConfig);
 
-        OntologyManagerController.newUnitConfigObservable.addObserver(newUnitConfigObserver);
-        OntologyManagerController.removedUnitConfigObservable.addObserver(removedUnitConfigObserver);
-        UnitRemoteSynchronizer.unitRemoteObservable.addObserver(unitRemoteObserver);
+        OntologyManagerController.NEW_UNIT_CONFIG_OBSERVABLE.addObserver(newUnitConfigObserver);
+        OntologyManagerController.REMOVED_UNIT_CONFIG_OBSERVABLE.addObserver(removedUnitConfigObserver);
+        UnitRemoteSynchronizer.UNIT_REMOTE_OBSERVABLE.addObserver(unitRemoteObserver);
     }
 
     private void loadUnitRemotes(final List<UnitConfig> unitConfigs) throws InterruptedException, CouldNotPerformException {
@@ -81,7 +83,7 @@ public class UnitRemoteSynchronizer {
         LOGGER.info("Try to set state observation(s) of " + potentialRemotesNum + " potential unit remote(s).");
 
         for (final UnitConfig unitConfig : unitConfigsBuf) {
-            unitRemoteObservable.notifyObservers(unitConfig);
+            UNIT_REMOTE_OBSERVABLE.notifyObservers(unitConfig);
         }
     }
 
@@ -92,7 +94,6 @@ public class UnitRemoteSynchronizer {
     private synchronized List<UnitRemote> getLoadedUnitRemotes() {
         return loadedUnitRemotes;
     }
-    
     private synchronized void incrementFailedRemotesNum() {
         failedRemotesNum++;
     }
@@ -148,21 +149,22 @@ public class UnitRemoteSynchronizer {
         //TODO currently problematic unitTypes...fix in future
         switch (unitType) {
             case AUDIO_SINK:
-//                new StateObservation(unitRemote, unitRemote.getDataClass());
+//                new StateObservation(unitRemote);
                 return;
             case AUDIO_SOURCE:
-//                new StateObservation(unitRemote, unitRemote.getDataClass());
+//                new StateObservation(unitRemote);
                 return;
             case CONNECTION:
-//                new StateObservation(unitRemote, unitRemote.getDataClass());
+//                new StateObservation(unitRemote);
                 return;
             case DEVICE:
-//                new StateObservation(unitRemote, unitRemote.getDataClass());
+//                new StateObservation(unitRemote);
                 return;
             case LOCATION:
-//                new StateObservation(unitRemote, unitRemote.getDataClass());
+//                new StateObservation(unitRemote);
                 return;
+            default:
         }
-        new StateObservation(unitRemote, unitRemote.getDataClass());
+        new StateObservation(unitRemote);
     }
 }

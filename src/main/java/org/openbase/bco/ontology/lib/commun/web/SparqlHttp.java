@@ -91,7 +91,7 @@ public interface SparqlHttp {
      */
     static boolean uploadSparqlRequest(final String sparql) {
         try {
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
             return true;
         } catch (IOException e) {
             // could not send to server - insert sparql update expression to buffer queue

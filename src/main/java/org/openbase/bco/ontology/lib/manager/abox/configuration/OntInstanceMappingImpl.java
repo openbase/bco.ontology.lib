@@ -39,6 +39,7 @@ import java.util.List;
 /**
  * @author agatting on 23.12.16.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class OntInstanceMappingImpl implements OntInstanceMapping {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntInstanceMappingImpl.class);
@@ -47,7 +48,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
      * {@inheritDoc}
      */
     @Override
-    public List<RdfTriple> getInsertConfigInstances(List<UnitConfig> unitConfigs) {
+    public List<RdfTriple> getInsertConfigInstances(final List<UnitConfig> unitConfigs) {
 
         final List<RdfTriple> triples = new ArrayList<>();
 
@@ -62,6 +63,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
     /**
      * {@inheritDoc}
      */
+    @Override
     public List<RdfTriple> getInsertStateAndServiceAndValueInstances() {
 
         final List<RdfTriple> triples = new ArrayList<>();

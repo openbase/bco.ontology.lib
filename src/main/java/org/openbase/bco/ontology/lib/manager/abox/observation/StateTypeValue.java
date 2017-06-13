@@ -35,7 +35,6 @@ import rst.domotic.state.DoorStateType.DoorState;
 import rst.domotic.state.EnablingStateType.EnablingState;
 import rst.domotic.state.HandleStateType.HandleState;
 import rst.domotic.state.IlluminanceStateType.IlluminanceState;
-import rst.domotic.state.IntensityStateType.IntensityState;
 import rst.domotic.state.InventoryStateType.InventoryState;
 import rst.domotic.state.MotionStateType.MotionState;
 import rst.domotic.state.PassageStateType.PassageState;
@@ -63,6 +62,7 @@ import java.util.Set;
  *
  * @author agatting on 22.02.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class StateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateTypeValue.class);
@@ -74,7 +74,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> actionStateValue(final ActionState actionState) {
+    Set<Pair<String, Boolean>> actionStateValue(final ActionState actionState) {
 
         final Set<Pair<String, Boolean>> actionValuePairSet = new HashSet<>();
         actionValuePairSet.add(new Pair<>(actionState.getValue().toString(), false));
@@ -89,7 +89,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> activationStateValue(final ActivationState activationState) {
+    Set<Pair<String, Boolean>> activationStateValue(final ActivationState activationState) {
 
         final Set<Pair<String, Boolean>> activationValuePairSet = new HashSet<>();
         activationValuePairSet.add(new Pair<>(activationState.getValue().toString(), false));
@@ -104,7 +104,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> alarmStateValue(final AlarmState alarmState) {
+    Set<Pair<String, Boolean>> alarmStateValue(final AlarmState alarmState) {
 
         final Set<Pair<String, Boolean>> alarmValuePairSet = new HashSet<>();
         alarmValuePairSet.add(new Pair<>(alarmState.getValue().toString(), false));
@@ -119,7 +119,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> batteryStateValue(final BatteryState batteryState) {
+    Set<Pair<String, Boolean>> batteryStateValue(final BatteryState batteryState) {
 
         final Set<Pair<String, Boolean>> batteryValuesPairSet = new HashSet<>();
         batteryValuesPairSet.add(new Pair<>(batteryState.getValue().toString(), false));
@@ -135,7 +135,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> blindStateValue(final BlindState blindState) {
+    Set<Pair<String, Boolean>> blindStateValue(final BlindState blindState) {
 
         final Set<Pair<String, Boolean>> blindValuePairSet = new HashSet<>();
         blindValuePairSet.add(new Pair<>(blindState.getMovementState().toString(), false));
@@ -151,7 +151,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> brightnessStateValue(final BrightnessState brightnessState) {
+    Set<Pair<String, Boolean>> brightnessStateValue(final BrightnessState brightnessState) {
 
         final Set<Pair<String, Boolean>> brightnessValuePairSet = new HashSet<>();
         final BrightnessState.DataUnit dataUnit = brightnessState.getBrightnessDataUnit();
@@ -177,7 +177,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> buttonStateValue(final ButtonState buttonState) {
+    Set<Pair<String, Boolean>> buttonStateValue(final ButtonState buttonState) {
 
         final Set<Pair<String, Boolean>> buttonValuePairSet = new HashSet<>();
         buttonValuePairSet.add(new Pair<>(buttonState.getValue().toString(), false));
@@ -192,7 +192,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> colorStateValue(final ColorState colorState) {
+    Set<Pair<String, Boolean>> colorStateValue(final ColorState colorState) {
 
         final Set<Pair<String, Boolean>> hsbValuesPairSet = new HashSet<>();
 
@@ -234,7 +234,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> contactStateValue(final ContactState contactState) {
+    Set<Pair<String, Boolean>> contactStateValue(final ContactState contactState) {
 
         final Set<Pair<String, Boolean>> contactValuePairSet = new HashSet<>();
         contactValuePairSet.add(new Pair<>(contactState.getValue().toString(), false));
@@ -249,7 +249,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> doorStateValue(final DoorState doorState) {
+    Set<Pair<String, Boolean>> doorStateValue(final DoorState doorState) {
 
         final Set<Pair<String, Boolean>> doorValuePairSet = new HashSet<>();
         doorValuePairSet.add(new Pair<>(doorState.getValue().toString(), false));
@@ -264,7 +264,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> enablingStateValue(final EnablingState enablingState) {
+    Set<Pair<String, Boolean>> enablingStateValue(final EnablingState enablingState) {
 
         final Set<Pair<String, Boolean>> enablingValuePairSet = new HashSet<>();
         enablingValuePairSet.add(new Pair<>(enablingState.getValue().toString(), false));
@@ -279,7 +279,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> handleStateValue(final HandleState handleState) {
+    Set<Pair<String, Boolean>> handleStateValue(final HandleState handleState) {
 
         final Set<Pair<String, Boolean>> handleValuePairSet = new HashSet<>();
         handleValuePairSet.add(new Pair<>("\"" + String.valueOf(handleState.getPosition()) + "\"^^xsd:double", true));
@@ -294,7 +294,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> illuminanceStateValue(final IlluminanceState illuminanceState) {
+    Set<Pair<String, Boolean>> illuminanceStateValue(final IlluminanceState illuminanceState) {
 
         final Set<Pair<String, Boolean>> illuminanceValuePairSet = new HashSet<>();
         final IlluminanceState.DataUnit dataUnit = illuminanceState.getIlluminanceDataUnit();
@@ -313,34 +313,6 @@ public class StateTypeValue {
         return illuminanceValuePairSet;
     }
 
-
-    /**
-     * Method returns state values of the given intensityState.
-     *
-     * @param intensityState The IntensityState.
-     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
-     * The size of the set describes the number of state values the individual state keeps.
-     */
-    @Deprecated
-    protected Set<Pair<String, Boolean>> intensityStateValue(final IntensityState intensityState) {
-
-        final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
-        final IntensityState.DataUnit dataUnit = intensityState.getIntensityDataUnit();
-
-        switch (dataUnit) {
-            case PERCENT:
-                intensityValuePairSet.add(new Pair<>("\"" + String.valueOf(intensityState.getIntensity()) + "\"^^NS:Percent", true));
-                break;
-            case UNKNOWN:
-                LOGGER.warn("Dropped intensity state value, cause dataUnit is UNKNOWN.");
-                break;
-            default:
-                LOGGER.warn("DataUnit of intensity state could not be detected. Please add " + dataUnit + " to ontologyManager implementation.");
-        }
-
-        return intensityValuePairSet;
-    }
-
     /**
      * Method returns state values of the given inventoryState.
      *
@@ -348,7 +320,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> inventoryStateValue(final InventoryState inventoryState) {
+    Set<Pair<String, Boolean>> inventoryStateValue(final InventoryState inventoryState) {
         //TODO no identification in ontology...
 
         final Set<Pair<String, Boolean>> inventoryValuePairSet = new HashSet<>();
@@ -366,7 +338,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> motionStateValue(final MotionState motionState) {
+    Set<Pair<String, Boolean>> motionStateValue(final MotionState motionState) {
 
         final Set<Pair<String, Boolean>> motionValuePairSet = new HashSet<>();
         motionValuePairSet.add(new Pair<>(motionState.getValue().toString(), false));
@@ -381,7 +353,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> passageStateValue(final PassageState passageState) {
+    Set<Pair<String, Boolean>> passageStateValue(final PassageState passageState) {
 
         final Set<Pair<String, Boolean>> passageValuePairSet = new HashSet<>();
 //        passageValuePairSet.add(new Pair<>(passageState..., false)); //TODO
@@ -396,7 +368,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> powerConsumptionStateValue(final PowerConsumptionState powerConsumptionState) {
+    Set<Pair<String, Boolean>> powerConsumptionStateValue(final PowerConsumptionState powerConsumptionState) {
 
         final Set<Pair<String, Boolean>> powerConsumptionValuePairSet = new HashSet<>();
         powerConsumptionValuePairSet.add(new Pair<>("\"" + String.valueOf(powerConsumptionState.getVoltage()) + "\"^^NS:Voltage", true));
@@ -413,7 +385,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> powerStateValue(final PowerState powerState) {
+    Set<Pair<String, Boolean>> powerStateValue(final PowerState powerState) {
 
         final Set<Pair<String, Boolean>> powerValuePairSet = new HashSet<>();
         powerValuePairSet.add(new Pair<>(powerState.getValue().toString(), false));
@@ -428,7 +400,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> presenceStateValue(final PresenceState presenceState) {
+    Set<Pair<String, Boolean>> presenceStateValue(final PresenceState presenceState) {
 
         final Set<Pair<String, Boolean>> presenceValuePairSet = new HashSet<>();
         presenceValuePairSet.add(new Pair<>(presenceState.getValue().toString(), false));
@@ -443,7 +415,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> rfidStateValue(final RFIDState rfidState) {
+    Set<Pair<String, Boolean>> rfidStateValue(final RFIDState rfidState) {
 
         final Set<Pair<String, Boolean>> rfidValuePairSet = new HashSet<>();
         rfidValuePairSet.add(new Pair<>("\"" + rfidState.getData().toString()  + "\"^^xsd:string", true));
@@ -458,7 +430,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> smokeStateValue(final SmokeState smokeState) {
+    Set<Pair<String, Boolean>> smokeStateValue(final SmokeState smokeState) {
 
         final Set<Pair<String, Boolean>> smokeValuePairSet = new HashSet<>();
         smokeValuePairSet.add(new Pair<>(smokeState.getValue().toString(), false));
@@ -474,7 +446,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> standbyStateValue(final StandbyState standbyState) {
+    Set<Pair<String, Boolean>> standbyStateValue(final StandbyState standbyState) {
 
         final Set<Pair<String, Boolean>> standbyValuePairSet = new HashSet<>();
         standbyValuePairSet.add(new Pair<>(standbyState.getValue().toString(), false));
@@ -489,7 +461,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> switchStateValue(final SwitchState switchState) {
+    Set<Pair<String, Boolean>> switchStateValue(final SwitchState switchState) {
 
         final Set<Pair<String, Boolean>> switchValuePairSet = new HashSet<>();
         switchValuePairSet.add(new Pair<>("\"" + String.valueOf(switchState.getPosition()) + "\"^^xsd:double", true));
@@ -504,7 +476,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> tamperStateValue(final TamperState tamperState) {
+    Set<Pair<String, Boolean>> tamperStateValue(final TamperState tamperState) {
 
         final Set<Pair<String, Boolean>> tamperValuePairSet = new HashSet<>();
         tamperValuePairSet.add(new Pair<>(tamperState.getValue().toString(), false));
@@ -519,7 +491,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> temperatureStateValue(final TemperatureState temperatureState) {
+    Set<Pair<String, Boolean>> temperatureStateValue(final TemperatureState temperatureState) {
 
         final Set<Pair<String, Boolean>> temperatureValuePairSet = new HashSet<>();
         final TemperatureState.DataUnit dataUnit = temperatureState.getTemperatureDataUnit();
@@ -531,7 +503,7 @@ public class StateTypeValue {
                 temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
                 break;
             case FAHRENHEIT:
-                temperature = ((temperatureState.getTemperature() - OntConfig.FREEZING_POINT_FAHRENHEIT) / 1.8);
+                temperature = ((temperatureState.getTemperature() - OntConfig.FREEZING_POINT_FAHRENHEIT) / OntConfig.FAHRENHEIT_DIVISOR);
                 temperatureValuePairSet.add(new Pair<>("\"" + String.valueOf(temperature) + "\"^^NS:Celsius", true));
                 break;
             case KELVIN:
@@ -555,7 +527,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> userActivityStateValue(final UserActivityState userActivityState) {
+    Set<Pair<String, Boolean>> userActivityStateValue(final UserActivityState userActivityState) {
 
         final Set<Pair<String, Boolean>> userActivityValuePairSet = new HashSet<>();
         userActivityValuePairSet.add(new Pair<>("\"" + userActivityState.getCurrentActivity().toString() + "\"^^NS:CurrentActivity", true));
@@ -571,7 +543,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> userPresenceStateValue(final UserPresenceState userPresenceState) {
+    Set<Pair<String, Boolean>> userPresenceStateValue(final UserPresenceState userPresenceState) {
 
         final Set<Pair<String, Boolean>> userPresenceValuePairSet = new HashSet<>();
         userPresenceValuePairSet.add(new Pair<>(userPresenceState.getValue().toString(), false));
@@ -586,7 +558,7 @@ public class StateTypeValue {
      * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
      * The size of the set describes the number of state values the individual state keeps.
      */
-    protected Set<Pair<String, Boolean>> windowStateValue(final WindowState windowState) {
+    Set<Pair<String, Boolean>> windowStateValue(final WindowState windowState) {
 
         final Set<Pair<String, Boolean>> windowValuePairSet = new HashSet<>();
         windowValuePairSet.add(new Pair<>(windowState.getValue().toString(), false));

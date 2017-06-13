@@ -40,6 +40,7 @@ import java.util.List;
 /**
  * @author agatting on 20.02.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class OntClassMappingImpl implements OntClassMapping {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntClassMappingImpl.class);
@@ -72,6 +73,7 @@ public class OntClassMappingImpl implements OntClassMapping {
                     case CONNECTION:
                         triples.addAll(getConnectionTypeClasses(unitConfig));
                         break;
+                    default:
                 }
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);

@@ -55,11 +55,6 @@ import java.util.Map;
 public final class OntConfig {
 
     /**
-     * Logger.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
-
-    /**
      * Namespace of the ontology.
      */
     public static final String NAMESPACE = "http://www.openbase.org/bco/ontology#";
@@ -72,7 +67,77 @@ public final class OntConfig {
     /**
      * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. POWER_STATE_SERVICE - powerStateService
      */
-    public final static Map<String, ServiceType> SERVICE_NAME_MAP = new HashMap<>();
+    public static final Map<String, ServiceType> SERVICE_NAME_MAP = new HashMap<>();
+
+    /**
+     * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. COLORABLE_LIGHT - colorableLight
+     */
+    public static final Map<String, UnitType> UNIT_NAME_MAP = new HashMap<>();
+
+    /**
+     * The ontology database URL.
+     */
+    private static String ontologyDbUrl;
+
+    /**
+     * The ontology ping URL.
+     */
+    private static String ontologyPingUrl;
+
+    /**
+     * The ontology scope (RSB).
+     */
+    private static String ontologyRsbScope;
+
+    /**
+     * The ontology mode.
+     */
+    private static boolean ontologyModeHistoricData;
+
+    /**
+     * DateTime format.
+     */
+    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
+     * A small retry period time in seconds.
+     */
+    public static final int SMALL_RETRY_PERIOD_SECONDS = 5;
+
+    /**
+     * A small retry period time in milliseconds.
+     */
+    public static final int SMALL_RETRY_PERIOD_MILLISECONDS = 5000;
+
+    /**
+     * Absolute zero point of temperature (Celsius).
+     */
+    public static final double ABSOLUTE_ZERO_POINT_CELSIUS = 273.15;
+
+    /**
+     * Freezing point of temperature (Fahrenheit).
+     */
+    public static final double FREEZING_POINT_FAHRENHEIT = 32.0;
+
+    /**
+     * Divisor for temperature (Celsius to Fahrenheit).
+     */
+    public static final double FAHRENHEIT_DIVISOR = 1.8;
+
+    /**
+     * Tolerance of heartbeat communication.
+     */
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
+
+    /**
+     * The size of the transaction buffer.
+     */
+    public static final int TRANSACTION_BUFFER_SIZE = 10000000;
+
+    /**
+     * Logger.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
 
     static {
         for (final ServiceType serviceType : ServiceType.values()) {
@@ -84,14 +149,7 @@ public final class OntConfig {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }
-    }
 
-    /**
-     * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. COLORABLE_LIGHT - colorableLight
-     */
-    public final static Map<String, UnitType> UNIT_NAME_MAP = new HashMap<>();
-
-    static {
         for (final UnitType unitType : UnitType.values()) {
             try {
                 if (unitType != null) {
@@ -101,6 +159,31 @@ public final class OntConfig {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }
+
+        try {
+            ontologyDbUrl = JPService.getProperty(JPOntologyDBURL.class).getValue();
+            ontologyPingUrl = JPService.getProperty(JPOntologyPingURL.class).getValue();
+            ontologyRsbScope = JPService.getProperty(JPOntologyRSBScope.class).getValue();
+            ontologyModeHistoricData = JPService.getProperty(JPOntologyMode.class).getValue();
+        } catch (JPNotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+    }
+
+    public static String getOntologyDbUrl() {
+        return ontologyDbUrl;
+    }
+
+    public static String getOntologyPingUrl() {
+        return ontologyPingUrl;
+    }
+
+    public static String getOntologyRsbScope() {
+        return ontologyRsbScope;
+    }
+
+    public static boolean getOntologyModeHistoricData() {
+        return ontologyModeHistoricData;
     }
 
     /**
@@ -145,48 +228,37 @@ public final class OntConfig {
     }
 
     /**
-     * The ontology database URL.
+     * Enum contains the different period types.
      */
-    public static String ONTOLOGY_DB_URL = "";
-
-    /**
-     * The ontology ping URL.
-     */
-    public static String ONTOLOGY_PING_URL = "";
-
-    /**
-     * The ontology scope (RSB).
-     */
-    public static String ONTOLOGY_RSB_SCOPE = "";
-
-    /**
-     * The ontology mode.
-     */
-    public static boolean ONTOLOGY_MODE_HISTORIC_DATA;
-
-    static {
-        try {
-            ONTOLOGY_DB_URL = JPService.getProperty(JPOntologyDBURL.class).getValue();
-            ONTOLOGY_PING_URL = JPService.getProperty(JPOntologyPingURL.class).getValue();
-            ONTOLOGY_RSB_SCOPE = JPService.getProperty(JPOntologyRSBScope.class).getValue();
-            ONTOLOGY_MODE_HISTORIC_DATA = JPService.getProperty(JPOntologyMode.class).getValue();
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        }
-    }
-
-    public static final int BACKDATED_BEGINNING_OF_PERIOD = 1;
-
-    public static final Period PERIOD_FOR_AGGREGATION = Period.DAY;
-
     public enum Period {
+
+        /**
+         * Period hour.
+         */
         HOUR,
+        /**
+         * Period day.
+         */
         DAY,
+        /**
+         * Period week.
+         */
         WEEK,
+        /**
+         * Period month.
+         */
         MONTH,
+        /**
+         * Period year.
+         */
         YEAR
     }
 
+    /**
+     * Method returns the correct decimal format for timestamp transformation.
+     *
+     * @return the decimal format.
+     */
     public static DecimalFormat decimalFormat() {
         final DecimalFormat decimalFormat = new DecimalFormat("#.###");
         final DecimalFormatSymbols decimalFormatSymbols = decimalFormat.getDecimalFormatSymbols();
@@ -560,41 +632,6 @@ public final class OntConfig {
             return this.methodRegEx;
         }
     }
-
-    /**
-     * DateTime format.
-     */
-    public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-
-    /**
-     * A small retry period time in seconds.
-     */
-    public static final int SMALL_RETRY_PERIOD_SECONDS = 5;
-
-    /**
-     * A small retry period time in milliseconds.
-     */
-    public static final int SMALL_RETRY_PERIOD_MILLISECONDS = 5000;
-
-    /**
-     * A big retry period time in seconds.
-     */
-    public static final int BIG_RETRY_PERIOD_SECONDS = 30;
-
-    /**
-     * Absolute zero point of temperature (Celsius).
-     */
-    public static final double ABSOLUTE_ZERO_POINT_CELSIUS = 273.15;
-
-    /**
-     * Freezing point of temperature (Fahrenheit)
-     */
-    public static final double FREEZING_POINT_FAHRENHEIT = 32.0;
-
-    /**
-     * Tolerance of heartbeat communication.
-     */
-    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
 
     /**
      * Method tests the ontology elements of the configuration class (valid - e.g. no spelling mistake). Errors are printed via ExceptionPrinter.

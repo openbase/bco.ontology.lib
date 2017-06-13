@@ -39,6 +39,7 @@ import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 /**
  * @author agatting on 21.12.16.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class OntRelationMappingImpl implements OntRelationMapping {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OntRelationMappingImpl.class);
@@ -131,23 +132,24 @@ public class OntRelationMappingImpl implements OntRelationMapping {
      * {@inheritDoc}
      */
     @Override
-    public List<RdfTriple> getInsertStateRelations(List<ServiceType> serviceTypes) {
+    public List<RdfTriple> getInsertStateRelations(final List<ServiceType> serviceTypes) {
 
         final List<RdfTriple> triples = new ArrayList<>();
+        List<ServiceType> serviceTypesBuf = new ArrayList<>();
         MultiException.ExceptionStack exceptionStack = null;
 
         if (serviceTypes == null) {
-            serviceTypes = new ArrayList<>();
-
             for (final ServiceType serviceType : ServiceType.values()) {
                 if (serviceType.equals(ServiceType.UNKNOWN)) {
                     continue;
                 }
-                serviceTypes.add(serviceType);
+                serviceTypesBuf.add(serviceType);
             }
+        } else {
+            serviceTypesBuf = serviceTypes;
         }
 
-        for (final ServiceType serviceType : serviceTypes) {
+        for (final ServiceType serviceType : serviceTypesBuf) {
             try {
                 triples.add(getInsertStateRelation(serviceType));
             } catch (NotAvailableException e) {

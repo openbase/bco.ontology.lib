@@ -61,7 +61,7 @@ public class DataTripleCollection extends DataAssignation {
             final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectData());
 
             // send aggregated values ...
-            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ONTOLOGY_DB_URL, 0);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.getOntologyDbUrl(), 0);
 
 //            // delete unused connectionPhases (old)
 //            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
@@ -92,12 +92,12 @@ public class DataTripleCollection extends DataAssignation {
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");
-            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.ONTOLOGY_DB_URL, 0);
+            SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.getOntologyDbUrl(), 0);
 
             // delete unused aggregations (old)
             final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom.toString())
                     , StringModifier.addXsdDateTime(dateTimeUntil.toString()));
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL, 0);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl(), 0);
         }
     }
 

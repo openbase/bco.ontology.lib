@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- * <p>
+ *
  * This file is part of org.openbase.bco.ontology.lib.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartbeatPhase;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
-import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -59,15 +58,26 @@ import java.util.concurrent.TimeUnit;
  */
 public final class OntologyManagerController implements Launchable<Void>, VoidInitializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
+    /**
+     * Informs observer about new units.
+     */
+    public static final ObservableImpl<List<UnitConfig>> NEW_UNIT_CONFIG_OBSERVABLE = new ObservableImpl<>();
+
+    /**
+     * Informs observer about updated units.
+     */
+    public static final ObservableImpl<List<UnitConfig>> UPDATED_UNIT_CONFIG_OBSERVABLE = new ObservableImpl<>();
+
+    /**
+     * Informs observer about removed units.
+     */
+    public static final ObservableImpl<List<UnitConfig>> REMOVED_UNIT_CONFIG_OBSERVABLE = new ObservableImpl<>();
 
     static {
         DefaultConverterRepository.getDefaultConverterRepository().addConverter(new ProtocolBufferConverter<>(OntologyChange.newBuilder().build()));
     }
 
-    public static final ObservableImpl<List<UnitConfig>> newUnitConfigObservable = new ObservableImpl<>();
-    public static final ObservableImpl<List<UnitConfig>> updatedUnitConfigObservable = new ObservableImpl<>();
-    public static final ObservableImpl<List<UnitConfig>> removedUnitConfigObservable = new ObservableImpl<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(OntologyManagerController.class);
 
     private ProtobufListDiff<String, UnitConfig, UnitConfig.Builder> registryDiff;
     private UnitRegistryRemote unitRegistryRemote;
@@ -82,14 +92,12 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 LOGGER.info("Debug Mode");
             }
 
-            new TransactionBuffer();
             new HeartbeatPhase();
             new UnitRegistrySynchronizer();
             new UnitRemoteSynchronizer();
 
             final List<UnitConfig> unitConfigs = getUnitConfigs();
-            newUnitConfigObservable.notifyObservers(unitConfigs);
-            //TODO notify unitRemoteSynchronizer...
+            NEW_UNIT_CONFIG_OBSERVABLE.notifyObservers(unitConfigs);
 
             this.unitRegistryObserver = (observable, unitRegistryData) -> startUpdateObserver(unitRegistryData);
             this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
@@ -112,7 +120,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void init() throws InitializationException, InterruptedException {
         try {
             // upload ontModel
-            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.ONTOLOGY_DB_URL, 0);
+            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
         } catch (NotAvailableException e) {
             throw new InitializationException("Could not upload ontology model!", e);
         }
@@ -157,16 +165,16 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         try {
             if (!identifiableNewMessageMap.isEmpty()) {
                 final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableNewMessageMap.getMessages());
-                newUnitConfigObservable.notifyObservers(unitConfigs);
+                NEW_UNIT_CONFIG_OBSERVABLE.notifyObservers(unitConfigs);
             }
 
             if (!identifiableUpdatedMessageMap.isEmpty()) {
                 final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableUpdatedMessageMap.getMessages());
-                updatedUnitConfigObservable.notifyObservers(unitConfigs);
+                UPDATED_UNIT_CONFIG_OBSERVABLE.notifyObservers(unitConfigs);
             }
             if (!identifiableRemovedMessageMap.isEmpty()) {
                 final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableRemovedMessageMap.getMessages());
-                removedUnitConfigObservable.notifyObservers(unitConfigs);
+                REMOVED_UNIT_CONFIG_OBSERVABLE.notifyObservers(unitConfigs);
             }
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

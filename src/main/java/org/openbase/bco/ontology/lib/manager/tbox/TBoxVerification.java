@@ -42,11 +42,11 @@ public interface TBoxVerification {
     static boolean isOntClassExisting(final String className, OntModel ontModel) throws IOException, NotAvailableException {
 
         // add namespace to className. Throw IllegalArgumentException if parameter is null
-        final String classNameWithNS = StringModifier.addBcoNamespace(className, true);
+        String classNameWithNS = StringModifier.addBcoNamespace(className, true);
 
-        if (ontModel == null) {
+//        if (ontModel == null) {
 //            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPTBoxDatabaseURL.class).getValue());
-        }
+//        }
         return ontModel.getOntClass(classNameWithNS) != null;
     }
 
@@ -63,11 +63,11 @@ public interface TBoxVerification {
     static boolean isOntPropertyExisting(final String propertyName, OntModel ontModel) throws NotAvailableException, IOException {
 
         // add namespace to propertyName. Throw IllegalArgumentException if parameter is null
-        final String propertyNameWithNS = StringModifier.addBcoNamespace(propertyName, true);
+        String propertyNameWithNS = StringModifier.addBcoNamespace(propertyName, true);
 
-        if (ontModel == null) {
+//        if (ontModel == null) {
 //            ontModel = OntModelHttp.downloadModelFromServer(JPService.getProperty(JPOntologyTBoxDatabaseURL.class).getValue());
-        }
+//        }
         return ontModel.getOntProperty(propertyNameWithNS) != null;
     }
 

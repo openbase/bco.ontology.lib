@@ -122,7 +122,7 @@ public class TriggerFactory implements Factory {
     }
 
     private void initRsb() throws CouldNotPerformException, InterruptedException {
-        final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(OntConfig.ONTOLOGY_RSB_SCOPE);
+        final RSBListener rsbListener = RSBFactoryImpl.getInstance().createSynchronizedListener(OntConfig.getOntologyRsbScope());
 
         rsbListener.activate();
         rsbListener.addHandler(event -> {

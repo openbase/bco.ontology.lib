@@ -32,14 +32,14 @@ public interface OntClassMapping {
      * Method returns the triple information to insert the ontology classes based on the given unitConfigs.
      *
      * @param unitConfigs The unitConfigs, which contains the unit types or rather ontology class information.
-     * @return A list of triples, which contains the ontology classes.
+     * @return a list of triples, which contains the ontology classes.
      */
     List<RdfTriple> getUnitTypeClasses(final List<UnitConfig> unitConfigs);
 
     /**
      * Method returns the triple information to insert ALL ontology classes.
      *
-     * @return A list of triples, which contains the ontology classes.
+     * @return a list of triples, which contains the ontology classes.
      */
     List<RdfTriple> getUnitTypeClasses();
 }

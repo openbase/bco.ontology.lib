@@ -72,9 +72,9 @@ public class UnitRegistrySynchronizer {
 
         rstConfigData();
 
-        OntologyManagerController.newUnitConfigObservable.addObserver(newUnitConfigObserver);
-        OntologyManagerController.updatedUnitConfigObservable.addObserver(updatedUnitConfigObserver);
-//        OntologyManagerController.removedUnitConfigObservable.addObserver(removedUnitConfigObserver);
+        OntologyManagerController.NEW_UNIT_CONFIG_OBSERVABLE.addObserver(newUnitConfigObserver);
+        OntologyManagerController.UPDATED_UNIT_CONFIG_OBSERVABLE.addObserver(updatedUnitConfigObserver);
+//        OntologyManagerController.REMOVED_UNIT_CONFIG_OBSERVABLE.addObserver(removedUnitConfigObserver);
     }
 
     private void rstConfigData() {
@@ -157,7 +157,7 @@ public class UnitRegistrySynchronizer {
             }
 
             // upload to ontology server
-            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
+            SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
         } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         } catch (IOException e) {

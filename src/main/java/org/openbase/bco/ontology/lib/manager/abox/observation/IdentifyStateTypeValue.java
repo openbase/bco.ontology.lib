@@ -60,7 +60,7 @@ public class IdentifyStateTypeValue extends StateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IdentifyStateTypeValue.class);
 
-    protected List<RdfTriple> addStateValue(final ServiceType serviceType, final Object stateObject, final String subjectObservation
+    List<RdfTriple> addStateValue(final ServiceType serviceType, final Object stateObject, final String subjectObservation
             , final List<RdfTriple> rdfTripleArrayListsBuf) {
 
         final Set<Pair<String, Boolean>> stateTypeAndIsLiteral = identifyState(serviceType, stateObject);

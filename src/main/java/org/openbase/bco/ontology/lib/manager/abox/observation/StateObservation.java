@@ -62,9 +62,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
+ * Class creates an instance of an observation, which is used for an unit. The observation sends the state data with timestamp to the ontology server.
+ *
+ * @param <Type> is used to identify the unit data class.
  * @author agatting on 09.01.17.
  */
-public class StateObservation<T> extends IdentifyStateTypeValue {
+public class StateObservation<Type> extends IdentifyStateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final SimpleDateFormat dateFormat;
@@ -74,7 +77,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
     private final ConnectionPhase connectionPhase;
-    private T observerData;
+    private Type observerData;
 
     private final RecurrenceEventFilter recurrenceEventFilter = new RecurrenceEventFilter(1) {
         @Override
@@ -87,17 +90,23 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     };
 
-    public StateObservation(final UnitRemote unitRemote, final Class data) throws InstantiationException {
+    /**
+     * Constructor initiates the observation of the input unitRemote to detect the state value and send it to the ontology server.
+     *
+     * @param unitRemote contains the state data, which should be observed.
+     * @throws InstantiationException is thrown in case the observation could not be initiated, because at least one component failed.
+     */
+    public StateObservation(final UnitRemote unitRemote) throws InstantiationException {
         try {
-            this.methodSetStateType = ReflectionUtility.detectMethods(data, MethodRegEx.STATE_METHOD.getName(), Pattern.CASE_INSENSITIVE);
+            this.methodSetStateType = ReflectionUtility.detectMethods(unitRemote.getDataClass(), MethodRegEx.STATE_METHOD.getName(), Pattern.CASE_INSENSITIVE);
             this.unitType = unitRemote.getType();
-            this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_RSB_SCOPE, OntologyChange.class);
+            this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.getOntologyRsbScope(), OntologyChange.class);
             this.stopwatch = new Stopwatch();
             this.remoteUnitId = unitRemote.getId().toString();
             this.connectionPhase = new ConnectionPhase(unitRemote);
             this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
 
-            final Observer<T> unitRemoteStateObserver = (final Observable<T> observable, final T remoteData) -> {
+            final Observer<Type> unitRemoteStateObserver = (final Observable<Type> observable, final Type remoteData) -> {
                 this.observerData = remoteData;
                 recurrenceEventFilter.trigger();
             };
@@ -112,7 +121,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
         }
     }
 
-    private void stateUpdate(final T remoteData) throws InterruptedException, CouldNotPerformException {
+    private void stateUpdate(final Type remoteData) throws InterruptedException, CouldNotPerformException {
         final List<ServiceType> services = new ArrayList<>();
         // main list, which contains complete observation instances
         final List<RdfTriple> insert = new ArrayList<>();
@@ -128,17 +137,17 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 stopwatch.waitForStop(1);
 
                 // get method as invoked object
-                final Object obj_stateType = methodStateType.invoke(remoteData);
+                final Object stateType = methodStateType.invoke(remoteData);
 
                 //### timeStamp triple ###\\
                 final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectionUtility
-                        .invokeMethod(obj_stateType, MethodRegEx.GET_TIMESTAMP.getName(), Pattern.CASE_INSENSITIVE);
+                        .invokeMethod(stateType, MethodRegEx.GET_TIMESTAMP.getName(), Pattern.CASE_INSENSITIVE);
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());
                     final String obsInstName;
 
-                    if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
+                    if (OntConfig.getOntologyModeHistoricData()) {
                         final String dateTimeNow = OffsetDateTime.now().toString();
                         obsInstName = OntConfig.OntPrefix.OBSERVATION.getName() + remoteUnitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
                     } else {
@@ -147,8 +156,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                     }
 
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
-                    final String obj_dateTime = StringModifier.addXsdDateTime(dateFormat.format(timestamp));
-                    insertBuf.add(new RdfTriple(obsInstName, OntProp.TIME_STAMP.getName(), obj_dateTime));
+                    final String timestampLiteral = StringModifier.addXsdDateTime(dateFormat.format(timestamp));
+                    insertBuf.add(new RdfTriple(obsInstName, OntProp.TIME_STAMP.getName(), timestampLiteral));
 
                     //### add observation instance to observation class ###\\
                     insertBuf.add(new RdfTriple(obsInstName, OntExpr.IS_A.getName(), OntCl.OBSERVATION.getName()));
@@ -162,7 +171,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
                     //### stateValue triple ###\\
                     final int sizeBuf = insertBuf.size(); //TODO
-                    insertBuf = addStateValue(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName), obj_stateType, obsInstName, insertBuf);
+                    insertBuf = addStateValue(OntConfig.SERVICE_NAME_MAP.get(serviceTypeName), stateType, obsInstName, insertBuf);
 
                     if (insertBuf.size() == sizeBuf) {
                         // incomplete observation instance. dropped...
@@ -186,7 +195,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
         final String sparql;
 
-        if (OntConfig.ONTOLOGY_MODE_HISTORIC_DATA) {
+        if (OntConfig.getOntologyModeHistoricData()) {
             sparql = SparqlUpdateExpression.getSparqlInsertExpression(insert);
         } else {
             sparql = SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, StaticSparqlExpression.getNullWhereExpression());

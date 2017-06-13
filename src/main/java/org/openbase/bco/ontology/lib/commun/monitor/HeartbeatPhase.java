@@ -93,7 +93,7 @@ public class HeartbeatPhase {
     }
 
     private QuerySolution getQuerySolutionFromOntDB(final String queryExpression) throws IOException, NotAvailableException {
-        final ResultSet resultSet = SparqlHttp.sparqlQuery(queryExpression, OntConfig.ONTOLOGY_DB_URL);
+        final ResultSet resultSet = SparqlHttp.sparqlQuery(queryExpression, OntConfig.getOntologyDbUrl());
 
         if (resultSet == null || !resultSet.hasNext()) {
             throw new NotAvailableException("Could not get resultSet of query, because query result is invalid! Query wrong?");
@@ -125,7 +125,7 @@ public class HeartbeatPhase {
                     insert.add(new RdfTriple(heartbeatPhaseInst, OntProp.LAST_CONNECTION.getName(), timestampLiteral));
                     insert.add(new RdfTriple(OntInst.RECENT_HEARTBEAT.getName(), OntProp.LAST_CONNECTION.getName(), timestampLiteral));
 
-                    SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, null), OntConfig.ONTOLOGY_DB_URL);
+                    SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, null), OntConfig.getOntologyDbUrl());
                     LOGGER.info(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, null));
                 } else {
                     // lastHeartBeat timestamp isn't in time. set new heartbeatPhase
@@ -158,7 +158,7 @@ public class HeartbeatPhase {
                 insert.add(new RdfTriple(heartbeatPhaseInst, OntProp.FIRST_CONNECTION.getName(), timestampLiteral));
                 insert.add(new RdfTriple(heartbeatPhaseInst, OntProp.LAST_CONNECTION.getName(), timestampLiteral));
 
-                SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSeparatedSparqlUpdateExpression(delete, insert, null), OntConfig.ONTOLOGY_DB_URL);
+                SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSeparatedSparqlUpdateExpression(delete, insert, null), OntConfig.getOntologyDbUrl());
                 return;
             } catch (IOException e) {
                 ExceptionPrinter.printHistory("Retry...", e, LOGGER, LogLevel.WARN);

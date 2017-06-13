@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- * <p>
+ *
  * This file is part of org.openbase.bco.ontology.lib.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -22,7 +22,6 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
-import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
@@ -41,43 +40,50 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 17.01.17.
  */
-public class TransactionBuffer {
+public final class TransactionBuffer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionBuffer.class);
-    private static final Queue<String> queue = new LinkedBlockingQueue<>();
+    private static final Queue<String> QUEUE = new LinkedBlockingQueue<>();
     private static RSBInformer<OntologyChange> rsbInformer;
 
     static {
         try {
-            rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_RSB_SCOPE, OntologyChange.class);
-        } catch (InstantiationException e) {
+            new TransactionBuffer();
+            rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.getOntologyRsbScope(), OntologyChange.class);
+        } catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
     }
 
-    public TransactionBuffer() throws CouldNotPerformException {
+    /**
+     * Constructor for TransactionBuffer.
+     *
+     * @throws CouldNotPerformException is thrown in case the thread to perform the transaction buffer could not be performed.
+     */
+    private TransactionBuffer() throws CouldNotPerformException {
         startUploadQueueEntriesThread();
     }
 
     private void startUploadQueueEntriesThread() throws CouldNotPerformException {
         try {
             GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-                while (!queue.isEmpty()) {
-                    final String sparql = queue.peek();
+                System.out.println("hellooooooo");
+                while (!QUEUE.isEmpty()) {
+                    final String sparql = QUEUE.peek();
 
                     try {
-                        SparqlHttp.uploadSparqlRequest(sparql, OntConfig.ONTOLOGY_DB_URL);
-                        queue.poll();
+                        SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
+                        QUEUE.poll();
                     } catch (CouldNotPerformException e) {
-                        queue.poll();
-                        ExceptionPrinter.printHistory("Dropped broken queue entry.", e, LOGGER, LogLevel.ERROR);
+                        QUEUE.poll();
+                        ExceptionPrinter.printHistory("Dropped broken QUEUE entry.", e, LOGGER, LogLevel.ERROR);
                     } catch (IOException e) {
                         LOGGER.warn("IOException: no connection...Retry...");
                         break;
                     }
 
                     try {
-                        if (queue.isEmpty()) {
+                        if (QUEUE.isEmpty()) {
                             final OntologyChange ontologyChange = OntologyChange.newBuilder().addCategory(OntologyChange.Category.UNKNOWN).build();
 
                             rsbInformer.activate();
@@ -96,14 +102,14 @@ public class TransactionBuffer {
     }
 
     /**
-     * Method inserts a sparql expression to the transaction buffer (queue). If the queue reaches the capacity than the first entry is removed to avoid overflow.
+     * Method inserts a sparql expression to the transaction buffer (QUEUE). If the QUEUE reaches the capacity than the first entry is removed to avoid overflow.
      *
      * @param sparql is the sparql update expression.
      */
     public static void insertData(final String sparql) {
-        if (queue.size() > Integer.MAX_VALUE - 100) {
-            queue.poll();
+        if (QUEUE.size() > OntConfig.TRANSACTION_BUFFER_SIZE) {
+            QUEUE.poll();
         }
-        queue.offer(sparql);
+        QUEUE.offer(sparql);
     }
 }
