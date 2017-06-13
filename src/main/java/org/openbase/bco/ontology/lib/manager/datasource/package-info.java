@@ -20,4 +20,4 @@
 /**
  * @author agatting on 11.01.17.
  */
-package org.openbase.bco.ontology.lib.manager.datapool;
+package org.openbase.bco.ontology.lib.manager.datasource;

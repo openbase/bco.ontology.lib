@@ -538,7 +538,12 @@ public final class OntConfig {
         /**
          * Pattern for method name part.
          */
-        GET_TIMESTAMP("getTimestamp");
+        GET_TIMESTAMP("^getTimestamp$"),
+
+        /**
+         * Pattern for state method names.
+         */
+        STATE_METHOD("(?s)^get.*state$");
 
         private final String methodRegEx;
 

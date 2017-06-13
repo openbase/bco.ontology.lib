@@ -19,7 +19,6 @@
 package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.RdfTriple;
 
 import java.util.ArrayList;
 import java.util.List;

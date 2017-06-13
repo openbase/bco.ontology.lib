@@ -16,13 +16,13 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.manager.datapool;
+package org.openbase.bco.ontology.lib.manager.datasource;
 
 import org.openbase.bco.ontology.lib.OntologyManagerController;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
 import org.openbase.bco.ontology.lib.manager.abox.configuration.OntRelationMappingImpl;
-import org.openbase.bco.ontology.lib.utility.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMapping;
 import org.openbase.bco.ontology.lib.manager.tbox.OntClassMappingImpl;

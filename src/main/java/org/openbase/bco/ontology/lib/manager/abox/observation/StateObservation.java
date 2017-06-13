@@ -20,8 +20,8 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.manager.datapool.ObjectReflection;
-import org.openbase.bco.ontology.lib.utility.RdfTriple;
+import org.openbase.bco.ontology.lib.utility.ReflectionUtility;
+import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author agatting on 09.01.17.
@@ -88,7 +89,7 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
     public StateObservation(final UnitRemote unitRemote, final Class data) throws InstantiationException {
         try {
-            this.methodSetStateType = ObjectReflection.getMethodSetByRegEx(data, MethodRegEx.GET.getName(), MethodRegEx.STATE.getName());
+            this.methodSetStateType = ReflectionUtility.detectMethods(data, MethodRegEx.STATE_METHOD.getName(), Pattern.CASE_INSENSITIVE);
             this.unitType = unitRemote.getType();
             this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.ONTOLOGY_RSB_SCOPE, OntologyChange.class);
             this.stopwatch = new Stopwatch();
@@ -103,7 +104,6 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
 
             final Observer<ConnectionState> unitRemoteConnectionObserver = (final Observable<ConnectionState> observable
                     , final ConnectionState connectionState) -> connectionPhase.identifyConnectionState(connectionState);
-
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
 
@@ -131,8 +131,8 @@ public class StateObservation<T> extends IdentifyStateTypeValue {
                 final Object obj_stateType = methodStateType.invoke(remoteData);
 
                 //### timeStamp triple ###\\
-                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ObjectReflection
-                        .getInvokedObject(obj_stateType , MethodRegEx.GET_TIMESTAMP.getName());
+                final TimestampType.Timestamp stateTimestamp = (TimestampType.Timestamp) ReflectionUtility
+                        .invokeMethod(obj_stateType, MethodRegEx.GET_TIMESTAMP.getName(), Pattern.CASE_INSENSITIVE);
 
                 if (stateTimestamp.hasTime() && stateTimestamp.getTime() != 0) {
                     final String serviceTypeName = StringModifier.getServiceTypeNameFromStateMethodName(methodStateType.getName());

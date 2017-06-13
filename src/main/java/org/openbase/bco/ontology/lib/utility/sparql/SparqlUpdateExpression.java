@@ -20,11 +20,9 @@ package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.RdfTriple;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
