@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 public interface ReflectionUtility {
 
     /**
-     * Method detects a method by input name & class object and returns the invoked result of the method.
+     * Method detects a method by input name and returns the invoked result of the method.
      *
      * @param object is the object, which the method is invoked from.
      * @param regEx is the regular expression, which should be matched with the method name.
