@@ -75,26 +75,6 @@ public final class OntConfig {
     public static final Map<String, UnitType> UNIT_NAME_MAP = new HashMap<>();
 
     /**
-     * The ontology database URL.
-     */
-    private static String ontologyDbUrl;
-
-    /**
-     * The ontology ping URL.
-     */
-    private static String ontologyPingUrl;
-
-    /**
-     * The ontology scope (RSB).
-     */
-    private static String ontologyRsbScope;
-
-    /**
-     * The ontology mode.
-     */
-    private static boolean ontologyModeHistoricData;
-
-    /**
      * DateTime format.
      */
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
@@ -127,7 +107,7 @@ public final class OntConfig {
     /**
      * Tolerance of heartbeat communication.
      */
-    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS + 10;
+    public static final int HEART_BEAT_TOLERANCE = SMALL_RETRY_PERIOD_SECONDS * 3;
 
     /**
      * The size of the transaction buffer.
@@ -135,9 +115,39 @@ public final class OntConfig {
     public static final int TRANSACTION_BUFFER_SIZE = 10000000;
 
     /**
+     * All listed location types, which are subsets of the class Location.
+     */
+    public static final String[] LOCATION_CATEGORIES = new String[] {"Region", "Tile", "Zone"};
+
+    /**
+     * All listed connection types, which are subsets of the class Connection.
+     */
+    public static final String[] CONNECTION_CATEGORIES = new String[] {"Door", "Passage", "Window"};
+
+    /**
      * Logger.
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(OntConfig.class);
+
+    /**
+     * The ontology database URL.
+     */
+    private static String ontologyDbUrl;
+
+    /**
+     * The ontology ping URL.
+     */
+    private static String ontologyPingUrl;
+
+    /**
+     * The ontology scope (RSB).
+     */
+    private static String ontologyRsbScope;
+
+    /**
+     * The ontology mode.
+     */
+    private static boolean ontologyModeHistoricData;
 
     static {
         for (final ServiceType serviceType : ServiceType.values()) {
@@ -153,7 +163,7 @@ public final class OntConfig {
         for (final UnitType unitType : UnitType.values()) {
             try {
                 if (unitType != null) {
-                    UNIT_NAME_MAP.put(StringModifier.firstCharToLowerCase(StringModifier.getUnitTypeName(unitType)), unitType);
+                    UNIT_NAME_MAP.put(StringModifier.getUnitTypeName(unitType), unitType);
                 }
             } catch (NotAvailableException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
@@ -170,18 +180,38 @@ public final class OntConfig {
         }
     }
 
+    /**
+     * Getter for ontology database url.
+     *
+     * @return the ontology database url.
+     */
     public static String getOntologyDbUrl() {
         return ontologyDbUrl;
     }
 
+    /**
+     * Getter for ontology ping url.
+     *
+     * @return the ontology ping url.
+     */
     public static String getOntologyPingUrl() {
         return ontologyPingUrl;
     }
 
+    /**
+     * Getter for ontology rsb scope.
+     *
+     * @return the ontology rsb scope.
+     */
     public static String getOntologyRsbScope() {
         return ontologyRsbScope;
     }
 
+    /**
+     * Getter for ontology mode to save historic data or current state values only.
+     *
+     * @return the ontology mode.
+     */
     public static boolean getOntologyModeHistoricData() {
         return ontologyModeHistoricData;
     }
@@ -396,7 +426,6 @@ public final class OntConfig {
      */
     public enum OntProp {
         // ### object properties of ontology ###
-
         /**
          * hasSubLocation (object property).
          */
@@ -643,7 +672,6 @@ public final class OntConfig {
     public void initialTestConfig() throws InterruptedException, NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
-//        final OntModel ontModel = OntModelHttp.getTBoxModelViaRetry();
         final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, null);
 
 

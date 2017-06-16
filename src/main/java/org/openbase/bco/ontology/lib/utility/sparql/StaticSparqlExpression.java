@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,23 @@ public class StaticSparqlExpression {
         where.add(new RdfTriple(null, null, null));
         return where;
     }
+
+    public static final String queryURIs =
+            "PREFIX sp: <http://spinrdf.org/sp#> "
+            + "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "SELECT ?y WHERE { "
+                + "{ "
+                    + "?x sp:object ?y . "
+                + "} UNION { "
+                    + "?x sp:subject ?y . "
+                + "} "
+                + "FILTER(isURI(?y)) . "
+                + "FILTER (regex(str(?y), " + StringModifier.addQuotationMarks(OntConfig.NAMESPACE) + ")) . "
+                + "FILTER NOT EXISTS { ?x sp:predicate NS:hasStateValue } "
+                + "FILTER NOT EXISTS { ?x sp:object NS:Observation } "
+                + "FILTER NOT EXISTS { ?x sp:subject NS:Observation } "
+                // more filter criteria can be placed here ...
+            + "} ";
 
     /**
      * Method returns a sparql update string, which identifies and fill the latest connectionPhase instance of each unit. If a connectionPhase is incomplete,

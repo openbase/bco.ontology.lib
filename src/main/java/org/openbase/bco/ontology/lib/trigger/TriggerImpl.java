@@ -101,12 +101,12 @@ public class TriggerImpl implements Trigger {
     }
 
     @Override
-    public void addObserver(Observer<ActivationState.State> observer) {
+    public void addObserver(final Observer<ActivationState.State> observer) {
         activationObservable.addObserver(observer);
     }
 
     @Override
-    public void removeObserver(Observer<ActivationState.State> observer) {
+    public void removeObserver(final Observer<ActivationState.State> observer) {
         activationObservable.removeObserver(observer);
     }
 
@@ -174,6 +174,11 @@ public class TriggerImpl implements Trigger {
         return false;
     }
 
+    /**
+     * Getter for trigger config, which includes unit types, service types and categories.
+     *
+     * @return the trigger config.
+     */
     public TriggerConfig getTriggerConfig() {
         return triggerConfig;
     }
