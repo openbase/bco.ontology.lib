@@ -25,6 +25,8 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.trigger.sparql.QueryParser;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
+import org.openbase.jul.exception.MultiException;
+import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
@@ -72,7 +74,7 @@ public class TriggerFactory implements Factory {
     }
 
     public Trigger newInstance(final String label, final String query) throws InstantiationException, InterruptedException
-            , IllegalArgumentException {
+            , NotAvailableException, MultiException {
 
         if (label == null || query == null) {
             throw new IllegalArgumentException("Trigger label or trigger query is null!");
@@ -88,24 +90,19 @@ public class TriggerFactory implements Factory {
         return initTrigger(trigger, triggerConfig);
     }
 
-    public OntologyChange getOntologyChange(final String label, final String query) throws IllegalArgumentException {
-
-        if (label == null || query == null) {
-            throw new IllegalArgumentException("Trigger label or trigger query is null!");
-        }
-
-        final QueryParser queryParser = new QueryParser(label, query);
-        return queryParser.getOntologyChange();
+    public OntologyChange getOntologyChange(final String label, final String query) throws NotAvailableException, MultiException {
+        final QueryParser queryParser = new QueryParser();
+        return queryParser.getOntologyChange(label, query);
     }
 
-    public TriggerConfig buildTriggerConfig(final String label, final String query) throws IllegalArgumentException {
+    public TriggerConfig buildTriggerConfig(final String label, final String query) throws NotAvailableException, MultiException {
 
         if (label == null || query == null) {
             throw new IllegalArgumentException("Trigger label or trigger query is null!");
         }
 
-        final QueryParser queryParser = new QueryParser(label, query);
-        final OntologyChange ontologyChange = queryParser.getOntologyChange();
+        final QueryParser queryParser = new QueryParser();
+        final OntologyChange ontologyChange = queryParser.getOntologyChange(label, query);
 
         return TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
     }
