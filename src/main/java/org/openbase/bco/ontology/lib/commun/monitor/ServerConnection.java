@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- * <p>
+ *
  * This file is part of org.openbase.bco.ontology.lib.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -22,6 +22,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -39,42 +40,36 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 27.02.17.
  */
-public class ServerConnection {
+public final class ServerConnection {
+
+    /**
+     * Informs about the server connection state.
+     */
+    public static final ObservableImpl<ConnectionState> SERVER_STATE_OBSERVABLE = new ObservableImpl<>(false);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerConnection.class);
-    public static final ObservableImpl<ConnectionState> connectionStateObservable = new ObservableImpl<>();
-    private ConnectionState lastConnectionState;
 
-    public ServerConnection() throws NotAvailableException {
-        this.lastConnectionState = ConnectionState.DISCONNECTED;
-
-        createConnectionObserver();
+    private ServerConnection() throws NotAvailableException {
     }
 
-    private void createConnectionObserver() throws NotAvailableException {
-
+    /**
+     * Method creates a monitoring thread to observe the connection state between ontology manager and ontology server. In case the server can't be
+     * reached, an observable informs.
+     *
+     * @throws NotAvailableException is thrown in case there is no thread available.
+     */
+    public static void newServerConnectionObservable() throws NotAvailableException {
         GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-            boolean isReachable;
-
             try {
-                final HttpClient httpclient = HttpClients.createDefault();
-                final HttpGet httpGet = new HttpGet(OntConfig.getOntologyPingUrl());
-                final HttpResponse httpResponse = httpclient.execute(httpGet);
-                // get response code and take the first number only
-                final int responseCodeShort = Integer.parseInt(Integer.toString(httpResponse.getStatusLine().getStatusCode()).substring(0, 1));
+                try {
+                    final HttpClient httpclient = HttpClients.createDefault();
+                    final HttpGet httpGet = new HttpGet(OntConfig.getOntologyPingUrl());
+                    final HttpResponse httpResponse = httpclient.execute(httpGet);
 
-                isReachable = responseCodeShort == 2;
-            } catch (IOException e) {
-                isReachable = false;
-            }
-
-            try {
-                if (isReachable && (lastConnectionState.equals(ConnectionState.DISCONNECTED))) {
-                    connectionStateObservable.notifyObservers(ConnectionState.CONNECTED);
-                    lastConnectionState = ConnectionState.CONNECTED;
-                } else if (!isReachable && (lastConnectionState.equals(ConnectionState.CONNECTED))) {
-                    connectionStateObservable.notifyObservers(ConnectionState.DISCONNECTED);
-                    lastConnectionState = ConnectionState.DISCONNECTED;
+                    SparqlHttp.checkHttpRequest(httpResponse, null);
+                    SERVER_STATE_OBSERVABLE.notifyObservers(ConnectionState.CONNECTED);
+                } catch (IOException | CouldNotPerformException e) {
+                    SERVER_STATE_OBSERVABLE.notifyObservers(ConnectionState.DISCONNECTED);
                 }
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);

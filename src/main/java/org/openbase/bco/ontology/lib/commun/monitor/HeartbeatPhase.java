@@ -1,17 +1,17 @@
 /**
  * ==================================================================
- * <p>
+ *
  * This file is part of org.openbase.bco.ontology.lib.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is free software: you can redistribute it and modify
  * it under the terms of the GNU General Public License (Version 3)
  * as published by the Free Software Foundation.
- * <p>
+ *
  * org.openbase.bco.ontology.lib is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * <p>
+ *
  * You should have received a copy of the GNU General Public License
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
@@ -52,12 +52,18 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author agatting on 31.01.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class HeartbeatPhase {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatPhase.class);
     private final Stopwatch stopwatch;
     private Future future;
 
+    /**
+     * Constructor initializes the heartBeatPhase module to represent the connection time frames between manager and server.
+     *
+     * @throws InitializationException is thrown in case the module could not initialized.
+     */
     public HeartbeatPhase() throws InitializationException {
         this.stopwatch = new Stopwatch();
 

@@ -29,13 +29,40 @@ import java.io.IOException;
  */
 public interface OntologyRemote {
 
+    /**
+     * Method verifies a match of the trigger query via sparql remote to the ontology server.
+     *
+     * @param query is the sparql query, which is send to the ontology server.
+     * @return true if the query has a match. Otherwise false.
+     * @throws IOException is thrown in case there is a connection problem.
+     */
     boolean match(final String query) throws IOException;
 
-    void addConnectionStateObserver(Observer<ConnectionState> observer);
+    /**
+     * Method adds the observer to the server connection state observable.
+     *
+     * @param observer is the object, which should be informed.
+     */
+    void addConnectionStateObserver(final Observer<ConnectionState> observer);
 
-    void removeConnectionStateObserver(Observer<ConnectionState> observer);
+    /**
+     * Method removes the observer from the server connection state observable.
+     *
+     * @param observer is the object, which should not be informed anymore.
+     */
+    void removeConnectionStateObserver(final Observer<ConnectionState> observer);
 
-    void addOntologyObserver(Observer<OntologyChange> observer);
+    /**
+     * Method adds the observer to the ontology change observable.
+     *
+     * @param observer is the object, which should be informed.
+     */
+    void addOntologyObserver(final Observer<OntologyChange> observer);
 
-    void removeOntologyObserver(Observer<OntologyChange> observer);
+    /**
+     * Method removes the observer from the ontology change observable.
+     *
+     * @param observer is the object, which should not be informed anymore.
+     */
+    void removeOntologyObserver(final Observer<OntologyChange> observer);
 }

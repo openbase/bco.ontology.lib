@@ -58,7 +58,7 @@ public class TriggerFactory implements Factory {
      * @throws InterruptedException is thrown in case the thread is externally interrupted.
      */
     public TriggerFactory() throws CouldNotPerformException, InterruptedException {
-        new ServerConnection();
+        ServerConnection.newServerConnectionObservable();
         initRsb();
     }
 

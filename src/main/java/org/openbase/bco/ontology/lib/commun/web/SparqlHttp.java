@@ -52,6 +52,9 @@ import java.util.concurrent.Future;
 
 final class SparqlHttpLogger {
     static final Logger LOGGER = LoggerFactory.getLogger(SparqlHttpLogger.class);
+
+    private SparqlHttpLogger() {
+    }
 }
 
 /**
@@ -69,15 +72,15 @@ public interface SparqlHttp {
      */
     static void uploadSparqlRequest(final String sparql, final String url) throws IOException, CouldNotPerformException {
 
-        final String serverServiceName = ServerService.UPDATE.getName();
-        final HttpClient httpclient = HttpClients.createDefault();
-        final HttpPost httpPost = new HttpPost(url + serverServiceName);
+        String serverServiceName = ServerService.UPDATE.getName();
+        HttpClient httpclient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url + serverServiceName);
 
-        final List<NameValuePair> params = new ArrayList<>();
+        List<NameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(serverServiceName, sparql));
 
         httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        final HttpResponse httpResponse = httpclient.execute(httpPost);
+        HttpResponse httpResponse = httpclient.execute(httpPost);
         checkHttpRequest(httpResponse, sparql);
     }
 
@@ -113,7 +116,7 @@ public interface SparqlHttp {
      * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
     static void uploadSparqlRequest(final String sparql, final String url, final long timeout) throws CouldNotPerformException, InterruptedException, CancellationException {
-        final Stopwatch stopwatch = new Stopwatch();
+        Stopwatch stopwatch = new Stopwatch();
 
         Future<Boolean> future = GlobalCachedExecutorService.submit(() -> {
             while (true) {
@@ -143,9 +146,9 @@ public interface SparqlHttp {
      */
     static ResultSet sparqlQuery(final String query, final String url) throws IOException {
         try {
-            final String serverServiceName = ServerService.SPARQL.getName();
-            final Query queryObject = QueryFactory.create(query) ;
-            final QueryExecution queryExecution = QueryExecutionFactory.sparqlService(url + serverServiceName, queryObject);
+            String serverServiceName = ServerService.SPARQL.getName();
+            Query queryObject = QueryFactory.create(query);
+            QueryExecution queryExecution = QueryExecutionFactory.sparqlService(url + serverServiceName, queryObject);
 
             return queryExecution.execSelect();
         } catch (QueryExceptionHTTP e) {
@@ -165,7 +168,7 @@ public interface SparqlHttp {
      * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
     static ResultSet sparqlQuery(final String query, final String url, final long timeout) throws InterruptedException, ExecutionException {
-        final Stopwatch stopwatch = new Stopwatch();
+        Stopwatch stopwatch = new Stopwatch();
 
         Future<ResultSet> future = GlobalCachedExecutorService.submit(() -> {
             while (true) {
@@ -185,25 +188,26 @@ public interface SparqlHttp {
      * based on connection. That means the method do not identify an possibly IOException!
      *
      * @param httpResponse is the response of the http request.
-     * @param sparql is the sparql update string, which is used for terminal information in case of bad request.
+     * @param sparql is the sparql update string, which is used for terminal information in case of bad request. Set to null, if not necessary.
      * @throws CouldNotPerformException is thrown in case the http request was not successfully.
      */
     static void checkHttpRequest(final HttpResponse httpResponse, final String sparql) throws CouldNotPerformException {
-        //TODO maybe split client and server error code...
-        final int responseCode = httpResponse.getStatusLine().getStatusCode();
-        final int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
+
+        int responseCode = httpResponse.getStatusLine().getStatusCode();
+        int reducedCode = Integer.parseInt(Integer.toString(responseCode).substring(0, 1));
+        String stringBuf = (sparql == null) ? "<null>" : sparql;
 
         switch (reducedCode) {
             case 2: // request successful
                 return;
             case 3: // bypass
-                throw new CouldNotPerformException("Http bypass code. Client must do something... Sparql update string: " + sparql);
+                throw new CouldNotPerformException("Http bypass code. Client must do something... Sparql update string: " + stringBuf);
             case 4: // client error
-                throw new CouldNotPerformException("Client error code. Possibly sparql update string is wrong: " + sparql);
+                throw new CouldNotPerformException("Client error code. Possibly sparql update string is wrong: " + stringBuf);
             case 5: // server error
-                throw new CouldNotPerformException("Server error code. Possibly server is unavailable! Or sparql update bad?! " + sparql);
+                throw new CouldNotPerformException("Server error code. Possibly server is unavailable! Or sparql update bad?! " + stringBuf);
             default: // unknown error
-                throw new CouldNotPerformException("Unknown status code. Sparql update string: " +sparql);
+                throw new CouldNotPerformException("Unknown status code. Sparql update string: " + stringBuf);
         }
     }
 

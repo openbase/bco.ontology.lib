@@ -41,17 +41,13 @@ import java.util.concurrent.Future;
 /**
  * @author agatting on 19.01.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public interface OntModelHttp {
 
     /**
      * Logger.
      */
     Logger LOGGER = LoggerFactory.getLogger(OntModelHttp.class);
-
-    /**
-     * Stopwatch for retries.
-     */
-    Stopwatch stopwatch = new Stopwatch();
 
     /**
      * Method returns the ontology model from the ontology server. Consider correct url. Consider the possible big size of the ontology (and download time).
@@ -89,6 +85,7 @@ public interface OntModelHttp {
      * @throws CancellationException is thrown in case the timeout was reached and the download trial was canceled.
      */
     static OntModel downloadModelFromServer(final String url, final long timeout) throws InterruptedException, NotAvailableException, CancellationException {
+        Stopwatch stopwatch = new Stopwatch();
 
         Future<OntModel> future = GlobalCachedExecutorService.submit(() -> {
             while (true) {
@@ -143,6 +140,7 @@ public interface OntModelHttp {
      * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
     static void addModelToServer(final OntModel ontModel, final String url, final long timeout) throws InterruptedException, NotAvailableException, CancellationException {
+        Stopwatch stopwatch = new Stopwatch();
 
         Future<Boolean> future = GlobalCachedExecutorService.submit(() -> {
             while (true) {

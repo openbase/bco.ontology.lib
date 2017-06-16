@@ -41,6 +41,7 @@ import java.util.List;
 /**
  * @author agatting on 27.02.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
@@ -66,23 +67,35 @@ public class OntologyRemoteImpl implements OntologyRemote {
         return queryResult;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void addConnectionStateObserver(Observer<ConnectionState> observer) {
-        ServerConnection.connectionStateObservable.addObserver(observer);
+    public void addConnectionStateObserver(final Observer<ConnectionState> observer) {
+        ServerConnection.SERVER_STATE_OBSERVABLE.addObserver(observer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void removeConnectionStateObserver(Observer<ConnectionState> observer) {
-        ServerConnection.connectionStateObservable.removeObserver(observer);
+    public void removeConnectionStateObserver(final Observer<ConnectionState> observer) {
+        ServerConnection.SERVER_STATE_OBSERVABLE.removeObserver(observer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void addOntologyObserver(Observer<OntologyChange> observer) {
+    public void addOntologyObserver(final Observer<OntologyChange> observer) {
         TriggerFactory.ONTOLOGY_CHANGE_OBSERVABLE.addObserver(observer);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void removeOntologyObserver(Observer<OntologyChange> observer) {
+    public void removeOntologyObserver(final Observer<OntologyChange> observer) {
         TriggerFactory.ONTOLOGY_CHANGE_OBSERVABLE.removeObserver(observer);
     }
 
