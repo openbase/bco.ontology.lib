@@ -149,10 +149,13 @@ public class AskQueryExample {
                     + "?obs NS:hasTimeStamp ?lastTime . "
                 + "}";
 
-
-    public static final String queryToLastConnectionPhaseTimeStamp =
+    /**
+     * Sparql query to select the last timestamp of connection phase. The query considers the form of the last timestamp (normal literal or pointer across
+     * recentHeartBeat)
+     */
+    public static final String QUERY_LAST_CONNECTION_PHASE_TIMESTAMP =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT * WHERE { "
                     + "?conn a NS:ConnectionPhase . "
                     // get times, which are stored in different cases

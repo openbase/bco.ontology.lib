@@ -82,8 +82,8 @@ public class QueryParser {
         final List<Category> categoryChanges = getCategoryChanges(resources);
 
         if (unitTypeChanges.isEmpty() && serviceTypeChanges.isEmpty() && categoryChanges.isEmpty()) {
-            throw new NotAvailableException("Could not identify any ontology changes for trigger with label \"" + triggerLabel + "\". Maybe wrong " +
-                    "query string? Or select ontology change manually.");
+            throw new NotAvailableException("Could not identify any ontology changes for trigger with label \"" + triggerLabel + "\". Maybe wrong "
+                    + "query string? Or select ontology change manually.");
         }
 
         return OntologyChange.newBuilder().addAllCategory(categoryChanges).addAllUnitType(unitTypeChanges).addAllServiceType(serviceTypeChanges).build();
@@ -171,7 +171,7 @@ public class QueryParser {
 
     private ResultSet getSPINResultSet(final String askQuery) {
         // create query to ask uris from input query
-        final Query queryUrisWithBcoNs = QueryFactory.create(StaticSparqlExpression.queryURIs);
+        final Query queryUrisWithBcoNs = QueryFactory.create(StaticSparqlExpression.QUERY_URIS);
         final Model model = ModelFactory.createDefaultModel();
 
         // convert ask query to rdf spin
@@ -199,8 +199,8 @@ public class QueryParser {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
         }
-        MultiException.checkAndThrow("Could not parse ontologyChange from query string, because of negation phrase in query string! Certain determination of " +
-                "trigger changes criteria can't be guarantee. Select manual criteria for this trigger!", exceptionStack);
+        MultiException.checkAndThrow("Could not parse ontologyChange from query string, because of negation phrase in query string! Certain determination of "
+                + "trigger changes criteria can't be guarantee. Select manual criteria for this trigger!", exceptionStack);
     }
 
 }

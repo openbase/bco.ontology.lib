@@ -47,7 +47,7 @@ public interface ReflectionUtility {
      */
     static Object invokeMethod(final Object object, final String regEx, final int patternFlag) throws CouldNotPerformException {
         try {
-            final Method method = detectMethod(object.getClass(), regEx, patternFlag);
+            Method method = detectMethod(object.getClass(), regEx, patternFlag);
             return method.invoke(object);
         } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
             throw new CouldNotPerformException("Invocation failed!", e);
@@ -65,10 +65,10 @@ public interface ReflectionUtility {
      */
     static Set<Object> invokeMethods(final Object object, final String regEx, final int patternFlag) throws CouldNotPerformException {
         try {
-            final Set<Method> methods = detectMethods(object.getClass(), regEx, patternFlag);
-            final Set<Object> invokedObjects = new HashSet<>();
+            Set<Method> methods = detectMethods(object.getClass(), regEx, patternFlag);
+            Set<Object> invokedObjects = new HashSet<>();
 
-            for (final Method method : methods) {
+            for (Method method : methods) {
                 invokedObjects.add(method.invoke(object));
             }
             return invokedObjects;
@@ -99,11 +99,11 @@ public interface ReflectionUtility {
                 throw new NotAvailableException("Regular expression is null!");
             }
 
-            final List<Method> methods = new ArrayList<>();
-            final Pattern pattern = (patternFlag == 0) ? Pattern.compile(regEx) : Pattern.compile(regEx, patternFlag);
+            List<Method> methods = new ArrayList<>();
+            Pattern pattern = (patternFlag == 0) ? Pattern.compile(regEx) : Pattern.compile(regEx, patternFlag);
 
-            for (final Method method : inputClass.getMethods()) {
-                final Matcher matcher = pattern.matcher(method.getName());
+            for (Method method : inputClass.getMethods()) {
+                Matcher matcher = pattern.matcher(method.getName());
                 if (matcher.find()) {
                     methods.add(method);
                 }
@@ -114,7 +114,7 @@ public interface ReflectionUtility {
             } else if (methods.size() >= 2) {
                 String exceptionInfo = "There are more than one matching methods, which contains the regular expression: " + regEx + ". Method names are: ";
 
-                for (final Method method : methods) {
+                for (Method method : methods) {
                     exceptionInfo += method.getName() + ", ";
                 }
                 throw new NoSuchMethodException(exceptionInfo);
@@ -147,11 +147,11 @@ public interface ReflectionUtility {
                 throw new NotAvailableException("Regular expression is null!");
             }
 
-            final Set<Method> methods = new HashSet<>();
-            final Pattern pattern = (patternFlag == 0) ? Pattern.compile(regEx) : Pattern.compile(regEx, patternFlag);
+            Set<Method> methods = new HashSet<>();
+            Pattern pattern = (patternFlag == 0) ? Pattern.compile(regEx) : Pattern.compile(regEx, patternFlag);
 
-            for (final Method method : inputClass.getMethods()) {
-                final Matcher matcher = pattern.matcher(method.getName());
+            for (Method method : inputClass.getMethods()) {
+                Matcher matcher = pattern.matcher(method.getName());
 
                 if (matcher.find()) {
                     methods.add(method);

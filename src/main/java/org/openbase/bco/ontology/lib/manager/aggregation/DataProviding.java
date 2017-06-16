@@ -79,7 +79,7 @@ public class DataProviding {
         final HashMap<String, Long> hashMap = new HashMap<>();
 
         final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, "src/normalData.owl");
-        final Query query = QueryFactory.create(StaticSparqlExpression.getAllConnectionPhases);
+        final Query query = QueryFactory.create(StaticSparqlExpression.GET_ALL_CONNECTION_PHASES);
         final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
         final ResultSet resultSet = queryExecution.execSelect();
 //        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllConnectionPhases);

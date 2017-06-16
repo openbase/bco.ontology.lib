@@ -46,7 +46,6 @@ public class ServerConnection {
     private ConnectionState lastConnectionState;
 
     public ServerConnection() throws NotAvailableException {
-
         this.lastConnectionState = ConnectionState.DISCONNECTED;
 
         createConnectionObserver();

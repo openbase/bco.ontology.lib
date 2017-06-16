@@ -42,6 +42,7 @@ import java.io.OutputStream;
 /**
  * @author agatting on 18.05.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public interface OntModelUtility {
 
     /**
@@ -60,7 +61,7 @@ public interface OntModelUtility {
      */
     static OntModel loadOntModelFromFile(OntModel ontModel, final String path) throws  NotAvailableException {
         try {
-            final InputStream input = (path == null) ? StringModifier.class.getResourceAsStream("/Ontology.owl") : new FileInputStream(path);
+            InputStream input = (path == null) ? StringModifier.class.getResourceAsStream("/Ontology.owl") : new FileInputStream(path);
             LOGGER.info("Ontology file loaded from " + input);
 
             if (ontModel == null) {
@@ -91,7 +92,7 @@ public interface OntModelUtility {
             filePath = "src/";
         }
 
-        final OutputStream output = new FileOutputStream(filePath + fileName + ".owl");
+        OutputStream output = new FileOutputStream(filePath + fileName + ".owl");
         ontModel.writeAll(output, "RDF/XML", null);
         output.close();
         LOGGER.info("Saved ontModel in path" + filePath + fileName + ".owl");
@@ -107,9 +108,9 @@ public interface OntModelUtility {
      */
     static boolean askQuery(final String query, final OntModel ontModel) throws JenaException {
 
-        final Query queryObj = QueryFactory.create(query);
-        final QueryExecution queryExecution = QueryExecutionFactory.create(queryObj, ontModel);
-        final boolean solution = queryExecution.execAsk();
+        Query queryObj = QueryFactory.create(query);
+        QueryExecution queryExecution = QueryExecutionFactory.create(queryObj, ontModel);
+        boolean solution = queryExecution.execAsk();
 
         queryExecution.close();
         return solution;
@@ -124,9 +125,9 @@ public interface OntModelUtility {
      */
     static void selectQuery(final String query, final OntModel ontModel) throws JenaException {
 
-        final Query queryObj = QueryFactory.create(query);
-        final QueryExecution queryExecution = QueryExecutionFactory.create(queryObj, ontModel);
-        final ResultSet resultSet = queryExecution.execSelect();
+        Query queryObj = QueryFactory.create(query);
+        QueryExecution queryExecution = QueryExecutionFactory.create(queryObj, ontModel);
+        ResultSet resultSet = queryExecution.execSelect();
 
         ResultSetFormatter.out(System.out, resultSet, queryObj);
         queryExecution.close();

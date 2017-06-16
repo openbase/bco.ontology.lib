@@ -43,17 +43,33 @@ import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
  */
 public class TriggerFactory implements Factory {
 
+    /**
+     * Informs observer about changed categories.
+     */
+    public static final ObservableImpl<OntologyChange> ONTOLOGY_CHANGE_OBSERVABLE = new ObservableImpl<>(false);
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggerFactory.class);
 
-    public static ObservableImpl<OntologyChange> changeCategoryObservable = null;
-
+    /**
+     * Constructor initializes the base elements to create multiple trigger instances. That means (1) an independent server connection to monitor the
+     * connection state between trigger interface and ontology server and (2) the rsb communication.
+     *
+     * @throws CouldNotPerformException is thrown in case at least one base element could not be initialized.
+     * @throws InterruptedException is thrown in case the thread is externally interrupted.
+     */
     public TriggerFactory() throws CouldNotPerformException, InterruptedException {
-
-        changeCategoryObservable = new ObservableImpl<>(false, this);
         new ServerConnection();
         initRsb();
     }
 
+    /**
+     * Method creates a new individual trigger instance, which will be informed if there are relevant ontology changes. The method needs the trigger config.
+     *
+     * @param config is the trigger config, which includes the label, query and ontologyChange.
+     * @return the trigger instance.
+     * @throws InstantiationException is thrown in case the input is invalid (null or bad query) or the trigger could not activated.
+     * @throws InterruptedException is thrown in case the thread is externally interrupted.
+     */
     @Override
     public Trigger newInstance(final Object config) throws InstantiationException, InterruptedException {
 
@@ -62,10 +78,7 @@ public class TriggerFactory implements Factory {
         }
 
         final TriggerConfig triggerConfig = ((TriggerConfig) config);
-
-        if (triggerConfig.getLabel() == null || triggerConfig.getQuery() == null || triggerConfig.getDependingOntologyChange() == null) {
-            throw new IllegalArgumentException("At least one element of the triggerConfig is null!");
-        }
+        checkTriggerConfig(triggerConfig);
 
         final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
         final Trigger trigger = new TriggerImpl(ontologyRemote);
@@ -73,43 +86,73 @@ public class TriggerFactory implements Factory {
         return initTrigger(trigger, triggerConfig);
     }
 
-    public Trigger newInstance(final String label, final String query) throws InstantiationException, InterruptedException
-            , NotAvailableException, MultiException {
+    /**
+     * Method creates a new individual trigger instance, which will be informed if there are relevant ontology changes. The method needs label and query of the
+     * trigger only. The ontologyChange will be parsed from the input query.
+     *
+     * @param label is the label of the trigger.
+     * @param query is the query of the trigger.
+     * @return the trigger instance.
+     * @throws InstantiationException is thrown in case the input is invalid (null or bad query) or the trigger could not activated.
+     * @throws InterruptedException is thrown in case the thread is externally interrupted.
+     */
+    public Trigger newInstance(final String label, final String query) throws InstantiationException, InterruptedException {
+        try {
+            final OntologyChange ontologyChange = getOntologyChange(label, query);
+            final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
+            final Trigger trigger = new TriggerImpl(ontologyRemote);
+            final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
 
-        if (label == null || query == null) {
-            throw new IllegalArgumentException("Trigger label or trigger query is null!");
+            return initTrigger(trigger, triggerConfig);
+        } catch (NotAvailableException | MultiException e) {
+            throw new InstantiationException(this, e);
         }
-
-        final OntologyChange ontologyChange = getOntologyChange(label, query);
-
-        final OntologyRemote ontologyRemote = new OntologyRemoteImpl();
-        final Trigger trigger = new TriggerImpl(ontologyRemote);
-        final TriggerConfig triggerConfig
-                = TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
-
-        return initTrigger(trigger, triggerConfig);
     }
 
+    /**
+     * Method creates an individual ontologyChange for the input query string (of the trigger with input label). The ontologyChange contains three types of
+     * change values, which aggregate to (1) change categories, (2) service types and (3) unit types. Consider: the query string should not contain any negation
+     * phrase, because of the parse complexity.
+     *
+     * @param label is the label of the trigger.
+     * @param query is the query of the trigger.
+     * @return the ontologyChange with change categories, service types and unit types.
+     * @throws NotAvailableException is thrown in case the input label or query is null.
+     * @throws MultiException is thrown in case the ontologyChange could not be parsed from the input query.
+     */
     public OntologyChange getOntologyChange(final String label, final String query) throws NotAvailableException, MultiException {
         final QueryParser queryParser = new QueryParser();
         return queryParser.getOntologyChange(label, query);
     }
 
+    /**
+     * Method returns a trigger config based on the input label and query. The ontologyChange will be parsed from the input query.
+     *
+     * @param label is the label of the trigger.
+     * @param query is the query of the trigger.
+     * @return the trigger config.
+     * @throws NotAvailableException is thrown in case the input label or query is null.
+     * @throws MultiException is thrown in case the ontologyChange could not be parsed from the input query.
+     */
     public TriggerConfig buildTriggerConfig(final String label, final String query) throws NotAvailableException, MultiException {
+        return TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(getOntologyChange(label, query)).build();
+    }
 
-        if (label == null || query == null) {
-            throw new IllegalArgumentException("Trigger label or trigger query is null!");
-        }
-
-        final QueryParser queryParser = new QueryParser();
-        final OntologyChange ontologyChange = queryParser.getOntologyChange(label, query);
-
+    /**
+     * Method returns the trigger config based on input label, query and ontologyChange.
+     *
+     * @param label is the label of the trigger.
+     * @param query is the query of the trigger.
+     * @param ontologyChange is the ontologyChange (categories, service types, unit types) of the trigger.
+     * @return the trigger config.
+     */
+    public TriggerConfig buildTriggerConfig(final String label, final String query, final OntologyChange ontologyChange) {
         return TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
     }
 
-    private Trigger initTrigger(final Trigger trigger, final TriggerConfig config) throws InterruptedException, InstantiationException {
+    private Trigger initTrigger(final Trigger trigger, final TriggerConfig triggerConfig) throws InterruptedException, InstantiationException {
         try {
-            trigger.init(config);
+            trigger.init(triggerConfig);
             trigger.activate();
 
             return trigger;
@@ -124,11 +167,44 @@ public class TriggerFactory implements Factory {
         rsbListener.activate();
         rsbListener.addHandler(event -> {
             try {
-                changeCategoryObservable.notifyObservers((OntologyChange) event.getData());
+                ONTOLOGY_CHANGE_OBSERVABLE.notifyObservers((OntologyChange) event.getData());
             } catch (CouldNotPerformException e) {
                 ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
             }
         }, false);
     }
-    
+
+    private void checkTriggerConfig(final TriggerConfig triggerConfig) throws InstantiationException {
+        MultiException.ExceptionStack exceptionStack = null;
+
+        try {
+            if (triggerConfig.getLabel() == null) {
+                throw new NotAvailableException("Trigger label is null!");
+            }
+        } catch (NotAvailableException e) {
+            exceptionStack = MultiException.push(this, e, null);
+        }
+
+        try {
+            if (triggerConfig.getQuery() == null) {
+                throw new NotAvailableException("Trigger query is null!");
+            }
+        } catch (NotAvailableException e) {
+            exceptionStack = MultiException.push(this, e, exceptionStack);
+        }
+
+        try {
+            if (triggerConfig.getDependingOntologyChange() == null) {
+                throw new NotAvailableException("Trigger ontologyChange is null!");
+            }
+        } catch (NotAvailableException e) {
+            exceptionStack = MultiException.push(this, e, exceptionStack);
+        }
+
+        try {
+            MultiException.checkAndThrow("Could not create trigger, because at least one element of the trigger config is null!", exceptionStack);
+        } catch (MultiException e) {
+            throw new InstantiationException(this, e);
+        }
+    }
 }

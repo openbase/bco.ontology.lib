@@ -78,12 +78,12 @@ public class OntologyRemoteImpl implements OntologyRemote {
 
     @Override
     public void addOntologyObserver(Observer<OntologyChange> observer) {
-        TriggerFactory.changeCategoryObservable.addObserver(observer);
+        TriggerFactory.ONTOLOGY_CHANGE_OBSERVABLE.addObserver(observer);
     }
 
     @Override
     public void removeOntologyObserver(Observer<OntologyChange> observer) {
-        TriggerFactory.changeCategoryObservable.removeObserver(observer);
+        TriggerFactory.ONTOLOGY_CHANGE_OBSERVABLE.removeObserver(observer);
     }
 
     private HttpEntity getHttpEntity(final String query) throws IOException {

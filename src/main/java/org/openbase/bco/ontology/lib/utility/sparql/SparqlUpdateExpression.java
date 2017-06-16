@@ -48,7 +48,7 @@ public interface SparqlUpdateExpression {
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "INSERT DATA { ";
 
-        for (final RdfTriple triple : insert) {
+        for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -82,7 +82,7 @@ public interface SparqlUpdateExpression {
                         + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                         + "INSERT { ";
 
-        for (final RdfTriple triple : insert) {
+        for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -93,7 +93,7 @@ public interface SparqlUpdateExpression {
         updateExpression += "} WHERE { ";
 
         if (where != null) {
-            for (final RdfTriple triple : where) {
+            for (RdfTriple triple : where) {
                 try {
                     updateExpression += getTripleCommand(triple, false);
                 } catch (NotAvailableException e) {
@@ -146,7 +146,7 @@ public interface SparqlUpdateExpression {
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { ";
 
-        for (final RdfTriple triple : delete) {
+        for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -155,9 +155,9 @@ public interface SparqlUpdateExpression {
         }
 
         updateExpression += "} WHERE { ";
-        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
+        List<RdfTriple> whereExpression = (where == null) ? delete : where;
 
-        for (final RdfTriple triple : whereExpression) {
+        for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, true);
             } catch (NotAvailableException e) {
@@ -167,7 +167,7 @@ public interface SparqlUpdateExpression {
 
         updateExpression += "} ; INSERT DATA { ";
 
-        for (final RdfTriple triple : insert) {
+        for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -219,7 +219,7 @@ public interface SparqlUpdateExpression {
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { ";
 
-        for (final RdfTriple triple : delete) {
+        for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -229,7 +229,7 @@ public interface SparqlUpdateExpression {
 
         updateExpression += "} INSERT { ";
 
-        for (final RdfTriple triple : insert) {
+        for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -238,9 +238,9 @@ public interface SparqlUpdateExpression {
         }
 
         updateExpression += "} WHERE { ";
-        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
+        List<RdfTriple> whereExpression = (where == null) ? delete : where;
 
-        for (final RdfTriple triple : whereExpression) {
+        for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, true);
             } catch (NotAvailableException e) {
@@ -272,13 +272,13 @@ public interface SparqlUpdateExpression {
      */
     static String getSparqlUpdateExpression(final RdfTriple delete, final String where) throws NotAvailableException {
 
-        final String updateExpression =
+        String updateExpression =
                 "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { " + getTripleCommand(delete, false);
-        
-        final String whereExpression = (where == null) ? getTripleCommand(delete, false) : where;
+        String whereExpression = (where == null) ? getTripleCommand(delete, false) : where;
+
         return updateExpression + "} WHERE { " + whereExpression + " } ";
     }
 
@@ -305,7 +305,7 @@ public interface SparqlUpdateExpression {
                 + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
                 + "DELETE { ";
 
-        for (final RdfTriple triple : delete) {
+        for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {
@@ -314,9 +314,9 @@ public interface SparqlUpdateExpression {
         }
 
         updateExpression += "} WHERE { ";
-        final List<RdfTriple> whereExpression = (where == null) ? delete : where;
+        List<RdfTriple> whereExpression = (where == null) ? delete : where;
 
-        for (final RdfTriple triple : whereExpression) {
+        for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, false);
             } catch (NotAvailableException e) {

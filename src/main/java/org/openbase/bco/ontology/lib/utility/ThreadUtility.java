@@ -52,7 +52,7 @@ public interface ThreadUtility {
 
             try {
                 timeoutThread.start();
-                final Object object = future.get();
+                Object object = future.get();
 
                 if (timeoutThread.isActive()) {
                     timeoutThread.cancel();

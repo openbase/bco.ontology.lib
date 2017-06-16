@@ -19,9 +19,7 @@
 
 package org.openbase.bco.ontology.lib.utility.sparql;
 
-import org.apache.commons.lang.time.DateUtils;
-
-import java.util.Date;
+import java.time.OffsetDateTime;
 
 /**
  * @author agatting on 16.11.16.
@@ -32,7 +30,6 @@ public final class CompetencyQuestions {
     //TODO later: get concrete object of query...
     //TODO make all strings like "home" generic
     //TODO make request of unitType generic
-
     //TODO add link to providerService up to REQ_16
 
     // competence questions for ontology validation based on SPARQL 1.1 Query Language
@@ -806,28 +803,26 @@ public final class CompetencyQuestions {
 //        final Date date = new Date();
 //        return simpleDateFormat.format(date);
 //    }
-    //todo adapt with joda time
 
-//    /**
-//     * Method adds/subtracts time from the current dateTime.
-//     * @param minutes The minutes.
-//     * @param hours The hours.
-//     * @param days The days.
-//     * @param months The months.
-//     * @param years The years.
-//     * @return The changed dateTime as String.
-//     */
-    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months,
-                                                  final int years) {
-//        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
-        final Date now = new Date();
+    /**
+     * Method adds/subtracts time from the current dateTime.
+     *
+     * @param minutes are the minutes.
+     * @param hours are the hours.
+     * @param days are the days.
+     * @param months are the months.
+     * @param years are the years.
+     * @return the changed dateTime as String.
+     */
+    public static String addTimeToCurrentDateTime(final int minutes, final int hours, final int days, final int months, final int years) {
+        final OffsetDateTime now = OffsetDateTime.now();
 
-        Date newDate = DateUtils.addHours(now, hours);
-        newDate = DateUtils.addMinutes(newDate, minutes);
-        newDate = DateUtils.addDays(newDate, days);
-        newDate = DateUtils.addMonths(newDate, months);
-        newDate = DateUtils.addYears(newDate, years);
+        now.plusMinutes(minutes);
+        now.plusHours(hours);
+        now.plusDays(days);
+        now.plusMonths(months);
+        now.plusYears(years);
 
-        return newDate.toString(); //TODO adapt with joda time
+        return now.toString();
     }
 }

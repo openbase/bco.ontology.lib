@@ -29,15 +29,13 @@ import java.util.List;
  *
  * @author agatting on 10.03.17.
  */
-public class StaticSparqlExpression {
+@SuppressWarnings("checkstyle:multiplestringliterals")
+public final class StaticSparqlExpression {
 
-    public static List<RdfTriple> getNullWhereExpression() {
-        final List<RdfTriple> where = new ArrayList<>();
-        where.add(new RdfTriple(null, null, null));
-        return where;
-    }
-
-    public static final String queryURIs =
+    /**
+     * Query selects all resources of another query. The resources are filtered by URI of bco.
+     */
+    public static final String QUERY_URIS =
             "PREFIX sp: <http://spinrdf.org/sp#> "
             + "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
             + "SELECT ?y WHERE { "
@@ -55,6 +53,76 @@ public class StaticSparqlExpression {
             + "} ";
 
     /**
+     * Select query to get the last timestamp of the recent heartbeatPhase. Please do not modify!
+     */
+    public static final String GET_RECENT_TIMESTAMP_OF_HEART_BEAT =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    + "SELECT ?heartbeatPhase ?lastConnection { "
+                    + "?heartbeatPhase a NS:HeartBeatPhase . "
+                    + "?heartbeatPhase NS:hasFirstConnection ?firstConnection . "
+                    + "?heartbeatPhase NS:hasLastConnection ?lastConnection . "
+                    + "} "
+                    + "ORDER BY DESC(?lastConnection) LIMIT 1";
+
+    /**
+     * Query selects all Connection phases.
+     */
+    public static final String GET_ALL_CONNECTION_PHASES =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                    + "SELECT ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp WHERE { "
+                    // get all connectionPhases
+                    + "?connectionPhase a NS:ConnectionPhase . "
+                    + "?unit NS:hasConnectionPhase ?connectionPhase . "
+                    + "?connectionPhase NS:hasFirstConnection ?firstTimestamp . "
+
+                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
+                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
+                    // reduce times to one variable via if condition
+                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
+                    + "} "
+                    + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
+
+    /**
+     * Method returns a sparql update to delete observations, which are older than 2017-04-22T00:00:00.000+02:00.
+     */
+    public static final String DELETE_ALL_OBSERVATIONS_WITH_FILTER =
+            "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                    + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                    + "DELETE { "
+                    + "?observation ?p ?o . "
+                    + "} WHERE { "
+                    + "?observation ?p ?o . "
+                    + "?observation a NS:Observation . "
+                    + "?observation NS:hasTimeStamp ?timestamp . "
+                    + "FILTER (?timestamp > \"2017-04-22T00:00:00.000+02:00\"^^xsd:dateTime) . "
+                    + "}";
+
+    /**
+     * Query to count all triples.
+     */
+    public static final String COUNT_ALL_TRIPLES =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                    + "SELECT (count(*) as ?count) WHERE { "
+                    + "?s ?p ?o . "
+                    + "}";
+
+    private StaticSparqlExpression() {
+    }
+
+    /**
+     * Method returns a rdf triple, which all elements are null. This triple is used as where expression in sparql queries.
+     *
+     * @return a list with one rdf triple, which elements are all null.
+     */
+    public static List<RdfTriple> getNullWhereExpression() {
+        final List<RdfTriple> where = new ArrayList<>();
+        where.add(new RdfTriple(null, null, null));
+        return where;
+    }
+
+    /**
      * Method returns a sparql update string, which identifies and fill the latest connectionPhase instance of each unit. If a connectionPhase is incomplete,
      * means the property 'hasLastConnection' is missing, the sparql update extends the connectionPhase with the 'hasLastConnection' and the given last
      * heartBeat timestamp. Please do not modify!
@@ -63,7 +131,6 @@ public class StaticSparqlExpression {
      * @return A sparql update string to repair incomplete connectionPhases.
      */
     public static String getConnectionPhaseUpdateExpr(final String lastHeartBeatTimestamp) {
-
          return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
                 + "INSERT { "
@@ -87,35 +154,12 @@ public class StaticSparqlExpression {
     }
 
     /**
-     * Select query to get the last timestamp of the recent heartbeatPhase. Please do not modify!
+     * Method returns a query, which selects all observations in the ontology.
+     *
+     * @param timestampUntil is the timestamp (until) to locate the time frame.
+     * @return a sparql string to select observations.
      */
-    public final static String getRecentTimestampOfHeartBeat =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "SELECT ?heartbeatPhase ?lastConnection { "
-                + "?heartbeatPhase a NS:HeartBeatPhase . "
-                + "?heartbeatPhase NS:hasFirstConnection ?firstConnection . "
-                + "?heartbeatPhase NS:hasLastConnection ?lastConnection . "
-            + "} "
-            + "ORDER BY DESC(?lastConnection) LIMIT 1";
-
-    public final static String getAllConnectionPhases =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp WHERE { "
-                // get all connectionPhases
-                + "?connectionPhase a NS:ConnectionPhase . "
-                + "?unit NS:hasConnectionPhase ?connectionPhase . "
-                + "?connectionPhase NS:hasFirstConnection ?firstTimestamp . "
-
-                + "?connectionPhase NS:hasLastConnection ?timestamp . "
-                + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
-                // reduce times to one variable via if condition
-                + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
-            + "} "
-            + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
-
     public static String getAllObservations(final String timestampUntil) {
-
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
@@ -129,19 +173,15 @@ public class StaticSparqlExpression {
                 + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
     }
 
-//    public static String getMinPeriod(final String period, final String timestampFrom, final String timestampUntil) {
-//
-//        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-//                + "SELECT (MIN(?timestamp) AS ?minTimestamp) WHERE { "
-//                    + "?aggObs NS:hasPeriod NS:" + period + " . "
-//                    + "?aggObs NS:hasTimeStamp ?timestamp . "
-//                + "} "
-//                + "GROUP BY ?minTimestamp ";
-//    }
-
+    /**
+     * Method returns a query to select all aggregated observations in a time frame.
+     *
+     * @param period is the period of the aggregated observation.
+     * @param dateTimeFrom is the timestamp from.
+     * @param dateTimeUntil is the timestamp until.
+     * @return a sparql query to get aggregated observations.
+     */
     public static String getAllAggObs(final String period, final String dateTimeFrom, final String dateTimeUntil) {
-
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean WHERE { "
@@ -163,69 +203,77 @@ public class StaticSparqlExpression {
                 + "GROUP BY ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean ";
     }
 
-    public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
-                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "DELETE { "
-                    + "?connectionPhase ?p ?o . "
-                    + "?s NS:hasConnectionPhase ?connectionPhase . "
-                + "} WHERE { "
-                    + "?connectionPhase ?p ?o . "
-                    + "?s NS:hasConnectionPhase ?connectionPhase . "
-                    + "?connectionPhase a NS:ConnectionPhase . "
-                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
-                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
-                    // reduce times to one variable via if condition
-                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
-                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
-                + "}";
-    }
+//    public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
+//        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "DELETE { "
+//                    + "?connectionPhase ?p ?o . "
+//                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+//                + "} WHERE { "
+//                    + "?connectionPhase ?p ?o . "
+//                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+//                    + "?connectionPhase a NS:ConnectionPhase . "
+//                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
+//                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
+//                    // reduce times to one variable via if condition
+//                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
+//                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
+//                + "}";
+//    }
+//
+//    public static String deleteUnusedHeartBeatPhases(final String dateTimeUntil) {
+//        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "DELETE { "
+//                    + "?heartBeatPhase ?p ?o . "
+//                + "} WHERE { "
+//                    + "?heartBeatPhase ?p ?o . "
+//                    + "?heartBeatPhase a NS:HeartBeatPhase . "
+//                    + "?heartBeatPhase NS:hasLastConnection ?lastTimestamp . "
+//                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
+//                + "}";
+//    }
+//
+//    public static String deleteUnusedObservations(final String dateTimeUntil) {
+//        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+//                + "DELETE { "
+//                    + "?obs ?p ?o . "
+//                + "} WHERE { "
+//                + "{ SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
+//                        + "?observation a NS:Observation . "
+//                        + "?observation NS:hasTimeStamp ?timestamp . "
+//                        + "FILTER (?timestamp < " + dateTimeUntil + " ) . "
+//                        + "?observation NS:hasUnitId ?unit . "
+//                        + "?observation NS:hasStateValue ?stateValue . "
+//                        + "?observation NS:hasProviderService ?providerService . "
+//                        + "FILTER NOT EXISTS { "
+//                            + "?observation NS:hasPeriod ?period . } . "
+//                        + "} "
+//                        + "GROUP BY ?unit ?providerService ?maxTimestamp } "
+//
+//                    + "?obs ?p ?o . "
+//                    + "?obs a NS:Observation . "
+//                    + "?obs NS:hasUnitId ?unit . "
+//                    + "?obs NS:hasProviderService ?providerService . "
+//                    + "?obs NS:hasTimeStamp ?obsTime . "
+//                    + "FILTER NOT EXISTS { "
+//                        + "?obs NS:hasPeriod ?period . "
+//                    + "} "
+//                    + "FILTER (?obsTime < ?maxTimestamp ) . "
+//                + "}";
+//    }
 
-    public static String deleteUnusedHeartBeatPhases(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
-                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "DELETE { "
-                    + "?heartBeatPhase ?p ?o . "
-                + "} WHERE { "
-                    + "?heartBeatPhase ?p ?o . "
-                    + "?heartBeatPhase a NS:HeartBeatPhase . "
-                    + "?heartBeatPhase NS:hasLastConnection ?lastTimestamp . "
-                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
-                + "}";
-    }
-
-    public static String deleteUnusedObservations(final String dateTimeUntil) {
-        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
-                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "DELETE { "
-                    + "?obs ?p ?o . "
-                + "} WHERE { "
-                + "{ SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
-                        + "?observation a NS:Observation . "
-                        + "?observation NS:hasTimeStamp ?timestamp . "
-                        + "FILTER (?timestamp < " + dateTimeUntil + " ) . "
-                        + "?observation NS:hasUnitId ?unit . "
-                        + "?observation NS:hasStateValue ?stateValue . "
-                        + "?observation NS:hasProviderService ?providerService . "
-                        + "FILTER NOT EXISTS { "
-                            + "?observation NS:hasPeriod ?period . } . "
-                        + "} "
-                        + "GROUP BY ?unit ?providerService ?maxTimestamp } "
-
-                    + "?obs ?p ?o . "
-                    + "?obs a NS:Observation . "
-                    + "?obs NS:hasUnitId ?unit . "
-                    + "?obs NS:hasProviderService ?providerService . "
-                    + "?obs NS:hasTimeStamp ?obsTime . "
-                    + "FILTER NOT EXISTS { "
-                        + "?obs NS:hasPeriod ?period . "
-                    + "} "
-                    + "FILTER (?obsTime < ?maxTimestamp ) . "
-                + "}";
-    }
-
-    public static String deleteUnusedAggObs(String period, final String dateTimeFrom, final String dateTimeUntil) {
-        period = period.toLowerCase();
+    /**
+     * Method returns a sparql update to delete all aggregated observations in a time frame.
+     *
+     * @param period is the period of the aggregated observation.
+     * @param dateTimeFrom is the timestamp from.
+     * @param dateTimeUntil is the timestamp until.
+     * @return a sparql update to delete aggregated observations.
+     */
+    public static String deleteUnusedAggObs(final String period, final String dateTimeFrom, final String dateTimeUntil) {
+        final String periodBuf = period.toLowerCase();
         return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "DELETE { "
@@ -233,25 +281,19 @@ public class StaticSparqlExpression {
                 + "} WHERE { "
                     + "?aggObs ?p ?o . "
                     + "?aggObs a NS:AggregationObservation . "
-                    + "?aggObs NS:hasPeriod NS:" + period + " . "
+                    + "?aggObs NS:hasPeriod NS:" + periodBuf + " . "
                     + "?aggObs NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp >= " + dateTimeFrom + " && ?timestamp <= " + dateTimeUntil + " ) . "
                 + "}";
     }
 
-    public static final String deleteAllObservationsWithFilter =
-            "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-            + "DELETE { "
-                + "?observation ?p ?o . "
-            + "} WHERE { "
-                + "?observation ?p ?o . "
-                + "?observation a NS:Observation . "
-                + "?observation NS:hasTimeStamp ?timestamp . "
-                + "FILTER (?timestamp > \"2017-04-22T00:00:00.000+02:00\"^^xsd:dateTime) . "
-            + "}";
-
-
+    /**
+     * Method returns a sparql update to delete observations in a specific time frame.
+     *
+     * @param dateTimeFrom is the timestamp from.
+     * @param dateTimeUntil is the timestamp until.
+     * @return the sparql update.
+     */
     public static String deleteObservationOfTimeFrame(final String dateTimeFrom, final String dateTimeUntil) {
         return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
@@ -264,13 +306,6 @@ public class StaticSparqlExpression {
                     + "FILTER (?timestamp < " + dateTimeFrom + " || ?timestamp >= " + dateTimeUntil + " ) . "
                 + "}";
     }
-
-    public final static String countAllTriples =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-            + "SELECT (count(*) as ?count) WHERE { "
-                + "?s ?p ?o . "
-            + "}";
 
 //    public static String test(final String timestampUntil) {
 //

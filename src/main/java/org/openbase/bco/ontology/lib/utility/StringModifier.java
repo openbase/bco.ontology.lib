@@ -31,6 +31,7 @@ import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 /**
  * @author agatting on 17.02.17.
  */
+@SuppressWarnings("checkstyle:multiplestringliterals")
 public interface StringModifier {
 
     /**
