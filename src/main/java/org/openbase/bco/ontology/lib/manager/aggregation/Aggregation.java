@@ -25,5 +25,12 @@ import org.openbase.jul.exception.CouldNotPerformException;
  */
 public interface Aggregation {
 
+    /**
+     *
+     *
+     * @param currentDays currentDays
+     * @throws CouldNotPerformException CouldNotPerformException
+     * @throws InterruptedException InterruptedException
+     */
     void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException;
 }

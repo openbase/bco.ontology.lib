@@ -16,35 +16,8 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.jp;
-
-import org.openbase.jps.exception.JPNotAvailableException;
-import org.openbase.jps.preset.AbstractJPString;
 
 /**
- * @author agatting on 22.02.17.
+ * @author agatting on 23.06.17.
  */
-public class JPOntologyURL extends AbstractJPString {
-
-    /**
-     * Command line argument strings.
-     */
-    public static final String[] COMMAND_IDENTIFIERS = {"--ontology-server-url"};
-
-    /**
-     * Constructor for the JPOntologyURL class.
-     */
-    public JPOntologyURL() {
-        super(COMMAND_IDENTIFIERS);
-    }
-    @Override
-    protected String getPropertyDefaultValue() throws JPNotAvailableException {
-        return "http://localhost:3030/";
-    }
-
-    @Override
-    public String getDescription() {
-        return "JPOntologyURL property is used to set the URL to the server application (without suffix of server services).";
-    }
-
-}
+package org.openbase.bco.ontology.lib.utility.time;

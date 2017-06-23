@@ -34,9 +34,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.util.iterator.ExtendedIterator;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.utility.time.TimeInterval;
 import org.openbase.bco.ontology.lib.utility.OntModelUtility;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
@@ -66,12 +65,12 @@ public class DataProviding {
 
     private OffsetDateTime dateTimeFrom;
     private OffsetDateTime dateTimeUntil;
-    private final Interval intervalTimeFrame; //TODO implement own interval class/method to remove joda-time dependency
+    private final TimeInterval timeInterval;
 
-    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) {
+    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws NotAvailableException {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
-        this.intervalTimeFrame = new Interval(dateTimeFrom.toInstant().toEpochMilli(), dateTimeUntil.toInstant().toEpochMilli());
+        this.timeInterval = new TimeInterval(dateTimeFrom.toInstant().toEpochMilli(), dateTimeUntil.toInstant().toEpochMilli());
     }
 
     public HashMap<String, Long> getConnectionTimeForEachUnit() throws NotAvailableException {
@@ -84,7 +83,6 @@ public class DataProviding {
         final ResultSet resultSet = queryExecution.execSelect();
 //        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllConnectionPhases);
 
-
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
 
@@ -92,11 +90,12 @@ public class DataProviding {
             final String startTimestamp = querySolution.getLiteral("firstTimestamp").getLexicalForm();
             final String endTimestamp = querySolution.getLiteral("lastTimestamp").getLexicalForm();
 
-            final Interval connectionInterval = new Interval(new DateTime(startTimestamp), new DateTime(endTimestamp));
-            final Interval overlapInterval = intervalTimeFrame.overlap(connectionInterval);
+            final TimeInterval connectionTimeInterval = new TimeInterval(OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli()
+                    , OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli());
+            final TimeInterval overlapTimeInterval = timeInterval.getOverlap(connectionTimeInterval);
 
-            if (overlapInterval != null) {
-                final long intervalValue = overlapInterval.getEndMillis() - overlapInterval.getStartMillis();
+            if (overlapTimeInterval != null) {
+                final long intervalValue = overlapTimeInterval.getEndMillis() - overlapTimeInterval.getStartMillis();
 
                 if (hashMap.containsKey(unitId)) {
                     hashMap.put(unitId, hashMap.get(unitId) + intervalValue);
@@ -110,6 +109,10 @@ public class DataProviding {
         queryExecution.close();
 
         return hashMap;
+    }
+
+    private void getOverlapTime() {
+
     }
 
     public HashMap<String, Long> getConnectionTimeForEachUnitForTesting(final Set<String> unitStrings) {
