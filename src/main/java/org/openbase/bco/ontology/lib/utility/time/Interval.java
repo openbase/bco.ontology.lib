@@ -23,7 +23,7 @@ import org.openbase.jul.exception.NotAvailableException;
 /**
  * @author agatting on 23.06.17.
  */
-public class TimeInterval {
+public class Interval {
 
     private final long startMillis;
     private final long endMillis;
@@ -35,7 +35,7 @@ public class TimeInterval {
      * @param endMillis is the end time in milliseconds. Must be greater or equal than the start time.
      * @throws NotAvailableException is thrown in case the start time is bigger than the end time.
      */
-    public TimeInterval(final long startMillis, final long endMillis) throws NotAvailableException {
+    public Interval(final long startMillis, final long endMillis) throws NotAvailableException {
         this.startMillis = startMillis;
         this.endMillis = endMillis;
 
@@ -61,19 +61,28 @@ public class TimeInterval {
         return endMillis; }
 
     /**
+     * Method returns the duration of interval time in milliseconds.
+     *
+     * @return the duration of the interval time in milliseconds.
+     */
+    public long getDurationMillis() {
+        return endMillis - startMillis;
+    }
+
+    /**
      * Method returns the overlap time of this interval and the input interval, if there is an overlap. Otherwise returns null.
      *
-     * @param timeInterval is the another interval.
-     * @return a timeInterval object, which is the overlap of the intervals. Returns null if there is no overlap.
+     * @param interval is the another interval.
+     * @return a interval object, which is the overlap of the intervals. Returns null if there is no overlap.
      * @throws NotAvailableException is thrown in case the input interval is null or the start/end times are invalid.
      */
-    public TimeInterval getOverlap(final TimeInterval timeInterval) throws NotAvailableException {
+    public Interval getOverlap(final Interval interval) throws NotAvailableException {
 
-        if (overlaps(timeInterval)) {
-            final long newStart = Math.max(startMillis, timeInterval.getStartMillis());
-            final long newEnd = Math.min(endMillis, timeInterval.getEndMillis());
+        if (overlaps(interval)) {
+            final long newStart = Math.max(startMillis, interval.getStartMillis());
+            final long newEnd = Math.min(endMillis, interval.getEndMillis());
 
-            return new TimeInterval(newStart, newEnd);
+            return new Interval(newStart, newEnd);
         }
 
         return null;
@@ -82,18 +91,18 @@ public class TimeInterval {
     /**
      * Method compares this interval with the input interval, if there is an overlap.
      *
-     * @param timeInterval is the another time interval.
+     * @param interval is the another time interval.
      * @return true if the intervals overlap. Otherwise false.
      * @throws NotAvailableException is thrown in case the input interval is null.
      */
-    public boolean overlaps(final TimeInterval timeInterval) throws NotAvailableException {
+    public boolean overlaps(final Interval interval) throws NotAvailableException {
 
-        if (timeInterval == null) {
+        if (interval == null) {
             assert false;
-            throw new NotAvailableException("TimeInterval is null.");
+            throw new NotAvailableException("Interval is null.");
         }
 
-        return (startMillis < timeInterval.getEndMillis() && timeInterval.getStartMillis() < endMillis);
+        return (startMillis < interval.getEndMillis() && interval.getStartMillis() < endMillis);
     }
 
 }

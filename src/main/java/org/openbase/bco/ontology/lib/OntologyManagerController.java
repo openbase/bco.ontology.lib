@@ -119,7 +119,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void init() throws InitializationException, InterruptedException {
         try {
-            // upload ontModel
+            // upload (add) ontModel
             OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
         } catch (NotAvailableException e) {
             throw new InitializationException("Could not upload ontology model!", e);

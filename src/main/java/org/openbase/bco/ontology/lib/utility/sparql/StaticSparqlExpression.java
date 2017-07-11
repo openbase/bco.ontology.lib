@@ -174,6 +174,28 @@ public final class StaticSparqlExpression {
     }
 
     /**
+     * Method returns a query string, which selects observation data in the ontology.
+     *
+     * @param startTimestamp is the start timestamp (from) to locate the time frame.
+     * @param endTimestamp is the end timestamp (until) to locate the time frame.
+     * @return a sparql string to select observations.
+     */
+    public static String getAllObservations(final String startTimestamp, final String endTimestamp) {
+        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
+                + "?observation a NS:Observation . "
+                + "?observation NS:hasTimeStamp ?timestamp . "
+                + "FILTER (?timestamp >= " + startTimestamp + " && ?timestamp < " + endTimestamp + " ) . "
+                + "?observation NS:hasUnitId ?unit . "
+                + "?observation NS:hasStateValue ?stateValue . "
+                + "?observation NS:hasProviderService ?providerService . "
+                + "} "
+                + "ORDER BY ?observation ";
+//                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+    }
+
+    /**
      * Method returns a query to select all aggregated observations in a time frame.
      *
      * @param period is the period of the aggregated observation.

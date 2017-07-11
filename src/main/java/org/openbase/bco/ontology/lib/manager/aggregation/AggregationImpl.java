@@ -23,6 +23,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
@@ -79,7 +80,7 @@ public class AggregationImpl implements Aggregation {
 //        this.dateTimeUntil = getAdaptedDateTime(now, backDatedQuantity);
 //    }
 
-    public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException {
+    public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, IOException {
         final OffsetDateTime dateTimeFromTest = OffsetDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
         final OffsetDateTime dateTimeUntilTest = OffsetDateTime.of(LocalDateTime.parse("2018-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
         currentDays += 1;

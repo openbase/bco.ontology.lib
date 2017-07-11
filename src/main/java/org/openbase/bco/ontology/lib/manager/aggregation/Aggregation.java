@@ -20,6 +20,8 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.jul.exception.CouldNotPerformException;
 
+import java.io.IOException;
+
 /**
  * @author agatting on 25.03.17.
  */
@@ -32,5 +34,5 @@ public interface Aggregation {
      * @throws CouldNotPerformException CouldNotPerformException
      * @throws InterruptedException InterruptedException
      */
-    void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException;
+    void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, IOException;
 }

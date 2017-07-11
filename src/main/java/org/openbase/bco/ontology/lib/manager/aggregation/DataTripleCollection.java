@@ -19,9 +19,9 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.Observation;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
@@ -33,6 +33,7 @@ import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.schedule.Stopwatch;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +50,8 @@ public class DataTripleCollection extends DataAssignation {
     private final DataProviding dataProviding;
     private final Period period;
 
-    public DataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) throws CouldNotPerformException, InterruptedException {
+    public DataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) throws CouldNotPerformException
+            , InterruptedException, IOException {
         super(dateTimeFrom, dateTimeUntil, period);
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
@@ -101,10 +103,9 @@ public class DataTripleCollection extends DataAssignation {
         }
     }
 
-    private List<RdfTriple> collectData() throws NotAvailableException {
-//        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnit(); //TODO
-        final HashMap<String, List<ObservationDataCollection>> observationsEachUnit = dataProviding.getObservationsForEachUnit();
-        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimeForEachUnitForTesting(observationsEachUnit.keySet());
+    private List<RdfTriple> collectData() throws NotAvailableException, IOException {
+        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimes();
+        final HashMap<String, List<Observation>> observationsEachUnit = dataProviding.getObservations();
 
         return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
     }
@@ -126,13 +127,13 @@ public class DataTripleCollection extends DataAssignation {
     }
 
     private List<RdfTriple> relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit
-            , final HashMap<String, List<ObservationDataCollection>> observationsPerUnit) {
+            , final HashMap<String, List<Observation>> observationsPerUnit) {
         final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String unitId : observationsPerUnit.keySet()) {
             if (connectionTimePerUnit.containsKey(unitId)) {
                 final long connectionTimeMilli = connectionTimePerUnit.get(unitId);
-                final List<ObservationDataCollection> obsDataCollList = observationsPerUnit.get(unitId);
+                final List<Observation> obsDataCollList = observationsPerUnit.get(unitId);
 
                 triples.addAll(relateDataForEachServiceOfEachUnit(unitId, connectionTimeMilli, obsDataCollList));
             }
@@ -165,13 +166,13 @@ public class DataTripleCollection extends DataAssignation {
         return triples;
     }
 
-    private List<RdfTriple> relateDataForEachServiceOfEachUnit(final String unitId, final long connectionTimeMilli
-            , final List<ObservationDataCollection> obsDataCollList) {
+    private List<RdfTriple> relateDataForEachServiceOfEachUnit(final String unitId, final long connectionTimeMilli, final List<Observation> obsDataCollList) {
         final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, List<ServiceDataCollection>> serviceDataCollList = new HashMap<>();
 
-        for (final ObservationDataCollection dataObs : obsDataCollList) {
-            final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValue(), dataObs.getTimestamp());
+        for (final Observation dataObs : obsDataCollList) {
+            //TODO change dataType (list stateValue)
+            final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValues().get(0), dataObs.getTimestamp());
 //            System.out.println(dataObs.getProviderService() + ", " + dataObs.getStateValue() + ", " + unitId);
 
             if (serviceDataCollList.containsKey(dataObs.getProviderService())) {

@@ -292,7 +292,7 @@ public class Measurement {
         }
     }
 
-    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException {
+    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, IOException {
 
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
@@ -399,7 +399,7 @@ public class Measurement {
         OntModelHttp.addModelToServer(ontModel, OntConfig.getOntologyDbUrl(), 0);
     }
 
-    private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException {
+    private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException, IOException {
         System.out.println("Duplicate data...Day: 1");
         duplicateData.duplicateDataOfAggObs(daysCurCount);
         askNumberOfTriple();

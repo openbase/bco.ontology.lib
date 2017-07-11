@@ -42,6 +42,7 @@ import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,6 +79,11 @@ public final class OntConfig {
      * DateTime format.
      */
     public static final String DATE_TIME = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
+    /**
+     * Format "yyyy-MM-dd'T'HH:mm:ss.SSSXXX".
+     */
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(OntConfig.DATE_TIME);
 
     /**
      * A small retry period time in seconds.
@@ -297,6 +303,62 @@ public final class OntConfig {
         decimalFormat.setDecimalFormatSymbols(decimalFormatSymbols);
 
         return decimalFormat;
+    }
+
+    /**
+     * Enumeration of sparql variables.
+     */
+    public enum SparqlVariable {
+
+        /**
+         * SPARQL variable: unit.
+         */
+        UNIT("unit"),
+
+        /**
+         * SPARQL variable: stateValue.
+         */
+        STATE_VALUE("stateValue"),
+
+        /**
+         * SPARQL variable: observation.
+         */
+        OBSERVATION("observation"),
+
+        /**
+         * SPARQL variable: timestamp.
+         */
+        TIMESTAMP("timestamp"),
+
+        /**
+         * SPARQL variable: firstTimestamp.
+         */
+        FIRST_TIMESTAMP("firstTimestamp"),
+
+        /**
+         * SPARQL variable: lastTimestamp.
+         */
+        LAST_TIMESTAMP("lastTimestamp"),
+
+        /**
+         * SPARQL variable: providerService.
+         */
+        PROVIDER_SERVICE("providerService");
+
+        private final String variable;
+
+        SparqlVariable(final String variable) {
+            this.variable = variable;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return a name of an enum element as string.
+         */
+        public String getName() {
+            return this.variable;
+        }
     }
 
     /**
