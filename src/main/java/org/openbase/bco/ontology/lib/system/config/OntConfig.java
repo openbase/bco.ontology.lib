@@ -24,7 +24,7 @@ import org.openbase.bco.ontology.lib.jp.JPOntologyDBURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyMode;
 import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyRSBScope;
-import org.openbase.bco.ontology.lib.utility.OntModelUtility;
+import org.openbase.bco.ontology.lib.utility.ontology.OntModelHandler;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jps.core.JPService;
@@ -291,6 +291,82 @@ public final class OntConfig {
     }
 
     /**
+     * Enum describes the type, which the state value is based on.
+     */
+    public enum StateValueType {
+
+        /**
+         * Discrete state value of the BCO context (open, close, on, off, ...).
+         */
+        BCO_VALUE,
+
+        /**
+         * Continuous state value with type percentage.
+         */
+        PERCENT,
+
+        /**
+         * Continuous state value with type hue of the color space.
+         */
+        HUE,
+
+        /**
+         * Continuous state value with type brightness of the color space.
+         */
+        BRIGHTNESS,
+
+        /**
+         * Continuous state value with type saturation of the color space.
+         */
+        SATURATION,
+
+        /**
+         * Continuous state value with type voltage for tension.
+         */
+        VOLTAGE,
+
+        /**
+         * Continuous state value with type watt for power.
+         */
+        WATT,
+
+        /**
+         * Continuous state value with type ampere for conduction current.
+         */
+        AMPERE,
+
+        /**
+         * Continuous state value with type lux for illuminance.
+         */
+        LUX,
+
+        /**
+         * Continuous state value with type celsius for temperature.
+         */
+        CELSIUS,
+
+        /**
+         * Continuous state value with type double for general definitions.
+         */
+        DOUBLE
+    }
+
+    /**
+     * Enum contains the type of aggregation.
+     */
+    public enum DataFormatAgg {
+
+        /**
+         * Identify data, which are not aggregated yet.
+         */
+        NOT_AGGREGATED,
+        /**
+         * Identify data, which was aggregated and should be aggregated one more time.
+         */
+        AGGREGATED
+    }
+
+    /**
      * Method returns the correct decimal format for timestamp transformation.
      *
      * @return the decimal format.
@@ -428,9 +504,9 @@ public final class OntConfig {
         CONNECTION_PHASE("ConnectionPhase"),
 
         /**
-         * Observation (class).
+         * OntObservation (class).
          */
-        OBSERVATION("Observation"),
+        OBSERVATION("OntObservation"),
 
         /**
          * StateValue (class).
@@ -734,44 +810,43 @@ public final class OntConfig {
     public void initialTestConfig() throws InterruptedException, NotAvailableException {
 
         MultiException.ExceptionStack exceptionStack = null;
-        final OntModel ontModel = OntModelUtility.loadOntModelFromFile(null, null);
+        final OntModel ontModel = OntModelHandler.loadOntModelFromFile(null, null);
 
-
-        try {
-            // test validity of enum property
-            for (final OntProp ontProp : OntProp.values()) {
-                try {
-                    if (!TBoxVerification.isOntPropertyExisting(ontProp.getName(), ontModel)) {
-                        throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
-                                + "with ontology property! Wrong String or doesn't exist in ontology!");
-                    }
-                } catch (IllegalArgumentException | IOException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                }
-            }
-
-            // test validity of enum ontClass
-            for (final OntCl ontClass : OntCl.values()) {
-                try {
-                    if (!TBoxVerification.isOntClassExisting(ontClass.getName(), ontModel)) {
-                        throw new NotAvailableException("Ontology class \"" + ontClass.getName()
-                                + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
-                    }
-                } catch (IllegalArgumentException | IOException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
-                }
-            }
-
+        // test validity of enum property
+        for (final OntProp ontProp : OntProp.values()) {
             try {
-                // test availability of ontology namespace
-                if (!(ontModel.getNsPrefixURI("") + "#").equals(OntConfig.NAMESPACE)) {
-                    throw new NotAvailableException("Namespace \"" + OntConfig.NAMESPACE
-                            + "\" doesn't match with ontology namespace! Wrong String or ontology!");
+                if (!TBoxVerification.isOntPropertyExisting(ontProp.getName(), ontModel)) {
+                    throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
+                            + "with ontology property! Wrong String or doesn't exist in ontology!");
                 }
-            } catch (NotAvailableException e) {
+            } catch (IllegalArgumentException | IOException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
             }
+        }
 
+        // test validity of enum ontClass
+        for (final OntCl ontClass : OntCl.values()) {
+            try {
+                if (!TBoxVerification.isOntClassExisting(ontClass.getName(), ontModel)) {
+                    throw new NotAvailableException("Ontology class \"" + ontClass.getName()
+                            + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
+                }
+            } catch (IllegalArgumentException | IOException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
+            }
+        }
+
+        try {
+            // test availability of ontology namespace
+            if (!(ontModel.getNsPrefixURI("") + "#").equals(OntConfig.NAMESPACE)) {
+                throw new NotAvailableException("Namespace \"" + OntConfig.NAMESPACE
+                        + "\" doesn't match with ontology namespace! Wrong String or ontology!");
+            }
+        } catch (NotAvailableException e) {
+            exceptionStack = MultiException.push(this, e, exceptionStack);
+        }
+
+        try {
             MultiException.checkAndThrow("Could not process all ontology participants correctly!", exceptionStack);
         }  catch (CouldNotPerformException e) {
             ExceptionPrinter.printHistory("Please check OntConfig - names classes and properties", e, LOGGER, LogLevel.ERROR);

@@ -20,10 +20,11 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartbeatPhase;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
+import org.openbase.bco.ontology.lib.manager.aggregation.DataProviding;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.OntModelUtility;
+import org.openbase.bco.ontology.lib.utility.ontology.OntModelHandler;
 import org.openbase.bco.registry.remote.Registries;
 import org.openbase.bco.registry.unit.remote.UnitRegistryRemote;
 import org.openbase.jps.core.JPService;
@@ -49,6 +50,8 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
+import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -92,6 +95,11 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 LOGGER.info("Debug Mode");
             }
 
+            //TEST
+//            OffsetDateTime from = OffsetDateTime.parse("2017-04-21T19:00:00.000+02:00");
+//            OffsetDateTime until = OffsetDateTime.parse("2017-04-21T19:00:10.000+02:00");
+//            DataProviding dataProviding = new DataProviding(from, until);
+
             new HeartbeatPhase();
             new UnitRegistrySynchronizer();
             new UnitRemoteSynchronizer();
@@ -120,7 +128,7 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     public void init() throws InitializationException, InterruptedException {
         try {
             // upload (add) ontModel
-            OntModelHttp.addModelToServer(OntModelUtility.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
+            OntModelHttp.addModelToServer(OntModelHandler.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
         } catch (NotAvailableException e) {
             throw new InitializationException("Could not upload ontology model!", e);
         }

@@ -16,7 +16,7 @@
  * along with org.openbase.bco.ontology.lib. If not, see <http://www.gnu.org/licenses/>.
  * ==================================================================
  */
-package org.openbase.bco.ontology.lib.utility;
+package org.openbase.bco.ontology.lib.utility.ontology;
 
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.ontology.OntModelSpec;
@@ -28,6 +28,7 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.shared.JenaException;
+import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,12 +44,12 @@ import java.io.OutputStream;
  * @author agatting on 18.05.17.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
-public interface OntModelUtility {
+public interface OntModelHandler {
 
     /**
      * Logger to print information.
      */
-    Logger LOGGER = LoggerFactory.getLogger(OntModelUtility.class);
+    Logger LOGGER = LoggerFactory.getLogger(OntModelHandler.class);
 
     /**
      * Method loads the ontology from the fileSystem/external-resource into an ontModel. The ontModel can be given by argument or a new default
@@ -59,7 +60,7 @@ public interface OntModelUtility {
      * @return an ontModel with data from the filesystem.
      * @throws NotAvailableException is thrown in case the ontModel could not be created or the file path is wrong.
      */
-    static OntModel loadOntModelFromFile(OntModel ontModel, final String path) throws  NotAvailableException {
+    static OntModel loadOntModelFromFile(OntModel ontModel, final String path) throws NotAvailableException {
         try {
             InputStream input = (path == null) ? StringModifier.class.getResourceAsStream("/Ontology.owl") : new FileInputStream(path);
             LOGGER.info("Ontology file loaded from " + input);

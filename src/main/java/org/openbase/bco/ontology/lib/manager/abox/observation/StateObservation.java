@@ -71,9 +71,9 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StateObservation.class);
     private final SimpleDateFormat dateFormat;
-    private String remoteUnitId;
+    private final String remoteUnitId;
     private final Stopwatch stopwatch;
-    private Set<Method> methodSetStateType;
+    private final Set<Method> methodSetStateType;
     private final RSBInformer<OntologyChange> rsbInformer;
     private final UnitType unitType;
     private final ConnectionPhase connectionPhase;
@@ -111,8 +111,8 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
                 recurrenceEventFilter.trigger();
             };
 
-            final Observer<ConnectionState> unitRemoteConnectionObserver = (final Observable<ConnectionState> observable
-                    , final ConnectionState connectionState) -> connectionPhase.identifyConnectionState(connectionState);
+            final Observer<ConnectionState> unitRemoteConnectionObserver = (final Observable<ConnectionState> observable, final ConnectionState connectionState)
+                    -> connectionPhase.identifyConnectionState(connectionState);
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
 

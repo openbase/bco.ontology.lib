@@ -21,9 +21,9 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import javafx.util.Pair;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -60,7 +60,7 @@ public class DataAggregation {
         private final double timeWeighting;
         private final HashMap<String, Pair<Long, Integer>> activeTimeAndQuantityPerStateValue;
 
-        public DiscreteStateValues(final long unitConnectionTime, final List<ServiceDataCollection> bcoValuesAndTimestamps) throws CouldNotPerformException {
+        public DiscreteStateValues(final long unitConnectionTime, final List<OntStateChange> bcoValuesAndTimestamps) throws CouldNotPerformException {
 
             checkTimeValidity(unitConnectionTime);
 
@@ -68,7 +68,7 @@ public class DataAggregation {
             this.activeTimeAndQuantityPerStateValue = getActiveTimeAndQuantityPerStateValue(bcoValuesAndTimestamps);
         }
 
-        public DiscreteStateValues(final List<ServiceAggDataCollection> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
+        public DiscreteStateValues(final List<OntAggregatedStateChange> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
 
             this.timeWeighting = calcTimeWeighting(getTimeWeightingArray(aggDataList), getPeriodLength(toAggPeriod));
             this.activeTimeAndQuantityPerStateValue = getAggActiveTimeAndAggQuantityPerStateValue(aggDataList);
@@ -98,7 +98,7 @@ public class DataAggregation {
             return quantityMap;
         }
 
-        private HashMap<String, Pair<Long, Integer>> getAggActiveTimeAndAggQuantityPerStateValue(final List<ServiceAggDataCollection> aggDataCollList)
+        private HashMap<String, Pair<Long, Integer>> getAggActiveTimeAndAggQuantityPerStateValue(final List<OntAggregatedStateChange> aggDataCollList)
                 throws CouldNotPerformException {
 
             final HashMap<String, Pair<Long, Integer>> hashMap = new HashMap<>();
@@ -106,7 +106,7 @@ public class DataAggregation {
             final HashMap<String, List<String>> hashMapQuantity = new HashMap<>();
             final HashMap<String, List<String>> hashMapActivityTime = new HashMap<>();
 
-            for (final ServiceAggDataCollection serviceAggDataColl : aggDataCollList) {
+            for (final OntAggregatedStateChange serviceAggDataColl : aggDataCollList) {
                 final String stateValue = serviceAggDataColl.getStateValue().asResource().getLocalName();
 
                 if (hashMapQuantity.containsKey(stateValue)) {
@@ -150,7 +150,7 @@ public class DataAggregation {
             return activityTimeList.stream().mapToLong(Long::longValue).sum();
         }
 
-        private HashMap<String, Pair<Long, Integer>> getActiveTimeAndQuantityPerStateValue(final List<ServiceDataCollection> bcoValuesAndTimestamps) throws NotAvailableException {
+        private HashMap<String, Pair<Long, Integer>> getActiveTimeAndQuantityPerStateValue(final List<OntStateChange> bcoValuesAndTimestamps) throws NotAvailableException {
 
             final HashMap<String, Pair<Long, Integer>> hashMap = new HashMap<>();
 
@@ -160,10 +160,10 @@ public class DataAggregation {
             String lastTimestamp = null;
             String lastStateValue = null;
 
-            final ListIterator<ServiceDataCollection> listIterator = bcoValuesAndTimestamps.listIterator();
+            final ListIterator<OntStateChange> listIterator = bcoValuesAndTimestamps.listIterator();
 
             while (listIterator.hasNext()) {
-                final ServiceDataCollection stateValueDataCollection = listIterator.next();
+                final OntStateChange stateValueDataCollection = listIterator.next();
 
                 if (lastTimestamp != null) {
                     long timeDiffMillis;
@@ -188,7 +188,7 @@ public class DataAggregation {
                 }
 
 //                if (!stateValueDataCollection.getStateValue().isLiteral()) {
-                    lastStateValue = StringModifier.getLocalName(stateValueDataCollection.getStateValue().asResource().toString());
+                    lastStateValue = StringModifier.getLocalName(stateValueDataCollection.getStateValues().get(0).asResource().toString()); //TODO extend to list...
 //                } else {
 //                    lastStateValue = "UNKNOWN"; //TODO (bad hack)
 //                }
@@ -211,7 +211,7 @@ public class DataAggregation {
         private final double timeWeighting;
         private final int quantity;
 
-        public ContinuousStateValues(final long unitConnectionTime, final List<ServiceDataCollection> stateValueDataCollectionList) throws CouldNotPerformException {
+        public ContinuousStateValues(final long unitConnectionTime, final List<OntStateChange> stateValueDataCollectionList) throws CouldNotPerformException {
 
             checkTimeValidity(unitConnectionTime);
 
@@ -226,7 +226,7 @@ public class DataAggregation {
             this.quantity = calcQuantity(stateValuesString);
         }
 
-        public ContinuousStateValues(final List<ServiceAggDataCollection> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
+        public ContinuousStateValues(final List<OntAggregatedStateChange> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
 
             this.mean = calcMean(getMeanList(aggDataList));
             this.variance = calcVariance(getVarianceList(aggDataList));
@@ -255,30 +255,30 @@ public class DataAggregation {
             return quantity;
         }
 
-        private double[] getMeanList(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
-            final List<String> aggMeanBuf = aggDataList.stream().map(ServiceAggDataCollection::getMean).collect(Collectors.toList());
+        private double[] getMeanList(final List<OntAggregatedStateChange> aggDataList) throws CouldNotPerformException {
+            final List<String> aggMeanBuf = aggDataList.stream().map(OntAggregatedStateChange::getMean).collect(Collectors.toList());
             return convertToArray(convertStringToDouble(aggMeanBuf));
         }
 
-        private double[] getVarianceList(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
-            final List<String> aggVarianceBuf = aggDataList.stream().map(ServiceAggDataCollection::getVariance).collect(Collectors.toList());
+        private double[] getVarianceList(final List<OntAggregatedStateChange> aggDataList) throws CouldNotPerformException {
+            final List<String> aggVarianceBuf = aggDataList.stream().map(OntAggregatedStateChange::getVariance).collect(Collectors.toList());
             return convertToArray(convertStringToDouble(aggVarianceBuf));
         }
 
-        private double[] getStandardDeviationList(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
-            final List<String> aggStandardDeviationBuf = aggDataList.stream().map(ServiceAggDataCollection::getStandardDeviation).collect(Collectors.toList());
+        private double[] getStandardDeviationList(final List<OntAggregatedStateChange> aggDataList) throws CouldNotPerformException {
+            final List<String> aggStandardDeviationBuf = aggDataList.stream().map(OntAggregatedStateChange::getStandardDeviation).collect(Collectors.toList());
             return convertToArray(convertStringToDouble(aggStandardDeviationBuf));
         }
 
-        private List<Integer> getQuantity(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
-            final List<String> aggQuantityBuf = aggDataList.stream().map(ServiceAggDataCollection::getQuantity).collect(Collectors.toList());
+        private List<Integer> getQuantity(final List<OntAggregatedStateChange> aggDataList) throws CouldNotPerformException {
+            final List<String> aggQuantityBuf = aggDataList.stream().map(OntAggregatedStateChange::getQuantity).collect(Collectors.toList());
             return convertStringToInteger(aggQuantityBuf);
         }
 
-        private List<String> getStateValues(final List<ServiceDataCollection> stateValueDataCollectionList) throws NotAvailableException {
-            return stateValueDataCollectionList.stream().map(serviceDataCollection -> {
+        private List<String> getStateValues(final List<OntStateChange> stateValueDataCollectionList) throws NotAvailableException {
+            return stateValueDataCollectionList.stream().map(ontStateChange -> {
                 try {
-                    return StringModifier.getLocalName(serviceDataCollection.getStateValue().asLiteral().getLexicalForm());
+                    return StringModifier.getLocalName(ontStateChange.getStateValues().get(0).asLiteral().getLexicalForm()); //TODO extend to list...
                 } catch (NotAvailableException e) {
                     return ""; //TODO
                 }
@@ -324,8 +324,8 @@ public class DataAggregation {
         }
     }
 
-    private double[] getTimeWeightingArray(final List<ServiceAggDataCollection> aggDataList) throws CouldNotPerformException {
-        final List<String> aggQuantityBuf = aggDataList.stream().map(ServiceAggDataCollection::getTimeWeighting).collect(Collectors.toList());
+    private double[] getTimeWeightingArray(final List<OntAggregatedStateChange> aggDataList) throws CouldNotPerformException {
+        final List<String> aggQuantityBuf = aggDataList.stream().map(OntAggregatedStateChange::getTimeWeighting).collect(Collectors.toList());
         return convertToArray(convertStringToDouble(aggQuantityBuf));
     }
 

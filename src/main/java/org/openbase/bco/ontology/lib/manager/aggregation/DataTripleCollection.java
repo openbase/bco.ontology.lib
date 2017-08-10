@@ -19,11 +19,11 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.Observation;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedObservation;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ObservationAggDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -32,17 +32,21 @@ import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.schedule.Stopwatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author agatting on 01.04.17.
  */
 public class DataTripleCollection extends DataAssignation {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataTripleCollection.class);
 
     private final OffsetDateTime dateTimeFrom;
     private final OffsetDateTime dateTimeUntil;
@@ -50,9 +54,10 @@ public class DataTripleCollection extends DataAssignation {
     private final DataProviding dataProviding;
     private final Period period;
 
-    public DataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) throws CouldNotPerformException
-            , InterruptedException, IOException {
+    public DataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period)
+            throws CouldNotPerformException, InterruptedException, ExecutionException {
         super(dateTimeFrom, dateTimeUntil, period);
+
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
         this.stopwatch = new Stopwatch();
@@ -60,7 +65,7 @@ public class DataTripleCollection extends DataAssignation {
         this.period = period;
 
         if (period.equals(Period.DAY)) {
-            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectData());
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectDataForEachUnit());
 
             // send aggregated values ...
             SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.getOntologyDbUrl(), 0);
@@ -90,7 +95,7 @@ public class DataTripleCollection extends DataAssignation {
                     break;
             }
 
-            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectAggData(oldPeriod));
+            final String sparqlUpdateExpr = SparqlUpdateExpression.getSparqlInsertExpression(collectAggDataForEachUnit(oldPeriod));
 
             // send aggregated aggregations ...
             System.out.println("Send AggData...");
@@ -103,91 +108,73 @@ public class DataTripleCollection extends DataAssignation {
         }
     }
 
-    private List<RdfTriple> collectData() throws NotAvailableException, IOException {
-        final HashMap<String, Long> connTimeEachUnit = dataProviding.getConnectionTimes();
-        final HashMap<String, List<Observation>> observationsEachUnit = dataProviding.getObservations();
 
-        return relateDataForEachUnit(connTimeEachUnit, observationsEachUnit);
-    }
-
-    private List<RdfTriple> collectAggData(final Period period) throws InterruptedException, NotAvailableException {
-        final HashMap<String, List<ObservationAggDataCollection>> observationsEachUnit = dataProviding.getAggObsForEachUnit(period);
-        return relateAggDataForEachUnit(observationsEachUnit);
-    }
-
-    private List<RdfTriple> relateAggDataForEachUnit(final HashMap<String, List<ObservationAggDataCollection>> obsAggPerUnit) {
+    private List<RdfTriple> collectDataForEachUnit() throws NotAvailableException, InterruptedException, ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
+        final HashMap<String, Long> unitConnectionMap = dataProviding.getConnectionTimes();
+        final HashMap<String, List<OntObservation>> unitObservationMap = dataProviding.getObservations();
 
-        for (final String unitId : obsAggPerUnit.keySet()) {
-                final List<ObservationAggDataCollection> obsDataCollList = obsAggPerUnit.get(unitId);
-
-                triples.addAll(relateAggDataForEachServiceOfEachUnit(unitId, obsDataCollList));
-        }
-        return triples;
-    }
-
-    private List<RdfTriple> relateDataForEachUnit(final HashMap<String, Long> connectionTimePerUnit
-            , final HashMap<String, List<Observation>> observationsPerUnit) {
-        final List<RdfTriple> triples = new ArrayList<>();
-
-        for (final String unitId : observationsPerUnit.keySet()) {
-            if (connectionTimePerUnit.containsKey(unitId)) {
-                final long connectionTimeMilli = connectionTimePerUnit.get(unitId);
-                final List<Observation> obsDataCollList = observationsPerUnit.get(unitId);
-
-                triples.addAll(relateDataForEachServiceOfEachUnit(unitId, connectionTimeMilli, obsDataCollList));
+        for (final String unitId : unitObservationMap.keySet()) {
+            if (unitConnectionMap.containsKey(unitId)) {
+                triples.addAll(collectDataForEachService(unitId, unitConnectionMap.get(unitId), unitObservationMap.get(unitId)));
+            } else {
+                LOGGER.info("The unit with ID >> " + unitId + " << has no state value for aggregation.");
             }
         }
+
         return triples;
     }
 
-    private List<RdfTriple> relateAggDataForEachServiceOfEachUnit(final String unitId, final List<ObservationAggDataCollection> obsAggDataCollList) {
+    private List<RdfTriple> collectAggDataForEachUnit(final Period period) throws NotAvailableException, InterruptedException, ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, List<ServiceAggDataCollection>> serviceAggDataCollList = new HashMap<>();
+        final HashMap<String, List<OntAggregatedObservation>> unitAggObservationMap = dataProviding.getAggregatedObservations(period);
 
-        for (final ObservationAggDataCollection aggDataObs : obsAggDataCollList) {
-            final ServiceAggDataCollection serviceAggDataColl = new ServiceAggDataCollection(aggDataObs.getStateValue(),aggDataObs.getQuantity()
-                    , aggDataObs.getActivityTime(), aggDataObs.getVariance(), aggDataObs.getStandardDeviation(), aggDataObs.getMean(), aggDataObs.getTimeWeighting());
+        for (final String unitId : unitAggObservationMap.keySet()) {
+            triples.addAll(collectAggDataForEachService(unitId, unitAggObservationMap.get(unitId)));
+        }
 
-            if (serviceAggDataCollList.containsKey(aggDataObs.getProviderService())) {
+        return triples;
+    }
+
+    private List<RdfTriple> collectAggDataForEachService(final String unitId, final List<OntAggregatedObservation> ontAggObservations) {
+        final HashMap<String, List<OntAggregatedStateChange>> ontAggStateChanges = new HashMap<>();
+
+        for (final OntAggregatedObservation ontAggObservation : ontAggObservations) {
+            final OntAggregatedStateChange ontAggStateChange = new OntAggregatedStateChange(ontAggObservation.getStateValue(),ontAggObservation.getQuantity()
+                    , ontAggObservation.getActivityTime(), ontAggObservation.getVariance(), ontAggObservation.getStandardDeviation(), ontAggObservation.getMean(), ontAggObservation.getTimeWeighting());
+
+            if (ontAggStateChanges.containsKey(ontAggObservation.getProviderService())) {
                 // there is an entry: add data
-                final List<ServiceAggDataCollection> arrayList = serviceAggDataCollList.get(aggDataObs.getProviderService());
-                arrayList.add(serviceAggDataColl);
-                serviceAggDataCollList.put(aggDataObs.getProviderService(), arrayList);
+                final List<OntAggregatedStateChange> arrayList = ontAggStateChanges.get(ontAggObservation.getProviderService());
+                arrayList.add(ontAggStateChange);
+                ontAggStateChanges.put(ontAggObservation.getProviderService(), arrayList);
             } else {
                 // there is no entry: put data
-                final List<ServiceAggDataCollection> arrayList = new ArrayList<>();
-                arrayList.add(serviceAggDataColl);
-                serviceAggDataCollList.put(aggDataObs.getProviderService(), arrayList);
+                ontAggStateChanges.put(ontAggObservation.getProviderService(), new ArrayList<OntAggregatedStateChange>() {{add(ontAggStateChange);}});
             }
         }
-        triples.addAll(identifyServiceType(serviceAggDataCollList, 0, unitId));
 
-        return triples;
+        return identifyServiceType(ontAggStateChanges, 0, unitId);
     }
 
-    private List<RdfTriple> relateDataForEachServiceOfEachUnit(final String unitId, final long connectionTimeMilli, final List<Observation> obsDataCollList) {
+    private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli, final List<OntObservation> ontObservations) {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, List<ServiceDataCollection>> serviceDataCollList = new HashMap<>();
+        final HashMap<String, List<OntStateChange>> serviceStateChangeMap = new HashMap<>();
 
-        for (final Observation dataObs : obsDataCollList) {
-            //TODO change dataType (list stateValue)
-            final ServiceDataCollection serviceDataColl = new ServiceDataCollection(dataObs.getStateValues().get(0), dataObs.getTimestamp());
-//            System.out.println(dataObs.getProviderService() + ", " + dataObs.getStateValue() + ", " + unitId);
+        for (final OntObservation ontObservation : ontObservations) {
+            final OntStateChange ontStateChange = new OntStateChange(ontObservation.getStateValues(), ontObservation.getTimestamp());
 
-            if (serviceDataCollList.containsKey(dataObs.getProviderService())) {
+            if (serviceStateChangeMap.containsKey(ontObservation.getProviderService())) {
                 // there is an entry: add data
-                final List<ServiceDataCollection> arrayList = serviceDataCollList.get(dataObs.getProviderService());
-                arrayList.add(serviceDataColl);
-                serviceDataCollList.put(dataObs.getProviderService(), arrayList);
+                final List<OntStateChange> arrayList = serviceStateChangeMap.get(ontObservation.getProviderService());
+                arrayList.add(ontStateChange);
+                serviceStateChangeMap.put(ontObservation.getProviderService(), arrayList);
             } else {
                 // there is no entry: put data
-                final List<ServiceDataCollection> arrayList = new ArrayList<>();
-                arrayList.add(serviceDataColl);
-                serviceDataCollList.put(dataObs.getProviderService(), arrayList);
+                serviceStateChangeMap.put(ontObservation.getProviderService(), new ArrayList<OntStateChange>() {{add(ontStateChange);}});
             }
         }
-        triples.addAll(identifyServiceType(serviceDataCollList, connectionTimeMilli, unitId));
+        triples.addAll(identifyServiceType(serviceStateChangeMap, unitConnectionTimeMilli, unitId));
 
         return triples;
     }

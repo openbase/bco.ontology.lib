@@ -47,8 +47,8 @@ public final class StaticSparqlExpression {
                 + "FILTER(isURI(?y)) . "
                 + "FILTER (regex(str(?y), " + StringModifier.addQuotationMarks(OntConfig.NAMESPACE) + ")) . "
                 + "FILTER NOT EXISTS { ?x sp:predicate NS:hasStateValue } "
-                + "FILTER NOT EXISTS { ?x sp:object NS:Observation } "
-                + "FILTER NOT EXISTS { ?x sp:subject NS:Observation } "
+                + "FILTER NOT EXISTS { ?x sp:object NS:OntObservation } "
+                + "FILTER NOT EXISTS { ?x sp:subject NS:OntObservation } "
                 // more filter criteria can be placed here ...
             + "} ";
 
@@ -93,7 +93,7 @@ public final class StaticSparqlExpression {
                     + "?observation ?p ?o . "
                     + "} WHERE { "
                     + "?observation ?p ?o . "
-                    + "?observation a NS:Observation . "
+                    + "?observation a NS:OntObservation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp > \"2017-04-22T00:00:00.000+02:00\"^^xsd:dateTime) . "
                     + "}";
@@ -156,21 +156,22 @@ public final class StaticSparqlExpression {
     /**
      * Method returns a query, which selects all observations in the ontology.
      *
-     * @param timestampUntil is the timestamp (until) to locate the time frame.
+     * @param endTimestamp is the end timestamp (until) to locate the time frame.
      * @return a sparql string to select observations.
      */
-    public static String getAllObservations(final String timestampUntil) {
+    public static String getAllObservations(final String endTimestamp) {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                    + "?observation a NS:Observation . "
+                    + "?observation a NS:OntObservation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
-                    + "FILTER (?timestamp < " + timestampUntil + " ) . "
+                    + "FILTER (?timestamp < " + endTimestamp + " ) . "
                     + "?observation NS:hasUnitId ?unit . "
                     + "?observation NS:hasStateValue ?stateValue . "
                     + "?observation NS:hasProviderService ?providerService . "
                 + "} "
-                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+//                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
+                + "ORDER BY ?observation ";
     }
 
     /**
@@ -184,12 +185,12 @@ public final class StaticSparqlExpression {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                + "?observation a NS:Observation . "
-                + "?observation NS:hasTimeStamp ?timestamp . "
-                + "FILTER (?timestamp >= " + startTimestamp + " && ?timestamp < " + endTimestamp + " ) . "
-                + "?observation NS:hasUnitId ?unit . "
-                + "?observation NS:hasStateValue ?stateValue . "
-                + "?observation NS:hasProviderService ?providerService . "
+                    + "?observation a NS:OntObservation . "
+                    + "?observation NS:hasTimeStamp ?timestamp . "
+                    + "FILTER (?timestamp >= " + startTimestamp + " && ?timestamp < " + endTimestamp + " ) . "
+                    + "?observation NS:hasUnitId ?unit . "
+                    + "?observation NS:hasStateValue ?stateValue . "
+                    + "?observation NS:hasProviderService ?providerService . "
                 + "} "
                 + "ORDER BY ?observation ";
 //                + "GROUP BY ?observation ?unit ?stateValue ?providerService ?timestamp ";
@@ -263,7 +264,7 @@ public final class StaticSparqlExpression {
 //                    + "?obs ?p ?o . "
 //                + "} WHERE { "
 //                + "{ SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
-//                        + "?observation a NS:Observation . "
+//                        + "?observation a NS:OntObservation . "
 //                        + "?observation NS:hasTimeStamp ?timestamp . "
 //                        + "FILTER (?timestamp < " + dateTimeUntil + " ) . "
 //                        + "?observation NS:hasUnitId ?unit . "
@@ -275,7 +276,7 @@ public final class StaticSparqlExpression {
 //                        + "GROUP BY ?unit ?providerService ?maxTimestamp } "
 //
 //                    + "?obs ?p ?o . "
-//                    + "?obs a NS:Observation . "
+//                    + "?obs a NS:OntObservation . "
 //                    + "?obs NS:hasUnitId ?unit . "
 //                    + "?obs NS:hasProviderService ?providerService . "
 //                    + "?obs NS:hasTimeStamp ?obsTime . "
@@ -323,7 +324,7 @@ public final class StaticSparqlExpression {
                     + "?obs ?p ?o . "
                 + "} WHERE { "
                     + "?obs ?p ?o . "
-                    + "?obs a NS:Observation . "
+                    + "?obs a NS:OntObservation . "
                     + "?obs NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp < " + dateTimeFrom + " || ?timestamp >= " + dateTimeUntil + " ) . "
                 + "}";
@@ -334,7 +335,7 @@ public final class StaticSparqlExpression {
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
 //                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
 //                + "SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
-//                    + "?observation a NS:Observation . "
+//                    + "?observation a NS:OntObservation . "
 //                    + "?observation NS:hasTimeStamp ?timestamp . "
 //                    + "FILTER (?timestamp < " + timestampUntil + " ) . "
 //                    + "?observation NS:hasUnitId ?unit . "
@@ -352,7 +353,7 @@ public final class StaticSparqlExpression {
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
 //                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
 //                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-//                + "?observation a NS:Observation . "
+//                + "?observation a NS:OntObservation . "
 //                + "?observation NS:hasTimeStamp ?timestamp . "
 //                + "FILTER (?timestamp < " + timestampFrom + " ) . "
 //                + "?observation NS:hasUnitId ?unit . "

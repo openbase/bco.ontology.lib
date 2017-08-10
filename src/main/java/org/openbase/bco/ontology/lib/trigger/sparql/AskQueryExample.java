@@ -47,7 +47,7 @@ public class AskQueryExample {
                 + "ASK { "
                     // get all colorableLights with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
+                        + "?obs a NS:OntObservation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:PowerSwitch . "
@@ -68,7 +68,7 @@ public class AskQueryExample {
                 + "ASK { "
                     // get all tile units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
+                        + "?obs a NS:OntObservation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Tile . "
@@ -90,7 +90,7 @@ public class AskQueryExample {
                 + "ASK { "
                     // get all television units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
+                        + "?obs a NS:OntObservation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:Television . "
@@ -115,7 +115,7 @@ public class AskQueryExample {
                 + "ASK { "
                     // get all user units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
+                        + "?obs a NS:OntObservation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:User . "
@@ -136,7 +136,7 @@ public class AskQueryExample {
                 + "ASK { "
                     // get all smokeDetector units with their youngest timestamp
                     + "{ SELECT (MAX(?time) AS ?lastTime) ?unit WHERE { "
-                        + "?obs a NS:Observation . "
+                        + "?obs a NS:OntObservation . "
                         + "?obs NS:hasTimeStamp ?time . "
                         + "?obs NS:hasUnitId ?unit . "
                         + "?unit a NS:SmokeDetector . "

@@ -18,14 +18,17 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceAggDataCollection;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.ServiceDataCollection;
+import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.StateValueType;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -49,63 +52,73 @@ public class DataAssignation extends DataAggregation {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataAssignation.class);
     private final OffsetDateTime dateTimeFrom;
     private final OffsetDateTime dateTimeUntil;
-    private final OntConfig.Period period;
-//    private final SimpleDateFormat dateFormat;
+    private final long dateTimeFromMillis;
+    private final Period period;
     private final Stopwatch stopwatch;
+    private String unitId;
+    private long unitConnectionTimeMilli;
+    private String serviceType;
 
     //TODO if a state has multiple continuous values, than an additionally distinction is needed
 
-    public DataAssignation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final OntConfig.Period period) {
+    public DataAssignation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) {
         super(dateTimeFrom, dateTimeUntil);
 
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
+        this.dateTimeFromMillis = dateTimeFrom.toInstant().toEpochMilli();
         this.period = period;
-//        this.dateFormat = new SimpleDateFormat(OntConfig.DATE_TIME, Locale.getDefault());
         this.stopwatch = new Stopwatch();
     }
 
-    protected List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceDataMap, final long connectionTimeMilli, final String unitId) {
+    protected List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceStateChangeMap, final long unitConnectionTimeMilli, final String unitId) {
+        this.unitId = unitId;
+        this.unitConnectionTimeMilli = unitConnectionTimeMilli;
         final List<RdfTriple> triples = new ArrayList<>();
+        MultiException.ExceptionStack exceptionStack = null;
 
-        for (final String serviceTypeName : serviceDataMap.keySet()) {
+        for (final String serviceType : serviceStateChangeMap.keySet()) {
+            this.serviceType = serviceType;
+
             try {
-                switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceTypeName))) {
+                switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceType))) {
                     case UNKNOWN:
                         LOGGER.warn("There is a serviceType UNKNOWN!");
                         break;
                     case ACTIVATION_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case BATTERY_STATE_SERVICE:
-                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
+                        triples.addAll(percentStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case BLIND_STATE_SERVICE:
-                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
+                        triples.addAll(percentStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case BRIGHTNESS_STATE_SERVICE:
                         break;
                     case BUTTON_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case COLOR_STATE_SERVICE:
-                        triples.addAll(colorStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(hsbStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case CONTACT_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case DOOR_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case EARTHQUAKE_ALARM_STATE_SERVICE:
                         break;
                     case FIRE_ALARM_STATE_SERVICE:
                         break;
                     case HANDLE_STATE_SERVICE:
-                        triples.addAll(handleStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(doubleStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case ILLUMINANCE_STATE_SERVICE:
-                        triples.addAll(illuminanceStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(luxStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case INTENSITY_STATE_SERVICE:
                         break;
@@ -114,309 +127,440 @@ public class DataAssignation extends DataAggregation {
                     case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
                         break;
                     case MOTION_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case PASSAGE_STATE_SERVICE:
                         break;
                     case POWER_CONSUMPTION_STATE_SERVICE:
-                        triples.addAll(powerConsumptionStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(powerStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case POWER_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case PRESENCE_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case RFID_STATE_SERVICE:
-//                    triples.addAll(rfidStateValue(connectionTimeMilli, serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+//                    triples.addAll(rfidStateValue(serviceStateChangeMap.get(serviceType)));
                         break;
                     case SMOKE_ALARM_STATE_SERVICE:
                         break;
                     case SMOKE_STATE_SERVICE:
-                        triples.addAll(batteryOrBlindOrSmokeStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
+                        triples.addAll(percentStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case STANDBY_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case SWITCH_STATE_SERVICE:
-                        triples.addAll(switchStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId,serviceTypeName));
+                        triples.addAll(doubleStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case TAMPER_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case TARGET_TEMPERATURE_STATE_SERVICE:
                         break;
                     case TEMPERATURE_ALARM_STATE_SERVICE:
                         break;
                     case TEMPERATURE_STATE_SERVICE:
-                        triples.addAll(temperatureStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(celsiusStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     case TEMPEST_ALARM_STATE_SERVICE:
                         break;
                     case WATER_ALARM_STATE_SERVICE:
                         break;
                     case WINDOW_STATE_SERVICE:
-                        triples.addAll(bcoStateValue(connectionTimeMilli, (List<?>) serviceDataMap.get(serviceTypeName), unitId, serviceTypeName));
+                        triples.addAll(bcoStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
                     default:
                         // no matched providerService
-                        try {
-                            throw new NotAvailableException("Could not assign to providerService. Please check implementation or rather integrate "
-                                    + OntConfig.SERVICE_NAME_MAP.get(serviceTypeName) + " to method identifyServiceType of aggregation component.");
-                        } catch (NotAvailableException e) {
-                            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-                        }
-                        break;
+                        throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
                 }
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+            } catch (CouldNotPerformException e) {
+                exceptionStack = MultiException.push(this, e, exceptionStack);
             }
         }
+
+        try {
+            MultiException.checkAndThrow("Could not process all service type identification or state value aggregation!", exceptionStack);
+        }  catch (CouldNotPerformException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }
+
         return triples;
     }
 
-    // method only for serviceTypes with one stateValue (bco simpleDiscreteValues stateValues) - no individual distinction necessary
-    private List<RdfTriple> bcoStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+    /**
+     * Method identifies and aggregates state values based on discrete values (/bco state values like on, off, open, ...).
+     *
+     * @param stateChanges are the discrete state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> bcoStateValue(final List<?> stateChanges) throws CouldNotPerformException {
 
-        final List<RdfTriple> triples = new ArrayList<>();
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            final List<OntStateChange> bco = OntNode.getResources((List<OntStateChange>) stateChanges);
+            return discreteValuesObservation(dismissUnusedStateValues(bco));
 
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> genericValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-                triples.addAll(simpleDiscreteValues(connectionTimeMilli, genericValueList, unitId, serviceType));
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            final List<OntAggregatedStateChange> bco = OntNode.getAggResources((List<OntAggregatedStateChange>) stateChanges);
+            return discreteValuesAggObservation(bco);
 
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                triples.addAll(simpleAggDiscreteValues((List<ServiceAggDataCollection>) serviceDataCollList, unitId, serviceType));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @bcoStateValue ...!", e, LOGGER, LogLevel.ERROR);
         }
-        return triples;
+        throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
     }
 
-    private List<RdfTriple> batteryOrBlindOrSmokeStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
+    /**
+     * Method identifies and aggregates state values based on data type percentage (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> percentStateValue(final List<?> stateChanges) throws CouldNotPerformException {
 
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> batteryValueList = new ArrayList<>();
-                List<ServiceDataCollection> batteryLevelList = new ArrayList<>();
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            final List<OntStateChange> percentages = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.PERCENT);
+            return continuousValuesObservation(dismissUnusedStateValues(percentages), StateValueType.PERCENT);
 
-                for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-//                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
-
-                    if (!serviceDataColl.getStateValue().isLiteral()) {
-                        //battery/blind/smoke value
-                        batteryValueList.add(serviceDataColl);
-                    } else if (StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
-                        // battery/blind/smoke level
-                        batteryLevelList.add(serviceDataColl);
-                    }
-                }
-                batteryValueList = dismissInsignificantObservations(batteryValueList);
-                batteryLevelList = dismissInsignificantObservations(batteryLevelList);
-                triples.addAll(simpleDiscreteValues(connectionTimeMilli, batteryValueList, unitId, serviceType));
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, batteryLevelList, unitId, serviceType, "percent"));
-
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                List<ServiceAggDataCollection> batteryValueList = new ArrayList<>();
-                List<ServiceAggDataCollection> batteryLevelList = new ArrayList<>();
-
-                for (final ServiceAggDataCollection serviceDataColl : (List<ServiceAggDataCollection>) serviceDataCollList) {
-//                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
-
-                    if (!serviceDataColl.getStateValue().isLiteral()) {
-                        //battery/blind/smoke value
-                        batteryValueList.add(serviceDataColl);
-                    } else if (serviceDataColl.getStateValue().asLiteral().toString().equalsIgnoreCase("percent")) {
-                        // battery/blind/smoke level
-                        batteryLevelList.add(serviceDataColl);
-                    }
-                }
-                triples.addAll(simpleAggDiscreteValues(batteryValueList, unitId, serviceType));
-                triples.addAll(simpleAggContinuousValues(batteryLevelList, unitId, serviceType, "percent"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @batteryOrBlindOrSmokeStateValue ...!", e, LOGGER, LogLevel.ERROR);
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            final List<OntAggregatedStateChange> percentages = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.PERCENT);
+            return continuousValuesAggObservation(percentages, StateValueType.PERCENT);
         }
-        return triples;
+        throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
     }
 
-    private List<RdfTriple> colorStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
-
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> brightnessList = new ArrayList<>();
-                List<ServiceDataCollection> hueList = new ArrayList<>();
-                List<ServiceDataCollection> saturationList = new ArrayList<>();
-
-                for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
-
-                    if (dataType.equalsIgnoreCase("brightness")) {
-                        //brightness value
-                        brightnessList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("hue")) {
-                        // hue value
-                        hueList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("saturation")) {
-                        // saturation value
-                        saturationList.add(serviceDataColl);
-                    }
-                }
-
-                hueList = dismissInsignificantObservations(hueList);
-                saturationList = dismissInsignificantObservations(saturationList);
-                brightnessList = dismissInsignificantObservations(brightnessList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, hueList, unitId, serviceType, "hue"));
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, saturationList, unitId, serviceType, "saturation"));
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, brightnessList, unitId, serviceType, "brightness"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                List<ServiceAggDataCollection> brightnessList = new ArrayList<>();
-                List<ServiceAggDataCollection> hueList = new ArrayList<>();
-                List<ServiceAggDataCollection> saturationList = new ArrayList<>();
-
-                for (final ServiceAggDataCollection serviceDataColl : (List<ServiceAggDataCollection>) serviceDataCollList) {
-                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
-
-                    if (dataType.equalsIgnoreCase("brightness")) {
-                        //brightness value
-                        brightnessList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("hue")) {
-                        // hue value
-                        hueList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("saturation")) {
-                        // saturation value
-                        saturationList.add(serviceDataColl);
-                    }
-                }
-                triples.addAll(simpleAggContinuousValues(brightnessList, unitId, serviceType, "brightness"));
-                triples.addAll(simpleAggContinuousValues(hueList, unitId, serviceType, "hue"));
-                triples.addAll(simpleAggContinuousValues(saturationList, unitId, serviceType, "saturation"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
-        }
-
-//        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = getAggColorValues(hueList, saturationList, brightnessList);
+//    private List<RdfTriple> batteryOrBlindOrSmokeStateValue(final List<?> stateChanges) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
 //        try {
-//            triples.addAll(getColorTriple(connectionTimeMilli, hsbCountMap, unitId, serviceType));
-//        } catch (InterruptedException e) {
+//            if (stateChanges.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> batteryValueList = new ArrayList<>();
+//                List<OntStateChange> batteryLevelList = new ArrayList<>();
+//
+//                for (final OntStateChange stateChange : (List<OntStateChange>) stateChanges) {
+////                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//
+//                    if (!stateChange.getStateValue().isLiteral()) {
+//                        //battery/blind/smoke value
+//                        batteryValueList.add(stateChange);
+//                    } else if (StringModifier.getLocalName(stateChange.getStateValue().asLiteral().getDatatypeURI()).equalsIgnoreCase("percent")) {
+//                        // battery/blind/smoke level
+//                        batteryLevelList.add(stateChange);
+//                    }
+//                }
+//
+//                batteryValueList = dismissUnusedStateValues(batteryValueList);
+//                batteryLevelList = dismissUnusedStateValues(batteryLevelList);
+//                triples.addAll(discreteValuesObservation(batteryValueList));
+//                triples.addAll(continuousValuesObservation(batteryLevelList, "percent"));
+//
+//            } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+//                List<OntAggregatedStateChange> batteryValueList = new ArrayList<>();
+//                List<OntAggregatedStateChange> batteryLevelList = new ArrayList<>();
+//
+//                for (final OntAggregatedStateChange serviceDataColl : (List<OntAggregatedStateChange>) stateChanges) {
+////                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
+//
+//                    if (!serviceDataColl.getStateValue().isLiteral()) {
+//                        //battery/blind/smoke value
+//                        batteryValueList.add(serviceDataColl);
+//                    } else if (serviceDataColl.getStateValue().asLiteral().toString().equalsIgnoreCase("percent")) {
+//                        // battery/blind/smoke level
+//                        batteryLevelList.add(serviceDataColl);
+//                    }
+//                }
+//                triples.addAll(discreteValuesAggObservation(batteryValueList));
+//                triples.addAll(continuousValuesAggObservation(batteryLevelList, "percent"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @batteryOrBlindOrSmokeStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
+
+    /**
+     * Method identifies and aggregates state values based on data type hsb - hue, saturation, brightness (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> hsbStateValue(final List<?> stateChanges) throws CouldNotPerformException {
+        final List<RdfTriple> triples = new ArrayList<>();
+
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            List<OntStateChange> brightness = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.BRIGHTNESS);
+            List<OntStateChange> hue = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.HUE);
+            List<OntStateChange> saturation = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.SATURATION);
+
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(hue), StateValueType.HUE));
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(saturation), StateValueType.SATURATION));
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(brightness), StateValueType.BRIGHTNESS));
+
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            List<OntAggregatedStateChange> brightness = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.BRIGHTNESS);
+            List<OntAggregatedStateChange> hue = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.HUE);
+            List<OntAggregatedStateChange> saturation = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.SATURATION);
+
+            triples.addAll(continuousValuesAggObservation(hue, StateValueType.HUE));
+            triples.addAll(continuousValuesAggObservation(saturation, StateValueType.SATURATION));
+            triples.addAll(continuousValuesAggObservation(brightness, StateValueType.BRIGHTNESS));
+
+        } else {
+            throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
+        }
+        return triples;
+    }
+
+//    private List<RdfTriple> colorStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> brightnessList = new ArrayList<>();
+//                List<OntStateChange> hueList = new ArrayList<>();
+//                List<OntStateChange> saturationList = new ArrayList<>();
+//
+//                for (final OntStateChange serviceDataColl : (List<OntStateChange>) serviceDataCollList) {
+//                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//
+//                    if (dataType.equalsIgnoreCase("brightness")) {
+//                        //brightness value
+//                        brightnessList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("hue")) {
+//                        // hue value
+//                        hueList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("saturation")) {
+//                        // saturation value
+//                        saturationList.add(serviceDataColl);
+//                    }
+//                }
+//
+//                hueList = dismissUnusedStateValues(hueList);
+//                saturationList = dismissUnusedStateValues(saturationList);
+//                brightnessList = dismissUnusedStateValues(brightnessList);
+//                triples.addAll(continuousValuesObservation(hueList, "hue"));
+//                triples.addAll(continuousValuesObservation(saturationList, "saturation"));
+//                triples.addAll(continuousValuesObservation(brightnessList, "brightness"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                List<OntAggregatedStateChange> brightnessList = new ArrayList<>();
+//                List<OntAggregatedStateChange> hueList = new ArrayList<>();
+//                List<OntAggregatedStateChange> saturationList = new ArrayList<>();
+//
+//                for (final OntAggregatedStateChange serviceDataColl : (List<OntAggregatedStateChange>) serviceDataCollList) {
+//                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
+//
+//                    if (dataType.equalsIgnoreCase("brightness")) {
+//                        //brightness value
+//                        brightnessList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("hue")) {
+//                        // hue value
+//                        hueList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("saturation")) {
+//                        // saturation value
+//                        saturationList.add(serviceDataColl);
+//                    }
+//                }
+//                triples.addAll(continuousValuesAggObservation(brightnessList, "brightness"));
+//                triples.addAll(continuousValuesAggObservation(hueList, "hue"));
+//                triples.addAll(continuousValuesAggObservation(saturationList, "saturation"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
 //            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
 //        }
-        return triples;
+//
+////        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = getAggColorValues(hueList, saturationList, brightnessList);
+////        try {
+////            triples.addAll(getColorTriple(connectionTimeMilli, hsbCountMap, unitId, serviceType));
+////        } catch (InterruptedException e) {
+////            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+////        }
+//        return triples;
+//    }
+
+    /**
+     * Method identifies and aggregates state values based on data type double (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> doubleStateValue(final List<?> stateChanges) throws CouldNotPerformException {
+
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            final List<OntStateChange> doubleValue = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.DOUBLE);
+            return continuousValuesObservation(dismissUnusedStateValues(doubleValue), StateValueType.DOUBLE);
+
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            final List<OntAggregatedStateChange> doubleValue = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.DOUBLE);
+            return continuousValuesAggObservation(doubleValue, StateValueType.DOUBLE);
+        }
+        throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
     }
 
-    private List<RdfTriple> handleStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+//    private List<RdfTriple> handleStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> handleValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+//                triples.addAll(continuousValuesObservation(handleValueList, "double"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                triples.addAll(continuousValuesAggObservation((List<OntAggregatedStateChange>) serviceDataCollList, "double"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @handleStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
+
+    /**
+     * Method identifies and aggregates state values based on data type lux (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> luxStateValue(final List<?> stateChanges) throws CouldNotPerformException {
+
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            final List<OntStateChange> lux = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.LUX);
+            return continuousValuesObservation(dismissUnusedStateValues(lux), StateValueType.LUX);
+
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            final List<OntAggregatedStateChange> lux = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.LUX);
+            return continuousValuesAggObservation(lux, StateValueType.LUX);
+        }
+        throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
+    }
+
+//    private List<RdfTriple> illuminanceStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> illuminanceValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+//                triples.addAll(continuousValuesObservation(illuminanceValueList, "lux"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                triples.addAll(continuousValuesAggObservation((List<OntAggregatedStateChange>) serviceDataCollList, "lux"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @illuminanceStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
+
+    /**
+     * Method identifies and aggregates state values based on power - voltage, watt, ampere (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> powerStateValue(final List<?> stateChanges) throws CouldNotPerformException {
         final List<RdfTriple> triples = new ArrayList<>();
 
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> handleValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, handleValueList, unitId, serviceType, "double"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                triples.addAll(simpleAggContinuousValues((List<ServiceAggDataCollection>) serviceDataCollList, unitId, serviceType, "double"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @handleStateValue ...!", e, LOGGER, LogLevel.ERROR);
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            List<OntStateChange> voltage = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.VOLTAGE);
+            List<OntStateChange> watt = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.WATT);
+            List<OntStateChange> ampere = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.AMPERE);
+
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(voltage), StateValueType.VOLTAGE));
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(watt), StateValueType.WATT));
+            triples.addAll(continuousValuesObservation(dismissUnusedStateValues(ampere), StateValueType.AMPERE));
+
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            List<OntAggregatedStateChange> voltage = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.VOLTAGE);
+            List<OntAggregatedStateChange> watt = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.WATT);
+            List<OntAggregatedStateChange> ampere = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.AMPERE);
+
+            triples.addAll(continuousValuesAggObservation(voltage, StateValueType.VOLTAGE));
+            triples.addAll(continuousValuesAggObservation(watt, StateValueType.WATT));
+            triples.addAll(continuousValuesAggObservation(ampere, StateValueType.AMPERE));
+
+        } else {
+            throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
         }
         return triples;
     }
 
-    private List<RdfTriple> illuminanceStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
+//    private List<RdfTriple> powerConsumptionStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> voltageList = new ArrayList<>();
+//                List<OntStateChange> wattList = new ArrayList<>();
+//                List<OntStateChange> ampereList = new ArrayList<>();
+//
+//                for (final OntStateChange serviceDataColl : (List<OntStateChange>) serviceDataCollList) {
+//                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
+//
+//                    if (dataType.equalsIgnoreCase("voltage")) {
+//                        //voltage value
+//                        voltageList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("watt")) {
+//                        // watt value
+//                        wattList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("ampere")) {
+//                        // ampere value
+//                        ampereList.add(serviceDataColl);
+//                    }
+//                }
+//                voltageList = dismissUnusedStateValues(voltageList);
+//                wattList = dismissUnusedStateValues(wattList);
+//                ampereList = dismissUnusedStateValues(ampereList);
+//                triples.addAll(continuousValuesObservation(voltageList, "voltage"));
+//                triples.addAll(continuousValuesObservation(wattList, "watt"));
+//                triples.addAll(continuousValuesObservation(ampereList, "ampere"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                List<OntAggregatedStateChange> voltageList = new ArrayList<>();
+//                List<OntAggregatedStateChange> wattList = new ArrayList<>();
+//                List<OntAggregatedStateChange> ampereList = new ArrayList<>();
+//
+//                for (final OntAggregatedStateChange serviceDataColl : (List<OntAggregatedStateChange>) serviceDataCollList) {
+//                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
+//
+//                    if (dataType.equalsIgnoreCase("voltage")) {
+//                        //voltage value
+//                        voltageList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("watt")) {
+//                        // watt value
+//                        wattList.add(serviceDataColl);
+//                    } else if (dataType.equalsIgnoreCase("ampere")) {
+//                        // ampere value
+//                        ampereList.add(serviceDataColl);
+//                    }
+//                }
+//                triples.addAll(continuousValuesAggObservation(voltageList, "brightness"));
+//                triples.addAll(continuousValuesAggObservation(wattList, "hue"));
+//                triples.addAll(continuousValuesAggObservation(ampereList, "saturation"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
+
+    private List<RdfTriple> rfidStateValue(final List<?> serviceDataCollList) { //TODO
         final List<RdfTriple> triples = new ArrayList<>();
 
         try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> illuminanceValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, illuminanceValueList, unitId, serviceType, "lux"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                triples.addAll(simpleAggContinuousValues((List<ServiceAggDataCollection>) serviceDataCollList, unitId, serviceType, "lux"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @illuminanceStateValue ...!", e, LOGGER, LogLevel.ERROR);
-        }
-        return triples;
-    }
-
-    private List<RdfTriple> powerConsumptionStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
-
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> voltageList = new ArrayList<>();
-                List<ServiceDataCollection> wattList = new ArrayList<>();
-                List<ServiceDataCollection> ampereList = new ArrayList<>();
-
-                for (final ServiceDataCollection serviceDataColl : (List<ServiceDataCollection>) serviceDataCollList) {
-                    final String dataType = StringModifier.getLocalName(serviceDataColl.getStateValue().asLiteral().getDatatypeURI());
-
-                    if (dataType.equalsIgnoreCase("voltage")) {
-                        //voltage value
-                        voltageList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("watt")) {
-                        // watt value
-                        wattList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("ampere")) {
-                        // ampere value
-                        ampereList.add(serviceDataColl);
-                    }
-                }
-                voltageList = dismissInsignificantObservations(voltageList);
-                wattList = dismissInsignificantObservations(wattList);
-                ampereList = dismissInsignificantObservations(ampereList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, voltageList, unitId, serviceType, "voltage"));
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, wattList, unitId, serviceType, "watt"));
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, ampereList, unitId, serviceType, "ampere"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                List<ServiceAggDataCollection> voltageList = new ArrayList<>();
-                List<ServiceAggDataCollection> wattList = new ArrayList<>();
-                List<ServiceAggDataCollection> ampereList = new ArrayList<>();
-
-                for (final ServiceAggDataCollection serviceDataColl : (List<ServiceAggDataCollection>) serviceDataCollList) {
-                    final String dataType = serviceDataColl.getStateValue().asLiteral().toString();
-
-                    if (dataType.equalsIgnoreCase("voltage")) {
-                        //voltage value
-                        voltageList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("watt")) {
-                        // watt value
-                        wattList.add(serviceDataColl);
-                    } else if (dataType.equalsIgnoreCase("ampere")) {
-                        // ampere value
-                        ampereList.add(serviceDataColl);
-                    }
-                }
-                triples.addAll(simpleAggContinuousValues(voltageList, unitId, serviceType, "brightness"));
-                triples.addAll(simpleAggContinuousValues(wattList, unitId, serviceType, "hue"));
-                triples.addAll(simpleAggContinuousValues(ampereList, unitId, serviceType, "saturation"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
-        }
-        return triples;
-    }
-
-    private List<RdfTriple> rfidStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
-
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> rfidValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
+            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+                List<OntStateChange> rfidValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
 
             } else {
                 throw new CouldNotPerformException("Could not identify variable type.");
@@ -428,78 +572,98 @@ public class DataAssignation extends DataAggregation {
         return null;//TODO
     }
 
-    private List<RdfTriple> switchStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
+//    private List<RdfTriple> switchStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                //TODO 0...1...another calculation of mean?
+//                List<OntStateChange> switchValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+//                triples.addAll(continuousValuesObservation(switchValueList, "double"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                triples.addAll(continuousValuesAggObservation((List<OntAggregatedStateChange>) serviceDataCollList, "double"));
+//
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @switchStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
 
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                //TODO 0...1...another calculation of mean?
-                List<ServiceDataCollection> switchValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, switchValueList, unitId, serviceType, "double"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                triples.addAll(simpleAggContinuousValues((List<ServiceAggDataCollection>) serviceDataCollList, unitId, serviceType, "double"));
+    /**
+     * Method identifies and aggregates state values based on data type celsius (continuous).
+     *
+     * @param stateChanges are the continuous state values.
+     * @return rdf triples to insert aggregated information which are calculated from the input state values.
+     * @throws CouldNotPerformException is thrown in case the parameter type is unknown.
+     */
+    private List<RdfTriple> celsiusStateValue(final List<?> stateChanges) throws CouldNotPerformException {
 
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @switchStateValue ...!", e, LOGGER, LogLevel.ERROR);
+        if (stateChanges.get(0) instanceof OntStateChange) {
+            final List<OntStateChange> temperature = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.CELSIUS);
+            return continuousValuesObservation(dismissUnusedStateValues(temperature), StateValueType.CELSIUS);
+
+        } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
+            final List<OntAggregatedStateChange> temperature = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.CELSIUS);
+            return continuousValuesAggObservation(temperature, StateValueType.CELSIUS);
         }
-        return triples;
+        throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
     }
 
-    private List<RdfTriple> temperatureStateValue(final long connectionTimeMilli, final List<?> serviceDataCollList, final String unitId, final String serviceType) {
-        final List<RdfTriple> triples = new ArrayList<>();
+//    private List<RdfTriple> temperatureStateValue(final List<?> serviceDataCollList) {
+//        final List<RdfTriple> triples = new ArrayList<>();
+//
+//        try {
+//            if (serviceDataCollList.get(0) instanceof OntStateChange) {
+//                List<OntStateChange> temperatureValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+//                triples.addAll(continuousValuesObservation(temperatureValueList, "celsius"));
+//            } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
+//                triples.addAll(continuousValuesAggObservation((List<OntAggregatedStateChange>) serviceDataCollList, "celsius"));
+//            } else {
+//                throw new CouldNotPerformException("Could not identify variable type.");
+//            }
+//        } catch (CouldNotPerformException e) {
+//            ExceptionPrinter.printHistory("Dropped data @temperatureStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        }
+//        return triples;
+//    }
 
-        try {
-            if (serviceDataCollList.get(0) instanceof ServiceDataCollection) {
-                List<ServiceDataCollection> temperatureValueList = dismissInsignificantObservations((List<ServiceDataCollection>) serviceDataCollList);
-                triples.addAll(simpleContinuousValues(connectionTimeMilli, temperatureValueList, unitId, serviceType, "celsius"));
-            } else if (serviceDataCollList.get(0) instanceof ServiceAggDataCollection) {
-                triples.addAll(simpleAggContinuousValues((List<ServiceAggDataCollection>) serviceDataCollList, unitId, serviceType, "celsius"));
-            } else {
-                throw new CouldNotPerformException("Could not identify variable type.");
-            }
-        } catch (CouldNotPerformException | InterruptedException e) {
-            ExceptionPrinter.printHistory("Dropped data @temperatureStateValue ...!", e, LOGGER, LogLevel.ERROR);
-        }
-        return triples;
-    }
-
-    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<ServiceDataCollection> hueList
-            , List<ServiceDataCollection> saturationList, final List<ServiceDataCollection> brightnessList) {
-
-        if (hueList.size() != saturationList.size() || hueList.size() != brightnessList.size()) {
-            LOGGER.error("List sizes of hue, saturation and brightness are not equal!");
-        }
-
-        // sort ascending (old to young)
-        Collections.sort(hueList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
-        Collections.sort(saturationList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
-        Collections.sort(brightnessList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
-
-        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = new HashMap<>();
-
-        for (int i = 0; i < hueList.size(); i++) {
-            final int hue = (int) (Double.parseDouble(hueList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
-            final int saturation = (int) (Double.parseDouble(saturationList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
-            final int brightness = (int) (Double.parseDouble(brightnessList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
-
-            final Triple<Integer, Integer, Integer> hsb = new MutableTriple<>(hue, saturation, brightness);
-
-            if (hsbCountMap.containsKey(hsb)) {
-                // there is an entry with the hsb values
-                hsbCountMap.put(hsb, hsbCountMap.get(hsb) + 1);
-            } else {
-                // set new entry
-                hsbCountMap.put(hsb, 1);
-            }
-        }
-        return hsbCountMap;
-    }
+//    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<OntStateChange> hueList
+//            , List<OntStateChange> saturationList, final List<OntStateChange> brightnessList) { //TODO
+//
+//        if (hueList.size() != saturationList.size() || hueList.size() != brightnessList.size()) {
+//            LOGGER.error("List sizes of hue, saturation and brightness are not equal!");
+//        }
+//
+//        // sort ascending (old to young)
+//        Collections.sort(hueList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+//        Collections.sort(saturationList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+//        Collections.sort(brightnessList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+//
+//        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = new HashMap<>();
+//
+//        for (int i = 0; i < hueList.size(); i++) {
+//            final int hue = (int) (Double.parseDouble(hueList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
+//            final int saturation = (int) (Double.parseDouble(saturationList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
+//            final int brightness = (int) (Double.parseDouble(brightnessList.get(i).getStateValue().asLiteral().getLexicalForm()) / 10);
+//
+//            final Triple<Integer, Integer, Integer> hsb = new MutableTriple<>(hue, saturation, brightness);
+//
+//            if (hsbCountMap.containsKey(hsb)) {
+//                // there is an entry with the hsb values
+//                hsbCountMap.put(hsb, hsbCountMap.get(hsb) + 1);
+//            } else {
+//                // set new entry
+//                hsbCountMap.put(hsb, 1);
+//            }
+//        }
+//        return hsbCountMap;
+//    }
 
     private List<RdfTriple> getColorTriple(final long connectionTimeMilli, final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap
-            , final String unitId, final String serviceType) throws InterruptedException {
+            , final String unitId, final String serviceType) {
 
         final List<RdfTriple> triples = new ArrayList<>();
         final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli
@@ -528,11 +692,14 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<RdfTriple> simpleDiscreteValues(final long connectionTimeMilli, final List<ServiceDataCollection> discreteList, final String unitId
-            , final String serviceType) throws CouldNotPerformException, InterruptedException {
+    private List<RdfTriple> discreteValuesObservation(final List<OntStateChange> discreteList) throws CouldNotPerformException {
+
+        if (discreteList.isEmpty()) {
+            throw new CouldNotPerformException("There is no state value. Empty list!");
+        }
 
         final List<RdfTriple> triples = new ArrayList<>();
-        final DiscreteStateValues discreteStateValues = new DiscreteStateValues(connectionTimeMilli, discreteList);
+        final DiscreteStateValues discreteStateValues = new DiscreteStateValues(unitConnectionTimeMilli, discreteList);
 
         final HashMap<String, Long> activationTimeMap = discreteStateValues.getActiveTimePerStateValue();
         final HashMap<String, Integer> quantityMap = discreteStateValues.getQuantityPerStateValue();
@@ -555,8 +722,11 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<RdfTriple> simpleAggDiscreteValues(final List<ServiceAggDataCollection> aggDiscreteList, final String unitId, final String serviceType)
-            throws CouldNotPerformException, InterruptedException {
+    private List<RdfTriple> discreteValuesAggObservation(final List<OntAggregatedStateChange> aggDiscreteList) throws CouldNotPerformException {
+
+        if (aggDiscreteList.isEmpty()) {
+            throw new CouldNotPerformException("There is no state value. Empty list!");
+        }
 
         final List<RdfTriple> triples = new ArrayList<>();
         final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
@@ -583,11 +753,14 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<RdfTriple> simpleContinuousValues(final long connectionTimeMilli, final List<ServiceDataCollection> continuousList, final String unitId
-            , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
+    private List<RdfTriple> continuousValuesObservation(final List<OntStateChange> continuousList, final StateValueType dataType) throws CouldNotPerformException {
+
+        if (continuousList.isEmpty()) {
+            throw new CouldNotPerformException("There is no state value of kind " + dataType.name() + ".");
+        }
 
         final List<RdfTriple> triples = new ArrayList<>();
-        final ContinuousStateValues continuousStateValues = new ContinuousStateValues(connectionTimeMilli, continuousList);
+        final ContinuousStateValues continuousStateValues = new ContinuousStateValues(unitConnectionTimeMilli, continuousList);
         final String subj_AggObs = getAggObsInstance(unitId);
 
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
@@ -595,7 +768,7 @@ public class DataAssignation extends DataAggregation {
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
         // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
-        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType.name() + "\"^^xsd:string"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
@@ -606,8 +779,11 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private List<RdfTriple> simpleAggContinuousValues(final List<ServiceAggDataCollection> aggContinuousList, final String unitId
-            , final String serviceType, final String dataType) throws CouldNotPerformException, InterruptedException {
+    private List<RdfTriple> continuousValuesAggObservation(final List<OntAggregatedStateChange> aggContinuousList, final StateValueType dataType) throws CouldNotPerformException {
+
+        if (aggContinuousList.isEmpty()) {
+            throw new CouldNotPerformException("There is no state value of kind " + dataType.name() + ".");
+        }
 
         final List<RdfTriple> triples = new ArrayList<>();
         final OntConfig.Period toAggregatedPeriod = period; //TODO to aggregated period...
@@ -619,7 +795,7 @@ public class DataAssignation extends DataAggregation {
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PROVIDER_SERVICE.getName(), serviceType));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.PERIOD.getName(), period.toString().toLowerCase()));
         // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
-        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType + "\"^^xsd:string"));
+        triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STATE_VALUE.getName(), "\"" + dataType.name() + "\"^^xsd:string"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
         triples.add(new RdfTriple(subj_AggObs, OntConfig.OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
@@ -630,37 +806,47 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-    private String getAggObsInstance(final String unitId) throws InterruptedException {
+    private String getAggObsInstance(final String unitId) {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
-        stopwatch.waitForStop(1);
+        try {
+            stopwatch.waitForStop(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         final String dateTimeNow = OffsetDateTime.now().toString();
 
         return "AggObs" + unitId + dateTimeNow.substring(0, dateTimeNow.indexOf("+"));
     }
 
-    // dismiss all observations below the dateTimeFrom. BESIDES the youngest observation below the dateTimeFrom.
-    private List<ServiceDataCollection> dismissInsignificantObservations(final List<ServiceDataCollection> stateValueDataCollectionList) {
+    /**
+     * Method dismisses all state values, which are not in the time frame (from - until), besides the oldest. Main problem/idea is that the oldest timestamp
+     * before the time frame must be known to keep state value information about the whole time frame. The first (/oldest) timestamp inside the time frame can
+     * be start, maybe, 5 seconds after the start timestamp of aggregation. Without the state value (+ timestamp) before the time frame, the information is
+     * missing.
+     *
+     * @param stateChanges are the state values of an unit.
+     * @return a reduced list with state values, which are relevant for the aggregation time frame.
+     */
+    private List<OntStateChange> dismissUnusedStateValues(final List<OntStateChange> stateChanges) {
 
         // sort ascending (old to young)
-        Collections.sort(stateValueDataCollectionList, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+        Collections.sort(stateChanges, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
 
-        final List<ServiceDataCollection> bufDataList = new ArrayList<>();
-        boolean insignificant = true;
-        ServiceDataCollection bufData = null;
-        final long dateTimeFromMillis = dateTimeFrom.toInstant().toEpochMilli();
+        final List<OntStateChange> bufDataList = new ArrayList<>();
+        OntStateChange bufData = null;
 
-        for (final ServiceDataCollection stateValueDataCollection : stateValueDataCollectionList) {
-            final long stateValueMillis = OffsetDateTime.parse(stateValueDataCollection.getTimestamp()).toInstant().toEpochMilli();
+        for (final OntStateChange stateChange : stateChanges) {
+            final long timestampMillis = OffsetDateTime.parse(stateChange.getTimestamp()).toInstant().toEpochMilli();
 
-            if (insignificant && stateValueMillis <= dateTimeFromMillis) {
-                bufData = stateValueDataCollection;
+            if (timestampMillis <= dateTimeFromMillis) {
+                bufData = stateChange;
             } else {
-                if (insignificant && bufData != null) {
+                if (bufData != null) {
                     bufDataList.add(bufData);
-                    insignificant = false;
+                    bufData = null;
                 }
-                bufDataList.add(stateValueDataCollection);
+                bufDataList.add(stateChange);
             }
         }
         return bufDataList;

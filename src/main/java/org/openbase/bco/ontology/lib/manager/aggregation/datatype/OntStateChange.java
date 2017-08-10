@@ -20,39 +20,53 @@ package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
 import org.apache.jena.rdf.model.RDFNode;
 
+import java.util.List;
+
 /**
  * @author agatting on 25.03.17.
  */
-public class ServiceDataCollection {
-    private final RDFNode stateValue;
+public class OntStateChange {
+
+    private final List<RDFNode> stateValues;
     private final String timestamp;
 
     /**
-     * Method contains a data collection of stateValue, dataType and timestamp, which a providerService can contain.
-     * A dataType can be null, then it's a BCO stateValue (like ON/OFF) or not null, then it's a physical unit or a specific membership.
+     * Method creates a ontology stateChange data type, which describes the state values to a specific time.
      *
-     * @param stateValue The value as discrete (BCO value) or continuous.
-     * @param timestamp The timestamp of the stateValue and dataType.
+     * @param stateValues are the values of an state change to a specific time.
+     * @param timestamp is the specific time in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX.
      */
-    public ServiceDataCollection(final RDFNode stateValue, final String timestamp) {
-        this.stateValue = stateValue;
+    public OntStateChange(final List<RDFNode> stateValues, final String timestamp) {
+        this.stateValues = stateValues;
         this.timestamp = timestamp;
     }
 
     /**
-     * Getter for stateValue.
+     * Getter for observation data: stateValues.
      *
-     * @return stateValue.
+     * @return the state values.
      */
-    public RDFNode getStateValue() {
-        return stateValue; }
+    public List<RDFNode> getStateValues() {
+        return stateValues;
+    }
 
     /**
-     * Getter for timestamp.
+     * Getter for observation data: timestamp.
      *
-     * @return timestamp.
+     * @return the timestamp in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public String getTimestamp() {
-        return timestamp; }
+        return timestamp;
+    }
+
+    /**
+     * Method adds a single state value to the list of stateValues.
+     *
+     * @param stateValue is the stateValue, which should be added.
+     * @return true, if added successfully. Otherwise false.
+     */
+    public boolean addValue(final RDFNode stateValue) {
+        return stateValues.add(stateValue);
+    }
 
 }

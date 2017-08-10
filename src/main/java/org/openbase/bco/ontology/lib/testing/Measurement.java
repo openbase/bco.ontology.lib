@@ -101,7 +101,7 @@ public class Measurement {
     private static final String SIMPLE_QUERY =
             "PREFIX NAMESPACE: <http://www.openbase.org/bco/ontology#> "
                     + "ASK { "
-                        + "?obs a NAMESPACE:Observation . "
+                        + "?obs a NAMESPACE:OntObservation . "
                         + "?obs NAMESPACE:hasUnitId ?unit . "
                         + "?obs NAMESPACE:hasStateValue NAMESPACE:ON . "
                         + "?unit a NAMESPACE:ColorableLight . "
@@ -112,7 +112,7 @@ public class Measurement {
 //            + "PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#> "
 //                + "ASK { "
 //                    + "{ SELECT ?timeA ?unitA WHERE { "
-//                        + "?obsA a NAMESPACE:Observation . "
+//                        + "?obsA a NAMESPACE:OntObservation . "
 //                        + "?obsA NAMESPACE:hasTimeStamp ?timeA . "
 //                        + "?obsA NAMESPACE:hasUnitId ?unitA . "
 //                        + "?unitA a NAMESPACE:PowerSwitch . "
@@ -122,7 +122,7 @@ public class Measurement {
 //                    + "ORDER BY DESC(?timeA) "
 //                    + "LIMIT 10 } . "
 //                    + "{ SELECT ?timeB ?unitB WHERE { "
-//                        + "?obsB a NAMESPACE:Observation . "
+//                        + "?obsB a NAMESPACE:OntObservation . "
 //                        + "?obsB NAMESPACE:hasTimeStamp ?timeB . "
 //                        + "?obsB NAMESPACE:hasUnitId ?unitB . "
 //                        + "?unitB a NAMESPACE:ColorableLight . "
@@ -292,7 +292,7 @@ public class Measurement {
         }
     }
 
-    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, IOException {
+    private void startMeasurementAggData() throws InterruptedException, CouldNotPerformException, ExecutionException {
 
         if (triggerCount < TRIGGER_MAX_COUNT) {
             measurementWatch.restart();
@@ -399,7 +399,7 @@ public class Measurement {
         OntModelHttp.addModelToServer(ontModel, OntConfig.getOntologyDbUrl(), 0);
     }
 
-    private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException, IOException {
+    private void startAggregatedDataMeasurement() throws InterruptedException, CouldNotPerformException, ExecutionException {
         System.out.println("Duplicate data...Day: 1");
         duplicateData.duplicateDataOfAggObs(daysCurCount);
         askNumberOfTriple();

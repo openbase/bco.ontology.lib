@@ -5,7 +5,7 @@ org.openbase.bco.ontology.lib.commun.web
 org.openbase.bco.ontology.lib.jp
 org.openbase.bco.ontology.lib.manager
 org.openbase.bco.ontology.lib.manager.abox.configuration
-org.openbase.bco.ontology.lib.manager.abox.observation
+org.openbase.bco.ontology.lib.manager.abox.ontObservation
 org.openbase.bco.ontology.lib.manager.aggregation
 org.openbase.bco.ontology.lib.manager.aggregation.datatype
 org.openbase.bco.ontology.lib.manager.buffer

@@ -25,13 +25,20 @@ import java.util.List;
 /**
  * @author agatting on 05.07.17.
  */
-public class Observation {
+public class OntObservation {
 
     private final String providerService;
     private final List<RDFNode> stateValues;
     private final String timestamp;
 
-    public Observation(final String providerService, final List<RDFNode> stateValues, final String timestamp) {
+    /**
+     * Method creates an ontology observation. It describes a state change regarding to the providerService.
+     *
+     * @param providerService is the providerService to identify the kind of state values.
+     * @param stateValues are the values of an state change to a specific time.
+     * @param timestamp is the specific time in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX.
+     */
+    public OntObservation(final String providerService, final List<RDFNode> stateValues, final String timestamp) {
         this.providerService = providerService;
         this.stateValues = stateValues;
         this.timestamp = timestamp;
@@ -40,28 +47,37 @@ public class Observation {
     /**
      * Getter for observation data: providerService.
      *
-     * @return providerService.
+     * @return the providerService to identify the kind of state values.
      */
     public String getProviderService() {
-        return providerService; }
+        return providerService;
+    }
 
     /**
-     * Getter for observation data: stateValue.
+     * Getter for observation data: stateValues.
      *
-     * @return stateValue.
+     * @return the state values.
      */
     public List<RDFNode> getStateValues() {
-        return stateValues; }
-
-    public boolean addValue(final RDFNode stateValue) {
-        return stateValues.add(stateValue);
+        return stateValues;
     }
 
     /**
      * Getter for observation data: timestamp.
      *
-     * @return timestamp.
+     * @return the timestamp in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public String getTimestamp() {
-        return timestamp; }
+        return timestamp;
+    }
+
+    /**
+     * Method adds a single state value to the list of stateValues.
+     *
+     * @param stateValue is the stateValue, which should be added.
+     * @return true, if added successfully. Otherwise false.
+     */
+    public boolean addValue(final RDFNode stateValue) {
+        return stateValues.add(stateValue);
+    }
 }
