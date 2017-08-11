@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.openbase.jul.exception.CouldNotPerformException;
 
 /**
  * @author agatting on 19.01.17.
@@ -101,7 +102,7 @@ public interface OntModelHttp {
 
         try {
             return (OntModel) ThreadUtility.setTimeoutToCallable(timeout, future);
-        } catch (ExecutionException e) {
+        } catch (ExecutionException | CouldNotPerformException e) {
             throw new NotAvailableException(e);
         }
     }
@@ -157,7 +158,7 @@ public interface OntModelHttp {
 
         try {
             ThreadUtility.setTimeoutToCallable(timeout, future);
-        } catch (ExecutionException e) {
+        } catch (ExecutionException | CouldNotPerformException e) {
             throw new NotAvailableException(e);
         }
     }

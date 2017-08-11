@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 final class SparqlHttpLogger {
+
     static final Logger LOGGER = LoggerFactory.getLogger(SparqlHttpLogger.class);
 
     private SparqlHttpLogger() {
@@ -180,7 +181,12 @@ public interface SparqlHttp {
             }
         });
 
-        return (ResultSet) ThreadUtility.setTimeoutToCallable(timeout, future);
+        try {
+            return (ResultSet) ThreadUtility.setTimeoutToCallable(timeout, future);
+        } catch (CouldNotPerformException ex) {
+            future.cancel(true);
+            throw new ExecutionException("Could not limit query timeout!", ex);
+        }
     }
 
     /**
