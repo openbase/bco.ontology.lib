@@ -18,7 +18,6 @@
  */
 package org.openbase.bco.ontology.lib.manager.abox.configuration;
 
-import org.openbase.bco.dal.lib.layer.service.Service;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
@@ -35,6 +34,7 @@ import rst.domotic.unit.UnitConfigType.UnitConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.openbase.bco.dal.lib.layer.service.Services;
 
 /**
  * @author agatting on 23.12.16.
@@ -137,7 +137,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             }
 
             try {
-                final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                final String stateName = StringModifier.firstCharToLowerCase(Services.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), OntCl.STATE.getName()));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
@@ -195,7 +195,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                 continue;
             }
             try {
-                for (final Object stateValue : Service.getServiceStateValues(serviceType).toArray()) {
+                for (final Object stateValue : Services.getServiceStateValues(serviceType).toArray()) {
                     final String stateValueName = StringModifier.firstCharToLowerCase(StringModifier.getCamelCaseName(stateValue.toString()));
 
                     if (stateValueName.equalsIgnoreCase("unknown")) {
@@ -272,7 +272,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
 
         for (final ServiceType serviceType : serviceTypes) {
             try {
-                final String stateName = StringModifier.firstCharToLowerCase(Service.getServiceStateName(serviceType));
+                final String stateName = StringModifier.firstCharToLowerCase(Services.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), null));
             } catch (NotAvailableException e) {
                 exceptionStack = MultiException.push(this, e, exceptionStack);
