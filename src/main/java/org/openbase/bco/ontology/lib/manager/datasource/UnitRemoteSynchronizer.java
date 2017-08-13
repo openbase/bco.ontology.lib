@@ -125,7 +125,7 @@ public class UnitRemoteSynchronizer {
             addLoadedUnitRemote(unitRemote);
             identifyUnitRemote(unitRemote);
             incrementSuccessfullyRemotesNum(unitRemote.getLabel());
-        } catch (ExecutionException | NotAvailableException | InstantiationException e) {
+        } catch (ExecutionException | NotAvailableException | InstantiationException ex) {
             incrementFailedRemotesNum();
             LOGGER.warn("Could not get unitRemote of " + unitConfig.getLabel() + ". Dropped.");
         }

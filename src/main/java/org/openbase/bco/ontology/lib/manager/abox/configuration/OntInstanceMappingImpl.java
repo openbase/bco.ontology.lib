@@ -106,18 +106,18 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                     }
 
                     triples.add(new RdfTriple(unitConfig.getId(), OntExpr.IS_A.getName(), unitTypeName));
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                } catch (NotAvailableException ex) {
+                    exceptionStack = MultiException.push(this, ex, exceptionStack);
                 }
             }
-        } catch (CouldNotPerformException e) {
-            exceptionStack = MultiException.push(this, e, exceptionStack);
+        } catch (CouldNotPerformException ex) {
+            exceptionStack = MultiException.push(this, ex, exceptionStack);
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely unitTypes!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -139,15 +139,15 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             try {
                 final String stateName = StringModifier.firstCharToLowerCase(Services.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), OntCl.STATE.getName()));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely stateTypes!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -169,15 +169,15 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             try {
                 final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
                 triples.add(new RdfTriple(serviceName, OntExpr.IS_A.getName(), OntCl.PROVIDER_SERVICE.getName()));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely serviceTypes!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -203,7 +203,7 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
                     }
                     triples.add(new RdfTriple(stateValueName, OntExpr.IS_A.getName(), OntCl.STATE_VALUE.getName()));
                 }
-            } catch (NotAvailableException e) {
+            } catch (NotAvailableException ex) {
                 // ignore, because existing state values are needed only
             }
         }
@@ -222,15 +222,15 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
         for (final UnitConfig unitConfig : unitConfigs) {
             try {
                 triples.add(getDeleteUnitInstance(unitConfig));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely units!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -248,15 +248,15 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             try {
                 final String serviceName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType));
                 triples.add(new RdfTriple(serviceName, OntExpr.IS_A.getName(), null));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely services!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -274,15 +274,15 @@ public class OntInstanceMappingImpl implements OntInstanceMapping {
             try {
                 final String stateName = StringModifier.firstCharToLowerCase(Services.getServiceStateName(serviceType));
                 triples.add(new RdfTriple(stateName, OntExpr.IS_A.getName(), null));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely states!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }

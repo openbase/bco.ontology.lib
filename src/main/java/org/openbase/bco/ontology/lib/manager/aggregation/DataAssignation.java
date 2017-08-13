@@ -176,15 +176,15 @@ public class DataAssignation extends DataAggregation {
                         // no matched providerService
                         throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
                 }
-            } catch (CouldNotPerformException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (CouldNotPerformException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Could not process all service type identification or state value aggregation!", exceptionStack);
-        }  catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }  catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
 
         return triples;
@@ -276,8 +276,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @batteryOrBlindOrSmokeStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @batteryOrBlindOrSmokeStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -371,15 +371,15 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //
 ////        final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap = getAggColorValues(hueList, saturationList, brightnessList);
 ////        try {
 ////            triples.addAll(getColorTriple(connectionTimeMilli, hsbCountMap, unitId, serviceType));
-////        } catch (InterruptedException e) {
-////            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+////        } catch (InterruptedException ex) {
+////            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 ////        }
 //        return triples;
 //    }
@@ -416,8 +416,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @handleStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @handleStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -454,8 +454,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @illuminanceStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @illuminanceStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -548,8 +548,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @colorStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -565,8 +565,8 @@ public class DataAssignation extends DataAggregation {
             } else {
                 throw new CouldNotPerformException("Could not identify variable type.");
             }
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Dropped data @rfidStateValue ...!", e, LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory("Dropped data @rfidStateValue ...!", ex, LOGGER, LogLevel.ERROR);
         }
 
         return null;//TODO
@@ -586,8 +586,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @switchStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @switchStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -624,8 +624,8 @@ public class DataAssignation extends DataAggregation {
 //            } else {
 //                throw new CouldNotPerformException("Could not identify variable type.");
 //            }
-//        } catch (CouldNotPerformException e) {
-//            ExceptionPrinter.printHistory("Dropped data @temperatureStateValue ...!", e, LOGGER, LogLevel.ERROR);
+//        } catch (CouldNotPerformException ex) {
+//            ExceptionPrinter.printHistory("Dropped data @temperatureStateValue ...!", ex, LOGGER, LogLevel.ERROR);
 //        }
 //        return triples;
 //    }
@@ -810,7 +810,7 @@ public class DataAssignation extends DataAggregation {
         // wait one millisecond to guarantee, that aggregationObservation instances are unique
         try {
             stopwatch.waitForStop(1);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
 

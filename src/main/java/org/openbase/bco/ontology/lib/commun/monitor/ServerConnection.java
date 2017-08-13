@@ -68,11 +68,11 @@ public final class ServerConnection {
 
                     SparqlHttp.checkHttpRequest(httpResponse, null);
                     SERVER_STATE_OBSERVABLE.notifyObservers(ConnectionState.CONNECTED);
-                } catch (IOException | CouldNotPerformException e) {
+                } catch (IOException | CouldNotPerformException ex) {
                     SERVER_STATE_OBSERVABLE.notifyObservers(ConnectionState.DISCONNECTED);
                 }
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (CouldNotPerformException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }, 0, 1, TimeUnit.SECONDS);
     }

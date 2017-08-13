@@ -156,8 +156,8 @@ public interface StringModifier {
                 throw new NotAvailableException("Service type is null.");
             }
             return StringProcessor.transformUpperCaseToCamelCase(serviceType.name());
-        } catch (CouldNotPerformException e) {
-            throw new NotAvailableException("Service name", e);
+        } catch (CouldNotPerformException ex) {
+            throw new NotAvailableException("Service name", ex);
         }
     }
 
@@ -175,8 +175,8 @@ public interface StringModifier {
                 throw new NotAvailableException("Unit type is null.");
             }
             return StringProcessor.transformUpperCaseToCamelCase(unitType.name());
-        } catch (CouldNotPerformException e) {
-            throw new NotAvailableException("Unit name", e);
+        } catch (CouldNotPerformException ex) {
+            throw new NotAvailableException("Unit name", ex);
         }
     }
 
@@ -194,8 +194,8 @@ public interface StringModifier {
                 throw new NotAvailableException("Input string is null.");
             }
             return StringProcessor.transformUpperCaseToCamelCase(input);
-        } catch (CouldNotPerformException e) {
-            throw new NotAvailableException("Input name", e);
+        } catch (CouldNotPerformException ex) {
+            throw new NotAvailableException("Input name", ex);
         }
     }
 

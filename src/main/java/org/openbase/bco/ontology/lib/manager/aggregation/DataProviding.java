@@ -161,9 +161,9 @@ public class DataProviding {
 
                 observationIdBuf = observationId;
             }
-        } catch (Exception e) {
+        } catch (Exception ex) {
             ExceptionPrinter.printHistory("At least one observation data element is null or the identification is wrong (no resource respectively literal)!"
-                    , e, LOGGER, LogLevel.ERROR);
+                    , ex, LOGGER, LogLevel.ERROR);
         }
 
         return unitObservationMap;

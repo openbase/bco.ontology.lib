@@ -115,8 +115,8 @@ public class TriggerImpl implements Trigger {
         try {
             this.triggerConfig = triggerConfig;
             activationObservable.notifyObservers(ActivationState.State.UNKNOWN);
-        } catch (CouldNotPerformException e) {
-            throw new InitializationException(this, e);
+        } catch (CouldNotPerformException ex) {
+            throw new InitializationException(this, ex);
         }
     }
 
@@ -142,8 +142,8 @@ public class TriggerImpl implements Trigger {
                 } else {
                     activationObservable.notifyObservers(ActivationState.State.DEACTIVE);
                 }
-            } catch (IOException e) {
-                ExceptionPrinter.printHistory("Could not send query to server. Waiting of notification from ServerConnection", e, LOGGER, LogLevel.WARN);
+            } catch (IOException ex) {
+                ExceptionPrinter.printHistory("Could not send query to server. Waiting of notification from ServerConnection", ex, LOGGER, LogLevel.WARN);
             }
         }
     }

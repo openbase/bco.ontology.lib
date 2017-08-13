@@ -437,8 +437,8 @@ public class Measurement {
             numberOfTriple = numTriples;
 //        measuredValues[daysCurCount][0] = numTriples;
             return numTriples;
-        } catch (ExecutionException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (ExecutionException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return 0L;
     }
@@ -471,8 +471,8 @@ public class Measurement {
                     LOGGER.error("Stopwatch is not running!");
                 }
             });
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
 
         try {
@@ -502,8 +502,8 @@ public class Measurement {
                     LOGGER.error("Stopwatch is not running!");
                 }
             });
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER);
         }
     }
 
@@ -526,7 +526,7 @@ public class Measurement {
             sheet = workbook.getSheet(sheetName);
             rowSimple = sheet.getRow(1);
             rowComplex = sheet.getRow(2);
-        } catch (IOException e) {
+        } catch (IOException ex) {
             workbook = new XSSFWorkbook();
             sheet = workbook.createSheet(sheetName);
             final Row row = sheet.createRow(0);
@@ -584,8 +584,8 @@ public class Measurement {
             final FileOutputStream outputStream = new FileOutputStream(file);
             workbook.write(outputStream);
             workbook.close();
-        } catch (IOException e) {
-            ExceptionPrinter.printHistory(e, LOGGER);
+        } catch (IOException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER);
         }
     }
 
@@ -599,7 +599,7 @@ public class Measurement {
             FileInputStream excelFile = new FileInputStream(new File(FILE_NAME));
             workbook = new XSSFWorkbook(excelFile);
             sheet = workbook.getSheet(sheetName);
-        } catch (IOException e) {
+        } catch (IOException ex) {
             workbook = new XSSFWorkbook();
             sheet = workbook.createSheet(sheetName);
             row = sheet.createRow(daysCurCount);
@@ -652,8 +652,8 @@ public class Measurement {
             final FileOutputStream outputStream = new FileOutputStream(file);
             workbook.write(outputStream);
             workbook.close();
-        } catch (IOException e) {
-            ExceptionPrinter.printHistory(e, LOGGER);
+        } catch (IOException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER);
         }
     }
 

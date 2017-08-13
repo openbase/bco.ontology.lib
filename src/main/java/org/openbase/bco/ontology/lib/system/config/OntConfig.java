@@ -161,8 +161,8 @@ public final class OntConfig {
                 if (serviceType != null) {
                     SERVICE_NAME_MAP.put(StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceType)), serviceType);
                 }
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (NotAvailableException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }
 
@@ -171,8 +171,8 @@ public final class OntConfig {
                 if (unitType != null) {
                     UNIT_NAME_MAP.put(StringModifier.getUnitTypeName(unitType), unitType);
                 }
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (NotAvailableException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }
 
@@ -181,8 +181,8 @@ public final class OntConfig {
             ontologyPingUrl = JPService.getProperty(JPOntologyPingURL.class).getValue();
             ontologyRsbScope = JPService.getProperty(JPOntologyRSBScope.class).getValue();
             ontologyModeHistoricData = JPService.getProperty(JPOntologyMode.class).getValue();
-        } catch (JPNotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (JPNotAvailableException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -819,8 +819,8 @@ public final class OntConfig {
                     throw new NotAvailableException("Property \"" + ontProp.getName() + "\" doesn't match "
                             + "with ontology property! Wrong String or doesn't exist in ontology!");
                 }
-            } catch (IllegalArgumentException | IOException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (IllegalArgumentException | IOException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
@@ -831,8 +831,8 @@ public final class OntConfig {
                     throw new NotAvailableException("Ontology class \"" + ontClass.getName()
                             + "\" doesn't match with ontology class! Wrong String or doesn't exist in ontology!");
                 }
-            } catch (IllegalArgumentException | IOException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (IllegalArgumentException | IOException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
@@ -842,14 +842,14 @@ public final class OntConfig {
                 throw new NotAvailableException("Namespace \"" + OntConfig.NAMESPACE
                         + "\" doesn't match with ontology namespace! Wrong String or ontology!");
             }
-        } catch (NotAvailableException e) {
-            exceptionStack = MultiException.push(this, e, exceptionStack);
+        } catch (NotAvailableException ex) {
+            exceptionStack = MultiException.push(this, ex, exceptionStack);
         }
 
         try {
             MultiException.checkAndThrow("Could not process all ontology participants correctly!", exceptionStack);
-        }  catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("Please check OntConfig - names classes and properties", e, LOGGER, LogLevel.ERROR);
+        }  catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory("Please check OntConfig - names classes and properties", ex, LOGGER, LogLevel.ERROR);
         }
     }
 }

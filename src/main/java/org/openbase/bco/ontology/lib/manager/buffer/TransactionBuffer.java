@@ -50,8 +50,8 @@ public final class TransactionBuffer {
         try {
             new TransactionBuffer();
             rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.getOntologyRsbScope(), OntologyChange.class);
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -74,10 +74,10 @@ public final class TransactionBuffer {
                     try {
                         SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
                         QUEUE.poll();
-                    } catch (CouldNotPerformException e) {
+                    } catch (CouldNotPerformException ex) {
                         QUEUE.poll();
-                        ExceptionPrinter.printHistory("Dropped broken QUEUE entry.", e, LOGGER, LogLevel.ERROR);
-                    } catch (IOException e) {
+                        ExceptionPrinter.printHistory("Dropped broken QUEUE entry.", ex, LOGGER, LogLevel.ERROR);
+                    } catch (IOException ex) {
                         LOGGER.warn("IOException: no connection...Retry...");
                         break;
                     }
@@ -91,13 +91,13 @@ public final class TransactionBuffer {
                             rsbInformer.deactivate();
                             LOGGER.info("Transaction buffer is empty. All entries send to server.");
                         }
-                    } catch (InterruptedException | CouldNotPerformException e) {
-                        ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                    } catch (InterruptedException | CouldNotPerformException ex) {
+                        ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
                     }
                 }
             }, 0, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
-        } catch (RejectedExecutionException | IllegalArgumentException | CouldNotPerformException e) {
-            throw new CouldNotProcessException("Could not process transactionBuffer thread!", e);
+        } catch (RejectedExecutionException | IllegalArgumentException | CouldNotPerformException ex) {
+            throw new CouldNotProcessException("Could not process transactionBuffer thread!", ex);
         }
     }
 

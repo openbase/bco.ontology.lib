@@ -158,9 +158,9 @@ public class UnitRegistrySynchronizer {
 
             // upload to ontology server
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
-        } catch (IOException e) {
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
+        } catch (IOException ex) {
             TransactionBuffer.insertData(sparql);
         }
     }

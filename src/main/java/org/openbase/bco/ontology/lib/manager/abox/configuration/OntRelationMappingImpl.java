@@ -152,15 +152,15 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         for (final ServiceType serviceType : serviceTypesBuf) {
             try {
                 triples.add(getInsertStateRelation(serviceType));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely services!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -189,15 +189,15 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         for (final ServiceType serviceType : serviceTypes) {
             try {
                 triples.add(getDeleteStateRelation(serviceType));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely services!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -278,15 +278,15 @@ public class OntRelationMappingImpl implements OntRelationMapping {
                 final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceConfig.getServiceDescription().getType()));
 
                 triples.add(new RdfTriple(unitConfig.getId(), OntProp.PROVIDER_SERVICE.getName(), serviceTypeName));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely services!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }

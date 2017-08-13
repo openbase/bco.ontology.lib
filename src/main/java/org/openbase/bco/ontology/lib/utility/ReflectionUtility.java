@@ -49,8 +49,8 @@ public interface ReflectionUtility {
         try {
             Method method = detectMethod(object.getClass(), regEx, patternFlag);
             return method.invoke(object);
-        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            throw new CouldNotPerformException("Invocation failed!", e);
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException ex) {
+            throw new CouldNotPerformException("Invocation failed!", ex);
         }
     }
 
@@ -72,8 +72,8 @@ public interface ReflectionUtility {
                 invokedObjects.add(method.invoke(object));
             }
             return invokedObjects;
-        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            throw new CouldNotPerformException("Invocation failed!", e);
+        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException ex) {
+            throw new CouldNotPerformException("Invocation failed!", ex);
         }
     }
 
@@ -121,8 +121,8 @@ public interface ReflectionUtility {
             } else {
                 throw new NoSuchMethodException("There is no matching method with regular expression: " + regEx);
             }
-        } catch (NoSuchMethodException | NotAvailableException e) {
-            throw new CouldNotPerformException("Could not get method!", e);
+        } catch (NoSuchMethodException | NotAvailableException ex) {
+            throw new CouldNotPerformException("Could not get method!", ex);
         }
     }
 
@@ -162,8 +162,8 @@ public interface ReflectionUtility {
             }
 
             return methods;
-        } catch (NotAvailableException | NoSuchMethodException e) {
-            throw new CouldNotPerformException("Could not get methods of dataClass!", e);
+        } catch (NotAvailableException | NoSuchMethodException ex) {
+            throw new CouldNotPerformException("Could not get methods of dataClass!", ex);
         }
     }
 

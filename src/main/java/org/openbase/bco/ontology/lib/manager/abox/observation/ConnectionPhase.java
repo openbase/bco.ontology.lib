@@ -105,8 +105,8 @@ public class ConnectionPhase {
             insert.add(new RdfTriple(unitId, OntProp.CONNECTION_PHASE.getName(), connectionPhaseInst));
 
             isSetConnectionPhaseSuccess = SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSparqlInsertExpression(insert));
-        } catch (NotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (NotAvailableException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -135,8 +135,8 @@ public class ConnectionPhase {
             }
 
             connectionPhaseInst = null;
-        } catch (NotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (NotAvailableException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 }
