@@ -75,8 +75,8 @@ public class IdentifyStateTypeValue extends StateTypeValue {
                         final String stateValueName = StringModifier.firstCharToLowerCase(StringModifier.getCamelCaseName(pair.getKey()));
                         rdfTripleArrayListsBuf.add(new RdfTriple(subjectObservation, OntProp.STATE_VALUE.getName(), stateValueName));
                     }
-                } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                } catch (NotAvailableException ex) {
+                    ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
                 }
             }
         }
@@ -160,8 +160,8 @@ public class IdentifyStateTypeValue extends StateTypeValue {
                 try {
                     throw new NotAvailableException("Could not identify stateType. Please check implementation or rather integrate " + serviceType
                             + " to method identifyState.");
-                } catch (NotAvailableException e) {
-                    ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
+                } catch (NotAvailableException ex) {
+                    ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.WARN);
                 }
                 return null;
         }

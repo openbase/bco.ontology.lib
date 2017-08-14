@@ -177,15 +177,15 @@ public class DataAssignation extends DataAggregation {
                         // no matched providerService
                         throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
                 }
-            } catch (CouldNotPerformException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (CouldNotPerformException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Could not process all service type identification or state value aggregation!", exceptionStack);
-        }  catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        }  catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
 
         return triples;

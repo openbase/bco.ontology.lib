@@ -300,7 +300,7 @@ public class DataAggregation {
             return stateValueDataCollectionList.stream().map(ontStateChange -> {
                 try {
                     return StringModifier.getLocalName(ontStateChange.getStateValues().get(0).asLiteral().getLexicalForm()); //TODO extend to list...
-                } catch (NotAvailableException e) {
+                } catch (NotAvailableException ex) {
                     return ""; //TODO
                 }
             }).collect(Collectors.toList());
@@ -366,7 +366,7 @@ public class DataAggregation {
     private List<Double> convertStringToDouble(final List<String> stringValues) throws CouldNotPerformException {
         try {
             return stringValues.stream().map(Double::parseDouble).collect(Collectors.toList());
-        } catch (Exception e) {
+        } catch (Exception ex) {
             throw new CouldNotPerformException("Could not perform aggregation because stateValueList contains discrete values: " + stringValues);
         }
     }
@@ -374,7 +374,7 @@ public class DataAggregation {
     private List<Integer> convertStringToInteger(final List<String> stringValues) throws CouldNotPerformException {
         try {
             return stringValues.stream().map(Integer::parseInt).collect(Collectors.toList());
-        } catch (Exception e) {
+        } catch (Exception ex) {
             throw new CouldNotPerformException("Could not perform aggregation because stateValueList contains discrete values: " + stringValues);
         }
     }
@@ -382,7 +382,7 @@ public class DataAggregation {
     private List<Long> convertStringToLong(final List<String> stringValues) throws CouldNotPerformException {
         try {
             return stringValues.stream().map(Long::parseLong).collect(Collectors.toList());
-        } catch (Exception e) {
+        } catch (Exception ex) {
             throw new CouldNotPerformException("Could not perform aggregation because stateValueList contains discrete values: " + stringValues);
         }
     }

@@ -72,9 +72,9 @@ public interface OntModelHandler {
             ontModel.read(input, null);
 
             return ontModel;
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException ex) {
             throw new NotAvailableException("File in path " + path + " not found!");
-        } catch (JenaException e) {
+        } catch (JenaException ex) {
             throw new NotAvailableException("Could not create ontModel!");
         }
     }

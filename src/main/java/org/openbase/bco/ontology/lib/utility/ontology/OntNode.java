@@ -55,8 +55,8 @@ public interface OntNode {
                     if (stateValue.isLiteral() && StringModifier.getLocalName(stateValue.asLiteral().getDatatypeURI()).equalsIgnoreCase(dataType.name())) {
                         buf = true;
                     }
-                } catch (CouldNotPerformException e) {
-                    exceptionStack = MultiException.push(null, e, exceptionStack);
+                } catch (CouldNotPerformException ex) {
+                    exceptionStack = MultiException.push(null, ex, exceptionStack);
                 }
             }
 
@@ -89,8 +89,8 @@ public interface OntNode {
                 if (stateValue.isLiteral() && StringModifier.getLocalName(stateValue.asLiteral().getDatatypeURI()).equalsIgnoreCase(dataType.name())) {
                     stateChangeLiterals.add(stateChange);
                 }
-            } catch (CouldNotPerformException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (CouldNotPerformException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 

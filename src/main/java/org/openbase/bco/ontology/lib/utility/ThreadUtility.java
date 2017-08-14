@@ -23,6 +23,7 @@ import org.openbase.jul.schedule.Timeout;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.openbase.jul.exception.CouldNotPerformException;
 
 /**
  * @author agatting on 22.05.17.
@@ -38,8 +39,9 @@ public interface ThreadUtility {
      * @throws InterruptedException is thrown in case the threads are interrupted.
      * @throws ExecutionException is thrown in case the given thread throws an exception.
      * @throws CancellationException is thrown in case the timeout is reached.
+     * @throws org.openbase.jul.exception.CouldNotPerformException is thrown if the timeout could not be attached to the future task.
      */
-    static Object setTimeoutToCallable(final long timeout, final Future<?> future) throws InterruptedException, ExecutionException, CancellationException {
+    static Object setTimeoutToCallable(final long timeout, final Future<?> future) throws InterruptedException, ExecutionException, CancellationException, CouldNotPerformException {
         if (timeout != 0) {
             Timeout timeoutThread = new Timeout(timeout) {
                 @Override
@@ -58,9 +60,9 @@ public interface ThreadUtility {
                     timeoutThread.cancel();
                 }
                 return object;
-            } catch (ExecutionException e) {
+            } catch (ExecutionException ex) {
                 timeoutThread.cancel();
-                throw new ExecutionException(e);
+                throw new ExecutionException(ex);
             }
         } else {
             return future.get();

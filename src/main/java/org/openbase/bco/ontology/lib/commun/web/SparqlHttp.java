@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 final class SparqlHttpLogger {
+
     static final Logger LOGGER = LoggerFactory.getLogger(SparqlHttpLogger.class);
 
     private SparqlHttpLogger() {
@@ -96,11 +97,11 @@ public interface SparqlHttp {
         try {
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl());
             return true;
-        } catch (IOException e) {
+        } catch (IOException ex) {
             // could not send to server - insert sparql update expression to buffer queue
             TransactionBuffer.insertData(sparql);
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad! SPARQL String: " + sparql, e, SparqlHttpLogger.LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory("At least one element is null or whole update string is bad! SPARQL String: " + sparql, ex, SparqlHttpLogger.LOGGER, LogLevel.ERROR);
         }
         return false;
     }
@@ -123,7 +124,7 @@ public interface SparqlHttp {
                 try {
                     SparqlHttp.uploadSparqlRequest(sparql, url);
                     return true;
-                } catch (IOException e) {
+                } catch (IOException ex) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
             }
@@ -131,8 +132,8 @@ public interface SparqlHttp {
 
         try {
             ThreadUtility.setTimeoutToCallable(timeout, future);
-        } catch (ExecutionException e) {
-            throw new CouldNotPerformException(e);
+        } catch (ExecutionException ex) {
+            throw new CouldNotPerformException(ex);
         }
     }
 
@@ -151,7 +152,7 @@ public interface SparqlHttp {
             QueryExecution queryExecution = QueryExecutionFactory.sparqlService(url + serverServiceName, queryObject);
 
             return queryExecution.execSelect();
-        } catch (QueryExceptionHTTP e) {
+        } catch (QueryExceptionHTTP ex) {
             throw new IOException("Connection establishment refused. Server offline?");
         }
     }
@@ -174,13 +175,18 @@ public interface SparqlHttp {
             while (true) {
                 try {
                     return sparqlQuery(query, url);
-                } catch (IOException e) {
+                } catch (IOException ex) {
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
             }
         });
 
-        return (ResultSet) ThreadUtility.setTimeoutToCallable(timeout, future);
+        try {
+            return (ResultSet) ThreadUtility.setTimeoutToCallable(timeout, future);
+        } catch (CouldNotPerformException ex) {
+            future.cancel(true);
+            throw new ExecutionException("Could not limit query timeout!", ex);
+        }
     }
 
     /**

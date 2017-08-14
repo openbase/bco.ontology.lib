@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import org.openbase.jul.exception.CouldNotPerformException;
 
 /**
  * @author agatting on 19.01.17.
@@ -66,10 +67,10 @@ public interface OntModelHttp {
             }
 
             return ModelFactory.createOntologyModel(OntModelSpec.OWL_DL_MEM, model);
-        } catch (NullPointerException | NotAvailableException e) {
+        } catch (NullPointerException | NotAvailableException ex) {
             throw new NotAvailableException("The server contains no ontology!");
-        } catch (Exception e) {
-            throw new IOException(e);
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
     }
 
@@ -91,9 +92,9 @@ public interface OntModelHttp {
             while (true) {
                 try {
                     return OntModelHttp.downloadModelFromServer(url);
-                } catch (IOException e) {
+                } catch (IOException ex) {
                     //retry
-                    ExceptionPrinter.printHistory("No connection to ontology server. Retry...", e, LOGGER, LogLevel.WARN);
+                    ExceptionPrinter.printHistory("No connection to ontology server. Retry...", ex, LOGGER, LogLevel.WARN);
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
             }
@@ -101,8 +102,8 @@ public interface OntModelHttp {
 
         try {
             return (OntModel) ThreadUtility.setTimeoutToCallable(timeout, future);
-        } catch (ExecutionException e) {
-            throw new NotAvailableException(e);
+        } catch (ExecutionException | CouldNotPerformException ex) {
+            throw new NotAvailableException(ex);
         }
     }
 
@@ -123,8 +124,8 @@ public interface OntModelHttp {
 
         try {
             DatasetAccessorFactory.createHTTP(url + OntConfig.ServerService.DATA.getName()).add(ontModel);
-        } catch (Exception e) {
-            throw new IOException("Could not add model to ontology server!", e);
+        } catch (Exception ex) {
+            throw new IOException("Could not add model to ontology server!", ex);
         }
     }
 
@@ -147,9 +148,9 @@ public interface OntModelHttp {
                 try {
                     OntModelHttp.addModelToServer(ontModel, url);
                     return true;
-                } catch (IOException e) {
+                } catch (IOException ex) {
                     //retry
-                    ExceptionPrinter.printHistory("No connection to upload ontModel to ontology server. Retry...", e, LOGGER, LogLevel.WARN);
+                    ExceptionPrinter.printHistory("No connection to upload ontModel to ontology server. Retry...", ex, LOGGER, LogLevel.WARN);
                     stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
                 }
             }
@@ -157,8 +158,8 @@ public interface OntModelHttp {
 
         try {
             ThreadUtility.setTimeoutToCallable(timeout, future);
-        } catch (ExecutionException e) {
-            throw new NotAvailableException(e);
+        } catch (ExecutionException | CouldNotPerformException ex) {
+            throw new NotAvailableException(ex);
         }
     }
 
