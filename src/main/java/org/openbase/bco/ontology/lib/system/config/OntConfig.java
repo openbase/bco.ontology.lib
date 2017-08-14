@@ -736,7 +736,12 @@ public final class OntConfig {
         /**
          * Prefix of connectionPhase instance.
          */
-        CONNECTION_PHASE("connectionPhase_");
+        CONNECTION_PHASE("connectionPhase_"),
+
+        /**
+         * Prefix of aggregated observation instance.
+         */
+        AGGREGATION_OBSERVATION("aggObs_");
 
         private final String prefix;
 

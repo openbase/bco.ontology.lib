@@ -25,6 +25,7 @@ import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedS
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 
@@ -44,38 +45,48 @@ public class DataAggregation {
 
     private OffsetDateTime dateTimeFrom;
     private OffsetDateTime dateTimeUntil;
+    private final Period currentPeriod;
     private long timeFrameMilli;
 
     //TODO corruption by youngest values before time frame -> handle in calculation
     //TODO general survey of calculation ...
 
-    public DataAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) {
+    public DataAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period currentPeriod) {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
+        this.currentPeriod = currentPeriod;
         this.timeFrameMilli = dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli();
     }
 
     protected class DiscreteStateValues {
 
         private final double timeWeighting;
+        private final Period nextPeriod;
         private final HashMap<String, Pair<Long, Integer>> activeTimeAndQuantityPerStateValue;
 
-        public DiscreteStateValues(final long unitConnectionTime, final List<OntStateChange> bcoValuesAndTimestamps) throws CouldNotPerformException {
-
+        public DiscreteStateValues(final List<OntStateChange> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
             checkTimeValidity(unitConnectionTime);
-
             this.timeWeighting = calcTimeWeighting(unitConnectionTime);
-            this.activeTimeAndQuantityPerStateValue = getActiveTimeAndQuantityPerStateValue(bcoValuesAndTimestamps);
+            this.activeTimeAndQuantityPerStateValue = getActiveTimeAndQuantityPerStateValue(stateChanges);
+            this.nextPeriod = Period.DAY;
         }
 
-        public DiscreteStateValues(final List<OntAggregatedStateChange> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
+        public DiscreteStateValues(final List<OntAggregatedStateChange> stateChanges) throws CouldNotPerformException {
+            if (currentPeriod == null) {
+                throw new CouldNotPerformException("Could not perform aggregation of aggregated data, because current period is null!");
+            }
 
-            this.timeWeighting = calcTimeWeighting(getTimeWeightingArray(aggDataList), getPeriodLength(toAggPeriod));
-            this.activeTimeAndQuantityPerStateValue = getAggActiveTimeAndAggQuantityPerStateValue(aggDataList);
+            this.timeWeighting = calcTimeWeighting(getTimeWeightingArray(stateChanges), getPeriodLength(currentPeriod));
+            this.activeTimeAndQuantityPerStateValue = getAggActiveTimeAndAggQuantityPerStateValue(stateChanges);
+            this.nextPeriod = setNextPeriod();
         }
 
         public double getTimeWeighting() {
             return timeWeighting;
+        }
+
+        public Period getNextPeriod() {
+            return nextPeriod;
         }
 
         public HashMap<String, Long> getActiveTimePerStateValue() {
@@ -210,12 +221,13 @@ public class DataAggregation {
         private final double standardDeviation;
         private final double timeWeighting;
         private final int quantity;
+        private final Period nextPeriod;
 
-        public ContinuousStateValues(final long unitConnectionTime, final List<OntStateChange> stateValueDataCollectionList) throws CouldNotPerformException {
+        public ContinuousStateValues(final List<OntStateChange> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
 
             checkTimeValidity(unitConnectionTime);
 
-            final List<String> stateValuesString = getStateValues(stateValueDataCollectionList);
+            final List<String> stateValuesString = getStateValues(stateChanges);
             final List<Double> stateValuesDouble = convertStringToDouble(stateValuesString);
             final double stateValuesArray[] = convertToArray(stateValuesDouble);
 
@@ -224,15 +236,24 @@ public class DataAggregation {
             this.standardDeviation = calcStandardDeviation(stateValuesArray);
             this.timeWeighting = calcTimeWeighting(unitConnectionTime);
             this.quantity = calcQuantity(stateValuesString);
+            this.nextPeriod = Period.DAY;
         }
 
-        public ContinuousStateValues(final List<OntAggregatedStateChange> aggDataList, final OntConfig.Period toAggPeriod) throws CouldNotPerformException {
+        public ContinuousStateValues(final List<OntAggregatedStateChange> stateChanges) throws CouldNotPerformException {
+            if (currentPeriod == null) {
+                throw new CouldNotPerformException("Could not perform aggregation of aggregated data, because current period is null!");
+            }
 
-            this.mean = calcMean(getMeanList(aggDataList));
-            this.variance = calcVariance(getVarianceList(aggDataList));
-            this.standardDeviation = calcStandardDeviation(getStandardDeviationList(aggDataList));
-            this.timeWeighting = calcTimeWeighting(getTimeWeightingArray(aggDataList), getPeriodLength(toAggPeriod));
-            this.quantity = calcQuantity(getQuantity(aggDataList));
+            this.mean = calcMean(getMeanList(stateChanges));
+            this.variance = calcVariance(getVarianceList(stateChanges));
+            this.standardDeviation = calcStandardDeviation(getStandardDeviationList(stateChanges));
+            this.timeWeighting = calcTimeWeighting(getTimeWeightingArray(stateChanges), getPeriodLength(currentPeriod));
+            this.quantity = calcQuantity(getQuantity(stateChanges));
+            this.nextPeriod = setNextPeriod();
+        }
+
+        public Period getNextPeriod() {
+            return nextPeriod;
         }
 
         public double getMean() {
@@ -299,6 +320,19 @@ public class DataAggregation {
 //
 //            return new ValueConfidenceRange(String.valueOf(minValue), String.valueOf(maxValue));
 //        }
+    }
+
+    private Period setNextPeriod() {
+        switch (currentPeriod) {
+            case DAY:
+                return Period.WEEK;
+            case WEEK:
+                return Period.MONTH;
+            case MONTH:
+                return Period.YEAR;
+            default:
+                return null; //TODO
+        }
     }
 
     private int getPeriodLength(final OntConfig.Period period) throws NotAvailableException {
