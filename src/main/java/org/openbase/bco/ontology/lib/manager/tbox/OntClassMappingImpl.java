@@ -75,15 +75,15 @@ public class OntClassMappingImpl implements OntClassMapping {
                         break;
                     default:
                 }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("There are incompletely unit types!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -105,8 +105,8 @@ public class OntClassMappingImpl implements OntClassMapping {
                 }
 
                 triples.add(getUnitTypeClass(unitType));
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
 
@@ -115,8 +115,8 @@ public class OntClassMappingImpl implements OntClassMapping {
 
         try {
             MultiException.checkAndThrow("There are incompletely unit types!", exceptionStack);
-        } catch (MultiException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (MultiException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
         return triples;
     }
@@ -154,22 +154,22 @@ public class OntClassMappingImpl implements OntClassMapping {
 
                     final String locationTypeName = StringModifier.getCamelCaseName(locationType.name());
                     triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                } catch (NotAvailableException ex) {
+                    exceptionStack = MultiException.push(this, ex, exceptionStack);
                 }
             }
 
             try {
                 MultiException.checkAndThrow("There are incompletely location types!", exceptionStack);
-            } catch (MultiException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (MultiException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         } else {
             try {
                 final String locationTypeName = StringModifier.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                 triples.add(new RdfTriple(locationTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.LOCATION.getName()));
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (NotAvailableException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }
         return triples;
@@ -191,22 +191,22 @@ public class OntClassMappingImpl implements OntClassMapping {
 
                     final String connectionTypeName = StringModifier.getCamelCaseName(connectionType.name());
                     triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(this, e, exceptionStack);
+                } catch (NotAvailableException ex) {
+                    exceptionStack = MultiException.push(this, ex, exceptionStack);
                 }
             }
 
             try {
                 MultiException.checkAndThrow("There are incompletely connection types!", exceptionStack);
-            } catch (MultiException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (MultiException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         } else {
             try {
                 final String connectionTypeName = StringModifier.getCamelCaseName(unitConfig.getConnectionConfig().getType().name());
                 triples.add(new RdfTriple(connectionTypeName, OntExpr.SUB_CLASS_OF.getName(), OntCl.CONNECTION.getName()));
-            } catch (NotAvailableException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (NotAvailableException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }
         return triples;

@@ -110,8 +110,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
             this.unitRegistryObserver = (observable, unitRegistryData) -> startUpdateObserver(unitRegistryData);
             this.unitRegistryRemote.addDataObserver(unitRegistryObserver);
 
-        } catch (JPServiceException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (JPServiceException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -129,15 +129,15 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
         try {
             // upload (add) ontModel
             OntModelHttp.addModelToServer(OntModelHandler.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
-        } catch (NotAvailableException e) {
-            throw new InitializationException("Could not upload ontology model!", e);
+        } catch (NotAvailableException ex) {
+            throw new InitializationException("Could not upload ontology model!", ex);
         }
 
 //        try {
 //            final OntConfig ontConfig = new OntConfig();
 //            ontConfig.initialTestConfig();
-//        } catch (JPServiceException e) {
-//            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+//        } catch (JPServiceException ex) {
+//            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
 //        }
     }
 
@@ -155,8 +155,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 if (unitRegistryRemote != null && unitRegistryRemote.isDataAvailable()) {
                     return unitRegistryRemote.getUnitConfigs();
                 }
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory("Could not get unitConfigs. Retry...", e, LOGGER, LogLevel.ERROR);
+            } catch (CouldNotPerformException ex) {
+                ExceptionPrinter.printHistory("Could not get unitConfigs. Retry...", ex, LOGGER, LogLevel.ERROR);
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
             }
         }
@@ -184,8 +184,8 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
                 final List<UnitConfig> unitConfigs = new ArrayList<>(identifiableRemovedMessageMap.getMessages());
                 REMOVED_UNIT_CONFIG_OBSERVABLE.notifyObservers(unitConfigs);
             }
-        } catch (CouldNotPerformException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (CouldNotPerformException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 }

@@ -35,6 +35,7 @@ import rst.domotic.state.DoorStateType.DoorState;
 import rst.domotic.state.EnablingStateType.EnablingState;
 import rst.domotic.state.HandleStateType.HandleState;
 import rst.domotic.state.IlluminanceStateType.IlluminanceState;
+import rst.domotic.state.IntensityStateType.IntensityState;
 import rst.domotic.state.InventoryStateType.InventoryState;
 import rst.domotic.state.MotionStateType.MotionState;
 import rst.domotic.state.PassageStateType.PassageState;
@@ -311,6 +312,20 @@ public class StateTypeValue {
         }
 
         return illuminanceValuePairSet;
+    }
+
+    /**
+     * Method returns state values of the given inventoryState.
+     *
+     * @param intensityState is the intensityState.
+     * @return PairSet of the state values. The pair contains the state value as string and if it is a literal ({@code false}) or no literal ({@code true}).
+     * The size of the set describes the number of state values the individual state keeps.
+     */
+    Set<Pair<String, Boolean>> intensityStateValue(final IntensityState intensityState) {
+
+        final Set<Pair<String, Boolean>> intensityValuePairSet = new HashSet<>();
+
+        return intensityValuePairSet;
     }
 
     /**

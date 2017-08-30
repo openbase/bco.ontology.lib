@@ -70,8 +70,8 @@ public class QueryParser {
 
         try {
             detectNegation(triggerQuery);
-        } catch (MultiException e) {
-            throw new MultiException("Could not perform trigger with label \"" + triggerLabel + "\"", e.getExceptionStack());
+        } catch (MultiException ex) {
+            throw new MultiException("Could not perform trigger with label \"" + triggerLabel + "\"", ex.getExceptionStack());
         }
 
         final ResultSet resultSet = getSPINResultSet(triggerQuery);
@@ -195,8 +195,8 @@ public class QueryParser {
                 if (askQuery.toLowerCase().contains(negationForm)) {
                     throw new NotAvailableException("Found negation keyword: " + negationForm);
                 }
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(this, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(this, ex, exceptionStack);
             }
         }
         MultiException.checkAndThrow("Could not parse ontologyChange from query string, because of negation phrase in query string! Certain determination of "

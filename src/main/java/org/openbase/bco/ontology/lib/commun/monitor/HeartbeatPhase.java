@@ -71,8 +71,8 @@ public class HeartbeatPhase {
             closeOldConnectionPhases();
             setHeartbeatPhase();
             startHeartbeatMonitor();
-        } catch (CouldNotPerformException | InterruptedException e) {
-            throw new InitializationException(this, e);
+        } catch (CouldNotPerformException | InterruptedException ex) {
+            throw new InitializationException(this, ex);
         }
     }
 
@@ -93,8 +93,8 @@ public class HeartbeatPhase {
 
         try {
             SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, where));
-        } catch (NotAvailableException e) {
-            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+        } catch (NotAvailableException ex) {
+            ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
         }
     }
 
@@ -137,11 +137,11 @@ public class HeartbeatPhase {
                     // lastHeartBeat timestamp isn't in time. set new heartbeatPhase
                     setHeartbeatPhase();
                 }
-            } catch (IOException e) {
-                ExceptionPrinter.printHistory("Retry...", e, LOGGER, LogLevel.WARN);
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory("Dropped heartbeat update!", e, LOGGER, LogLevel.ERROR);
-            } catch (InterruptedException e) {
+            } catch (IOException ex) {
+                ExceptionPrinter.printHistory("Retry...", ex, LOGGER, LogLevel.WARN);
+            } catch (CouldNotPerformException ex) {
+                ExceptionPrinter.printHistory("Dropped heartbeat update!", ex, LOGGER, LogLevel.ERROR);
+            } catch (InterruptedException ex) {
                 future.cancel(true);
             }
         }, 3, OntConfig.SMALL_RETRY_PERIOD_SECONDS, TimeUnit.SECONDS);
@@ -166,11 +166,11 @@ public class HeartbeatPhase {
 
                 SparqlHttp.uploadSparqlRequest(SparqlUpdateExpression.getSeparatedSparqlUpdateExpression(delete, insert, null), OntConfig.getOntologyDbUrl());
                 return;
-            } catch (IOException e) {
-                ExceptionPrinter.printHistory("Retry...", e, LOGGER, LogLevel.WARN);
+            } catch (IOException ex) {
+                ExceptionPrinter.printHistory("Retry...", ex, LOGGER, LogLevel.WARN);
                 stopwatch.waitForStart(OntConfig.SMALL_RETRY_PERIOD_MILLISECONDS);
-            } catch (CouldNotPerformException e) {
-                throw new InitializationException("Could not set heartbeatPhase!", e);
+            } catch (CouldNotPerformException ex) {
+                throw new InitializationException("Could not set heartbeatPhase!", ex);
             }
         }
     }

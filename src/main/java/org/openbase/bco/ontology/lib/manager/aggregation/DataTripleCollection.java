@@ -136,7 +136,8 @@ public class DataTripleCollection extends DataAssignation {
         return triples;
     }
 
-    private List<RdfTriple> collectAggDataForEachService(final String unitId, final List<OntAggregatedObservation> ontAggObservations) {
+    private List<RdfTriple> collectAggDataForEachService(final String unitId, final List<OntAggregatedObservation> ontAggObservations)
+            throws InterruptedException {
         final HashMap<String, List<OntAggregatedStateChange>> ontAggStateChanges = new HashMap<>();
 
         for (final OntAggregatedObservation ontAggObservation : ontAggObservations) {
@@ -157,7 +158,8 @@ public class DataTripleCollection extends DataAssignation {
         return identifyServiceType(ontAggStateChanges, 0, unitId);
     }
 
-    private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli, final List<OntObservation> ontObservations) {
+    private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli, final List<OntObservation> ontObservations)
+            throws InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, List<OntStateChange>> serviceStateChangeMap = new HashMap<>();
 

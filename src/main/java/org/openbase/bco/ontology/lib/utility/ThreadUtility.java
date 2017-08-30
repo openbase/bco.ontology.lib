@@ -60,9 +60,9 @@ public interface ThreadUtility {
                     timeoutThread.cancel();
                 }
                 return object;
-            } catch (ExecutionException e) {
+            } catch (ExecutionException ex) {
                 timeoutThread.cancel();
-                throw new ExecutionException(e);
+                throw new ExecutionException(ex);
             }
         } else {
             return future.get();

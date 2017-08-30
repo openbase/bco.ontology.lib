@@ -104,8 +104,8 @@ public class TriggerFactory implements Factory {
             final TriggerConfig triggerConfig = TriggerConfig.newBuilder().setLabel(label).setQuery(query).setDependingOntologyChange(ontologyChange).build();
 
             return initTrigger(trigger, triggerConfig);
-        } catch (NotAvailableException | MultiException e) {
-            throw new InstantiationException(this, e);
+        } catch (NotAvailableException | MultiException ex) {
+            throw new InstantiationException(this, ex);
         }
     }
 
@@ -156,8 +156,8 @@ public class TriggerFactory implements Factory {
             trigger.activate();
 
             return trigger;
-        } catch (CouldNotPerformException e) {
-            throw new InstantiationException("Could not initiate trigger instance!", e);
+        } catch (CouldNotPerformException ex) {
+            throw new InstantiationException("Could not initiate trigger instance!", ex);
         }
     }
 
@@ -168,8 +168,8 @@ public class TriggerFactory implements Factory {
         rsbListener.addHandler(event -> {
             try {
                 ONTOLOGY_CHANGE_OBSERVABLE.notifyObservers((OntologyChange) event.getData());
-            } catch (CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+            } catch (CouldNotPerformException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
         }, false);
     }
@@ -181,30 +181,30 @@ public class TriggerFactory implements Factory {
             if (triggerConfig.getLabel() == null) {
                 throw new NotAvailableException("Trigger label is null!");
             }
-        } catch (NotAvailableException e) {
-            exceptionStack = MultiException.push(this, e, null);
+        } catch (NotAvailableException ex) {
+            exceptionStack = MultiException.push(this, ex, null);
         }
 
         try {
             if (triggerConfig.getQuery() == null) {
                 throw new NotAvailableException("Trigger query is null!");
             }
-        } catch (NotAvailableException e) {
-            exceptionStack = MultiException.push(this, e, exceptionStack);
+        } catch (NotAvailableException ex) {
+            exceptionStack = MultiException.push(this, ex, exceptionStack);
         }
 
         try {
             if (triggerConfig.getDependingOntologyChange() == null) {
                 throw new NotAvailableException("Trigger ontologyChange is null!");
             }
-        } catch (NotAvailableException e) {
-            exceptionStack = MultiException.push(this, e, exceptionStack);
+        } catch (NotAvailableException ex) {
+            exceptionStack = MultiException.push(this, ex, exceptionStack);
         }
 
         try {
             MultiException.checkAndThrow("Could not create trigger, because at least one element of the trigger config is null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new InstantiationException(this, e);
+        } catch (MultiException ex) {
+            throw new InstantiationException(this, ex);
         }
     }
 }

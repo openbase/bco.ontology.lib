@@ -84,8 +84,8 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
         public void relay() {
             try {
                 stateUpdate(observerData);
-            } catch (InterruptedException | CouldNotPerformException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR); //TODO handling?!
+            } catch (InterruptedException | CouldNotPerformException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR); //TODO handling?!
             }
         }
     };
@@ -116,8 +116,8 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
             unitRemote.addDataObserver(unitRemoteStateObserver);
             unitRemote.addConnectionStateObserver(unitRemoteConnectionObserver);
 
-        } catch (CouldNotPerformException e) {
-            throw new InstantiationException(this, e);
+        } catch (CouldNotPerformException ex) {
+            throw new InstantiationException(this, ex);
         }
     }
 
@@ -181,14 +181,14 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
                     // no exception produced: observation individual complete. add to main list
                     insert.addAll(insertBuf);
                 }
-            } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException e) {
+            } catch (IllegalAccessException | InvocationTargetException | CouldNotPerformException ex) {
                 // Could not collect all elements of observation instance
                 ExceptionPrinter.printHistory("Could not get data from stateType " + methodStateType.getName() + " from unitRemote " + remoteUnitId
-                        + ". Dropped.", e, LOGGER, LogLevel.WARN);
-            } catch (InterruptedException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.WARN);
-            } catch (NoSuchElementException e) {
-                ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
+                        + ". Dropped.", ex, LOGGER, LogLevel.WARN);
+            } catch (InterruptedException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.WARN);
+            } catch (NoSuchElementException ex) {
+                ExceptionPrinter.printHistory(ex, LOGGER, LogLevel.ERROR);
             }
             insertBuf.clear();
         }

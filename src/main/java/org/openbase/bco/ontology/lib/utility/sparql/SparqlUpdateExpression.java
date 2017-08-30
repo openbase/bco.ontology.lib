@@ -51,15 +51,15 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.", e);
+        } catch (MultiException ex) {
+            throw new NotAvailableException("Sparql update expression.", ex);
         }
         return updateExpression + " } ";
     }
@@ -85,8 +85,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -96,16 +96,16 @@ public interface SparqlUpdateExpression {
             for (RdfTriple triple : where) {
                 try {
                     updateExpression += getTripleCommand(triple, false);
-                } catch (NotAvailableException e) {
-                    exceptionStack = MultiException.push(null, e, exceptionStack);
+                } catch (NotAvailableException ex) {
+                    exceptionStack = MultiException.push(null, ex, exceptionStack);
                 }
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.", e);
+        } catch (MultiException ex) {
+            throw new NotAvailableException("Sparql update expression.", ex);
         }
         return updateExpression + " } ";
     }
@@ -149,8 +149,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -160,8 +160,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, true);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -170,15 +170,15 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.", e);
+        } catch (MultiException ex) {
+            throw new NotAvailableException("Sparql update expression.", ex);
         }
         return updateExpression + " } ";
     }
@@ -222,8 +222,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -232,8 +232,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : insert) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -243,15 +243,15 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, true);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.", e);
+        } catch (MultiException ex) {
+            throw new NotAvailableException("Sparql update expression.", ex);
         }
         return updateExpression + " } ";
     }
@@ -308,8 +308,8 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : delete) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
@@ -319,15 +319,15 @@ public interface SparqlUpdateExpression {
         for (RdfTriple triple : whereExpression) {
             try {
                 updateExpression += getTripleCommand(triple, false);
-            } catch (NotAvailableException e) {
-                exceptionStack = MultiException.push(null, e, exceptionStack);
+            } catch (NotAvailableException ex) {
+                exceptionStack = MultiException.push(null, ex, exceptionStack);
             }
         }
 
         try {
             MultiException.checkAndThrow("Some triple are null!", exceptionStack);
-        } catch (MultiException e) {
-            throw new NotAvailableException("Sparql update expression.", e);
+        } catch (MultiException ex) {
+            throw new NotAvailableException("Sparql update expression.", ex);
         }
         return updateExpression + " } ";
     }
