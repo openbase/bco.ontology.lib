@@ -94,9 +94,9 @@ public class DataAggregation {
         }
 
         /**
-         * Getter for
+         * Getter for aggregation period.
          *
-         * @return
+         * @return the aggregation period.
          */
         public Period getNextPeriod() {
             return nextPeriod;
