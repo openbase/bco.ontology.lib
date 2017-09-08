@@ -27,6 +27,7 @@ import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedS
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -102,13 +103,23 @@ public class DataTripleCollection extends DataAssignation {
             SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.getOntologyDbUrl(), 0);
 
             // delete unused aggregations (old)
-            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), StringModifier.addXsdDateTime(dateTimeFrom.toString())
-                    , StringModifier.addXsdDateTime(dateTimeUntil.toString()));
+            final String dateTimeFromLiteral = StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME);
+            final String dateTimeUntilLiteral = StringModifier.convertToLiteral(dateTimeUntil.toString(), XsdType.DATE_TIME);
+            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), dateTimeFromLiteral, dateTimeUntilLiteral);
+            // upload ...
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl(), 0);
         }
     }
 
-
+    /**
+     * Method starts the aggregation process of normal observations (not aggregated). Means for each unit the associated observations are collected/sorted in
+     * the following (called) methods to calculate and build the ontology triples to insert aggregated observations.
+     *
+     * @return a list of triples to insert aggregation observations.
+     * @throws NotAvailableException is thrown in case the needed information are not available.
+     * @throws InterruptedException is thrown in case the application was interrupted.
+     * @throws ExecutionException is thrown in case the processing thread throws an unknown exception.
+     */
     private List<RdfTriple> collectDataForEachUnit() throws NotAvailableException, InterruptedException, ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, Long> unitConnectionMap = dataProviding.getConnectionTimes();
@@ -154,7 +165,6 @@ public class DataTripleCollection extends DataAssignation {
                 ontAggStateChanges.put(ontAggObservation.getProviderService(), new ArrayList<OntAggregatedStateChange>() {{add(ontAggStateChange);}});
             }
         }
-
         return identifyServiceType(ontAggStateChanges, 0, unitId);
     }
 

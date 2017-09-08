@@ -32,11 +32,11 @@ public class OntObservation {
     private final String timestamp;
 
     /**
-     * Method creates an ontology observation. It describes a state change regarding to the providerService.
+     * Constructor for creating an ontology observation. It describes a state change regarding to one specific providerService with an timestamp.
      *
      * @param providerService is the providerService to identify the kind of state values.
      * @param stateValues are the values of an state change to a specific time.
-     * @param timestamp is the specific time in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX.
+     * @param timestamp is the specific time with the format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX.
      */
     public OntObservation(final String providerService, final List<RDFNode> stateValues, final String timestamp) {
         this.providerService = providerService;
@@ -54,21 +54,21 @@ public class OntObservation {
     }
 
     /**
-     * Getter for observation data: stateValues.
-     *
-     * @return the state values.
-     */
-    public List<RDFNode> getStateValues() {
-        return stateValues;
-    }
-
-    /**
      * Getter for observation data: timestamp.
      *
      * @return the timestamp in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX
      */
     public String getTimestamp() {
         return timestamp;
+    }
+
+    /**
+     * Getter for observation data: stateValues.
+     *
+     * @return the state values.
+     */
+    public List<RDFNode> getStateValues() {
+        return stateValues;
     }
 
     /**
@@ -80,4 +80,5 @@ public class OntObservation {
     public boolean addValue(final RDFNode stateValue) {
         return stateValues.add(stateValue);
     }
+
 }

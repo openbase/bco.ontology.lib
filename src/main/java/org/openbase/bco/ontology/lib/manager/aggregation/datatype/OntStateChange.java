@@ -59,14 +59,4 @@ public class OntStateChange {
         return timestamp;
     }
 
-    /**
-     * Method adds a single state value to the list of stateValues.
-     *
-     * @param stateValue is the stateValue, which should be added.
-     * @return true, if added successfully. Otherwise false.
-     */
-    public boolean addValue(final RDFNode stateValue) {
-        return stateValues.add(stateValue);
-    }
-
 }

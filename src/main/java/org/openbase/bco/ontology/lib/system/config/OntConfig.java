@@ -438,6 +438,57 @@ public final class OntConfig {
     }
 
     /**
+     * Enumeration of XSD data types.
+     */
+    public enum XsdType {
+
+        /**
+         * XSD type: int.
+         */
+        INT("^^xsd:int"),
+
+        /**
+         * XSD type: double.
+         */
+        DOUBLE("^^xsd:double"),
+
+        /**
+         * XSD type: long.
+         */
+        LONG("^^xsd:long"),
+
+        /**
+         * XSD type: string.
+         */
+        STRING("^^xsd:string"),
+
+        /**
+         * XSD type: boolean.
+         */
+        BOOLEAN("^^xsd:boolean"),
+
+        /**
+         * XSD type: dateTime.
+         */
+        DATE_TIME("^^xsd:dateTime");
+
+        private final String xsdType;
+
+        XsdType(final String xsdType) {
+            this.xsdType = xsdType;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return a name of an enum element as string.
+         */
+        public String getName() {
+            return this.xsdType;
+        }
+    }
+
+    /**
      * Enumeration of ontology instances.
      */
     public enum OntInst {

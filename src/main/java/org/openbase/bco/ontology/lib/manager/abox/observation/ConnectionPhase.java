@@ -21,10 +21,11 @@ package org.openbase.bco.ontology.lib.manager.abox.observation;
 import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.buffer.TransactionBuffer;
-import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
@@ -95,7 +96,8 @@ public class ConnectionPhase {
         try {
             final List<RdfTriple> insert = new ArrayList<>();
             final LocalDateTime dateTime = LocalDateTime.now();
-            final String timestampLiteral = StringModifier.addXsdDateTime(OffsetDateTime.of(dateTime, OffsetDateTime.now().getOffset()).toString());
+            final String dateTimeString = OffsetDateTime.of(dateTime, OffsetDateTime.now().getOffset()).toString();
+            final String timestampLiteral = StringModifier.convertToLiteral(dateTimeString, XsdType.DATE_TIME);
 
             connectionPhaseInst = OntPrefix.CONNECTION_PHASE.getName() + unitId + dateTime.toString();
 
@@ -120,7 +122,7 @@ public class ConnectionPhase {
             final List<RdfTriple> delete = new ArrayList<>();
             final List<RdfTriple> insert = new ArrayList<>();
             final List<RdfTriple> where = new ArrayList<>();
-            final String timestampLiteral = StringModifier.addXsdDateTime(OffsetDateTime.now().toString());
+            final String timestampLiteral = StringModifier.convertToLiteral(OffsetDateTime.now().toString(), XsdType.DATE_TIME);
 
             delete.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), OntInst.RECENT_HEARTBEAT.getName()));
             insert.add(new RdfTriple(connectionPhaseInst, OntProp.LAST_CONNECTION.getName(), timestampLiteral));

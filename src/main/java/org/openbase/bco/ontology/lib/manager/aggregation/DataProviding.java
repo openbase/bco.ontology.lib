@@ -27,6 +27,7 @@ import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation
 import org.openbase.bco.ontology.lib.utility.time.Interval;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.SparqlVariable;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
@@ -119,7 +120,7 @@ public class DataProviding {
     public HashMap<String, List<OntObservation>> getObservations() throws NotAvailableException, InterruptedException, ExecutionException {
         // key: unitId, value: list of observations
         final HashMap<String, List<OntObservation>> unitObservationMap = new HashMap<>();
-        final String timeUntil = StringModifier.addXsdDateTime(dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER));
+        final String timeUntil = StringModifier.convertToLiteral(dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER), XsdType.DATE_TIME);
         final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllObservations(timeUntil), OntConfig.getOntologyDbUrl(), 0);
 //        ResultSetFormatter.out(System.out, resultSet);
 
@@ -175,8 +176,8 @@ public class DataProviding {
         final HashMap<String, List<OntAggregatedObservation>> unitAggObservationMap = new HashMap<>();
 
 //        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
-        final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom.toString());
-        final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil.toString());
+        final String timestampFrom = StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME);
+        final String timestampUntil = StringModifier.convertToLiteral(dateTimeUntil.toString(), XsdType.DATE_TIME);
         final String query = StaticSparqlExpression.getAllAggObs(period.toString().toLowerCase(), timestampFrom, timestampUntil);
         final ResultSet resultSet = SparqlHttp.sparqlQuery(query, OntConfig.getOntologyDbUrl(), 0);
 //        ResultSetFormatter.out(System.out, resultSet, query);
