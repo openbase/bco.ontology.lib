@@ -18,9 +18,10 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
+import org.openbase.bco.ontology.lib.system.config.OntConfig.AggregationTense;
 import org.openbase.jul.exception.CouldNotPerformException;
 
-import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -36,4 +37,6 @@ public interface Aggregation {
      * @throws InterruptedException InterruptedException
      */
     void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, ExecutionException;
+
+    void startAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final AggregationTense aggregationTense);
 }

@@ -144,7 +144,7 @@ public class UnitRemoteSynchronizer {
 
     private void identifyUnitRemote(final UnitRemote unitRemote) throws InstantiationException, NotAvailableException {
 
-        final UnitType unitType = unitRemote.getType();
+        final UnitType unitType = unitRemote.getTemplate().getType();
 
         //TODO currently problematic unitTypes...fix in future
         switch (unitType) {

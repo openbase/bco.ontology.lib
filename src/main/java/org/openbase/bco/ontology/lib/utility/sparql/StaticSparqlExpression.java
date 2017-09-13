@@ -47,8 +47,8 @@ public final class StaticSparqlExpression {
                 + "FILTER(isURI(?y)) . "
                 + "FILTER (regex(str(?y), " + StringModifier.addQuotationMarks(OntConfig.NAMESPACE) + ")) . "
                 + "FILTER NOT EXISTS { ?x sp:predicate NS:hasStateValue } "
-                + "FILTER NOT EXISTS { ?x sp:object NS:OntObservation } "
-                + "FILTER NOT EXISTS { ?x sp:subject NS:OntObservation } "
+                + "FILTER NOT EXISTS { ?x sp:object NS:Observation } "
+                + "FILTER NOT EXISTS { ?x sp:subject NS:Observation } "
                 // more filter criteria can be placed here ...
             + "} ";
 
@@ -83,6 +83,14 @@ public final class StaticSparqlExpression {
                     + "} "
                     + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
 
+    public static final String GET_MIN_TIMESTAMP =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "SELECT min(?timestamp) AS ?minTimestamp WHERE { "
+                    + "?connectionPhase a NS:ConnectionPhase . "
+                    + "?connectionPhase NS:hasFirstConnection ?firstTimestamp . "
+                + "} ";
+
     /**
      * Method returns a sparql update to delete observations, which are older than 2017-04-22T00:00:00.000+02:00.
      */
@@ -93,7 +101,7 @@ public final class StaticSparqlExpression {
                     + "?observation ?p ?o . "
                     + "} WHERE { "
                     + "?observation ?p ?o . "
-                    + "?observation a NS:OntObservation . "
+                    + "?observation a NS:Observation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp > \"2017-04-22T00:00:00.000+02:00\"^^xsd:dateTime) . "
                     + "}";
@@ -163,7 +171,7 @@ public final class StaticSparqlExpression {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                    + "?observation a NS:OntObservation . "
+                    + "?observation a NS:Observation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp < " + endTimestamp + " ) . "
                     + "?observation NS:hasUnitId ?unit . "
@@ -185,7 +193,7 @@ public final class StaticSparqlExpression {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-                    + "?observation a NS:OntObservation . "
+                    + "?observation a NS:Observation . "
                     + "?observation NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp >= " + startTimestamp + " && ?timestamp < " + endTimestamp + " ) . "
                     + "?observation NS:hasUnitId ?unit . "
@@ -226,23 +234,23 @@ public final class StaticSparqlExpression {
                 + "GROUP BY ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean ";
     }
 
-//    public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
-//        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
-//                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-//                + "DELETE { "
-//                    + "?connectionPhase ?p ?o . "
-//                    + "?s NS:hasConnectionPhase ?connectionPhase . "
-//                + "} WHERE { "
-//                    + "?connectionPhase ?p ?o . "
-//                    + "?s NS:hasConnectionPhase ?connectionPhase . "
-//                    + "?connectionPhase a NS:ConnectionPhase . "
-//                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
-//                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
-//                    // reduce times to one variable via if condition
-//                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
-//                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
-//                + "}";
-//    }
+    public static String deleteUnusedConnectionPhases(final String dateTimeUntil) {
+        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
+                + "DELETE { "
+                    + "?connectionPhase ?p ?o . "
+                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+                + "} WHERE { "
+                    + "?connectionPhase ?p ?o . "
+                    + "?s NS:hasConnectionPhase ?connectionPhase . "
+                    + "?connectionPhase a NS:ConnectionPhase . "
+                    + "?connectionPhase NS:hasLastConnection ?timestamp . "
+                    + "OPTIONAL { ?timestamp NS:hasLastConnection ?lastHeartBeat . } . "
+                    // reduce times to one variable via if condition
+                    + "bind(if(isLiteral(?timestamp), ?timestamp, ?lastHeartBeat) as ?lastTimestamp)"
+                    + "FILTER (?lastTimestamp < " + dateTimeUntil + " ) . "
+                + "}";
+    }
 //
 //    public static String deleteUnusedHeartBeatPhases(final String dateTimeUntil) {
 //        return "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
@@ -264,7 +272,7 @@ public final class StaticSparqlExpression {
 //                    + "?obs ?p ?o . "
 //                + "} WHERE { "
 //                + "{ SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
-//                        + "?observation a NS:OntObservation . "
+//                        + "?observation a NS:Observation . "
 //                        + "?observation NS:hasTimeStamp ?timestamp . "
 //                        + "FILTER (?timestamp < " + dateTimeUntil + " ) . "
 //                        + "?observation NS:hasUnitId ?unit . "
@@ -276,7 +284,7 @@ public final class StaticSparqlExpression {
 //                        + "GROUP BY ?unit ?providerService ?maxTimestamp } "
 //
 //                    + "?obs ?p ?o . "
-//                    + "?obs a NS:OntObservation . "
+//                    + "?obs a NS:Observation . "
 //                    + "?obs NS:hasUnitId ?unit . "
 //                    + "?obs NS:hasProviderService ?providerService . "
 //                    + "?obs NS:hasTimeStamp ?obsTime . "
@@ -324,7 +332,7 @@ public final class StaticSparqlExpression {
                     + "?obs ?p ?o . "
                 + "} WHERE { "
                     + "?obs ?p ?o . "
-                    + "?obs a NS:OntObservation . "
+                    + "?obs a NS:Observation . "
                     + "?obs NS:hasTimeStamp ?timestamp . "
                     + "FILTER (?timestamp < " + dateTimeFrom + " || ?timestamp >= " + dateTimeUntil + " ) . "
                 + "}";
@@ -335,7 +343,7 @@ public final class StaticSparqlExpression {
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
 //                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
 //                + "SELECT ?unit ?providerService (MAX(?timestamp) AS ?maxTimestamp) WHERE { "
-//                    + "?observation a NS:OntObservation . "
+//                    + "?observation a NS:Observation . "
 //                    + "?observation NS:hasTimeStamp ?timestamp . "
 //                    + "FILTER (?timestamp < " + timestampUntil + " ) . "
 //                    + "?observation NS:hasUnitId ?unit . "
@@ -353,7 +361,7 @@ public final class StaticSparqlExpression {
 //        return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
 //                + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
 //                + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "
-//                + "?observation a NS:OntObservation . "
+//                + "?observation a NS:Observation . "
 //                + "?observation NS:hasTimeStamp ?timestamp . "
 //                + "FILTER (?timestamp < " + timestampFrom + " ) . "
 //                + "?observation NS:hasUnitId ?unit . "
