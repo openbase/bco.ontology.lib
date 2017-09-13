@@ -100,7 +100,7 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
     public StateObservation(final UnitRemote unitRemote) throws InstantiationException {
         try {
             this.methodSetStateType = ReflectionUtility.detectMethods(unitRemote.getDataClass(), MethodRegEx.STATE_METHOD.getName(), Pattern.CASE_INSENSITIVE);
-            this.unitType = unitRemote.getType();
+            this.unitType = unitRemote.getUnitType();
             this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.getOntologyRsbScope(), OntologyChange.class);
             this.stopwatch = new Stopwatch();
             this.remoteUnitId = unitRemote.getId().toString();
