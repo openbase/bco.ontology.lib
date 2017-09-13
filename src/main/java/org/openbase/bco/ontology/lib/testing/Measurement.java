@@ -155,7 +155,7 @@ public class Measurement {
         this.duplicateData = new DuplicateData();
 //        this.measuredValues = new Long[DAYS_MAX_COUNT][TRIGGER_MAX_COUNT + 1];
         this.isMeasurementFinished = false;
-        this.aggregation = new AggregationImpl();
+        this.aggregation = new AggregationImpl(null, null, null); //TODO Test values...
         this.stopwatch = new Stopwatch();
         this.simpleQuMeasuredValues = new ArrayList<>();
         this.complexQuMeasuredValues = new ArrayList<>();

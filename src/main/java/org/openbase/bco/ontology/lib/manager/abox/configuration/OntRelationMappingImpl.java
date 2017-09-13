@@ -276,7 +276,6 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         for (final ServiceConfig serviceConfig : unitConfig.getServiceConfigList()) {
             try {
                 final String serviceTypeName = StringModifier.firstCharToLowerCase(StringModifier.getServiceTypeName(serviceConfig.getServiceDescription().getType()));
-
                 triples.add(new RdfTriple(unitConfig.getId(), OntProp.PROVIDER_SERVICE.getName(), serviceTypeName));
             } catch (NotAvailableException ex) {
                 exceptionStack = MultiException.push(this, ex, exceptionStack);

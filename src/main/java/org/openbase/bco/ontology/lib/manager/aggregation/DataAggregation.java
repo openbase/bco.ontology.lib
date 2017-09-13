@@ -45,7 +45,7 @@ public class DataAggregation {
     private OffsetDateTime dateTimeFrom;
     private OffsetDateTime dateTimeUntil;
     private final Period currentPeriod;
-    private long timeFrameMilli;
+    private long timeFrameMilliS;
 
     public DataAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period currentPeriod) throws CouldNotPerformException  {
 
@@ -56,7 +56,7 @@ public class DataAggregation {
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
         this.currentPeriod = currentPeriod;
-        this.timeFrameMilli = dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli();
+        this.timeFrameMilliS = dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli();
     }
 
     protected class DiscreteStateValues {
@@ -69,7 +69,6 @@ public class DataAggregation {
         private final HashMap<String, Integer> quantityMap = new HashMap<>();
 
         public DiscreteStateValues(final List<OntStateChange> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
-
             this.unitTimeWeighting = calcTimeWeighting(unitConnectionTime);
             this.nextPeriod = Period.DAY;
 
@@ -77,7 +76,6 @@ public class DataAggregation {
         }
 
         public DiscreteStateValues(final List<OntAggregatedStateChange> stateChanges) throws CouldNotPerformException {
-
             this.unitTimeWeighting = calcTimeWeighting(getTimeWeightingArray(stateChanges), getPeriodLength(currentPeriod));
             this.nextPeriod = setNextPeriod();
 
@@ -85,7 +83,7 @@ public class DataAggregation {
         }
 
         /**
-         * Getter for statistical information: unit time weighting. A ratio of the connection time of the unit and the aggregation time frame.
+         * Getter for statistical information: unit connection time weighting. A ratio of the connection time of the unit and the aggregation time frame.
          *
          * @return a value of range 0..1 with 0: zero connection and 1: full connection of the unit in the aggregation time frame.
          */
@@ -133,7 +131,7 @@ public class DataAggregation {
             if (stateChanges.size() == 1) {
                 final String stateValue = StringModifier.getLocalName(stateChanges.get(0).getStateValues().get(0).asResource().toString());
                 // add metadata solution to the hash maps
-                registerActiveTime(stateValue, timeFrameMilli);
+                registerActiveTime(stateValue, timeFrameMilliS);
                 registerQuantity(stateValue, 0); // old state change so that quantity is zero
                 return;
             }
@@ -142,7 +140,8 @@ public class DataAggregation {
             long nextTimestampMilliS = 0;
             long stateValueTimeMilliS;
 
-            // consider the phase shift (start i=1): the current index is used to identify the until-timestamp for the previous state change
+            // principle: for each current state change (value) the time borders are taken. Means the current state change (i) and the timestamp of the next 
+            // state change (i + 1)
             for (int i = 0; i < stateChanges.size(); i++) {
                 // consider border cases, which are represented by the aggregation time frame (from and until)
                 if (i == 0) {
@@ -329,7 +328,7 @@ public class DataAggregation {
         MultiException.ExceptionStack exceptionStack = null;
 
         try {
-            if (unitConnectionTime > timeFrameMilli) {
+            if (unitConnectionTime > timeFrameMilliS) {
                 throw new VerificationFailedException("The unitConnectionTime is bigger than the time frame of aggregation!");
             }
         } catch (VerificationFailedException e) {
@@ -418,7 +417,7 @@ public class DataAggregation {
      * @return the time weighting in the range of [0..1].
      */
     private double calcTimeWeighting(final long unitConnectionTime) {
-        return Double.parseDouble(OntConfig.decimalFormat().format((double) unitConnectionTime / (double) timeFrameMilli));
+        return Double.parseDouble(OntConfig.decimalFormat().format((double) unitConnectionTime / (double) timeFrameMilliS));
     }
 
     private double calcTimeWeighting(final double[] timeWeightingArray, final int periodLength) {
