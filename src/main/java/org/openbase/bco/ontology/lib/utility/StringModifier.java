@@ -20,6 +20,7 @@ package org.openbase.bco.ontology.lib.utility;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.processing.StringProcessor;
@@ -97,20 +98,20 @@ public interface StringModifier {
         }
     }
 
-    /**
-     * Method transforms the input string to a literal with the data type "xsd:dateTime".
-     *
-     * @param input is the string, which should be transformed to a dateTime literal.
-     * @return a literal string with the data type "xsd:dateTime".
-     * @throws NotAvailableException is thrown in case the input is null.
-     */
-    static String addXsdDateTime(final String input) throws NotAvailableException {
-        if (input == null) {
-            assert false;
-            throw new NotAvailableException("DateTime is null.");
-        }
-        return "\"" + input + "\"^^xsd:dateTime";
-    }
+//    /**
+//     * Method transforms the input string to a literal with the data type "xsd:dateTime".
+//     *
+//     * @param input is the string, which should be transformed to a dateTime literal.
+//     * @return a literal string with the data type "xsd:dateTime".
+//     * @throws NotAvailableException is thrown in case the input is null.
+//     */
+//    static String addXsdDateTime(final String input) throws NotAvailableException {
+//        if (input == null) {
+//            assert false;
+//            throw new NotAvailableException("DateTime is null.");
+//        }
+//        return "\"" + input + "\"^^xsd:dateTime";
+//    }
 
     /**
      * Method transforms the first char of the input string to lower case.
@@ -218,6 +219,42 @@ public interface StringModifier {
     }
 
     /**
+     * Method converts the input data to a string based on the sparql literal syntax. The associated data type is set by the input xsdType. Input data and
+     * xsdType must be matching.
+     *
+     * @param data is the input data, which should be convert to a literal syntax.
+     * @param xsdType is the data type, which is used to set the kind of literal. Must match with the data type of the input data.
+     * @return a sparql literal as string.
+     * @throws NotAvailableException is thrown in case the parameter are invalid.
+     */
+    static String convertToLiteral(final Object data, final XsdType xsdType) throws NotAvailableException {
+        try {
+            if (data == null) {
+                assert false;
+                throw new NotAvailableException("Input data is null.");
+            }
+
+            switch (xsdType) {
+                case INT:
+                    return addQuotationMarks(String.valueOf((int) data));
+                case DOUBLE:
+                    return addQuotationMarks(String.valueOf((double) data));
+                case LONG:
+                    return addQuotationMarks(String.valueOf((long) data));
+                case STRING:
+                    return addQuotationMarks((String) data);
+                case DATE_TIME:
+                    return addQuotationMarks((String) data);
+                default:
+                    assert false;
+                    throw new NotAvailableException("Input xsdType is unknown.");
+            }
+        } catch (Exception e) {
+            throw new NotAvailableException("Could not convert, because input data do not match with the input xsd data type!", e);
+        }
+    }
+
+    /**
      * Method returns the service type name of the state method name (e.g. getPowerState: powerStateService).
      *
      * @param stateMethodName is the state method name, which should be transformed.
@@ -245,5 +282,7 @@ public interface StringModifier {
             throw new NotAvailableException("Input string is no state (method) name! " + stateMethodName);
         }
     }
+
+
 
 }

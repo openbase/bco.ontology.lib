@@ -27,6 +27,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
@@ -99,7 +100,7 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
     public StateObservation(final UnitRemote unitRemote) throws InstantiationException {
         try {
             this.methodSetStateType = ReflectionUtility.detectMethods(unitRemote.getDataClass(), MethodRegEx.STATE_METHOD.getName(), Pattern.CASE_INSENSITIVE);
-            this.unitType = unitRemote.getType();
+            this.unitType = unitRemote.getUnitType();
             this.rsbInformer = RSBFactoryImpl.getInstance().createSynchronizedInformer(OntConfig.getOntologyRsbScope(), OntologyChange.class);
             this.stopwatch = new Stopwatch();
             this.remoteUnitId = unitRemote.getId().toString();
@@ -156,7 +157,7 @@ public class StateObservation<Type> extends IdentifyStateTypeValue {
                     }
 
                     final Timestamp timestamp = new Timestamp(TimestampJavaTimeTransform.transform(stateTimestamp));
-                    final String timestampLiteral = StringModifier.addXsdDateTime(dateFormat.format(timestamp));
+                    final String timestampLiteral = StringModifier.convertToLiteral(dateFormat.format(timestamp), XsdType.DATE_TIME);
                     insertBuf.add(new RdfTriple(obsInstName, OntProp.TIME_STAMP.getName(), timestampLiteral));
 
                     //### add observation instance to observation class ###\\

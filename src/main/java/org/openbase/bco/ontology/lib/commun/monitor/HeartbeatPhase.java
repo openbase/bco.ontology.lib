@@ -29,6 +29,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntInst;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
@@ -123,7 +124,7 @@ public class HeartbeatPhase {
                     // last heartbeat is within the frequency: replace last timestamp of current heartbeatPhase with refreshed timestamp
                     final List<RdfTriple> delete = new ArrayList<>();
                     final List<RdfTriple> insert = new ArrayList<>();
-                    final String timestampLiteral = StringModifier.addXsdDateTime(now.toString());
+                    final String timestampLiteral = StringModifier.convertToLiteral(now.toString(), XsdType.DATE_TIME);
 
                     delete.add(new RdfTriple(heartbeatPhaseInst, OntProp.LAST_CONNECTION.getName(), null));
                     delete.add(new RdfTriple(OntInst.RECENT_HEARTBEAT.getName(), OntProp.LAST_CONNECTION.getName(), null));
@@ -151,7 +152,8 @@ public class HeartbeatPhase {
         while (true) {
             try {
                 final LocalDateTime dateTime = LocalDateTime.now();
-                final String timestampLiteral = StringModifier.addXsdDateTime(OffsetDateTime.of(dateTime, OffsetDateTime.now().getOffset()).toString());
+                final String dateTimeString = OffsetDateTime.of(dateTime, OffsetDateTime.now().getOffset()).toString();
+                final String timestampLiteral = StringModifier.convertToLiteral(dateTimeString, XsdType.DATE_TIME);
                 final String heartbeatPhaseInst = OntPrefix.HEARTBEAT.getName() + dateTime.toString();
 
                 final List<RdfTriple> delete = new ArrayList<>();

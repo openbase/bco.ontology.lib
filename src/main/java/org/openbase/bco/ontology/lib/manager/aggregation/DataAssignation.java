@@ -18,13 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
@@ -42,10 +42,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author agatting on 25.03.17.
@@ -62,7 +61,7 @@ public class DataAssignation extends DataAggregation {
     private long unitConnectionTimeMilli;
     private String serviceType;
 
-    public DataAssignation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period currentPeriod) {
+    public DataAssignation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period currentPeriod) throws CouldNotPerformException {
         super(dateTimeFrom, dateTimeUntil, currentPeriod);
 
         this.dateTimeFrom = dateTimeFrom;
@@ -71,8 +70,20 @@ public class DataAssignation extends DataAggregation {
         this.stopwatch = new Stopwatch();
     }
 
-    protected List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceStateChangeMap, final long unitConnectionTimeMilli, final String unitId)
-            throws InterruptedException{
+    /**
+     * Method identifies the based service type and relates associated aggregation processes to get ontology triples for aggregation observations. This method
+     * call based on unit (id) level. Incorrect calculations are dropped and associated exceptions are logged.
+     *
+     * @param serviceStateChangeMap contains a map of services (keys) and their associated stateChanges. The state changes based on not aggregated or aggregated
+     *                              data type, which are identified by following methods. The state changes are basis for the aggregation.
+     * @param unitConnectionTimeMilli is the whole connection time in milliseconds of the current unit. If the state changes based on aggregated observations
+     *                                the value will be ignored. Instead the value of the aggregated observations are taken in DataAggregation.
+     * @param unitId is the id of the current based unit, which contains the input services and state changes.
+     * @return a list of triples to insert the aggregation observation in the ontology.
+     * @throws InterruptedException is thrown in case the application was interrupted.
+     */
+    List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceStateChangeMap, final long unitConnectionTimeMilli, final String unitId)
+            throws InterruptedException {
         this.unitId = unitId;
         this.unitConnectionTimeMilli = unitConnectionTimeMilli;
         final List<RdfTriple> triples = new ArrayList<>();
@@ -83,9 +94,6 @@ public class DataAssignation extends DataAggregation {
 
             try {
                 switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceType))) {
-                    case UNKNOWN:
-                        LOGGER.warn("There is a serviceType UNKNOWN!");
-                        break;
                     case ACTIVATION_STATE_SERVICE:
                         triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
@@ -173,6 +181,9 @@ public class DataAssignation extends DataAggregation {
                     case WINDOW_STATE_SERVICE:
                         triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
                         break;
+                    case UNKNOWN:
+                        // invalid service state
+                        throw new NotAvailableException("Could not assign to providerService UNKNOWN");
                     default:
                         // no matched providerService
                         throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
@@ -355,35 +366,35 @@ public class DataAssignation extends DataAggregation {
 //        return hsbCountMap;
 //    }
 
-    private List<RdfTriple> getColorTriple(final long connectionTimeMilli, final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap
-            , final String unitId, final String serviceType, final Period nextPeriod) throws InterruptedException {
-
-        final List<RdfTriple> triples = new ArrayList<>();
-        final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli
-                / (double) (dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli()));
-        final Set<Triple<Integer, Integer, Integer>> hsbSet = hsbCountMap.keySet();
-
-        for (final Triple<Integer, Integer, Integer> hsb : hsbSet) {
-            final String aggObs = getAggObsInstanceName(unitId);
-
-            final String hueValue = String.valueOf(hsb.getLeft() * 10);
-            final String saturationValue = String.valueOf(hsb.getMiddle() * 10);
-            final String brightnessValue = String.valueOf(hsb.getRight() * 10);
-            final String quantity = String.valueOf(hsbCountMap.get(hsb));
-
-            triples.add(new RdfTriple(aggObs, OntExpr.IS_A.getName(), OntCl.AGGREGATION_OBSERVATION.getName()));
-            triples.add(new RdfTriple(aggObs, OntProp.UNIT_ID.getName(), unitId));
-            triples.add(new RdfTriple(aggObs, OntProp.PROVIDER_SERVICE.getName(), serviceType));
-            triples.add(new RdfTriple(aggObs, OntProp.PERIOD.getName(), nextPeriod.toString().toLowerCase()));
-            triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), "\"" + timeWeighting + "\"^^xsd:double"));
-            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
-            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
-            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
-            triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), "\"" + quantity + "\"^^xsd:int"));
-            triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
-        }
-        return triples;
-    }
+//    private List<RdfTriple> getColorTriple(final long connectionTimeMilli, final HashMap<Triple<Integer, Integer, Integer>, Integer> hsbCountMap
+//            , final String unitId, final String serviceType, final Period nextPeriod) throws InterruptedException, NotAvailableException {
+//
+//        final List<RdfTriple> triples = new ArrayList<>();
+//        final String timeWeighting = OntConfig.decimalFormat().format((double) connectionTimeMilli
+//                / (double) (dateTimeUntil.toInstant().toEpochMilli() - dateTimeFrom.toInstant().toEpochMilli()));
+//        final Set<Triple<Integer, Integer, Integer>> hsbSet = hsbCountMap.keySet();
+//
+//        for (final Triple<Integer, Integer, Integer> hsb : hsbSet) {
+//            final String aggObs = getAggObsInstanceName(unitId);
+//
+//            final String hueValue = String.valueOf(hsb.getLeft() * 10);
+//            final String saturationValue = String.valueOf(hsb.getMiddle() * 10);
+//            final String brightnessValue = String.valueOf(hsb.getRight() * 10);
+//            final String quantity = String.valueOf(hsbCountMap.get(hsb));
+//
+//            triples.add(new RdfTriple(aggObs, OntExpr.IS_A.getName(), OntCl.AGGREGATION_OBSERVATION.getName()));
+//            triples.add(new RdfTriple(aggObs, OntProp.UNIT_ID.getName(), unitId));
+//            triples.add(new RdfTriple(aggObs, OntProp.PROVIDER_SERVICE.getName(), serviceType));
+//            triples.add(new RdfTriple(aggObs, OntProp.PERIOD.getName(), nextPeriod.toString().toLowerCase()));
+//            triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), StringModifier.convertToLiteral(timeWeighting, XsdType.DOUBLE)));
+//            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + hueValue + "\"^^NS:Hue"));
+//            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + saturationValue + "\"^^NS:Saturation"));
+//            triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + brightnessValue + "\"^^NS:Brightness"));
+//            triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), StringModifier.convertToLiteral(quantity, XsdType.INT)));
+//            triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME)));
+//        }
+//        return triples;
+//    }
 
     /**
      * Method builds triples to insert aggregated observations. Each agg. observation describes a discrete state value. A discrete state source keeps (maybe)
@@ -408,25 +419,26 @@ public class DataAssignation extends DataAggregation {
             discreteStateValues = new DiscreteStateValues((List<OntAggregatedStateChange>) stateChanges);
         }
 
-        final HashMap<String, Long> activationTimeMap = discreteStateValues.getActiveTimePerStateValue();
-        final HashMap<String, Integer> quantityMap = discreteStateValues.getQuantityPerStateValue();
-        final double timeWeighting = discreteStateValues.getTimeWeighting();
+        final HashMap<String, Long> activationTimeMap = discreteStateValues.getActiveTimes();
+        final HashMap<String, Integer> quantityMap = discreteStateValues.getQuantities();
+        final double timeWeighting = discreteStateValues.getUnitTimeWeighting();
         final List<RdfTriple> triples = new ArrayList<>();
 
         for (final String discreteStateType : activationTimeMap.keySet()) {
             // every aggregated state value has his own aggObs instance! A state source keeps multiple discrete values like a powerState ON and OFF.
             final String aggObs = getAggObsInstanceName(unitId);
-
+            // ontology resources
             triples.add(new RdfTriple(aggObs, OntExpr.IS_A.getName(), OntCl.AGGREGATION_OBSERVATION.getName()));
             triples.add(new RdfTriple(aggObs, OntProp.UNIT_ID.getName(), unitId));
             triples.add(new RdfTriple(aggObs, OntProp.PROVIDER_SERVICE.getName(), serviceType));
             triples.add(new RdfTriple(aggObs, OntProp.PERIOD.getName(), discreteStateValues.getNextPeriod().toString().toLowerCase()));
             triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), discreteStateType));
-            triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), "\"" + String.valueOf(quantityMap.get(discreteStateType)) + "\"^^xsd:int"));
-            triples.add(new RdfTriple(aggObs, OntProp.ACTIVITY_TIME.getName(), "\"" + String.valueOf(activationTimeMap.get(discreteStateType)) + "\"^^xsd:long"));
-            triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(timeWeighting) + "\"^^xsd:double"));
+            // ontology literals
+            triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), StringModifier.convertToLiteral(quantityMap.get(discreteStateType), XsdType.INT)));
+            triples.add(new RdfTriple(aggObs, OntProp.ACTIVITY_TIME.getName(), StringModifier.convertToLiteral(activationTimeMap.get(discreteStateType), XsdType.LONG)));
+            triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), StringModifier.convertToLiteral(timeWeighting, XsdType.DOUBLE)));
             //TODO optional timestamp...necessary by another aggregation process (time frame)?
-//            triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
+//            triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME)));
         }
         return triples;
     }
@@ -462,20 +474,20 @@ public class DataAssignation extends DataAggregation {
 
         final String aggObs = getAggObsInstanceName(unitId);
         final List<RdfTriple> triples = new ArrayList<>();
-
+        // ontology resources
         triples.add(new RdfTriple(aggObs, OntExpr.IS_A.getName(), OntConfig.OntCl.AGGREGATION_OBSERVATION.getName()));
         triples.add(new RdfTriple(aggObs, OntProp.UNIT_ID.getName(), unitId));
         triples.add(new RdfTriple(aggObs, OntProp.PROVIDER_SERVICE.getName(), serviceType));
         triples.add(new RdfTriple(aggObs, OntProp.PERIOD.getName(), continuousStateValues.getNextPeriod().toString().toLowerCase()));
-        // because of distinction the dataType of the stateValue is attached as literal (property hasStateValue) ...
-        triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), "\"" + stateValueType.name() + "\"^^xsd:string"));
-        triples.add(new RdfTriple(aggObs, OntProp.MEAN.getName(), "\"" + String.valueOf(continuousStateValues.getMean()) + "\"^^xsd:double"));
-        triples.add(new RdfTriple(aggObs, OntProp.VARIANCE.getName(), "\"" + String.valueOf(continuousStateValues.getVariance()) + "\"^^xsd:double"));
-        triples.add(new RdfTriple(aggObs, OntProp.STANDARD_DEVIATION.getName(), "\"" + String.valueOf(continuousStateValues.getStandardDeviation()) + "\"^^xsd:double"));
-        triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), "\"" + String.valueOf(continuousStateValues.getQuantity()) + "\"^^xsd:int"));
-        triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), "\"" + String.valueOf(continuousStateValues.getTimeWeighting()) + "\"^^xsd:double"));
+        // ontology literals
+        triples.add(new RdfTriple(aggObs, OntProp.STATE_VALUE.getName(), StringModifier.convertToLiteral(stateValueType.name(), XsdType.STRING)));
+        triples.add(new RdfTriple(aggObs, OntProp.MEAN.getName(), StringModifier.convertToLiteral(continuousStateValues.getMean(), XsdType.DOUBLE)));
+        triples.add(new RdfTriple(aggObs, OntProp.VARIANCE.getName(), StringModifier.convertToLiteral(continuousStateValues.getVariance(), XsdType.DOUBLE)));
+        triples.add(new RdfTriple(aggObs, OntProp.STANDARD_DEVIATION.getName(), StringModifier.convertToLiteral(continuousStateValues.getStandardDeviation(), XsdType.DOUBLE)));
+        triples.add(new RdfTriple(aggObs, OntProp.QUANTITY.getName(), StringModifier.convertToLiteral(continuousStateValues.getQuantity(), XsdType.INT)));
+        triples.add(new RdfTriple(aggObs, OntProp.TIME_WEIGHTING.getName(), StringModifier.convertToLiteral(continuousStateValues.getTimeWeighting(), XsdType.DOUBLE)));
         //TODO optional timestamp...necessary by another aggregation process (time frame)?
-//        triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), "\"" + dateTimeFrom.toString() + "\"^^xsd:dateTime"));
+//        triples.add(new RdfTriple(aggObs, OntProp.TIME_STAMP.getName(), StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME)));
 
         return triples;
     }
@@ -505,9 +517,8 @@ public class DataAssignation extends DataAggregation {
      * @return a reduced list with state values, which are relevant for the aggregation time frame.
      */
     private List<OntStateChange> dismissUnusedStateValues(final List<OntStateChange> stateChanges) {
-
         // sort ascending (old to young)
-        Collections.sort(stateChanges, (o1, o2) -> o1.getTimestamp().compareTo(o2.getTimestamp()));
+        stateChanges.sort(Comparator.comparing(OntStateChange::getTimestamp));
 
         final List<OntStateChange> bufDataList = new ArrayList<>();
         OntStateChange bufData = null;

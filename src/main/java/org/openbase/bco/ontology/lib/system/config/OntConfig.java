@@ -271,23 +271,43 @@ public final class OntConfig {
         /**
          * Period hour.
          */
-        HOUR,
+        HOUR(3600000),
         /**
          * Period day.
          */
-        DAY,
+        DAY(86400000),
         /**
          * Period week.
          */
-        WEEK,
+        WEEK(604800000),
         /**
          * Period month.
          */
-        MONTH,
+        MONTH(0),
         /**
          * Period year.
          */
-        YEAR
+        YEAR(0);
+
+        private final long periodLengthMilliS;
+
+        Period(final long periodLengthMilliS) {
+            this.periodLengthMilliS = periodLengthMilliS;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return the name of an enum element as string.
+         */
+        public long getInMilliS() {
+            return this.periodLengthMilliS;
+        }
+    }
+
+    public enum AggregationTense {
+
+        GREGORIAN_CALENDAR
     }
 
     /**
@@ -438,14 +458,75 @@ public final class OntConfig {
     }
 
     /**
-     * Enumeration of ontology instances.
+     * Enumeration of XSD data types.
+     */
+    public enum XsdType {
+
+        /**
+         * XSD type: int.
+         */
+        INT("^^xsd:int"),
+
+        /**
+         * XSD type: double.
+         */
+        DOUBLE("^^xsd:double"),
+
+        /**
+         * XSD type: long.
+         */
+        LONG("^^xsd:long"),
+
+        /**
+         * XSD type: string.
+         */
+        STRING("^^xsd:string"),
+
+        /**
+         * XSD type: boolean.
+         */
+        BOOLEAN("^^xsd:boolean"),
+
+        /**
+         * XSD type: dateTime.
+         */
+        DATE_TIME("^^xsd:dateTime");
+
+        private final String xsdType;
+
+        XsdType(final String xsdType) {
+            this.xsdType = xsdType;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return a name of an enum element as string.
+         */
+        public String getName() {
+            return this.xsdType;
+        }
+    }
+
+    /**
+     * Enumeration of ontology instances/individuals.
      */
     public enum OntInst {
 
         /**
          * recentHeartBeat (instance).
          */
-        RECENT_HEARTBEAT("recentHeartBeat");
+        RECENT_HEARTBEAT("recentHeartBeat"),
+
+        /**
+         * dateTimeFrom (instance) describes the beginning of the aggregation time frame.
+         */
+        DATE_TIME_FROM("dateTimeFrom"),
+
+        /**
+         * dateTimeUntil (instance) describes the ending of the aggregation time frame.
+         */
+        DATE_TIME_UNTIL("dateTimeUntil");
 
         private final String ontInst;
 
@@ -506,7 +587,7 @@ public final class OntConfig {
         /**
          * OntObservation (class).
          */
-        OBSERVATION("OntObservation"),
+        OBSERVATION("Observation"),
 
         /**
          * StateValue (class).
@@ -541,7 +622,12 @@ public final class OntConfig {
         /**
          * RecentHeartBeat (class).
          */
-        RECENT_HEARTBEAT("RecentHeartBeat");
+        RECENT_HEARTBEAT("RecentHeartBeat"),
+
+        /**
+         * AggregationTimeFrame (class).
+         */
+        AGGREGATION_TIME_FRAME("AggregationTimeFrame");
 
         private final String ontClass;
 
