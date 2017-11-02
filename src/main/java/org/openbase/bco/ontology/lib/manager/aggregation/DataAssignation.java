@@ -19,7 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
@@ -204,7 +204,7 @@ public class DataAssignation extends DataAggregation {
 
     /**
      * Method collects and calculates the state changes to an aggregated observation. State changes based on discrete state values (/bco state values
-     * like on, off, open, ...). The state changes can be not processed observations (OntStateChange) or aggregated observations (OntAggregatedStateChange).
+     * like on, off, open, ...). The state changes can be not processed observations (OntStateChangeBuf) or aggregated observations (OntAggregatedStateChange).
      *
      * @param stateChanges are the discrete state values.
      * @return rdf triples to insert aggregated information which are calculated from the input state changes.
@@ -213,12 +213,12 @@ public class DataAssignation extends DataAggregation {
      */
     private List<RdfTriple> aggregateDiscreteStateValue(final List<?> stateChanges) throws CouldNotPerformException, InterruptedException {
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            final List<OntStateChange> bco = OntNode.getResources((List<OntStateChange>) stateChanges);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            final List<OntStateChangeBuf> bco = OntNode.getResourceElements((List<OntStateChangeBuf>) stateChanges);
             return buildAggObsOfDiscreteValues(dismissUnusedStateValues(bco));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> bco = OntNode.getAggResources((List<OntAggregatedStateChange>) stateChanges);
+            final List<OntAggregatedStateChange> bco = OntNode.getAggResourceElements((List<OntAggregatedStateChange>) stateChanges);
             return buildAggObsOfDiscreteValues(bco);
 
         }
@@ -227,7 +227,7 @@ public class DataAssignation extends DataAggregation {
 
     /**
      * Method collects and calculates the state changes to an aggregated observation. State changes based on continuous state values. The state changes can
-     * be not processed observations (OntStateChange) or aggregated observations (OntAggregatedStateChange).
+     * be not processed observations (OntStateChangeBuf) or aggregated observations (OntAggregatedStateChange).
      *
      * @param stateChanges are the continuous state values.
      * @param stateValueType is the kind of state value to filter and attach the information to the aggregation observation.
@@ -238,12 +238,12 @@ public class DataAssignation extends DataAggregation {
     private List<RdfTriple> aggregateContinuousStateValue(final List<?> stateChanges, final StateValueType stateValueType)
             throws CouldNotPerformException, InterruptedException {
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            final List<OntStateChange> stateTypeValue = OntNode.getLiterals((List<OntStateChange>) stateChanges, stateValueType);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            final List<OntStateChangeBuf> stateTypeValue = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, stateValueType);
             return buildAggObsOfContinuousValue(dismissUnusedStateValues(stateTypeValue), stateValueType);
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> stateTypeValue = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, stateValueType);
+            final List<OntAggregatedStateChange> stateTypeValue = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, stateValueType);
             return buildAggObsOfContinuousValue(stateTypeValue, stateValueType);
         }
         throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
@@ -260,19 +260,19 @@ public class DataAssignation extends DataAggregation {
     private List<RdfTriple> hsbStateValue(final List<?> stateChanges) throws CouldNotPerformException, InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            final List<OntStateChange> brightness = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.BRIGHTNESS);
-            final List<OntStateChange> hue = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.HUE);
-            final List<OntStateChange> saturation = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.SATURATION);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            final List<OntStateChangeBuf> brightness = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.BRIGHTNESS);
+            final List<OntStateChangeBuf> hue = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.HUE);
+            final List<OntStateChangeBuf> saturation = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.SATURATION);
 
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(hue), StateValueType.HUE));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(saturation), StateValueType.SATURATION));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(brightness), StateValueType.BRIGHTNESS));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> brightness = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.BRIGHTNESS);
-            final List<OntAggregatedStateChange> hue = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.HUE);
-            final List<OntAggregatedStateChange> saturation = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.SATURATION);
+            final List<OntAggregatedStateChange> brightness = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.BRIGHTNESS);
+            final List<OntAggregatedStateChange> hue = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.HUE);
+            final List<OntAggregatedStateChange> saturation = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.SATURATION);
 
             triples.addAll(buildAggObsOfContinuousValue(hue, StateValueType.HUE));
             triples.addAll(buildAggObsOfContinuousValue(saturation, StateValueType.SATURATION));
@@ -295,19 +295,19 @@ public class DataAssignation extends DataAggregation {
     private List<RdfTriple> powerStateValue(final List<?> stateChanges) throws CouldNotPerformException, InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            final List<OntStateChange> voltage = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.VOLTAGE);
-            final List<OntStateChange> watt = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.WATT);
-            final List<OntStateChange> ampere = OntNode.getLiterals((List<OntStateChange>) stateChanges, StateValueType.AMPERE);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            final List<OntStateChangeBuf> voltage = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.VOLTAGE);
+            final List<OntStateChangeBuf> watt = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.WATT);
+            final List<OntStateChangeBuf> ampere = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.AMPERE);
 
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(voltage), StateValueType.VOLTAGE));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(watt), StateValueType.WATT));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(ampere), StateValueType.AMPERE));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> voltage = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.VOLTAGE);
-            final List<OntAggregatedStateChange> watt = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.WATT);
-            final List<OntAggregatedStateChange> ampere = OntNode.getAggLiterals((List<OntAggregatedStateChange>) stateChanges, StateValueType.AMPERE);
+            final List<OntAggregatedStateChange> voltage = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.VOLTAGE);
+            final List<OntAggregatedStateChange> watt = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.WATT);
+            final List<OntAggregatedStateChange> ampere = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.AMPERE);
 
             triples.addAll(buildAggObsOfContinuousValue(voltage, StateValueType.VOLTAGE));
             triples.addAll(buildAggObsOfContinuousValue(watt, StateValueType.WATT));
@@ -323,8 +323,8 @@ public class DataAssignation extends DataAggregation {
         //TODO aggregate string...?!
         final List<RdfTriple> triples = new ArrayList<>();
 
-        if (serviceDataCollList.get(0) instanceof OntStateChange) {
-            List<OntStateChange> rfidValueList = dismissUnusedStateValues((List<OntStateChange>) serviceDataCollList);
+        if (serviceDataCollList.get(0) instanceof OntStateChangeBuf) {
+            List<OntStateChangeBuf> rfidValueList = dismissUnusedStateValues((List<OntStateChangeBuf>) serviceDataCollList);
 
         } else if (serviceDataCollList.get(0) instanceof OntAggregatedStateChange) {
 
@@ -334,8 +334,8 @@ public class DataAssignation extends DataAggregation {
         return triples;
     }
 
-//    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<OntStateChange> hueList
-//            , List<OntStateChange> saturationList, final List<OntStateChange> brightnessList) { //TODO
+//    private HashMap<Triple<Integer, Integer, Integer>, Integer> getAggColorValues(final List<OntStateChangeBuf> hueList
+//            , List<OntStateChangeBuf> saturationList, final List<OntStateChangeBuf> brightnessList) { //TODO
 //
 //        if (hueList.size() != saturationList.size() || hueList.size() != brightnessList.size()) {
 //            LOGGER.error("List sizes of hue, saturation and brightness are not equal!");
@@ -413,8 +413,8 @@ public class DataAssignation extends DataAggregation {
 
         final DiscreteStateValues discreteStateValues;
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            discreteStateValues = new DiscreteStateValues((List<OntStateChange>) stateChanges, unitConnectionTimeMilli);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            discreteStateValues = new DiscreteStateValues((List<OntStateChangeBuf>) stateChanges, unitConnectionTimeMilli);
         } else {
             discreteStateValues = new DiscreteStateValues((List<OntAggregatedStateChange>) stateChanges);
         }
@@ -466,8 +466,8 @@ public class DataAssignation extends DataAggregation {
 
         final ContinuousStateValues continuousStateValues;
 
-        if (stateChanges.get(0) instanceof OntStateChange) {
-            continuousStateValues = new ContinuousStateValues((List<OntStateChange>) stateChanges, unitConnectionTimeMilli);
+        if (stateChanges.get(0) instanceof OntStateChangeBuf) {
+            continuousStateValues = new ContinuousStateValues((List<OntStateChangeBuf>) stateChanges, unitConnectionTimeMilli);
         } else {
             continuousStateValues = new ContinuousStateValues((List<OntAggregatedStateChange>) stateChanges);
         }
@@ -516,14 +516,14 @@ public class DataAssignation extends DataAggregation {
      * @param stateChanges are the state values of an unit.
      * @return a reduced list with state values, which are relevant for the aggregation time frame.
      */
-    private List<OntStateChange> dismissUnusedStateValues(final List<OntStateChange> stateChanges) {
+    private List<OntStateChangeBuf> dismissUnusedStateValues(final List<OntStateChangeBuf> stateChanges) {
         // sort ascending (old to young)
-        stateChanges.sort(Comparator.comparing(OntStateChange::getTimestamp));
+        stateChanges.sort(Comparator.comparing(OntStateChangeBuf::getTimestamp));
 
-        final List<OntStateChange> bufDataList = new ArrayList<>();
-        OntStateChange bufData = null;
+        final List<OntStateChangeBuf> bufDataList = new ArrayList<>();
+        OntStateChangeBuf bufData = null;
 
-        for (final OntStateChange stateChange : stateChanges) {
+        for (final OntStateChangeBuf stateChange : stateChanges) {
             final long timestampMillis = OffsetDateTime.parse(stateChange.getTimestamp()).toInstant().toEpochMilli();
 
             if (timestampMillis <= dateTimeFromMillis) {

@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedObservation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
@@ -52,7 +52,8 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
 
     private final DataProviding dataProviding;
 
-    public AggregationImpl(OffsetDateTime dateTimeFrom, OffsetDateTime dateTimeUntil, Period currentPeriod) throws CouldNotPerformException {
+    public AggregationImpl(OffsetDateTime dateTimeFrom, OffsetDateTime dateTimeUntil, Period currentPeriod) throws CouldNotPerformException
+            , ExecutionException, InterruptedException {
         super(dateTimeFrom, dateTimeUntil, currentPeriod);
 
         this.dataProviding = new DataProviding(dateTimeFrom, dateTimeUntil);
@@ -65,8 +66,6 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
     }
 
     public void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, ExecutionException {
-
-
 
 
         final OffsetDateTime dateTimeFromTest = OffsetDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
@@ -98,6 +97,28 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
     private void blub(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) {
 
     }
+
+//    private void initParameters(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws InterruptedException, ExecutionException,
+//            NotAvailableException {
+//
+//        if (dateTimeFrom == null) {
+//            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.GET_AGG_DATE_TIME_FROM, OntConfig.getOntologyDbUrl(), 0);
+//
+//            if (resultSet.hasNext()) {
+//                final QuerySolution querySolution = resultSet.nextSolution();
+//                final String timestampFrom = OntNode.getRDFNodeName(querySolution, OntConfig.SparqlVariable.TIMESTAMP.getName());
+//                this.dateTimeFrom = OffsetDateTime.parse(timestampFrom);
+//            } else {
+//                // there was no aggregation so far. set new timestamp
+//
+//                //TODO set timestamp...
+//                this.dateTimeFrom = OffsetDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
+//            }
+//        } else {
+//            this.dateTimeFrom = dateTimeFrom;
+//        }
+//
+//    }
 
     private void dataTripleCollection(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period)
             throws CouldNotPerformException, InterruptedException, ExecutionException {
@@ -208,19 +229,19 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
     private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli, final List<OntObservation> ontObservations)
             throws InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, List<OntStateChange>> serviceStateChangeMap = new HashMap<>();
+        final HashMap<String, List<OntStateChangeBuf>> serviceStateChangeMap = new HashMap<>();
 
         for (final OntObservation ontObservation : ontObservations) {
-            final OntStateChange ontStateChange = new OntStateChange(ontObservation.getStateValues(), ontObservation.getTimestamp());
+            final OntStateChangeBuf ontStateChangeBuf = new OntStateChangeBuf(ontObservation.getStateValues(), ontObservation.getTimestamp());
 
             if (serviceStateChangeMap.containsKey(ontObservation.getProviderService())) {
                 // there is an entry: add data
-                final List<OntStateChange> arrayList = serviceStateChangeMap.get(ontObservation.getProviderService());
-                arrayList.add(ontStateChange);
+                final List<OntStateChangeBuf> arrayList = serviceStateChangeMap.get(ontObservation.getProviderService());
+                arrayList.add(ontStateChangeBuf);
                 serviceStateChangeMap.put(ontObservation.getProviderService(), arrayList);
             } else {
                 // there is no entry: put data
-                serviceStateChangeMap.put(ontObservation.getProviderService(), new ArrayList<OntStateChange>() {{add(ontStateChange);}});
+                serviceStateChangeMap.put(ontObservation.getProviderService(), new ArrayList<OntStateChangeBuf>() {{add(ontStateChangeBuf);}});
             }
         }
         triples.addAll(identifyServiceType(serviceStateChangeMap, unitConnectionTimeMilli, unitId));

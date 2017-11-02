@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author agatting on 25.03.17.
  */
-public class OntStateChange {
+public class OntStateChangeBuf {
 
     private final List<RDFNode> stateValues;
     private final String timestamp;
@@ -36,7 +36,7 @@ public class OntStateChange {
      * @param stateValues are the values of an state change to a specific time.
      * @param timestamp is the specific time in format: yyyy-MM-dd'T'HH:mm:ss.SSSXXX.
      */
-    public OntStateChange(final List<RDFNode> stateValues, final String timestamp) {
+    public OntStateChangeBuf(final List<RDFNode> stateValues, final String timestamp) {
         this.stateValues = stateValues;
         this.timestamp = timestamp;
     }

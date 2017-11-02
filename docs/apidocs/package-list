@@ -17,5 +17,6 @@ org.openbase.bco.ontology.lib.trigger
 org.openbase.bco.ontology.lib.trigger.sparql
 org.openbase.bco.ontology.lib.utility
 org.openbase.bco.ontology.lib.utility.ontology
+org.openbase.bco.ontology.lib.utility.rdf
 org.openbase.bco.ontology.lib.utility.sparql
 org.openbase.bco.ontology.lib.utility.time

@@ -35,6 +35,7 @@ public interface Aggregation {
      * @param currentDays currentDays
      * @throws CouldNotPerformException CouldNotPerformException
      * @throws InterruptedException InterruptedException
+     * @throws ExecutionException ExecutionException
      */
     void startAggregation(int currentDays) throws CouldNotPerformException, InterruptedException, ExecutionException;
 
