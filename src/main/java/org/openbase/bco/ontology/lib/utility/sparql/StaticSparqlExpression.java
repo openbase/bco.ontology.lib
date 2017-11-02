@@ -19,6 +19,11 @@
 package org.openbase.bco.ontology.lib.utility.sparql;
 
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntCl;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntInst;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.SparqlVariable;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 
 import java.util.ArrayList;
@@ -31,6 +36,7 @@ import java.util.List;
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public final class StaticSparqlExpression {
+    //TODO make strings more generic. e.g. insert static strings of OntConfig.java
 
     /**
      * Query selects all resources of another query. The resources are filtered by URI of bco.
@@ -83,12 +89,24 @@ public final class StaticSparqlExpression {
                     + "} "
                     + "GROUP BY ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp ";
 
-    public static final String GET_MIN_TIMESTAMP =
-            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
-            + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
-                + "SELECT min(?timestamp) AS ?minTimestamp WHERE { "
-                    + "?connectionPhase a NS:ConnectionPhase . "
-                    + "?connectionPhase NS:hasFirstConnection ?firstTimestamp . "
+    /**
+     * SPARQL command to get the beginning of the aggregation time frame.
+     */
+    public static final String GET_AGG_DATE_TIME_FROM =
+            "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                + "SELECT ?" + SparqlVariable.TIMESTAMP + " WHERE { "
+                    + "NS:" + OntInst.DATE_TIME_FROM + " " + OntExpr.IS_A + " NS:" + OntCl.AGGREGATION_TIME_FRAME + " . "
+                    + "NS:" + OntInst.DATE_TIME_FROM + " NS:" + OntProp.TIME_STAMP + " ?" + SparqlVariable.TIMESTAMP + " . "
+                + "} ";
+
+    /**
+     * SPARQL command to get the ending of the aggregation time frame.
+     */
+    public static final String GET_AGG_DATE_TIME_UNTIL =
+            "PREFIX NS: <" + OntConfig.NAMESPACE + "> "
+                + "SELECT ?" + SparqlVariable.TIMESTAMP + " WHERE { "
+                    + "NS:" + OntInst.DATE_TIME_UNTIL + " " + OntExpr.IS_A + " NS:" + OntCl.AGGREGATION_TIME_FRAME + " . "
+                    + "NS:" + OntInst.DATE_TIME_UNTIL + " NS:" + OntProp.TIME_STAMP + " ?" + SparqlVariable.TIMESTAMP + " . "
                 + "} ";
 
     /**

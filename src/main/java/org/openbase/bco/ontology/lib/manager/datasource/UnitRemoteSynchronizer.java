@@ -164,7 +164,7 @@ public class UnitRemoteSynchronizer {
 //                new StateObservation(unitRemote);
                 return;
             default:
+                new StateObservation(unitRemote);
         }
-        new StateObservation(unitRemote);
     }
 }

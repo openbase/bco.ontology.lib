@@ -67,7 +67,6 @@ public final class TransactionBuffer {
     private void startUploadQueueEntriesThread() throws CouldNotPerformException {
         try {
             GlobalScheduledExecutorService.scheduleWithFixedDelay(() -> {
-                System.out.println("hellooooooo");
                 while (!QUEUE.isEmpty()) {
                     final String sparql = QUEUE.peek();
 

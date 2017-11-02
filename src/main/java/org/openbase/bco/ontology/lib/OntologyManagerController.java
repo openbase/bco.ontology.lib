@@ -20,7 +20,6 @@ package org.openbase.bco.ontology.lib;
 
 import org.openbase.bco.ontology.lib.commun.monitor.HeartbeatPhase;
 import org.openbase.bco.ontology.lib.commun.web.OntModelHttp;
-import org.openbase.bco.ontology.lib.manager.aggregation.DataProviding;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRegistrySynchronizer;
 import org.openbase.bco.ontology.lib.manager.datasource.UnitRemoteSynchronizer;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -50,8 +49,6 @@ import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.registry.UnitRegistryDataType.UnitRegistryData;
 import rst.domotic.unit.UnitConfigType.UnitConfig;
 
-import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -127,7 +124,13 @@ public final class OntologyManagerController implements Launchable<Void>, VoidIn
     @Override
     public void init() throws InitializationException, InterruptedException {
         try {
-            // upload (add) ontModel
+            //TEST
+//            Registries.waitForData();
+//            UnitRemote colorableLightRemote = Units.getUnitByScope("//bad/colorablelight/deckenlampe_2/", true);
+//            new StateObservation(colorableLightRemote);
+//            MultiException.checkAndThrow("Input is invalid.", Preconditions.checkNotNull(null, null, ""));
+
+            //upload (add) ontModel
             OntModelHttp.addModelToServer(OntModelHandler.loadOntModelFromFile(null, null), OntConfig.getOntologyDbUrl(), 0);
         } catch (NotAvailableException ex) {
             throw new InitializationException("Could not upload ontology model!", ex);
