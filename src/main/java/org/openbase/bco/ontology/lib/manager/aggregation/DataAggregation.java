@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
@@ -68,7 +68,7 @@ public class DataAggregation {
         // the quantity of activation for each state value
         private final HashMap<String, Integer> quantityMap = new HashMap<>();
 
-        public DiscreteStateValues(final List<OntStateChange> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
+        public DiscreteStateValues(final List<OntStateChangeBuf> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
             this.unitTimeWeighting = calcTimeWeighting(unitConnectionTime);
             this.nextPeriod = Period.DAY;
 
@@ -126,7 +126,7 @@ public class DataAggregation {
          * @param stateChanges are the state changes to compute the aggregated metadata.
          * @throws NotAvailableException is thrown in case the state change could not be transformed into a string.
          */
-        private void computeMetadata(final List<OntStateChange> stateChanges) throws NotAvailableException {
+        private void computeMetadata(final List<OntStateChangeBuf> stateChanges) throws NotAvailableException {
             // special case: there is no new state change. The single list entry is the state change before the aggregation time frame
             if (stateChanges.size() == 1) {
                 final String stateValue = StringModifier.getLocalName(stateChanges.get(0).getStateValues().get(0).asResource().toString());
@@ -231,7 +231,7 @@ public class DataAggregation {
         private final int quantity;
         private final Period nextPeriod;
 
-        public ContinuousStateValues(List<OntStateChange> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
+        public ContinuousStateValues(List<OntStateChangeBuf> stateChanges, final long unitConnectionTime) throws CouldNotPerformException {
             stateChanges = preparingStateChanges(unitConnectionTime, stateChanges);
 
             final List<String> stateValuesString = getStateValues(stateChanges);
@@ -303,10 +303,10 @@ public class DataAggregation {
             return convertStringToInteger(aggQuantityBuf);
         }
 
-        private List<String> getStateValues(final List<OntStateChange> stateValueDataCollectionList) throws NotAvailableException {
-            return stateValueDataCollectionList.stream().map(ontStateChange -> {
+        private List<String> getStateValues(final List<OntStateChangeBuf> stateValueDataCollectionList) throws NotAvailableException {
+            return stateValueDataCollectionList.stream().map(ontStateChangeBuf -> {
                 try {
-                    return StringModifier.getLocalName(ontStateChange.getStateValues().get(0).asLiteral().getLexicalForm()); //TODO extend to list...
+                    return StringModifier.getLocalName(ontStateChangeBuf.getStateValues().get(0).asLiteral().getLexicalForm()); //TODO extend to list...
                 } catch (NotAvailableException ex) {
                     return ""; //TODO
                 }
@@ -324,7 +324,7 @@ public class DataAggregation {
      * @return the sorted list of state changes.
      * @throws MultiException is thrown in case the verification of input information, which should be aggregated, is invalid.
      */
-    private List<OntStateChange> preparingStateChanges(final long unitConnectionTime, final List<OntStateChange> stateChanges) throws MultiException {
+    private List<OntStateChangeBuf> preparingStateChanges(final long unitConnectionTime, final List<OntStateChangeBuf> stateChanges) throws MultiException {
         MultiException.ExceptionStack exceptionStack = null;
 
         try {
@@ -353,7 +353,7 @@ public class DataAggregation {
         MultiException.checkAndThrow("Could not perform aggregation!", exceptionStack);
 
         // sort ascending (old to young)
-        stateChanges.sort(Comparator.comparing(OntStateChange::getTimestamp));
+        stateChanges.sort(Comparator.comparing(OntStateChangeBuf::getTimestamp));
 
         return stateChanges;
     }

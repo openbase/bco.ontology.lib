@@ -18,13 +18,19 @@
  */
 package org.openbase.bco.ontology.lib.utility.ontology;
 
+import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntProviderServices;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.StateValueType;
+import org.openbase.bco.ontology.lib.utility.Preconditions;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
+import org.openbase.jul.exception.MultiException.ExceptionStack;
+import org.openbase.jul.exception.NotAvailableException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,25 +43,40 @@ public interface OntNode {
     /**
      * Method filters the input state changes and returns state changes, which includes literals of the input data type.
      *
-     * @param stateChanges are the state changes of type OntStateChange, which include the state values.
+     * @param stateChanges are the state changes of type OntStateChangeBuf, which include the state values.
      * @param dataType is the ontology data type to filter the different state values.
-     * @return a list of filtered state changes.
-     * @throws MultiException is thrown in case some state values are null.
+     * @return a list of filtered (literals only) state changes.
+     * @throws MultiException is thrown in case one important value is null.
      */
-    static List<OntStateChange> getLiterals(final List<OntStateChange> stateChanges, final StateValueType dataType) throws MultiException {
+    static List<OntStateChangeBuf> getLiteralElements(final List<OntStateChangeBuf> stateChanges, final StateValueType dataType) throws MultiException {
 
-        final List<OntStateChange> stateChangeLiterals = new ArrayList<>();
-        MultiException.ExceptionStack exceptionStack = null;
+        ExceptionStack exceptionStack = Preconditions.checkNotNull(stateChanges, "Input state changes can not be null.", null);
+        exceptionStack = Preconditions.checkNotNull(dataType, "Input state value type can not be null.", exceptionStack);
 
-        for (final OntStateChange stateChange : stateChanges) {
+        MultiException.checkAndThrow("Input parameter invalid.", exceptionStack);
+        final List<OntStateChangeBuf> stateChangeLiterals = new ArrayList<>();
+
+        for (final OntStateChangeBuf stateChange : stateChanges) {
             boolean buf = false;
+
+//            final RDFNode stateValue = stateChange.getStateValues().get(0);
+//            final List<RDFNode> rdfNode = null;
+//
+//            final OntStateChange ontStateChange = new OntStateChange(true, null, null);
+//            final OntProviderServices ontProviderService = new OntProviderServices("");
+//            ontProviderService.ontStateChes.add(ontStateChange);
+
+
+
 
             for (final RDFNode stateValue : stateChange.getStateValues()) {
                 try {
-                    if (stateValue.isLiteral() && StringModifier.getLocalName(stateValue.asLiteral().getDatatypeURI()).equalsIgnoreCase(dataType.name())) {
+                    Preconditions.checkNotNull(stateValue, "RDFNode can not be null!");
+
+                    if (stateValue.isLiteral() && StringModifier.getLocalName(stateValue.asLiteral().getDatatypeURI()).equalsIgnoreCase(dataType.toString())) {
                         buf = true;
                     }
-                } catch (CouldNotPerformException ex) {
+                } catch (NotAvailableException ex) {
                     exceptionStack = MultiException.push(null, ex, exceptionStack);
                 }
             }
@@ -77,7 +98,8 @@ public interface OntNode {
      * @return a list of filtered state changes.
      * @throws MultiException is thrown in case some state values are null.
      */
-    static List<OntAggregatedStateChange> getAggLiterals(final List<OntAggregatedStateChange> stateChanges, final StateValueType dataType) throws MultiException {
+    static List<OntAggregatedStateChange> getAggLiteralElements(final List<OntAggregatedStateChange> stateChanges, final StateValueType dataType)
+            throws MultiException {
 
         final List<OntAggregatedStateChange> stateChangeLiterals = new ArrayList<>();
         MultiException.ExceptionStack exceptionStack = null;
@@ -101,14 +123,14 @@ public interface OntNode {
     /**
      * Method filters the input state changes and returns state changes, which includes resources.
      *
-     * @param stateChanges are the state changes of type OntStateChange, which include the state values.
+     * @param stateChanges are the state changes of type OntStateChangeBuf, which include the state values.
      * @return a list of filtered state changes.
      */
-    static List<OntStateChange> getResources(final List<OntStateChange> stateChanges) {
+    static List<OntStateChangeBuf> getResourceElements(final List<OntStateChangeBuf> stateChanges) {
 
-        final List<OntStateChange> stateChangeLiterals = new ArrayList<>();
+        final List<OntStateChangeBuf> stateChangeLiterals = new ArrayList<>();
 
-        for (final OntStateChange stateChange : stateChanges) {
+        for (final OntStateChangeBuf stateChange : stateChanges) {
             boolean buf = false;
 
             for (final RDFNode stateValue : stateChange.getStateValues()) {
@@ -130,7 +152,7 @@ public interface OntNode {
      * @param stateChanges are the state changes of type OntAggregatedStateChange, which include the state values.
      * @return a list of filtered state changes.
      */
-    static List<OntAggregatedStateChange> getAggResources(final List<OntAggregatedStateChange> stateChanges) {
+    static List<OntAggregatedStateChange> getAggResourceElements(final List<OntAggregatedStateChange> stateChanges) {
 
         final List<OntAggregatedStateChange> stateChangeLiterals = new ArrayList<>();
 
@@ -140,5 +162,16 @@ public interface OntNode {
             }
         }
         return stateChangeLiterals;
+    }
+
+
+    static String getRDFNodeName(final QuerySolution querySolution, final String name) throws NotAvailableException {
+
+//        ExceptionStack exceptionStack = Preconditions.checkNotNull(querySolution, "Parameter querySolution is null!", null);
+//        exceptionStack = Preconditions.checkNotNull(name, "Parameter name is null!", exceptionStack);
+//        MultiException.checkAndThrow("Input is invalid.", exceptionStack);
+
+        return (querySolution.get(name).isLiteral()) ? querySolution.getLiteral(name).getLexicalForm()
+                : StringModifier.getLocalName(querySolution.getResource(name).toString());
     }
 }

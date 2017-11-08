@@ -54,6 +54,8 @@ import java.util.Map;
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public final class OntConfig {
+    //TODO change prefix namespace "NS" to "BCO" everywhere
+    //TODO maybe new prefix "BCO" as static string (/including in ontology components directly...)
 
     /**
      * Namespace of the ontology.
@@ -64,6 +66,11 @@ public final class OntConfig {
      * Namespace of the xsd schema (w3c). Don't modify.
      */
     public static final String XSD = "http://www.w3.org/2001/XMLSchema#";
+
+    /**
+     * Namespace of the rdf schema (w3c). Don't modify.
+     */
+    public static final String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
 
     /**
      * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. POWER_STATE_SERVICE - powerStateService
@@ -218,7 +225,7 @@ public final class OntConfig {
      *
      * @return the ontology mode.
      */
-    public static boolean getOntologyModeHistoricData() {
+    public static boolean getOntologyManagerMode() {
         return ontologyModeHistoricData;
     }
 
@@ -372,18 +379,29 @@ public final class OntConfig {
     }
 
     /**
-     * Enum contains the type of aggregation.
+     * Enum contains the different kind of state values, which are used to handle the aggregation.
      */
-    public enum DataFormatAgg {
+    public enum ObservationType {
 
         /**
-         * Identify data, which are not aggregated yet.
+         * The present state change data are not aggregated so far and based on discrete state values (e.g. ON, OFF, ...).
          */
-        NOT_AGGREGATED,
+        DISCRETE,
+
         /**
-         * Identify data, which was aggregated and should be aggregated one more time.
+         * The present state change data are not aggregated so far and based on continuous state values (e.g. hsb values, ...).
          */
-        AGGREGATED
+        CONTINUOUS,
+
+        /**
+         * The present state change data were already aggregated and based on discrete state values (e.g. ON, OFF, ...).
+         */
+        AGGREGATED_DISCRETE,
+
+        /**
+         * The present state change data were already aggregated and based on continuous state values (e.g. hsb values, ...).
+         */
+        AGGREGATED_CONTINUOUS
     }
 
     /**

@@ -142,7 +142,7 @@ public class Measurement {
 
     private static final String COMPLEX_QUERY = AskQueryExample.QUERY_0;
 
-    public Measurement() throws InterruptedException, CouldNotPerformException {
+    public Measurement() throws InterruptedException, CouldNotPerformException, ExecutionException {
 //        this.measurementWatch = new Stopwatch();
         this.triggerMeasurementObservable = new ObservableImpl<>(false, this);
 //        this.colorableLightRemote = (ColorableLightRemote) Units.getUnit("a0f2c9d8-41a6-45c6-9609-5686b6733d4e", true); //old db

@@ -24,6 +24,10 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedObservation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange.Discrete;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntUnits;
+import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
 import org.openbase.bco.ontology.lib.utility.time.Interval;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
@@ -38,7 +42,6 @@ import org.openbase.jul.exception.printer.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,12 +59,10 @@ public class DataProviding {
     private final OffsetDateTime dateTimeUntil;
     private final Interval interval;
 
-    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws NotAvailableException {
+    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws InterruptedException, ExecutionException,
+            NotAvailableException {
 
-//        if (dateTimeFrom == null) {
-//            this.dateTimeFrom = OffsetDateTime.of(LocalDateTime.parse("2017-01-01T00:00:00.000"), OffsetDateTime.now().getOffset());
-//
-//        }
+//        initParameters(dateTimeFrom, dateTimeUntil);
 
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
@@ -91,12 +92,13 @@ public class DataProviding {
         while (resultSet.hasNext()) {
             final QuerySolution querySolution = resultSet.nextSolution();
 
-            final String unitId = getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
-            final String startTimestamp = getRDFNodeName(querySolution, SparqlVariable.FIRST_TIMESTAMP.getName());
-            final String endTimestamp = getRDFNodeName(querySolution, SparqlVariable.LAST_TIMESTAMP.getName());
+            final String unitId = OntNode.getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
+            final String startTimestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.FIRST_TIMESTAMP.getName());
+            final String endTimestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.LAST_TIMESTAMP.getName());
 
-            final Interval connectionInterval = new Interval(OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli()
-                    , OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli());
+            final long startMilliS = OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli();
+            final long endMilliS = OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli();
+            final Interval connectionInterval = new Interval(startMilliS, endMilliS);
             final Interval overlapInterval = interval.getOverlap(connectionInterval);
 
             if (overlapInterval != null) {
@@ -125,6 +127,9 @@ public class DataProviding {
      * @throws ExecutionException is thrown in case the callable thread throws an unknown exception.
      */
     public HashMap<String, List<OntObservation>> getObservations() throws NotAvailableException, InterruptedException, ExecutionException {
+
+        final OntUnits ontUnits = new OntUnits();
+
         // key: unitId, value: list of observations
         final HashMap<String, List<OntObservation>> unitObservationMap = new HashMap<>();
         final String timeUntil = StringModifier.convertToLiteral(dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER), XsdType.DATE_TIME);
@@ -133,21 +138,58 @@ public class DataProviding {
 
         // identify related state values (e.g. hsb) on the basis of the observation id/name. Because of the SPARQL query they are sorted...
         String observationIdBuf = null;
+        final List<RDFNode> stateValues = new ArrayList<>();
 
         try {
             while (resultSet.hasNext()) {
                 final QuerySolution querySolution = resultSet.nextSolution();
 
-                final String observationId = getRDFNodeName(querySolution, SparqlVariable.OBSERVATION.getName());
-                final String providerService = getRDFNodeName(querySolution, SparqlVariable.PROVIDER_SERVICE.getName());
-                final String unitId = getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
+                final String observationId = OntNode.getRDFNodeName(querySolution, SparqlVariable.OBSERVATION.getName());
+                final String providerService = OntNode.getRDFNodeName(querySolution, SparqlVariable.PROVIDER_SERVICE.getName());
+                final String unitId = OntNode.getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
                 final RDFNode stateValue = querySolution.get(SparqlVariable.STATE_VALUE.getName());
-                final String timestamp = getRDFNodeName(querySolution, SparqlVariable.TIMESTAMP.getName());
+                final String timestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.TIMESTAMP.getName());
 
                 if (stateValue == null || timestamp == null) {
                     throw new CouldNotProcessException("Could not identify at least one observation data element. Check naming-compliance of SPARQL " +
                             "query and querySolution!");
                 }
+
+
+//                final OntStateChange<Discrete> ontStateCh = new OntStateChange<>(new Discrete(null, null), null);
+
+                ontUnits.addOntProviderService(null, null);
+
+
+
+
+                if (ontUnits.getOntUnits().containsKey(unitId)) {
+
+                } else {
+
+
+                }
+
+
+                //////
+                if (observationId.equals(observationIdBuf)) {
+                    stateValues.add(stateValue);
+                } else {
+                    // create new OntStateChange
+
+
+
+
+
+                    stateValues.clear();
+                }
+
+
+
+
+
+                //////
+
 
                 // sort observations: each unitId has a list of observations. Additionally the state values of same unit sources must be identified and add to
                 // the same observation (contains list of state values)
@@ -220,10 +262,7 @@ public class DataProviding {
         return unitAggObservationMap;
     }
 
-    private String getRDFNodeName(final QuerySolution querySolution, final String name) throws NotAvailableException {
-        return (querySolution.get(name).isLiteral()) ? querySolution.getLiteral(name).getLexicalForm()
-                : StringModifier.getLocalName(querySolution.getResource(name).toString());
-    }
+
 
     private String getLiteral(final QuerySolution querySolution, final String propertyName) {
         return (querySolution.getLiteral(propertyName) == null) ? null : querySolution.getLiteral(propertyName).getLexicalForm();
