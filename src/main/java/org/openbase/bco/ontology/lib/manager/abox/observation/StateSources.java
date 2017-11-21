@@ -659,12 +659,9 @@ public class StateSources {
      */
     private List<RdfNodeObject> userActivityStateSources(final UserActivityState userActivityState) {
 
-        // TODO: must probably be changed, see issue https://github.com/openbase/bco.ontology.lib/issues/2
         final List<RdfNodeObject> stateSources = new ArrayList<>();
-        final String currentActivityVal = "\"" + userActivityState.getActivityId() + "\"^^NS:CurrentActivity";
-        stateSources.add(new RdfNodeObject(new ArrayList<String>() {{add(currentActivityVal);}}, true));
-//        final String nextActivityVal = "\"" + userActivityState.getNextActivity().toString() + "\"^^NS:NextActivity";
-//        stateSources.add(new RdfNodeObject(new ArrayList<String>() {{add(nextActivityVal);}}, true));
+        final String activityIdVal = "\"" + userActivityState.getActivityId() + "\"^^NS:ActivityId";
+        stateSources.add(new RdfNodeObject(new ArrayList<String>() {{add(activityIdVal);}}, true));
 
         return stateSources;
     }
