@@ -158,7 +158,7 @@ public class DataProviding {
 
 //                final OntStateChange<Discrete> ontStateCh = new OntStateChange<>(new Discrete(null, null), null);
 
-                ontUnits.addOntProviderService(null, null);
+//                ontUnits.addOntProviderService(null, null);
 
 
 

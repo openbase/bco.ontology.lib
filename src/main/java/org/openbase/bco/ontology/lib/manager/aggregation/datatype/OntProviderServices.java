@@ -19,7 +19,6 @@
 package org.openbase.bco.ontology.lib.manager.aggregation.datatype;
 
 import org.openbase.bco.ontology.lib.utility.Preconditions;
-import org.openbase.jul.exception.MultiException.ExceptionStack;
 import org.openbase.jul.exception.MultiException;
 
 import java.util.ArrayList;
@@ -27,42 +26,54 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
+ * This class is part of a data structure to provide the bco ontology data (state values of sensors and actuators). The custom data type 'OntProviderServices'
+ * expresses the middle-level of the data structure (middle granularity), which includes a quantity of elements (1:N - relation). Consider in addition the
+ * data types {@link OntUnits} and {@link OntStateChange}.
+ *
+ *           1       :      N                       1       :      N
+ * OntUnits --- (includes) --- OntProviderServices --- (includes) --- OntStateChange
+ *
  * @author agatting on 15.09.17.
  */
 public class OntProviderServices {
 
     private final HashMap<String, List<OntStateChange>> ontProviderServices;
 
+    /**
+     * Constructor creates a hashMap, which describes the providerServices(s)(key) and his related list of {@link OntStateChange} (value).
+     */
     public OntProviderServices() {
         this.ontProviderServices = new HashMap<>();
     }
 
+    /**
+     * Constructor creates a hashMap, which describes the providerServices(s)(key) and his related list of {@link OntStateChange} (value).
+     *
+     * @param ontProviderService is the providerService extracted from the ontology.
+     * @param ontStateChange is the concrete state change extracted from the ontology.
+     * @throws MultiException is thrown in case at least one input parameter is null.
+     */
     public OntProviderServices(final String ontProviderService, final OntStateChange ontStateChange) throws MultiException {
-        ExceptionStack exceptionStack = Preconditions.checkNotNull(ontProviderService, "Parameter ontProviderService is null!", null);
-        exceptionStack = Preconditions.checkNotNull(ontStateChange, "Parameter ontStateChange is null!", exceptionStack);
-        MultiException.checkAndThrow("Input is invalid.", exceptionStack);
+        MultiException.checkAndThrow("Input is invalid.", Preconditions.checkNotNull(this, null, ontProviderService, ontStateChange));
 
-        final List<OntStateChange> ontStateChanges = new ArrayList<OntStateChange>(){{add(ontStateChange);}};
-        this.ontProviderServices = new HashMap<String, List<OntStateChange>>() {{put(ontProviderService, ontStateChanges);}};
+        final List<OntStateChange> ontStateChanges = new ArrayList<OntStateChange>(){ {add(ontStateChange);} };
+        this.ontProviderServices = new HashMap<String, List<OntStateChange>>() { {put(ontProviderService, ontStateChanges);} };
     }
 
-//    public OntProviderServices(final String ontProviderService, final List<OntStateChange> ontStateChanges) {
-//        this.ontProviderServices = new HashMap<>() {{addStateChange(ontProviderService, ontStateChanges);}};
-//    }
+    /**
+     * Method adds a hashMap entry based on the input parameter.
+     *
+     * @param ontProviderService is the providerService extracted from the ontology.
+     * @param ontStateChange is the concrete state change extracted from the ontology.
+     * @throws MultiException is thrown in case at least one input parameter is null.
+     */
+    public void addOntStateChange(final String ontProviderService, final OntStateChange ontStateChange) throws MultiException {
+        MultiException.checkAndThrow("Input is invalid.", Preconditions.checkNotNull(this, null, ontProviderService, ontStateChange));
 
-    public HashMap<String, List<OntStateChange>> getOntProviderServices() {
-        return ontProviderServices;
-    }
-
-    public List<OntStateChange> getStateChanges(final String providerService) {
-        return ontProviderServices.get(providerService);
-    }
-
-    public void addOntStateChange(final String ontProviderService, final OntStateChange ontStateChange) {
         if (ontProviderServices.containsKey(ontProviderService)) {
             ontProviderServices.get(ontProviderService).add(ontStateChange);
         } else {
-            ontProviderServices.put(ontProviderService, new ArrayList<OntStateChange>(){{add(ontStateChange);}});
+            ontProviderServices.put(ontProviderService, new ArrayList<OntStateChange>(){ {add(ontStateChange);} });
         }
     }
 

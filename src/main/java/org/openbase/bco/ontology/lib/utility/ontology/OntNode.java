@@ -50,8 +50,8 @@ public interface OntNode {
      */
     static List<OntStateChangeBuf> getLiteralElements(final List<OntStateChangeBuf> stateChanges, final StateValueType dataType) throws MultiException {
 
-        ExceptionStack exceptionStack = Preconditions.checkNotNull(stateChanges, "Input state changes can not be null.", null);
-        exceptionStack = Preconditions.checkNotNull(dataType, "Input state value type can not be null.", exceptionStack);
+        ExceptionStack exceptionStack = Preconditions.checkNotNull(null, stateChanges, "Input state changes can not be null.", null);
+        exceptionStack = Preconditions.checkNotNull(null, dataType, "Input state value type can not be null.", exceptionStack);
 
         MultiException.checkAndThrow("Input parameter invalid.", exceptionStack);
         final List<OntStateChangeBuf> stateChangeLiterals = new ArrayList<>();

@@ -65,7 +65,10 @@ import java.util.List;
  * batteryState a individual state type. All state types contains at least one (sub) state source, like the batterState the sources "level" (0-100 energy) and
  * "state" (OK, CRITICAL, ...).
  * Additionally, the individual state types are assigned to their appropriate service types.
- * Further individual state types and their (sub) state sources should be implemented here. Furthermore a suitable entry in the assignation must be done.
+ * Further individual state types and their (sub) state sources should be implemented here. Furthermore, a suitable entry in the assignation must be done. If
+ * any changes of the current BCO states were appeared, the new value can be easily pushed to the declared list in the affected method. Only in case of a
+ * literal data (e.g. id's, names, etc.) the ontology model must be adapted, whether the literal data type (e.g. "Hue") isn't available. Take a look at the
+ * available methods in this class for examples (e.g. {@link StateSources#colorStateSources(ColorState)}).
  *
  * @author agatting on 22.02.17.
  */
