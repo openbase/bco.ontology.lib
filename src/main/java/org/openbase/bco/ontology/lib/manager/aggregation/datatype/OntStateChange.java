@@ -27,6 +27,7 @@ import org.openbase.bco.ontology.lib.utility.Preconditions;
 import org.openbase.jul.exception.InvalidStateException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.MultiException.ExceptionStack;
+import org.openbase.jul.exception.NotAvailableException;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -34,12 +35,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * This class is part of a data structure to provide the bco ontology data (state values of sensors and actuators). The custom data type 'OntStateChange'
- * expresses the lower-level of the data structure (finest granularity), which includes a concrete state change. Consider in addition the data types
- * {@link OntUnits} and {@link OntProviderServices}.
+ * This class is part of a data structure to provide the BCO ontology data (state values of sensors and actuators). The
+ * custom data type {@link OntProviderServices} expresses the lower-level of the data structure (finest
+ * granularity), which includes a concrete state change. Consider in addition the data types {@link OntUnits} and
+ * {@link OntProviderServices}.
  *
  *           1       :      N                       1       :      N
- * OntUnits --- (includes) --- OntProviderServices --- (includes) --- OntStateChange
+ * {@link OntUnits} --- (includes) --- {@link OntProviderServices} --- (includes) --- {@link OntStateChange}
  *
  * @author agatting on 15.09.17.
  */
@@ -49,10 +51,10 @@ public class OntStateChange<T> {
     private final ObservationType observationType;
 
     /**
-     * Constructor creates an stateChange object, which describes his value parts based on the defined type.
+     * Constructor creates a stateChange object, which describes his value parts based on the defined type.
      *
-     * @param type is the type/subclass of the ontStateChange. It should be one of the classes {@link Discrete}, {@link Continuous}, {@link AggregatedDiscrete}
-     *             or {@link AggregatedContinuous}.
+     * @param type is the type/subclass of the ontStateChange. It should be one of the classes
+     *             {@link Discrete} , {@link Continuous}, {@link AggregatedDiscrete} or {@link AggregatedContinuous}.
      * @throws InvalidStateException is thrown in case the input parameter is invalid (null or has wrong type).
      */
     public OntStateChange(final T type) throws InvalidStateException {
@@ -74,7 +76,7 @@ public class OntStateChange<T> {
     /**
      * Method returns the generic type class parameter (type of the state change).
      *
-     * @return one of the classes of {@link Discrete}, {@link Continuous}, {@link AggregatedDiscrete} or {@link AggregatedContinuous}.
+     * @return one of {@link Discrete}, {@link Continuous}, {@link AggregatedDiscrete} or {@link AggregatedContinuous}.
      */
     public T getType() {
         return type;
@@ -90,8 +92,9 @@ public class OntStateChange<T> {
     }
 
     /**
-     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be used, if the state change is not manipulated
-     * as far and the state value based on a discrete value (e.g. bco values like ON, OFF, OPEN, CLOSED).
+     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be
+     * used, if the state change is not manipulated as far and the state value based on a discrete value (e.g. BCO
+     * values like ON, OFF, OPEN, CLOSED).
      */
     public static class Discrete {
 
@@ -99,20 +102,22 @@ public class OntStateChange<T> {
         private final Resource stateValue;
 
         /**
-         * Constructor creates an discrete state change instance, which based on not manipulated state values (e.g. ON, OFF, ...) to store them. The
-         * information parts (input argument) will be convert to specific data types (see getter of this class).
+         * Constructor creates an discrete state change instance, which based on not manipulated state values (e.g.
+         * ON, OFF, ...) to store them. The information parts (input argument) will be convert to specific data types
+         * (see getter of this class).
          *
          * @param timestamp is the timestamp at which the state change occurred. Must be parsable to OffsetDateTime.
          * @param stateValue is the value (resource type) of the state change. Must be based on rdf resource.
-         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value isn't a resource (discrete value).
+         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value
+         * isn't a resource (discrete value).
          */
         public Discrete(final String timestamp, final RDFNode stateValue) throws MultiException {
-            final ExceptionStack exceptionStack = Preconditions.checkNotNull(this, null, timestamp, stateValue);
+            final ExceptionStack exceptionStack = Preconditions.multipleCheckNotNull(this, null, timestamp, stateValue);
 
             this.timestamp = Preconditions.callFunction(OffsetDateTime::parse, timestamp, this, exceptionStack);
-            this.stateValue = Preconditions.callFunction(stateValue::asResource, this, exceptionStack);
+            this.stateValue = Preconditions.callSupplier(stateValue::asResource, this, exceptionStack);
 
-            MultiException.checkAndThrow("Input is null or invalid.", exceptionStack);
+            MultiException.checkAndThrow("Input argument invalid. Null or no resource type!", exceptionStack);
         }
 
         /**
@@ -135,8 +140,9 @@ public class OntStateChange<T> {
     }
 
     /**
-     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be used, if the state change is not manipulated
-     * as far and the state value(s) based on continuous values (e.g. numbers like hsb).
+     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be
+     * used, if the state change is not manipulated as far and the state value(s) based on continuous values
+     * (e.g. numbers like hsb).
      */
     public static class Continuous {
 
@@ -144,24 +150,28 @@ public class OntStateChange<T> {
         private final List<Literal> stateValues;
 
         /**
-         * Constructor creates an continuous state change instance, which based on not manipulated state values (literals like e.g. 17.35^^xsd:int) to store
-         * them. The information parts (input argument) will be convert to specific data types (see getter of this class).
+         * Constructor creates an continuous state change instance, which based on not manipulated state values
+         * (literals like e.g. 17.35^^xsd:int) to store them. The information parts (input argument) will be convert
+         * to specific data types (see getter of this class).
          *
          * @param timestamp is the timestamp at which the state change occurred. Must be parsable to OffsetDateTime.
          * @param stateValues is the value (literal type) of the state change. The rdf nodes must be based on literals.
-         * @throws MultiException is thrown in case at least one input parameter is null/invalid or one state value isn't a literal (continuous value).
+         * @throws MultiException is thrown in case at least one input parameter is null/invalid or one state value
+         * isn't a literal (continuous value).
          */
         public Continuous(final String timestamp, final List<RDFNode> stateValues) throws MultiException {
-            final ExceptionStack exceptionStack = Preconditions.checkNotNull(this, null, timestamp, stateValues);
+            final ExceptionStack exceptionStack =
+                    Preconditions.multipleCheckNotNull(this, null, timestamp, stateValues);
+
             this.timestamp = Preconditions.callFunction(OffsetDateTime::parse, timestamp, this, exceptionStack);
             this.stateValues = new ArrayList<>();
 
             for (final RDFNode stateValue : stateValues) {
                 // convert rdf node to literal and add to list. Invalid nodes will be stacked
-                this.stateValues.add(Preconditions.callFunction(stateValue::asLiteral, this, exceptionStack));
+                this.stateValues.add(Preconditions.callSupplier(stateValue::asLiteral, this, exceptionStack));
             }
 
-            MultiException.checkAndThrow("Input argument(s) invalid!", exceptionStack);
+            MultiException.checkAndThrow("Input argument(s) invalid. Null or no literal type!", exceptionStack);
         }
 
         /**
@@ -182,11 +192,23 @@ public class OntStateChange<T> {
             return stateValues;
         }
 
+        /**
+         * Method converts the rdfNode to literal and adds to the stateValue list.
+         *
+         * @param stateValue to add to the list. Must be a literal.
+         * @throws NotAvailableException is thrown in case the parameter is invalid.
+         */
+        public void addStateValue(final RDFNode stateValue) throws NotAvailableException {
+            Preconditions.checkNotNull(stateValue, "Input stateValue is null");
+            stateValues.add(Preconditions.callSupplier(stateValue::asLiteral));
+        }
+
     }
 
     /**
-     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be used, if the state change was manipulated
-     * as far (already aggregated) and the state value based on a discrete value (e.g. bco values like ON, OFF, OPEN, CLOSED).
+     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be
+     * used, if the state change was manipulated as far (already aggregated) and the state value based on a discrete
+     * value (e.g. BCO values like ON, OFF, OPEN, CLOSED).
      */
     public static class AggregatedDiscrete {
 
@@ -196,26 +218,33 @@ public class OntStateChange<T> {
         private final Resource stateValue;
 
         /**
-         * Constructor creates an discrete state change instance, which based on manipulated (already aggregated) state values (e.g. ON, OFF, ...) to store
-         * them. The information parts (input argument) will be convert to specific data types (see getter of this class).
+         * Constructor creates an discrete state change instance, which based on manipulated (already aggregated) state
+         * values (e.g. ON, OFF, ...) to store them. The information parts (input argument) will be convert to specific
+         * data types (see getter of this class).
          *
-         * @param timeWeighting is the indicator how long the unit keeps connection to the system with value range [0..1]. E.g. an value of 0.6 means that
-         *                      there was connection (and observed state changes) in 60% of the aggregated time frame. 40% of the time was not observed so that
+         * @param timeWeighting is the indicator how long the unit keeps connection to the system with value range
+         *                      [0..1]. E.g. an value of 0.6 means that there was connection (and observed state
+         *                      changes) in 60% of the aggregated time frame. 40% of the time was not observed so that
          *                      this value is used as inaccuracy.
-         * @param activityTime is the time how long this discrete state value was activated in the aggregated time frame.
+         * @param activityTime is the time how long the discrete state value was activated in the aggregated time frame.
          * @param quantity is the number of activation of the based state value source in the aggregated time frame.
          * @param stateValue is the specific discrete state value.
-         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value isn't a resource (discrete value).
+         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value
+         * isn't a resource (discrete value).
          */
-        public AggregatedDiscrete(final String timeWeighting, final String activityTime, final String quantity, final RDFNode stateValue)
-                throws MultiException {
+        public AggregatedDiscrete(final String timeWeighting, final String activityTime,
+                                  final String quantity, final RDFNode stateValue) throws MultiException {
+            final ExceptionStack exceptionStack =
+                    Preconditions.multipleCheckNotNull(this, null, timeWeighting, activityTime, quantity, stateValue);
 
-            final ExceptionStack exceptionStack = Preconditions.checkNotNull(this, null, timeWeighting, activityTime, quantity, stateValue);
-
-            this.timeWeighting = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, timeWeighting, this, exceptionStack)).orElse(0.0);
-            this.activityTime = Optional.ofNullable(Preconditions.callFunction(Long::parseLong, activityTime, this, exceptionStack)).orElse(0L);
-            this.quantity = Optional.ofNullable(Preconditions.callFunction(Integer::parseInt, quantity, this, exceptionStack)).orElse(0);
-            this.stateValue = (stateValue == null) ? null : Preconditions.callFunction(stateValue::asResource, this, exceptionStack);
+            this.timeWeighting = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, timeWeighting,
+                    this, exceptionStack)).orElse(0.0);
+            this.activityTime = Optional.ofNullable(Preconditions.callFunction(Long::parseLong, activityTime, this,
+                    exceptionStack)).orElse(0L);
+            this.quantity = Optional.ofNullable(Preconditions.callFunction(Integer::parseInt, quantity, this,
+                    exceptionStack)).orElse(0);
+            this.stateValue = (stateValue == null) ? null : Preconditions.callSupplier(stateValue::asResource, this,
+                    exceptionStack);
 
             MultiException.checkAndThrow("Input is invalid.", exceptionStack);
         }
@@ -258,8 +287,9 @@ public class OntStateChange<T> {
     }
 
     /**
-     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be used, if the state change was manipulated
-     * as far (already aggregated) and the state value(s) based on continuous value(s) (e.g. numbers like hsb).
+     * This subclass defines an concrete instance/type of a state change of {@link OntStateChange}. It should be
+     * used, if the state change was manipulated as far (already aggregated) and the state value(s) based on continuous
+     * value(s) (e.g. numbers like hsb).
      */
     public static class AggregatedContinuous {
 
@@ -271,37 +301,49 @@ public class OntStateChange<T> {
         private final Literal stateValue;
 
         /**
-         * Constructor creates an continuous state change instance, which based on manipulated (already aggregated) state values (e.g. numbers like hsb) to
-         * store them. The information parts (input argument) will be convert to specific data types (see getter of this class).
+         * Constructor creates an continuous state change instance, which based on manipulated (already aggregated)
+         * state values (e.g. numbers like hsb) to store them. The information parts (input argument) will be convert
+         * to specific data types (see getter of this class).
          *
-         * @param mean of all state values from the same source, which are stored about the aggregated time frame. Lossy Statistical information.
-         * @param variance of all state values from the same source, which are stored about the aggregated time frame. Lossy Statistical information.
-         * @param standardDeviation of all state values from the same source, which are stored about the aggregated time frame. Lossy Statistical information.
-         * @param timeWeighting is the indicator how long the unit keeps connection to the system with value range [0..1]. E.g. an value of 0.6 means that
-         *                      there was connection (and observed state changes) in 60% of the aggregated time frame. 40% of the time was not observed so that
+         * @param mean of all state values from the same source, which are stored about the aggregated time frame.
+         *             Lossy Statistical information.
+         * @param variance of all state values from the same source, which are stored about the aggregated time frame.
+         *                 Lossy Statistical information.
+         * @param standardDeviation of all state values from the same source, which are stored about the aggregated
+         *                          time frame. Lossy Statistical information.
+         * @param timeWeighting is the indicator how long the unit keeps connection to the system with value range
+         *                      [0..1]. E.g. an value of 0.6 means that there was connection (and observed state
+         *                      changes) in 60% of the aggregated time frame. 40% of the time was not observed so that
          *                      this value is used as inaccuracy.
          * @param quantity is the number of activation of the based state value source in the aggregated time frame.
          * @param stateValue is the specific continuous state value.
-         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value isn't a literal (continuous value).
+         * @throws MultiException is thrown in case at least one input parameter is null/invalid or the state value
+         * isn't a literal (continuous value).
          */
-        public AggregatedContinuous(final String mean, final String variance, final String standardDeviation, final String timeWeighting
-                , final String quantity, final RDFNode stateValue) throws MultiException {
+        public AggregatedContinuous(final String mean, final String variance,
+                                    final String standardDeviation, final String timeWeighting,
+                                    final String quantity, final RDFNode stateValue) throws MultiException {
+            final ExceptionStack exceptionStack = Preconditions.multipleCheckNotNull(this, null, mean, variance,
+                    standardDeviation, timeWeighting, quantity, stateValue);
 
-            final ExceptionStack exceptionStack = Preconditions.checkNotNull(this, null, mean, variance, standardDeviation, timeWeighting, quantity
-                    , stateValue);
-
-            this.mean = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, mean, this, exceptionStack)).orElse(0.0);
-            this.variance = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, variance, this, exceptionStack)).orElse(0.0);
-            this.standardDeviation = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, standardDeviation, this, exceptionStack)).orElse(0.0);
-            this.timeWeighting = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, timeWeighting, this, exceptionStack)).orElse(0.0);
-            this.quantity = Optional.ofNullable(Preconditions.callFunction(Integer::parseInt, quantity, this, exceptionStack)).orElse(0);
-            this.stateValue = (stateValue == null) ? null : Preconditions.callFunction(stateValue::asLiteral, this, exceptionStack);
+            this.mean = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, mean, this,
+                    exceptionStack)).orElse(0.0);
+            this.variance = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, variance, this,
+                    exceptionStack)).orElse(0.0);
+            this.standardDeviation = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble,
+                    standardDeviation, this, exceptionStack)).orElse(0.0);
+            this.timeWeighting = Optional.ofNullable(Preconditions.callFunction(Double::parseDouble, timeWeighting,
+                    this, exceptionStack)).orElse(0.0);
+            this.quantity = Optional.ofNullable(Preconditions.callFunction(Integer::parseInt, quantity, this,
+                    exceptionStack)).orElse(0);
+            this.stateValue = (stateValue == null) ? null : Preconditions.callSupplier(stateValue::asLiteral, this,
+                    exceptionStack);
 
             MultiException.checkAndThrow("Input is invalid.", exceptionStack);
         }
 
         /**
-         * Method returns the mean value. Look at argument {@link AggregatedContinuous#mean} for information.
+         * Method returns the mean value. Look at argument {@link AggregatedContinuous#mean}.
          *
          * @return the mean value.
          */
@@ -310,7 +352,7 @@ public class OntStateChange<T> {
         }
 
         /**
-         * Method returns the variance. Look at argument {@link AggregatedContinuous#variance} for information.
+         * Method returns the variance. Look at argument {@link AggregatedContinuous#variance}.
          *
          * @return the variance.
          */
@@ -319,7 +361,7 @@ public class OntStateChange<T> {
         }
 
         /**
-         * Method returns the standard deviation. Look at argument {@link AggregatedContinuous#standardDeviation} for information.
+         * Method returns the standard deviation. Look at argument {@link AggregatedContinuous#standardDeviation}.
          *
          * @return the standard deviation.
          */
@@ -328,7 +370,7 @@ public class OntStateChange<T> {
         }
 
         /**
-         * Method returns the time weighting. Look at argument {@link AggregatedContinuous#timeWeighting} for information.
+         * Method returns the time weighting. Look at argument {@link AggregatedContinuous#timeWeighting}.
          *
          * @return the time weighting.
          */
@@ -337,7 +379,7 @@ public class OntStateChange<T> {
         }
 
         /**
-         * Method returns the quantity. Look at argument {@link AggregatedContinuous#quantity} for information.
+         * Method returns the quantity. Look at argument {@link AggregatedContinuous#quantity}.
          *
          * @return the quantity.
          */

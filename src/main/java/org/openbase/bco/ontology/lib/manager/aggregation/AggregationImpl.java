@@ -32,6 +32,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,7 +107,7 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
 //
 //            if (resultSet.hasNext()) {
 //                final QuerySolution querySolution = resultSet.nextSolution();
-//                final String timestampFrom = OntNode.getRDFNodeName(querySolution, OntConfig.SparqlVariable.TIMESTAMP.getName());
+//                final String timestampFrom = OntNodeHandler.getRDFNodeName(querySolution, OntConfig.SparqlVariable.TIMESTAMP.getName());
 //                this.dateTimeFrom = OffsetDateTime.parse(timestampFrom);
 //            } else {
 //                // there was no aggregation so far. set new timestamp
@@ -175,10 +176,11 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
      *
      * @return a list of triples to insert aggregation observations.
      * @throws NotAvailableException is thrown in case the needed information are not available.
+     * @throws MultiException is thrown in case the needed information are not available.
      * @throws InterruptedException is thrown in case the application was interrupted.
      * @throws ExecutionException is thrown in case the processing thread throws an unknown exception.
      */
-    private List<RdfTriple> collectDataForEachUnit() throws NotAvailableException, InterruptedException, ExecutionException {
+    private List<RdfTriple> collectDataForEachUnit() throws MultiException, NotAvailableException, InterruptedException, ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, Long> unitConnectionMap = dataProviding.getConnectionTimes();
         final HashMap<String, List<OntObservation>> unitObservationMap = dataProviding.getObservations();
@@ -194,7 +196,8 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
         return triples;
     }
 
-    private List<RdfTriple> collectAggDataForEachUnit(final Period period) throws NotAvailableException, InterruptedException, ExecutionException {
+    private List<RdfTriple> collectAggDataForEachUnit(final Period period) throws MultiException, NotAvailableException, InterruptedException
+            , ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
         final HashMap<String, List<OntAggregatedObservation>> unitAggObservationMap = dataProviding.getAggregatedObservations(period);
 

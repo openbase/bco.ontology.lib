@@ -65,18 +65,21 @@ public class OntRelationMappingImpl implements OntRelationMapping {
     public List<RdfTriple> getInsertUnitRelations(final UnitConfig unitConfig) {
 
         List<RdfTriple> triples = new ArrayList<>();
+        try {
+            if (unitConfig.getType().equals(UnitType.LOCATION)) {
+                triples.addAll(getInsertSubLocationRelation(unitConfig));
+                triples.addAll(getInsertHasUnitRelation(unitConfig));
+            } else if (unitConfig.getType().equals(UnitType.CONNECTION)) {
+                triples.addAll(getInsertConnectionRelation(unitConfig));
+            }
 
-        if (unitConfig.getType().equals(UnitType.LOCATION)) {
-            triples.addAll(getInsertSubLocationRelation(unitConfig));
-            triples.addAll(getInsertHasUnitRelation(unitConfig));
-        } else if (unitConfig.getType().equals(UnitType.CONNECTION)) {
-            triples.addAll(getInsertConnectionRelation(unitConfig));
+            triples.add(getInsertLabelRelation(unitConfig));
+            triples.add(getInsertIsEnabledRelation(unitConfig));
+            triples.addAll(getInsertProviderServiceRelation(unitConfig));
+
+        } catch (NotAvailableException e) {
+            ExceptionPrinter.printHistory(e, LOGGER, LogLevel.ERROR);
         }
-
-        triples.add(getInsertLabelRelation(unitConfig));
-        triples.add(getInsertIsEnabledRelation(unitConfig));
-        triples.addAll(getInsertProviderServiceRelation(unitConfig));
-
         return triples;
     }
 
@@ -247,7 +250,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         return new RdfTriple(null, OntProp.CONNECTION.getName(), unitConfig.getId());
     }
 
-    private RdfTriple getInsertLabelRelation(final UnitConfig unitConfig) {
+    private RdfTriple getInsertLabelRelation(final UnitConfig unitConfig) throws NotAvailableException {
         return new RdfTriple(unitConfig.getId(), OntProp.LABEL.getName(), StringModifier.addQuotationMarks(unitConfig.getLabel()));
     }
 
@@ -255,7 +258,7 @@ public class OntRelationMappingImpl implements OntRelationMapping {
         return new RdfTriple(unitConfig.getId(), OntProp.LABEL.getName(), null);
     }
 
-    private RdfTriple getInsertIsEnabledRelation(final UnitConfig unitConfig) {
+    private RdfTriple getInsertIsEnabledRelation(final UnitConfig unitConfig) throws NotAvailableException {
 
         if (unitConfig.getEnablingState().getValue().equals(State.ENABLED)) {
             return new RdfTriple(unitConfig.getId(), OntProp.IS_ENABLED.getName(), StringModifier.addQuotationMarks("true"));

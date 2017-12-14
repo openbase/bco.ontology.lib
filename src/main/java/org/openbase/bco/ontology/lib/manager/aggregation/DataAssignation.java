@@ -21,7 +21,7 @@ package org.openbase.bco.ontology.lib.manager.aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
-import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
+import org.openbase.bco.ontology.lib.utility.ontology.OntNodeHandler;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
@@ -214,11 +214,11 @@ public class DataAssignation extends DataAggregation {
     private List<RdfTriple> aggregateDiscreteStateValue(final List<?> stateChanges) throws CouldNotPerformException, InterruptedException {
 
         if (stateChanges.get(0) instanceof OntStateChangeBuf) {
-            final List<OntStateChangeBuf> bco = OntNode.getResourceElements((List<OntStateChangeBuf>) stateChanges);
+            final List<OntStateChangeBuf> bco = OntNodeHandler.getResourceElements((List<OntStateChangeBuf>) stateChanges);
             return buildAggObsOfDiscreteValues(dismissUnusedStateValues(bco));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> bco = OntNode.getAggResourceElements((List<OntAggregatedStateChange>) stateChanges);
+            final List<OntAggregatedStateChange> bco = OntNodeHandler.getAggResourceElements((List<OntAggregatedStateChange>) stateChanges);
             return buildAggObsOfDiscreteValues(bco);
 
         }
@@ -239,11 +239,11 @@ public class DataAssignation extends DataAggregation {
             throws CouldNotPerformException, InterruptedException {
 
         if (stateChanges.get(0) instanceof OntStateChangeBuf) {
-            final List<OntStateChangeBuf> stateTypeValue = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, stateValueType);
+            final List<OntStateChangeBuf> stateTypeValue = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, stateValueType);
             return buildAggObsOfContinuousValue(dismissUnusedStateValues(stateTypeValue), stateValueType);
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> stateTypeValue = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, stateValueType);
+            final List<OntAggregatedStateChange> stateTypeValue = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, stateValueType);
             return buildAggObsOfContinuousValue(stateTypeValue, stateValueType);
         }
         throw new CouldNotPerformException("Could not identify parameter type. Dropped data...");
@@ -261,18 +261,18 @@ public class DataAssignation extends DataAggregation {
         final List<RdfTriple> triples = new ArrayList<>();
 
         if (stateChanges.get(0) instanceof OntStateChangeBuf) {
-            final List<OntStateChangeBuf> brightness = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.BRIGHTNESS);
-            final List<OntStateChangeBuf> hue = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.HUE);
-            final List<OntStateChangeBuf> saturation = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.SATURATION);
+            final List<OntStateChangeBuf> brightness = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.BRIGHTNESS);
+            final List<OntStateChangeBuf> hue = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.HUE);
+            final List<OntStateChangeBuf> saturation = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.SATURATION);
 
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(hue), StateValueType.HUE));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(saturation), StateValueType.SATURATION));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(brightness), StateValueType.BRIGHTNESS));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> brightness = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.BRIGHTNESS);
-            final List<OntAggregatedStateChange> hue = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.HUE);
-            final List<OntAggregatedStateChange> saturation = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.SATURATION);
+            final List<OntAggregatedStateChange> brightness = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.BRIGHTNESS);
+            final List<OntAggregatedStateChange> hue = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.HUE);
+            final List<OntAggregatedStateChange> saturation = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.SATURATION);
 
             triples.addAll(buildAggObsOfContinuousValue(hue, StateValueType.HUE));
             triples.addAll(buildAggObsOfContinuousValue(saturation, StateValueType.SATURATION));
@@ -296,18 +296,18 @@ public class DataAssignation extends DataAggregation {
         final List<RdfTriple> triples = new ArrayList<>();
 
         if (stateChanges.get(0) instanceof OntStateChangeBuf) {
-            final List<OntStateChangeBuf> voltage = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.VOLTAGE);
-            final List<OntStateChangeBuf> watt = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.WATT);
-            final List<OntStateChangeBuf> ampere = OntNode.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.AMPERE);
+            final List<OntStateChangeBuf> voltage = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.VOLTAGE);
+            final List<OntStateChangeBuf> watt = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.WATT);
+            final List<OntStateChangeBuf> ampere = OntNodeHandler.getLiteralElements((List<OntStateChangeBuf>) stateChanges, StateValueType.AMPERE);
 
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(voltage), StateValueType.VOLTAGE));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(watt), StateValueType.WATT));
             triples.addAll(buildAggObsOfContinuousValue(dismissUnusedStateValues(ampere), StateValueType.AMPERE));
 
         } else if (stateChanges.get(0) instanceof OntAggregatedStateChange) {
-            final List<OntAggregatedStateChange> voltage = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.VOLTAGE);
-            final List<OntAggregatedStateChange> watt = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.WATT);
-            final List<OntAggregatedStateChange> ampere = OntNode.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.AMPERE);
+            final List<OntAggregatedStateChange> voltage = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.VOLTAGE);
+            final List<OntAggregatedStateChange> watt = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.WATT);
+            final List<OntAggregatedStateChange> ampere = OntNodeHandler.getAggLiteralElements((List<OntAggregatedStateChange>) stateChanges, StateValueType.AMPERE);
 
             triples.addAll(buildAggObsOfContinuousValue(voltage, StateValueType.VOLTAGE));
             triples.addAll(buildAggObsOfContinuousValue(watt, StateValueType.WATT));

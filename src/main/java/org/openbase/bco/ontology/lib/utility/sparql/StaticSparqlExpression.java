@@ -51,7 +51,7 @@ public final class StaticSparqlExpression {
                     + "?x sp:subject ?y . "
                 + "} "
                 + "FILTER(isURI(?y)) . "
-                + "FILTER (regex(str(?y), " + StringModifier.addQuotationMarks(OntConfig.NAMESPACE) + ")) . "
+                + "FILTER (regex(str(?y), \"" + OntConfig.NAMESPACE + "\")) . "
                 + "FILTER NOT EXISTS { ?x sp:predicate NS:hasStateValue } "
                 + "FILTER NOT EXISTS { ?x sp:object NS:Observation } "
                 + "FILTER NOT EXISTS { ?x sp:subject NS:Observation } "
@@ -73,7 +73,7 @@ public final class StaticSparqlExpression {
     /**
      * Query selects all Connection phases.
      */
-    public static final String GET_ALL_CONNECTION_PHASES =
+    public static final String SELECT_CONNECTION_PHASES =
             "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                     + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                     + "SELECT ?connectionPhase ?unit ?firstTimestamp ?lastTimestamp WHERE { "
@@ -185,7 +185,7 @@ public final class StaticSparqlExpression {
      * @param endTimestamp is the end timestamp (until) to locate the time frame.
      * @return a sparql string to select observations.
      */
-    public static String getAllObservations(final String endTimestamp) {
+    public static String selectObservations(final String endTimestamp) {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?observation ?unit ?stateValue ?providerService ?timestamp WHERE { "

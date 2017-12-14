@@ -35,6 +35,7 @@ import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -199,7 +200,7 @@ public class StateObservation<T> extends StateSources {
                     insert.add(new RdfTriple(obsInstName, OntProp.STATE_VALUE.getName(), stateValueName));
                 }
             }
-        } catch (NotAvailableException ex) {
+        } catch (MultiException ex) {
             ExceptionPrinter.printHistory("Dropped observation individual.", ex, LOGGER, LogLevel.ERROR);
         } catch (CouldNotPerformException ex) {
             ExceptionPrinter.printHistory("Could not perform timestamp method via invocation. " + serviceTypeName + " from unitRemote " + unitRemoteId

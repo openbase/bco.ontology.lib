@@ -68,7 +68,7 @@ import java.util.List;
  * Further individual state types and their (sub) state sources should be implemented here. Furthermore, a suitable entry in the assignation must be done. If
  * any changes of the current BCO states were appeared, the new value can be easily pushed to the declared list in the affected method. Only in case of a
  * literal data (e.g. id's, names, etc.) the ontology model must be adapted, whether the literal data type (e.g. "Hue") isn't available. Take a look at the
- * available methods in this class for examples (e.g. {@link StateSources#colorStateSources(ColorState)}).
+ * available methods in this class for examples.
  *
  * @author agatting on 22.02.17.
  */

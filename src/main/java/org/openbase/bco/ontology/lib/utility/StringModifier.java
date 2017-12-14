@@ -18,10 +18,13 @@
  */
 package org.openbase.bco.ontology.lib.utility;
 
+import org.apache.commons.lang3.StringUtils;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntExpr;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
-import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.MultiException;
+import org.openbase.jul.exception.MultiException.ExceptionStack;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.processing.StringProcessor;
 import org.slf4j.Logger;
@@ -30,6 +33,9 @@ import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
 import rst.domotic.unit.UnitTemplateType.UnitTemplate.UnitType;
 
 /**
+ * This interface contains methods to modify strings as one-liner. Mostly it's used to process the unit data, cause
+ * they be liable to normed forms (e.g. nomenclature) to store them in the BCO ontology.
+ *
  * @author agatting on 17.02.17.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
@@ -41,18 +47,18 @@ public interface StringModifier {
     Logger LOGGER = LoggerFactory.getLogger(StringModifier.class);
 
     /**
-     * Method returns the input string with the bco namespace prefix.
+     * Method adds the BCO namespace prefix {@link OntConfig#NAMESPACE} or rather {@link OntConfig.OntExpr#NS} to the
+     * input string. Furthermore, can be used to change the named prefixes ({@link OntConfig.OntExpr#NS} to
+     * {@link OntConfig#NAMESPACE} and the other way around.
      *
-     * @param input is the string, which should be extended with the bco namespace prefix.
-     * @param fullNamespace sets the kind of namespace. If {@code true} the full namespace is added as prefix. Otherwise the short form ("NAMESPACE:") is added.
-     * @return the string with namespace prefix.
+     * @param input is the string, which should be extended with the BCO namespace prefix.
+     * @param fullNamespace sets the kind of namespace. If {@code true} the full namespace {@link OntConfig#NAMESPACE}
+     *                      will be added. Otherwise the short form {@link OntConfig.OntExpr#NS}.
+     * @return the input string with selected namespace prefix.
      * @throws NotAvailableException is thrown in case the input is null.
      */
     static String addBcoNamespace(final String input, final boolean fullNamespace) throws NotAvailableException {
-        if (input == null) {
-            assert false;
-            throw new NotAvailableException("Input string is null.");
-        }
+        Preconditions.checkNotNull(input, "Couldn't add BCO namespace, cause input string is null!");
 
         if (fullNamespace) {
             if (!input.startsWith(OntConfig.NAMESPACE) && !input.startsWith(OntExpr.NS.getName())) {
@@ -74,139 +80,93 @@ public interface StringModifier {
     }
 
     /**
-     * Method returns the local name of the input string. Means the prefix (bco namespace (long/short) and xsd (long) are cropped. Hint: the jena method
-     * getLocalName() doesn't work correctly by all names, cause of rdf historical reasons...
+     * Method returns the local name of the ontology node name. In general, every node in the ontology is consisting of
+     * the ontology uri and the local name. The method crops the ontology uri (detection of separator "#" (hash)) or
+     * the defined prefix (currently {@link OntExpr#NS}).
+     * Hint: Jena method getLocalName() doesn't work perfectly in this application for all names (e.g. local name
+     * starts with numbers). RDF historical reasons.
      *
-     * @param input is the input string with containing local name.
-     * @return the local name.
-     * @throws NotAvailableException is thrown in case the input is null.
+     * @param ontologyNodeName is the ontology node name (uri + local name), which should be returned.
+     * @return the input ontology node name without uri. If no uri could be detected the input is returned unchanged.
+     * @throws NotAvailableException is thrown in case the parameter is null.
      */
-    static String getLocalName(final String input) throws NotAvailableException {
-        if (input == null) {
-            assert false;
-            throw new NotAvailableException("Input string is null.");
-        }
+    static String getLocalName(final String ontologyNodeName) throws NotAvailableException {
+        Preconditions.checkNotNull(ontologyNodeName, "Couldn't get local name, cause input uri is null!");
 
-        if (input.startsWith(OntConfig.NAMESPACE)) {
-            return input.substring(OntConfig.NAMESPACE.length(), input.length());
-        } else if (input.startsWith(OntExpr.NS.getName())) {
-            return input.substring(OntExpr.NS.getName().length(), input.length());
-        } else if (input.startsWith(OntConfig.XSD)) {
-            return input.substring(OntConfig.XSD.length(), input.length());
-        } else {
-            return input;
+        if (ontologyNodeName.startsWith(OntExpr.NS.getName())) {
+            return ontologyNodeName.substring(OntExpr.NS.getName().length(), ontologyNodeName.length());
         }
+        if (ontologyNodeName.contains("#")) {
+            return ontologyNodeName.substring(ontologyNodeName.indexOf("#") + 1);
+        }
+        return ontologyNodeName;
     }
-
-//    /**
-//     * Method transforms the input string to a literal with the data type "xsd:dateTime".
-//     *
-//     * @param input is the string, which should be transformed to a dateTime literal.
-//     * @return a literal string with the data type "xsd:dateTime".
-//     * @throws NotAvailableException is thrown in case the input is null.
-//     */
-//    static String addXsdDateTime(final String input) throws NotAvailableException {
-//        if (input == null) {
-//            assert false;
-//            throw new NotAvailableException("DateTime is null.");
-//        }
-//        return "\"" + input + "\"^^xsd:dateTime";
-//    }
 
     /**
      * Method transforms the first char of the input string to lower case.
      *
-     * @param input is the string, which should be transformed.
+     * @param input is the string, which first char should be transformed in lower case.
      * @return the input string with first char in lower case.
      * @throws NotAvailableException is thrown in case the input is null.
      */
     static String firstCharToLowerCase(final String input) throws NotAvailableException {
-        if (input == null) {
-            assert false;
-            throw new NotAvailableException("Input string is null.");
+        Preconditions.checkHasContent(input, "Couldn't transform, cause invalid input string");
+
+        if (input.length() == 1) {
+            return input.toLowerCase();
         }
-        return Character.toLowerCase(input.charAt(0)) + input.substring(1);
+        return input.substring(0, 1).toLowerCase() + input.substring(1);
     }
 
     /**
-     * Method transforms the first char of the input string to upper case.
+     * Method returns the service type name in camel case, e.g. POWER_STATE_SERVICE to PowerStateService.
      *
-     * @param input is the string, which should be transformed.
-     * @return the input string with first char in upper case.
-     * @throws NotAvailableException is thrown in case the input is null.
-     */
-    static String firstCharToUpperCase(final String input) throws NotAvailableException {
-        if (input == null) {
-            assert false;
-            throw new NotAvailableException("Input string is null.");
-        }
-        return Character.toUpperCase(input.charAt(0)) + input.substring(1);
-    }
-
-    /**
-     * Method returns the service type name in camel case, e.g. PowerStateService.
-     *
-     * @param serviceType is the service type, which name should be returned.
+     * @param serviceType is the service type for transformation.
      * @return the service type name in camel case.
      * @throws NotAvailableException is thrown in case the input is null.
      */
     static String getServiceTypeName(final ServiceType serviceType) throws NotAvailableException {
-        try {
-            if (serviceType == null) {
-                assert false;
-                throw new NotAvailableException("Service type is null.");
-            }
-            return StringProcessor.transformUpperCaseToCamelCase(serviceType.name());
-        } catch (CouldNotPerformException ex) {
-            throw new NotAvailableException("Service name", ex);
-        }
+        Preconditions.checkNotNull(serviceType, "Input service type couldn't transformed, cause null!");
+
+        return StringProcessor.transformUpperCaseToCamelCase(serviceType.name());
     }
 
     /**
-     * Method returns the unit type name in camel case, e.g. ColorableLight.
+     * Method returns the unit type name in camel case, e.g. COLORABLE_LIGHT to ColorableLight.
      *
-     * @param unitType is the service type, which name should be returned.
+     * @param unitType is the unit type for transformation.
      * @return the unit type name in camel case.
      * @throws NotAvailableException is thrown in case the input is null.
      */
     static String getUnitTypeName(final UnitType unitType) throws NotAvailableException {
-        try {
-            if (unitType == null) {
-                assert false;
-                throw new NotAvailableException("Unit type is null.");
-            }
-            return StringProcessor.transformUpperCaseToCamelCase(unitType.name());
-        } catch (CouldNotPerformException ex) {
-            throw new NotAvailableException("Unit name", ex);
-        }
+        Preconditions.checkNotNull(unitType, "Input unit type couldn't transformed, cause null!");
+
+        return StringProcessor.transformUpperCaseToCamelCase(unitType.name());
     }
 
     /**
-     * Method transforms the input string from upper case to camel case.
+     * Method transforms the input string from upper case to camel case, like e.g. HELLO_WORLD to HelloWorld.
      *
-     * @param input is the string in upper case.
+     * @param input is the string for transformation.
      * @return the input string in camel case.
      * @throws NotAvailableException is thrown in case the input is null.
      */
     static String getCamelCaseName(final String input) throws NotAvailableException {
-        try {
-            if (input == null) {
-                assert false;
-                throw new NotAvailableException("Input string is null.");
-            }
-            return StringProcessor.transformUpperCaseToCamelCase(input);
-        } catch (CouldNotPerformException ex) {
-            throw new NotAvailableException("Input name", ex);
-        }
+        Preconditions.checkNotNull(input, "Input string couldn't transformed, cause null!");
+
+        return StringProcessor.transformUpperCaseToCamelCase(input);
     }
 
     /**
-     * Method returns the input string in literal form, means quotation marks (e.g. "input").
+     * Method returns the input string in literal form, means in quotation marks (e.g. "input").
      *
-     * @param input is the string without quotation marks.
-     * @return a literal string (input string with quotation marks).
+     * @param input is the string for transformation. Existing quotation marks (ore or two) will be considered.
+     * @return the input as literal string (in quotation marks). If input is null only quotation marks will be returned.
+     * @throws NotAvailableException is thrown in case the input is null.
      */
-    static String addQuotationMarks(final String input) {
+    static String addQuotationMarks(final String input) throws NotAvailableException {
+        Preconditions.checkNotNull(input, "Couldn't add quotation marks, cause input string is null.");
+
         if (!input.startsWith("\"") && !input.endsWith("\"")) {
             return "\"" + input + "\"";
         } else if (input.startsWith("\"") && !input.endsWith("\"")) {
@@ -219,21 +179,19 @@ public interface StringModifier {
     }
 
     /**
-     * Method converts the input data to a string based on the sparql literal syntax. The associated data type is set by the input xsdType. Input data and
-     * xsdType must be matching.
+     * Method converts the input data to a string based on the sparql literal syntax. The associated data type is set
+     * by the input xsdType. Input data and xsdType must be matching.
      *
      * @param data is the input data, which should be convert to a literal syntax.
-     * @param xsdType is the data type, which is used to set the kind of literal. Must match with the data type of the input data.
-     * @return a sparql literal as string.
-     * @throws NotAvailableException is thrown in case the parameter are invalid.
+     * @param xsdType is the data type to set the kind of literal. Must match with the data type of the input data.
+     * @return a SPARQL literal as string.
+     * @throws NotAvailableException is thrown in case at least one parameter is invalid.
      */
     static String convertToLiteral(final Object data, final XsdType xsdType) throws NotAvailableException {
-        try {
-            if (data == null) {
-                assert false;
-                throw new NotAvailableException("Input data is null.");
-            }
+        Preconditions.checkNotNull(data, "Couldn't convert to literal cause input data is null!");
+        Preconditions.checkNotNull(data, "Couldn't convert to literal cause input xsdType is null!");
 
+        try {
             switch (xsdType) {
                 case INT:
                     return addQuotationMarks(String.valueOf((int) data));
@@ -246,43 +204,45 @@ public interface StringModifier {
                 case DATE_TIME:
                     return addQuotationMarks((String) data);
                 default:
-                    assert false;
-                    throw new NotAvailableException("Input xsdType is unknown.");
+                    throw new NotAvailableException("Input parameter xsdType unknown in implementation.");
             }
         } catch (Exception e) {
-            throw new NotAvailableException("Could not convert, because input data do not match with the input xsd data type!", e);
+            throw new NotAvailableException("Couldn't convert to literal! Invalid parameter.", e);
         }
     }
 
     /**
-     * Method returns the service type name of the state method name (e.g. getPowerState: powerStateService).
+     * Method extracts the service type name of the input state method name (e.g. getPowerState to powerStateService).
      *
-     * @param stateMethodName is the state method name, which should be transformed.
-     * @return the service type name in camel case (first char lower case).
-     * @throws NotAvailableException is thrown in case the input is null or is no valid state (name).
+     * @param stateMethodName is the state method name, which includes the needed service type name.
+     * @return the service type name in camel case (first char lower case, e.g. powerStateService)
+     * @throws NotAvailableException is thrown in case the input is null or no valid state (name).
      */
-    static String getServiceTypeNameFromStateMethodName(String stateMethodName) throws NotAvailableException {
-        if (stateMethodName == null) {
-            assert false;
-            throw new NotAvailableException("Input string is null.");
+    static String getServiceTypeNameFromStateMethodName(final String stateMethodName) throws NotAvailableException {
+        Preconditions.checkNotNull(stateMethodName, "Couldn't get service type name, cause input string is null.");
+        String serviceTypeName = stateMethodName;
+
+        if (StringUtils.containsIgnoreCase(serviceTypeName, MethodRegEx.GET.getName())) {
+            final int indexOfGet = StringUtils.indexOfIgnoreCase(serviceTypeName, MethodRegEx.GET.getName());
+            final int lengthOfGet = MethodRegEx.GET.getName().length();
+
+            serviceTypeName = serviceTypeName.substring(indexOfGet + lengthOfGet);
+            serviceTypeName = firstCharToLowerCase(serviceTypeName);
+
+            if (StringUtils.contains(serviceTypeName, MethodRegEx.STATE.getName())) {
+                final int indexOfState = serviceTypeName.indexOf(MethodRegEx.STATE.getName());
+                final int lengthOfState = MethodRegEx.STATE.getName().length();
+
+                serviceTypeName = serviceTypeName.substring(0, indexOfState + lengthOfState);
+                serviceTypeName += MethodRegEx.SERVICE.getName();
+            }
         }
 
-        if (stateMethodName.startsWith(OntConfig.MethodRegEx.GET.getName())) {
-            stateMethodName = stateMethodName.substring(OntConfig.MethodRegEx.GET.getName().length(), stateMethodName.length());
-            stateMethodName = firstCharToLowerCase(stateMethodName);
-        }
-
-        if (stateMethodName.endsWith(OntConfig.MethodRegEx.STATE.getName())) {
-            stateMethodName = stateMethodName + OntConfig.MethodRegEx.SERVICE.getName();
-        }
-
-        if (OntConfig.SERVICE_NAME_MAP.keySet().contains(stateMethodName)) {
-            return stateMethodName;
+        if (OntConfig.SERVICE_NAME_MAP.keySet().contains(serviceTypeName)) {
+            return serviceTypeName;
         } else {
-            throw new NotAvailableException("Input string is no state (method) name! " + stateMethodName);
+            throw new NotAvailableException("Input string is no state (method) name! " + serviceTypeName);
         }
     }
-
-
 
 }

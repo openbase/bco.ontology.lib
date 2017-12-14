@@ -114,6 +114,7 @@ public class HeartbeatPhase {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
                 final QuerySolution querySolution = getQuerySolutionFromOntDB(StaticSparqlExpression.GET_RECENT_TIMESTAMP_OF_HEART_BEAT);
 
+                //TODO getResource/Literal throws possible exception
                 final String heartbeatPhaseInst = StringModifier.getLocalName(querySolution.getResource("heartbeatPhase").toString());
                 final String lastTimeStamp = querySolution.getLiteral("lastConnection").getLexicalForm();
 

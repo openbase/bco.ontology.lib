@@ -166,7 +166,6 @@ public interface SparqlHttp {
      * @return the result of the SELECT query.
      * @throws InterruptedException is thrown in case the application is interrupted.
      * @throws ExecutionException is thrown in case the callable thread throws an unknown exception.
-     * @throws CancellationException is thrown in case the timeout was reached and the upload trial was canceled.
      */
     static ResultSet sparqlQuery(final String query, final String url, final long timeout) throws InterruptedException, ExecutionException {
         Stopwatch stopwatch = new Stopwatch();

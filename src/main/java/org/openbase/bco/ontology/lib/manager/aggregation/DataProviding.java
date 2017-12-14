@@ -23,19 +23,25 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedObservation;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange.Discrete;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange.*;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntUnitConnectionTimes;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntUnits;
-import org.openbase.bco.ontology.lib.utility.ontology.OntNode;
+import org.openbase.bco.ontology.lib.utility.ontology.OntNodeHandler;
 import org.openbase.bco.ontology.lib.utility.time.Interval;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
+import static org.openbase.bco.ontology.lib.system.config.OntConfig.ObservationType.CONTINUOUS;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
-import org.openbase.bco.ontology.lib.system.config.OntConfig.SparqlVariable;
+import static org.openbase.bco.ontology.lib.system.config.OntConfig.SparqlVariable.*;
 import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.CouldNotProcessException;
+import org.openbase.jul.exception.InitializationException;
+import org.openbase.jul.exception.InvalidStateException;
+import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -49,6 +55,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
+ * This class is used as information interface for the aggregation process. The information will be asked from the BCO
+ * ontology via SPARQL over HTTP (SOH). Providing data are e.g. unit-connection times, unit observations (state values).
+ *
  * @author agatting on 24.03.17.
  */
 public class DataProviding {
@@ -59,10 +68,8 @@ public class DataProviding {
     private final OffsetDateTime dateTimeUntil;
     private final Interval interval;
 
-    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws InterruptedException, ExecutionException,
-            NotAvailableException {
-
-//        initParameters(dateTimeFrom, dateTimeUntil);
+    public DataProviding(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil)
+            throws NotAvailableException {
 
         this.dateTimeFrom = dateTimeFrom;
         this.dateTimeUntil = dateTimeUntil;
@@ -80,8 +87,9 @@ public class DataProviding {
      */
     public HashMap<String, Long> getConnectionTimes() throws NotAvailableException, InterruptedException, ExecutionException {
 
-        final HashMap<String, Long> hashMap = new HashMap<>();
-        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.GET_ALL_CONNECTION_PHASES, OntConfig.getOntologyDbUrl(), 0);
+        final OntUnitConnectionTimes ontUnitConnectionTimes = new OntUnitConnectionTimes();
+//        final HashMap<String, Long> hashMap = new HashMap<>();
+        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.SELECT_CONNECTION_PHASES, OntConfig.getOntologyDbUrl(), 0);
         //### Testing ###//
 //        final OntModel ontModel = OntModelHandler.loadOntModelFromFile(null, "src/normalData.owl");
 //        final Query query = QueryFactory.create(StaticSparqlExpression.GET_ALL_CONNECTION_PHASES);
@@ -89,32 +97,174 @@ public class DataProviding {
 //        final ResultSet resultSet = queryExecution.execSelect();
         //### Testing ###//
 
-        while (resultSet.hasNext()) {
-            final QuerySolution querySolution = resultSet.nextSolution();
+//        while (resultSet.hasNext()) {
+//            final QuerySolution querySolution = resultSet.nextSolution();
+//
+//            final String unitId = OntNodeHandler.getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
+//            final String startTimestamp = OntNodeHandler.getRDFNodeName(querySolution, SparqlVariable.FIRST_TIMESTAMP.getName());
+//            final String endTimestamp = OntNodeHandler.getRDFNodeName(querySolution, SparqlVariable.LAST_TIMESTAMP.getName());
+//
+//            final long startMilliS = OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli();
+//            final long endMilliS = OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli();
+//            final Interval connectionInterval = new Interval(startMilliS, endMilliS);
+//            final Interval overlapInterval = interval.getOverlap(connectionInterval);
+//
+//            if (overlapInterval != null) {
+//                final long durationMillis = overlapInterval.getDurationMillis();
+//
+//                if (hashMap.containsKey(unitId)) {
+//                    hashMap.put(unitId, hashMap.get(unitId) + durationMillis);
+//                } else {
+//                    hashMap.put(unitId, durationMillis);
+//                }
+//            } else if (!hashMap.containsKey(unitId)) {
+//                hashMap.put(unitId, 0L);
+//            }
+//        }
 
-            final String unitId = OntNode.getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
-            final String startTimestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.FIRST_TIMESTAMP.getName());
-            final String endTimestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.LAST_TIMESTAMP.getName());
+        return new HashMap<>();
+    }
 
-            final long startMilliS = OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli();
-            final long endMilliS = OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli();
-            final Interval connectionInterval = new Interval(startMilliS, endMilliS);
-            final Interval overlapInterval = interval.getOverlap(connectionInterval);
+    /**
+     * Method executes a SPARQL query via http to get all connection phases of the units from the BCO ontology. Based
+     * on the result the connection times for each unit are extracted. The data (units and their times in milliseconds)
+     * are mapped in the data type {@link OntUnitConnectionTimes}. A connection time is at most limited to the size of
+     * the duration of the time frame {@link Interval}.
+     *
+     * @return {@link OntUnitConnectionTimes} - a mapping of units and connection times.
+     * @throws InitializationException is thrown in case the data couldn't be get or mapped.
+     */
+    public OntUnitConnectionTimes selectConnectionPhases() throws InitializationException {
+        try {
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.SELECT_CONNECTION_PHASES,
+                    OntConfig.getOntologyDbUrl(), 0);
+            final OntUnitConnectionTimes ontConnectionTimes = new OntUnitConnectionTimes();
 
-            if (overlapInterval != null) {
-                final long durationMillis = overlapInterval.getDurationMillis();
+            //### Testing ###//
+//        final OntModel ontModel = OntModelHandler.loadOntModelFromFile(null, "src/normalData.owl");
+//        final Query query = QueryFactory.create(StaticSparqlExpression.GET_ALL_CONNECTION_PHASES);
+//        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
+//        final ResultSet resultSet = queryExecution.execSelect();
+            //### Testing ###//
 
-                if (hashMap.containsKey(unitId)) {
-                    hashMap.put(unitId, hashMap.get(unitId) + durationMillis);
-                } else {
-                    hashMap.put(unitId, durationMillis);
-                }
-            } else if (!hashMap.containsKey(unitId)) {
-                hashMap.put(unitId, 0L);
+            while (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.nextSolution();
+
+                final String unitId = OntNodeHandler.getRDFNodeName(querySolution, UNIT.getName());
+                final String startTimestamp = OntNodeHandler.getRDFNodeName(querySolution, FIRST_TIMESTAMP.getName());
+                final String endTimestamp = OntNodeHandler.getRDFNodeName(querySolution, LAST_TIMESTAMP.getName());
+
+                final long startMillis = OffsetDateTime.parse(startTimestamp).toInstant().toEpochMilli();
+                final long endMillis = OffsetDateTime.parse(endTimestamp).toInstant().toEpochMilli();
+
+                final Interval connectionInterval = new Interval(startMillis, endMillis);
+                // get the connection time, which is inside the aggregation time frame
+                final Interval overlapInterval = interval.getOverlap(connectionInterval);
+                final long connectionTimeMillis = (overlapInterval == null) ? 0L : overlapInterval.getDurationMillis();
+
+                ontConnectionTimes.addUnitConnectionTime(unitId, connectionTimeMillis);
             }
-        }
+            return ontConnectionTimes;
 
-        return hashMap;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new InitializationException("Couldn't get a result from ontology server via SPARQL query.", e);
+        } catch (NotAvailableException e) {
+            throw new InitializationException("Couldn't dissolve data. At least one parameter is invalid.", e);
+        }
+    }
+
+    /**
+     * Method selects all observations (NOT aggregated only!) from the BCO ontology by query. The result will be
+     * processed and collected into the data structure {@link OntUnits}.
+     *
+     * @return the data structure {@link OntUnits}.
+     * @throws InitializationException is thrown in case the BCO ontology isn't reachable or the processing of the
+     * result couldn't be done.
+     */
+    public OntUnits selectObservations() throws InitializationException {
+        try {
+            final String timeUntilFormat = dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER);
+            final String timeUntilLiteral = StringModifier.convertToLiteral(timeUntilFormat, XsdType.DATE_TIME);
+            final OntUnits ontUnits = new OntUnits();
+
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression
+                    .selectObservations(timeUntilLiteral), OntConfig.getOntologyDbUrl(), 0);
+            //### Testing ###//
+//            ResultSetFormatter.out(System.out, resultSet);
+            //### Testing ###//
+
+            // thanks to SPARQL mightiness the result entries are sorted by observationId (see SPARQL query). In this
+            // case all state values, belonging to the same state change, are listed one after another. Therefore, same
+            // id means equal state change (e.g. in case of HSB - three values, one state change). Another id means
+            // another state change.
+            String currentObservationId = null;
+
+            while (resultSet.hasNext()) {
+                final QuerySolution querySolution = resultSet.nextSolution();
+
+                final String nextObservationId = OntNodeHandler.getRDFNodeName(querySolution, OBSERVATION.getName());
+                final String unitId = OntNodeHandler.getRDFNodeName(querySolution, UNIT.getName());
+                final String providerService = OntNodeHandler.getRDFNodeName(querySolution, PROVIDER_SERVICE.getName());
+                final RDFNode stateValue = querySolution.get(STATE_VALUE.getName());
+
+                // because of SPARQL query command (ORDER BY) the results are sorted by observationId
+                if (nextObservationId.equals(currentObservationId)) {
+                    // the same observationId means the identical observation node or rather state value (e.g. HSB)
+                    addStateValueToStateChange(ontUnits, unitId, providerService, stateValue);
+                } else {
+                    // different observationId means a new/another observation node
+                    final String timestamp = OntNodeHandler.getRDFNodeName(querySolution, TIMESTAMP.getName());
+
+                    createAndAddOntStateChange(ontUnits, unitId, providerService, timestamp, stateValue);
+                }
+                currentObservationId = nextObservationId;
+            }
+            return ontUnits;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new InitializationException("Couldn't get a result from ontology server via SPARQL query.", e);
+        } catch (CouldNotPerformException e) {
+            throw new InitializationException("Couldn't dissolve data. At least one parameter is invalid.", e);
+        }
+    }
+
+    private void addStateValueToStateChange(final OntUnits ontUnits, final String unitId, final String providerService,
+                                            final RDFNode stateValue) throws CouldNotPerformException {
+        try {
+            final List<OntStateChange> stateChanges =
+                    ontUnits.getOntProviderServices(unitId).getOntStateChanges(providerService);
+            final OntStateChange ontStateChange = stateChanges.get(stateChanges.size() - 1);
+
+            if (ontStateChange.getObservationType().equals(CONTINUOUS)) {
+                // add state value to last cycle
+                ((Continuous) ontUnits.getOntProviderServices(unitId).getOntStateChanges(providerService)
+                        .get(stateChanges.size() - 1).getType()).addStateValue(stateValue);
+            } else {
+                throw new CouldNotPerformException("Latest result entry has same observationId but different "
+                        + "observation type. Should be continuous.class. Maybe SPARQL query wrong (no SORT BY). "
+                        + "State value is > " + stateValue.toString() + " <");
+            }
+        } catch (NotAvailableException e) {
+            throw new CouldNotPerformException(e);
+        }
+    }
+
+    private void createAndAddOntStateChange(final OntUnits ontUnits, final String unitId,
+                                            final String providerService, final String timestamp,
+                                            final RDFNode stateValue) throws CouldNotPerformException {
+        try {
+            final OntStateChange ontStateChange;
+
+            if (stateValue.isLiteral()) {
+                final List<RDFNode> stateValues = new ArrayList<RDFNode>() {{add(stateValue);}};
+                ontStateChange = new OntStateChange<>(new Continuous(timestamp, stateValues));
+            } else {
+                ontStateChange = new OntStateChange<>(new Discrete(timestamp, stateValue));
+            }
+
+            ontUnits.addOntProviderService(unitId, providerService, ontStateChange);
+        } catch (MultiException | InvalidStateException e) {
+            throw new CouldNotPerformException(e);
+        }
     }
 
     /**
@@ -122,74 +272,42 @@ public class DataProviding {
      * value is returned.
      *
      * @return a map with unitId as key and a list of related observations.
-     * @throws NotAvailableException is thrown in case the dateTimes (from, until) could not be parsed.
+     * @throws MultiException is thrown in case the dateTimes (from, until) could not be parsed.
      * @throws InterruptedException is thrown in case the application is interrupted.
      * @throws ExecutionException is thrown in case the callable thread throws an unknown exception.
      */
-    public HashMap<String, List<OntObservation>> getObservations() throws NotAvailableException, InterruptedException, ExecutionException {
+    public HashMap<String, List<OntObservation>> getObservations() throws MultiException, InterruptedException, ExecutionException {
 
         final OntUnits ontUnits = new OntUnits();
 
         // key: unitId, value: list of observations
         final HashMap<String, List<OntObservation>> unitObservationMap = new HashMap<>();
-        final String timeUntil = StringModifier.convertToLiteral(dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER), XsdType.DATE_TIME);
-        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.getAllObservations(timeUntil), OntConfig.getOntologyDbUrl(), 0);
+        String timeUntil = null;
+        try {
+            timeUntil = StringModifier.convertToLiteral(dateTimeUntil.format(OntConfig.DATE_TIME_FORMATTER), XsdType.DATE_TIME);
+        } catch (NotAvailableException e) {
+            e.printStackTrace();
+        }
+        final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.selectObservations(timeUntil), OntConfig.getOntologyDbUrl(), 0);
 //        ResultSetFormatter.out(System.out, resultSet);
 
         // identify related state values (e.g. hsb) on the basis of the observation id/name. Because of the SPARQL query they are sorted...
         String observationIdBuf = null;
-        final List<RDFNode> stateValues = new ArrayList<>();
 
         try {
             while (resultSet.hasNext()) {
                 final QuerySolution querySolution = resultSet.nextSolution();
 
-                final String observationId = OntNode.getRDFNodeName(querySolution, SparqlVariable.OBSERVATION.getName());
-                final String providerService = OntNode.getRDFNodeName(querySolution, SparqlVariable.PROVIDER_SERVICE.getName());
-                final String unitId = OntNode.getRDFNodeName(querySolution, SparqlVariable.UNIT.getName());
-                final RDFNode stateValue = querySolution.get(SparqlVariable.STATE_VALUE.getName());
-                final String timestamp = OntNode.getRDFNodeName(querySolution, SparqlVariable.TIMESTAMP.getName());
+                final String observationId = OntNodeHandler.getRDFNodeName(querySolution, OBSERVATION.getName());
+                final String providerService = OntNodeHandler.getRDFNodeName(querySolution, PROVIDER_SERVICE.getName());
+                final String unitId = OntNodeHandler.getRDFNodeName(querySolution, UNIT.getName());
+                final RDFNode stateValue = querySolution.get(STATE_VALUE.getName());
+                final String timestamp = OntNodeHandler.getRDFNodeName(querySolution, TIMESTAMP.getName());
 
                 if (stateValue == null || timestamp == null) {
                     throw new CouldNotProcessException("Could not identify at least one observation data element. Check naming-compliance of SPARQL " +
                             "query and querySolution!");
                 }
-
-
-//                final OntStateChange<Discrete> ontStateCh = new OntStateChange<>(new Discrete(null, null), null);
-
-//                ontUnits.addOntProviderService(null, null);
-
-
-
-
-                if (ontUnits.getOntUnits().containsKey(unitId)) {
-
-                } else {
-
-
-                }
-
-
-                //////
-                if (observationId.equals(observationIdBuf)) {
-                    stateValues.add(stateValue);
-                } else {
-                    // create new OntStateChange
-
-
-
-
-
-                    stateValues.clear();
-                }
-
-
-
-
-
-                //////
-
 
                 // sort observations: each unitId has a list of observations. Additionally the state values of same unit sources must be identified and add to
                 // the same observation (contains list of state values)
@@ -220,7 +338,7 @@ public class DataProviding {
     }
 
     public HashMap<String, List<OntAggregatedObservation>> getAggregatedObservations(final Period period)
-            throws NotAvailableException, InterruptedException, ExecutionException {
+            throws MultiException, NotAvailableException, InterruptedException, ExecutionException {
         // key: unitId, value: list of aggregated observations
         final HashMap<String, List<OntAggregatedObservation>> unitAggObservationMap = new HashMap<>();
 

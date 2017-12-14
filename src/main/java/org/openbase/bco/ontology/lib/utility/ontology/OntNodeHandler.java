@@ -21,8 +21,6 @@ package org.openbase.bco.ontology.lib.utility.ontology;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdf.model.RDFNode;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntProviderServices;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.StateValueType;
 import org.openbase.bco.ontology.lib.utility.Preconditions;
@@ -34,11 +32,14 @@ import org.openbase.jul.exception.NotAvailableException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
+ * Interface contains methods to handle and filter ontology nodes (based on RDF) as to their content.
+ *
  * @author agatting on 08.08.17.
  */
-public interface OntNode {
+public interface OntNodeHandler {
 
     /**
      * Method filters the input state changes and returns state changes, which includes literals of the input data type.
@@ -164,14 +165,29 @@ public interface OntNode {
         return stateChangeLiterals;
     }
 
-
+    /**
+     * Method gets the rdfNode from the input querySolution based on input name and returns the lexical form. The
+     * affected rdfNode must be a literal or resource.
+     *
+     * @param querySolution is the single answer of the SELECT query, which contains the needed rdfNode.
+     * @param name of the searched rdfNode. It's the control variable from the sparql query (e.g. ?unit - without "?").
+     * @return the lexical form of the searched rdfNode.
+     * @throws NotAvailableException is thrown in case at least one input parameter is null, the input name doesn't
+     * represent a rdfNode in the querySolution or the founded rdfNode is neither a literal nor a resource.
+     */
     static String getRDFNodeName(final QuerySolution querySolution, final String name) throws NotAvailableException {
+        Preconditions.checkNotNull(querySolution, "Input querySolution is null!");
+        Preconditions.checkNotNull(name, "Input name is null!");
 
-//        ExceptionStack exceptionStack = Preconditions.checkNotNull(querySolution, "Parameter querySolution is null!", null);
-//        exceptionStack = Preconditions.checkNotNull(name, "Parameter name is null!", exceptionStack);
-//        MultiException.checkAndThrow("Input is invalid.", exceptionStack);
+        final RDFNode rdfNode = Preconditions.checkNotNull(querySolution.get(name),
+                "QuerySolution doesn't contain a rdfNode with the name >>" + name + "<<.");
 
-        return (querySolution.get(name).isLiteral()) ? querySolution.getLiteral(name).getLexicalForm()
-                : StringModifier.getLocalName(querySolution.getResource(name).toString());
+        if (rdfNode.isLiteral()) {
+            return querySolution.getLiteral(name).getLexicalForm();
+        } else if (rdfNode.isResource()) {
+            return StringModifier.getLocalName(querySolution.getResource(name).toString());
+        } else {
+            throw new NotAvailableException("Unknown rdfNode. Neither a literal nor a resource.");
+        }
     }
 }

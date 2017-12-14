@@ -24,6 +24,7 @@ import org.openbase.bco.ontology.lib.jp.JPOntologyDBURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyMode;
 import org.openbase.bco.ontology.lib.jp.JPOntologyPingURL;
 import org.openbase.bco.ontology.lib.jp.JPOntologyRSBScope;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.utility.ontology.OntModelHandler;
 import org.openbase.bco.ontology.lib.manager.tbox.TBoxVerification;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
@@ -73,12 +74,12 @@ public final class OntConfig {
     public static final String RDFS = "http://www.w3.org/2000/01/rdf-schema#";
 
     /**
-     * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. POWER_STATE_SERVICE - powerStateService
+     * Map contains the service types with appropriate name in camel case (and first char in lower case). E.g. powerStateService - POWER_STATE_SERVICE
      */
     public static final Map<String, ServiceType> SERVICE_NAME_MAP = new HashMap<>();
 
     /**
-     * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. COLORABLE_LIGHT - colorableLight
+     * Map contains the unit types with appropriate name in camel case (and first char in lower case). E.g. colorableLight - COLORABLE_LIGHT
      */
     public static final Map<String, UnitType> UNIT_NAME_MAP = new HashMap<>();
 
