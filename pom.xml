@@ -278,7 +278,7 @@
         <plugin.pmd.version>3.5</plugin.pmd.version>
         <plugin.javadoc.version>3.0.0</plugin.javadoc.version>
         <failOnStyleError>false</failOnStyleError>
-        <dependency.bco.version>1.6-SNAPSHOT</dependency.bco.version>
+        <dependency.bco.version>[1.6,1.7-alpha)</dependency.bco.version>
         <dependency.jul.version>${dependency.bco.version}</dependency.jul.version>
         <dependency.bco.dal.version>${dependency.bco.version}</dependency.bco.dal.version>
         <dependency.bco.ontology.version>${dependency.bco.version}</dependency.bco.ontology.version>
