@@ -4,7 +4,7 @@
 
     <groupId>org.openbase.bco</groupId>
     <artifactId>ontology.lib</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     
     <name>BCO Ontology Library</name>
     <inceptionYear>2016</inceptionYear>
