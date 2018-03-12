@@ -4,7 +4,7 @@
 
     <groupId>org.openbase.bco</groupId>
     <artifactId>ontology.lib</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     
     <name>BCO Ontology Library</name>
     <inceptionYear>2016</inceptionYear>
@@ -214,7 +214,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.0-M1</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -276,11 +276,12 @@
         <source.java.version>1.8</source.java.version>
         <plugin.checkstyle.version>2.15</plugin.checkstyle.version>
         <plugin.pmd.version>3.5</plugin.pmd.version>
-        <plugin.javadoc.version>3.0.0-M1</plugin.javadoc.version>
+        <plugin.javadoc.version>3.0.0</plugin.javadoc.version>
         <failOnStyleError>false</failOnStyleError>
-        <dependency.jul.version>1.5-SNAPSHOT</dependency.jul.version>
-        <dependency.bco.dal.version>1.5-SNAPSHOT</dependency.bco.dal.version>
-        <dependency.bco.ontology.version>1.5-SNAPSHOT</dependency.bco.ontology.version>
+        <dependency.bco.version>1.6-SNAPSHOT</dependency.bco.version>
+        <dependency.jul.version>${dependency.bco.version}</dependency.jul.version>
+        <dependency.bco.dal.version>${dependency.bco.version}</dependency.bco.dal.version>
+        <dependency.bco.ontology.version>${dependency.bco.version}</dependency.bco.ontology.version>
     </properties>
 
     <dependencies>
