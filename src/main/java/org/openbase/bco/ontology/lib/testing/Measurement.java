@@ -37,7 +37,7 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.manager.aggregation.Aggregation;
 import org.openbase.bco.ontology.lib.manager.aggregation.AggregationImpl;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.bco.ontology.lib.trigger.Trigger;
 import org.openbase.bco.ontology.lib.trigger.TriggerFactory;
 import org.openbase.bco.ontology.lib.trigger.sparql.AskQueryExample;
@@ -309,7 +309,7 @@ public class Measurement {
             complexQuMeasuredValues.clear();
 
             if (daysCurCount < DAYS_MAX_COUNT) {
-                SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.DELETE_ALL_OBSERVATIONS_WITH_FILTER, OntConfig.getOntologyDbUrl(), 0);
+                SparqlHttp.uploadSparqlRequest(QueryExpression.DELETE_ALL_OBSERVATIONS_WITH_FILTER, OntConfig.getOntologyDbUrl(), 0);
                 aggregation.startAggregation(daysCurCount);
                 stopwatch.waitForStart(2000);
 
@@ -424,7 +424,7 @@ public class Measurement {
     private long askNumberOfTriple() throws InterruptedException {
 
         try {
-            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.COUNT_ALL_TRIPLES, OntConfig.getOntologyDbUrl(), 0);
+            final ResultSet resultSet = SparqlHttp.sparqlQuery(QueryExpression.COUNT_ALL_TRIPLES, OntConfig.getOntologyDbUrl(), 0);
             Long numTriples = 0L;
 
             if (resultSet.hasNext()) {

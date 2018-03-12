@@ -19,19 +19,23 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
-import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedObservation;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntObservation;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntProviderServices;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntUnitConnectionTimes;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntUnits;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.AggregationTense;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.Period;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
+import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.slf4j.Logger;
@@ -42,6 +46,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -53,16 +58,15 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
 
     private final DataProviding dataProviding;
 
-    public AggregationImpl(OffsetDateTime dateTimeFrom, OffsetDateTime dateTimeUntil, Period currentPeriod) throws CouldNotPerformException
-            , ExecutionException, InterruptedException {
+    public AggregationImpl(OffsetDateTime dateTimeFrom, OffsetDateTime dateTimeUntil, Period currentPeriod)
+            throws CouldNotPerformException {
         super(dateTimeFrom, dateTimeUntil, currentPeriod);
 
         this.dataProviding = new DataProviding(dateTimeFrom, dateTimeUntil);
     }
 
-    public void startAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final AggregationTense aggregationTense) {
-
-
+    public void startAggregation(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil,
+                                 final AggregationTense aggregationTense) {
 
     }
 
@@ -95,19 +99,15 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
 //        new AggregationImpl(dateTimeFromTest, dateTimeUntilTest, periodTest);
     }
 
-    private void blub(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil, final Period period) {
-
-    }
-
 //    private void initParameters(final OffsetDateTime dateTimeFrom, final OffsetDateTime dateTimeUntil) throws InterruptedException, ExecutionException,
 //            NotAvailableException {
 //
 //        if (dateTimeFrom == null) {
-//            final ResultSet resultSet = SparqlHttp.sparqlQuery(StaticSparqlExpression.GET_AGG_DATE_TIME_FROM, OntConfig.getOntologyDbUrl(), 0);
+//            final ResultSet resultSet = SparqlHttp.sparqlQuery(QueryExpression.GET_AGG_DATE_TIME_FROM, OntConfig.getOntologyDbUrl(), 0);
 //
 //            if (resultSet.hasNext()) {
 //                final QuerySolution querySolution = resultSet.nextSolution();
-//                final String timestampFrom = OntNodeHandler.getRDFNodeName(querySolution, OntConfig.SparqlVariable.TIMESTAMP.getName());
+//                final String timestampFrom = OntNodeHandler.getRDFLocalName(querySolution, OntConfig.SparqlVariable.TIMESTAMP.getName());
 //                this.dateTimeFrom = OffsetDateTime.parse(timestampFrom);
 //            } else {
 //                // there was no aggregation so far. set new timestamp
@@ -131,11 +131,11 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
             SparqlHttp.uploadSparqlRequest(sparqlUpdateExpr, OntConfig.getOntologyDbUrl(), 0);
 
 //            // delete unused connectionPhases (old)
-//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedConnectionPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(QueryExpression.deleteUnusedConnectionPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 //            // delete unused heartBeatPhases (old)
-//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedHeartBeatPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(QueryExpression.deleteUnusedHeartBeatPhases(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 //            // delete unused observations (old)
-//            SparqlHttp.uploadSparqlRequestViaRetry(StaticSparqlExpression.deleteUnusedObservations(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
+//            SparqlHttp.uploadSparqlRequestViaRetry(QueryExpression.deleteUnusedObservations(StringModifier.addXsdDateTime(dateTimeUntil)), OntConfig.ServerService.UPDATE);
 
         } else {
             final Period oldPeriod;
@@ -164,7 +164,7 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
             // delete unused aggregations (old)
             final String dateTimeFromLiteral = StringModifier.convertToLiteral(dateTimeFrom.toString(), XsdType.DATE_TIME);
             final String dateTimeUntilLiteral = StringModifier.convertToLiteral(dateTimeUntil.toString(), XsdType.DATE_TIME);
-            final String sparql = StaticSparqlExpression.deleteUnusedAggObs(oldPeriod.toString(), dateTimeFromLiteral, dateTimeUntilLiteral);
+            final String sparql = QueryExpression.deleteUnusedAggObs(oldPeriod.toString(), dateTimeFromLiteral, dateTimeUntilLiteral);
             // upload ...
             SparqlHttp.uploadSparqlRequest(sparql, OntConfig.getOntologyDbUrl(), 0);
         }
@@ -175,20 +175,29 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
      * the following (called) methods to calculate and build the ontology triples to insert aggregated observations.
      *
      * @return a list of triples to insert aggregation observations.
-     * @throws NotAvailableException is thrown in case the needed information are not available.
-     * @throws MultiException is thrown in case the needed information are not available.
+     * @throws InitializationException is thrown in case the needed information are not available.
      * @throws InterruptedException is thrown in case the application was interrupted.
-     * @throws ExecutionException is thrown in case the processing thread throws an unknown exception.
      */
-    private List<RdfTriple> collectDataForEachUnit() throws MultiException, NotAvailableException, InterruptedException, ExecutionException {
+    private List<RdfTriple> collectDataForEachUnit() throws InitializationException, InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, Long> unitConnectionMap = dataProviding.getConnectionTimes();
-        final HashMap<String, List<OntObservation>> unitObservationMap = dataProviding.getObservations();
+        final OntUnitConnectionTimes ontUnitConnectionTimes = dataProviding.selectConnectionPhases();
+        final OntUnits ontUnits = dataProviding.selectObservations();
 
-        for (final String unitId : unitObservationMap.keySet()) {
-            if (unitConnectionMap.containsKey(unitId)) {
-                triples.addAll(collectDataForEachService(unitId, unitConnectionMap.get(unitId), unitObservationMap.get(unitId)));
+        final Set<String> unitIds = ontUnits.getOntUnits().keySet();
+        final HashMap<String, Long> ontConnectionTimesMillis = ontUnitConnectionTimes.getOntConnectionTimesMilli();
+
+        for (final String unitId : unitIds) {
+            if (ontConnectionTimesMillis.containsKey(unitId)) {
+                final OntProviderServices ontProviderServices = ontUnits.getOntProviderServices(unitId);
+                final long unitConnectionTimeMillis = ontConnectionTimesMillis.get(unitId);
+
+                if (ontProviderServices != null) {
+                    triples.addAll(collectDataForEachService(unitId, unitConnectionTimeMillis, ontProviderServices));
+                } else {
+                    //TODO
+                }
             } else {
+                //TODO
                 LOGGER.info("The unit with ID >> " + unitId + " << has no state value for aggregation.");
             }
         }
@@ -196,58 +205,80 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
         return triples;
     }
 
-    private List<RdfTriple> collectAggDataForEachUnit(final Period period) throws MultiException, NotAvailableException, InterruptedException
+    private List<RdfTriple> collectAggDataForEachUnit(final Period period) throws InitializationException, InterruptedException
             , ExecutionException {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, List<OntAggregatedObservation>> unitAggObservationMap = dataProviding.getAggregatedObservations(period);
+        final OntUnits ontUnits = dataProviding.selectAggregatedObservations(period);
 
-        for (final String unitId : unitAggObservationMap.keySet()) {
-            triples.addAll(collectAggDataForEachService(unitId, unitAggObservationMap.get(unitId)));
+        final Set<String> unitIds = ontUnits.getOntUnits().keySet();
+
+        for (final String unitId : unitIds) {
+            final OntProviderServices ontProviderServices = ontUnits.getOntProviderServices(unitId);
+            triples.addAll(collectAggDataForEachService(unitId, ontProviderServices));
         }
 
         return triples;
     }
 
-    private List<RdfTriple> collectAggDataForEachService(final String unitId, final List<OntAggregatedObservation> ontAggObservations)
+    private List<RdfTriple> collectAggDataForEachService(final String unitId, final OntProviderServices ontProviderServices)
             throws InterruptedException {
         final HashMap<String, List<OntAggregatedStateChange>> ontAggStateChanges = new HashMap<>();
 
-        for (final OntAggregatedObservation ontAggObservation : ontAggObservations) {
-            final OntAggregatedStateChange ontAggStateChange = new OntAggregatedStateChange(ontAggObservation.getStateValue(),ontAggObservation.getQuantity()
-                    , ontAggObservation.getActivityTime(), ontAggObservation.getVariance(), ontAggObservation.getStandardDeviation(), ontAggObservation.getMean(), ontAggObservation.getTimeWeighting());
+        final Set<String> providerServices = ontProviderServices.getOntProviderServices().keySet();
+        final List<RdfTriple> triples = new ArrayList<>();
 
-            if (ontAggStateChanges.containsKey(ontAggObservation.getProviderService())) {
-                // there is an entry: add data
-                final List<OntAggregatedStateChange> arrayList = ontAggStateChanges.get(ontAggObservation.getProviderService());
-                arrayList.add(ontAggStateChange);
-                ontAggStateChanges.put(ontAggObservation.getProviderService(), arrayList);
-            } else {
-                // there is no entry: put data
-                ontAggStateChanges.put(ontAggObservation.getProviderService(), new ArrayList<OntAggregatedStateChange>() {{add(ontAggStateChange);}});
-            }
+        for (final String providerService : providerServices) {
+            final List<OntStateChange> ontStateChanges = ontProviderServices.getOntStateChanges(providerService);
+
+            triples.addAll(identifyServiceType(providerService, ontStateChanges, 0, unitId));
         }
-        return identifyServiceType(ontAggStateChanges, 0, unitId);
+        return triples;
+
+//        for (final OntAggregatedObservation ontAggObservation : ontAggObservations) {
+//            final OntAggregatedStateChange ontAggStateChange = new OntAggregatedStateChange(ontAggObservation.getStateValue(),ontAggObservation.getQuantity()
+//                    , ontAggObservation.getActivityTime(), ontAggObservation.getVariance(), ontAggObservation.getStandardDeviation(), ontAggObservation.getMean(), ontAggObservation.getTimeWeighting());
+//
+//            if (ontAggStateChanges.containsKey(ontAggObservation.getProviderService())) {
+//                // there is an entry: add data
+//                final List<OntAggregatedStateChange> arrayList = ontAggStateChanges.get(ontAggObservation.getProviderService());
+//                arrayList.add(ontAggStateChange);
+//                ontAggStateChanges.put(ontAggObservation.getProviderService(), arrayList);
+//            } else {
+//                // there is no entry: put data
+//                ontAggStateChanges.put(ontAggObservation.getProviderService(), new ArrayList<OntAggregatedStateChange>() {{add(ontAggStateChange);}});
+//            }
+//        }
+//        return identifyServiceType(ontAggStateChanges, 0, unitId);
     }
 
-    private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli, final List<OntObservation> ontObservations)
-            throws InterruptedException {
+    private List<RdfTriple> collectDataForEachService(final String unitId, final long unitConnectionTimeMilli,
+                                                      final OntProviderServices ontProviderServices) throws InterruptedException {
         final List<RdfTriple> triples = new ArrayList<>();
-        final HashMap<String, List<OntStateChangeBuf>> serviceStateChangeMap = new HashMap<>();
+        final Set<String> providerServices = ontProviderServices.getOntProviderServices().keySet();
 
-        for (final OntObservation ontObservation : ontObservations) {
-            final OntStateChangeBuf ontStateChangeBuf = new OntStateChangeBuf(ontObservation.getStateValues(), ontObservation.getTimestamp());
+        for (final String providerService : providerServices) {
+            final List<OntStateChange> ontStateChanges = ontProviderServices.getOntStateChanges(providerService);
 
-            if (serviceStateChangeMap.containsKey(ontObservation.getProviderService())) {
-                // there is an entry: add data
-                final List<OntStateChangeBuf> arrayList = serviceStateChangeMap.get(ontObservation.getProviderService());
-                arrayList.add(ontStateChangeBuf);
-                serviceStateChangeMap.put(ontObservation.getProviderService(), arrayList);
-            } else {
-                // there is no entry: put data
-                serviceStateChangeMap.put(ontObservation.getProviderService(), new ArrayList<OntStateChangeBuf>() {{add(ontStateChangeBuf);}});
-            }
+            triples.addAll(identifyServiceType(providerService, ontStateChanges, unitConnectionTimeMilli, unitId));
         }
-        triples.addAll(identifyServiceType(serviceStateChangeMap, unitConnectionTimeMilli, unitId));
+
+//        final HashMap<String, List<OntStateChangeBuf>> serviceStateChangeMap = new HashMap<>();
+//
+//
+//        for (final OntObservation ontObservation : ontObservations) {
+//            final OntStateChangeBuf ontStateChangeBuf = new OntStateChangeBuf(ontObservation.getStateValues(), ontObservation.getTimestamp());
+//
+//            if (serviceStateChangeMap.containsKey(ontObservation.getProviderService())) {
+//                // there is an entry: add data
+//                final List<OntStateChangeBuf> arrayList = serviceStateChangeMap.get(ontObservation.getProviderService());
+//                arrayList.add(ontStateChangeBuf);
+//                serviceStateChangeMap.put(ontObservation.getProviderService(), arrayList);
+//            } else {
+//                // there is no entry: put data
+//                serviceStateChangeMap.put(ontObservation.getProviderService(), new ArrayList<OntStateChangeBuf>() {{add(ontStateChangeBuf);}});
+//            }
+//        }
+//        triples.addAll(identifyServiceType(serviceStateChangeMap, unitConnectionTimeMilli, unitId));
 
         return triples;
     }
@@ -267,7 +298,7 @@ public class AggregationImpl extends DataAssignation implements Aggregation {
 //        final OntModel ontModel = StringModifier.loadOntModelFromFile(null, "src/aggregationExampleFirstStageOfNormalData.owl");
 //        final String timestampFrom = StringModifier.addXsdDateTime(dateTimeFrom);
 //        final String timestampUntil = StringModifier.addXsdDateTime(dateTimeUntil);
-//        final Query query = QueryFactory.create(StaticSparqlExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
+//        final Query query = QueryFactory.create(QueryExpression.getAllAggObs(Period.DAY.toString().toLowerCase(), timestampFrom, timestampUntil));
 //        final QueryExecution queryExecution = QueryExecutionFactory.create(query, ontModel);
 //        final ResultSet resultSet = queryExecution.execSelect();
 //

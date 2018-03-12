@@ -32,7 +32,7 @@ import java.util.List;
  * granularity), which includes a quantity of elements (1:N - relation). Consider in addition the data types
  * {@link OntUnits} and {@link OntStateChange}.
  *
- *           1       :      N                       1       :      N
+ *           1       :      N                                       1       :      N
  * {@link OntUnits} --- (includes) --- {@link OntProviderServices} --- (includes) --- {@link OntStateChange}
  *
  * @author agatting on 15.09.17.
@@ -47,6 +47,15 @@ public class OntProviderServices {
      */
     public OntProviderServices() {
         this.ontProviderServices = new HashMap<>();
+    }
+
+    /**
+     * Method returns the providerServices with the related list of ontStateChanges.
+     *
+     * @return the hashMap with providerServices and related ontStateChanges.
+     */
+    public HashMap<String, List<OntStateChange>> getOntProviderServices() {
+        return ontProviderServices;
     }
 
     /**
@@ -89,11 +98,9 @@ public class OntProviderServices {
      *
      * @param ontProviderService is the providerService, which associated stateChanges are needed.
      * @return a list of {@link OntStateChange} by match. Otherwise null.
-     * @throws NotAvailableException is thrown in case the parameter is null.
      */
-    public List<OntStateChange> getOntStateChanges(final String ontProviderService) throws NotAvailableException {
-        Preconditions.checkNotNull(ontProviderService, "Parameter ontProviderService is null!");
-        return ontProviderServices.get(ontProviderService);
+    public List<OntStateChange> getOntStateChanges(final String ontProviderService) {
+        return (ontProviderService == null) ? null : ontProviderServices.get(ontProviderService);
     }
 
 }

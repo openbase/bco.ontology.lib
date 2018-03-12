@@ -27,7 +27,7 @@ import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.NotAvailableException;
 import org.topbraid.spin.arq.ARQ2SPIN;
@@ -171,7 +171,7 @@ public class QueryParser {
 
     private ResultSet getSPINResultSet(final String askQuery) {
         // create query to ask uris from input query
-        final Query queryUrisWithBcoNs = QueryFactory.create(StaticSparqlExpression.QUERY_URIS);
+        final Query queryUrisWithBcoNs = QueryFactory.create(QueryExpression.QUERY_URIS);
         final Model model = ModelFactory.createDefaultModel();
 
         // convert ask query to rdf spin
