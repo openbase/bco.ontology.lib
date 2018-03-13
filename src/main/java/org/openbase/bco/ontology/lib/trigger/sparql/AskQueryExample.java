@@ -39,6 +39,12 @@ import java.time.OffsetDateTime;
 @SuppressWarnings("checkstyle:multiplestringliterals")
 public class AskQueryExample {
 
+    public static final String QUERY_TEST =
+            "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
+                    + "ASK { "
+                    + "?unit NS:hasProviderService NS:powerStateService . "
+                    + "} ";
+
     /**
      * Ist die zuletzt geschaltete Lampe (colorableLight) eingeschaltet?
      */
@@ -164,6 +170,41 @@ public class AskQueryExample {
                     // reduce times to one variable via if condition
                     + "bind(if(isLiteral(?time), ?time, ?lastHeartBeat) as ?resultTime)"
                 + "} ";
+
+    public enum QueryExample {
+
+        QUERY_TEST_EXAMPLE(QUERY_TEST, "Test: Unit hasProviderService powerStateService"),
+
+        QUERY_LAST_LAMP_ON(QUERY_0, "Is the last switched lamp on?"),
+
+        QUERY_PERSON_IN_LIVING_ROOM(QUERY_1, "Is there a movement in the living room?"),
+
+        QUERY_TV_ON(QUERY_2, "Is there at least one TV on?"),
+
+        QUERY_PERSON_ABSENT(QUERY_3, "Is the inhabitant present?"),
+
+        QUERY_SMOKE(QUERY_4, "Is there smoke in the apartment?");
+
+        private final String query, description;
+
+        QueryExample(final String query, final String description) {
+            this.query = query;
+            this.description = description;
+        }
+
+        public String getQuery() {
+            return this.query;
+        }
+
+        /**
+         * Method returns the name of an enum element.
+         *
+         * @return the name of an enum element as string.
+         */
+        public String getDescription() {
+            return this.description;
+        }
+    }
 
     /**
      * Method returns the current dateTime.
