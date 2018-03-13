@@ -22,6 +22,7 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntProp;
@@ -31,7 +32,6 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntInst;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InitializationException;
 import org.openbase.jul.exception.NotAvailableException;
@@ -112,7 +112,7 @@ public class HeartbeatPhase {
         future = GlobalScheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
                 // get recent heartbeat phase instance name and lastHeartBeat timestamp
-                final QuerySolution querySolution = getQuerySolutionFromOntDB(StaticSparqlExpression.GET_RECENT_TIMESTAMP_OF_HEART_BEAT);
+                final QuerySolution querySolution = getQuerySolutionFromOntDB(QueryExpression.GET_RECENT_TIMESTAMP_OF_HEART_BEAT);
 
                 //TODO getResource/Literal throws possible exception
                 final String heartbeatPhaseInst = StringModifier.getLocalName(querySolution.getResource("heartbeatPhase").toString());

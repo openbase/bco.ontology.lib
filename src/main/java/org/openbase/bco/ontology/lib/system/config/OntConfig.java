@@ -279,27 +279,29 @@ public final class OntConfig {
         /**
          * Period hour.
          */
-        HOUR(3600000),
+        HOUR("hour", 3600000),
         /**
          * Period day.
          */
-        DAY(86400000),
+        DAY("day", 86400000),
         /**
          * Period week.
          */
-        WEEK(604800000),
+        WEEK("week", 604800000),
         /**
          * Period month.
          */
-        MONTH(0),
+        MONTH("month", 0), //TODO
         /**
          * Period year.
          */
-        YEAR(0);
+        YEAR("year", 0); //TODO
 
         private final long periodLengthMilliS;
+        private final String periodName;
 
-        Period(final long periodLengthMilliS) {
+        Period(final String periodName, final long periodLengthMilliS) {
+            this.periodName = periodName;
             this.periodLengthMilliS = periodLengthMilliS;
         }
 
@@ -308,8 +310,12 @@ public final class OntConfig {
          *
          * @return the name of an enum element as string.
          */
-        public long getInMilliS() {
+        public long getMilliS() {
             return this.periodLengthMilliS;
+        }
+
+        public String getName() {
+            return periodName.toLowerCase();
         }
     }
 
@@ -458,7 +464,37 @@ public final class OntConfig {
         /**
          * SPARQL variable: providerService.
          */
-        PROVIDER_SERVICE("providerService");
+        PROVIDER_SERVICE("providerService"),
+
+        /**
+         * SPARQL variable: timeWeighting.
+         */
+        TIME_WEIGHTING("timeWeighting"),
+
+        /**
+         * SPARQL variable: activityTime.
+         */
+        ACTIVITY_TIME("activityTime"),
+
+        /**
+         * SPARQL variable: standardDeviation.
+         */
+        STANDARD_DEVIATION("standardDeviation"),
+
+        /**
+         * SPARQL variable: variance.
+         */
+        VARIANCE("variance"),
+
+        /**
+         * SPARQL variable: mean.
+         */
+        MEAN("mean"),
+
+        /**
+         * SPARQL variable: quantity.
+         */
+        QUANTITY("quantity");
 
         private final String variable;
 

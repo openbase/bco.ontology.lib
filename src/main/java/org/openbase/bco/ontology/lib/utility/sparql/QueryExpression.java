@@ -35,7 +35,7 @@ import java.util.List;
  * @author agatting on 10.03.17.
  */
 @SuppressWarnings("checkstyle:multiplestringliterals")
-public final class StaticSparqlExpression {
+public final class QueryExpression {
     //TODO make strings more generic. e.g. insert static strings of OntConfig.java
 
     /**
@@ -134,7 +134,7 @@ public final class StaticSparqlExpression {
                     + "?s ?p ?o . "
                     + "}";
 
-    private StaticSparqlExpression() {
+    private QueryExpression() {
     }
 
     /**
@@ -230,7 +230,8 @@ public final class StaticSparqlExpression {
      * @param dateTimeUntil is the timestamp until.
      * @return a sparql query to get aggregated observations.
      */
-    public static String getAllAggObs(final String period, final String dateTimeFrom, final String dateTimeUntil) {
+    public static String selectAggregatedObservations(final String period, final String dateTimeFrom,
+                                                      final String dateTimeUntil) {
         return "PREFIX NS: <http://www.openbase.org/bco/ontology#> "
                 + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> "
                 + "SELECT ?aggObs ?unit ?timeWeighting ?service ?stateValue ?quantity ?activityTime ?variance ?standardDeviation ?mean WHERE { "

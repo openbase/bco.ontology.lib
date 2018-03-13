@@ -22,6 +22,7 @@ import org.openbase.bco.dal.lib.layer.unit.UnitRemote;
 import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.ReflectionUtility;
 import org.openbase.bco.ontology.lib.utility.rdf.RdfNodeObject;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.bco.ontology.lib.utility.sparql.RdfTriple;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.MethodRegEx;
@@ -32,11 +33,9 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.sparql.SparqlUpdateExpression;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.InstantiationException;
 import org.openbase.jul.exception.MultiException;
-import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
 import org.openbase.jul.extension.rsb.com.RSBFactoryImpl;
@@ -209,7 +208,7 @@ public class StateObservation<T> extends StateSources {
 
         try {
             final String sparql = (OntConfig.getOntologyManagerMode()) ? SparqlUpdateExpression.getSparqlInsertExpression(insert)
-                    : SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, StaticSparqlExpression.getNullWhereExpression());
+                    : SparqlUpdateExpression.getConnectedSparqlUpdateExpression(delete, insert, QueryExpression.getNullWhereExpression());
             LOGGER.info(sparql);
             if (SparqlHttp.uploadSparqlRequest(sparql)) {
                 rsbNotification(serviceType);

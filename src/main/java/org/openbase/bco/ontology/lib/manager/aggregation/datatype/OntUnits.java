@@ -61,11 +61,9 @@ public class OntUnits {
      *
      * @param unitId is the unit, which associated providerServices are needed.
      * @return the {@link OntProviderServices} by match - a mapping of providerServices. Otherwise null.
-     * @throws NotAvailableException is thrown in case the parameter is null.
      */
-    public OntProviderServices getOntProviderServices(final String unitId) throws NotAvailableException {
-        Preconditions.checkNotNull(unitId, "Parameter unitId is null!");
-        return ontUnits.get(unitId);
+    public OntProviderServices getOntProviderServices(final String unitId) {
+        return (unitId == null) ? null : ontUnits.get(unitId);
     }
 
     /**

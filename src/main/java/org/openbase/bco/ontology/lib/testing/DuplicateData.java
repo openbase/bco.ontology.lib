@@ -33,7 +33,7 @@ import org.openbase.bco.ontology.lib.commun.web.SparqlHttp;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.system.config.OntConfig;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.XsdType;
-import org.openbase.bco.ontology.lib.utility.sparql.StaticSparqlExpression;
+import org.openbase.bco.ontology.lib.utility.sparql.QueryExpression;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.NotAvailableException;
 
@@ -228,6 +228,6 @@ public class DuplicateData {
         final String dateTimeFrom = StringModifier.convertToLiteral(OffsetDateTime.of(2017, 4, 19, 0, 0, 0, 0, ZoneOffset.UTC).toString(), XsdType.DATE_TIME);
         final String dateTimeUntil = StringModifier.convertToLiteral(OffsetDateTime.of(2017, 4, 20, 0, 0, 0, 0, ZoneOffset.UTC).toString(), XsdType.DATE_TIME);
 
-        SparqlHttp.uploadSparqlRequest(StaticSparqlExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.getOntologyDbUrl(), 0);
+        SparqlHttp.uploadSparqlRequest(QueryExpression.deleteObservationOfTimeFrame(dateTimeFrom, dateTimeUntil), OntConfig.getOntologyDbUrl(), 0);
     }
 }

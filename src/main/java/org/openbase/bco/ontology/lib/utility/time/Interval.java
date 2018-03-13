@@ -39,8 +39,8 @@ public class Interval {
         this.startMillis = startMillis;
         this.endMillis = endMillis;
 
-        if (startMillis > endMillis) {
-            throw new NotAvailableException("The start value of the time interval is bigger than the end value!");
+        if (startMillis >= endMillis) {
+            throw new NotAvailableException("Start value of the time interval is bigger or equal than end value!");
         }
     }
 

@@ -19,6 +19,7 @@
 package org.openbase.bco.ontology.lib.manager.aggregation;
 
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntAggregatedStateChange;
+import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChange;
 import org.openbase.bco.ontology.lib.manager.aggregation.datatype.OntStateChangeBuf;
 import org.openbase.bco.ontology.lib.utility.StringModifier;
 import org.openbase.bco.ontology.lib.utility.ontology.OntNodeHandler;
@@ -33,6 +34,7 @@ import org.openbase.bco.ontology.lib.system.config.OntConfig.OntPrefix;
 import org.openbase.bco.ontology.lib.system.config.OntConfig.StateValueType;
 import org.openbase.jul.exception.CouldNotPerformException;
 import org.openbase.jul.exception.MultiException;
+import org.openbase.jul.exception.MultiException.ExceptionStack;
 import org.openbase.jul.exception.NotAvailableException;
 import org.openbase.jul.exception.printer.ExceptionPrinter;
 import org.openbase.jul.exception.printer.LogLevel;
@@ -74,123 +76,121 @@ public class DataAssignation extends DataAggregation {
      * Method identifies the based service type and relates associated aggregation processes to get ontology triples for aggregation observations. This method
      * call based on unit (id) level. Incorrect calculations are dropped and associated exceptions are logged.
      *
-     * @param serviceStateChangeMap contains a map of services (keys) and their associated stateChanges. The state changes based on not aggregated or aggregated
-     *                              data type, which are identified by following methods. The state changes are basis for the aggregation.
+     * @param providerService is the providerService.
+     * @param ontStateChanges are the associated state changes.
      * @param unitConnectionTimeMilli is the whole connection time in milliseconds of the current unit. If the state changes based on aggregated observations
      *                                the value will be ignored. Instead the value of the aggregated observations are taken in DataAggregation.
      * @param unitId is the id of the current based unit, which contains the input services and state changes.
      * @return a list of triples to insert the aggregation observation in the ontology.
      * @throws InterruptedException is thrown in case the application was interrupted.
      */
-    List<RdfTriple> identifyServiceType(final HashMap<String, ?> serviceStateChangeMap, final long unitConnectionTimeMilli, final String unitId)
-            throws InterruptedException {
+    List<RdfTriple> identifyServiceType(final String providerService, final List<OntStateChange> ontStateChanges,
+                                        final long unitConnectionTimeMilli, final String unitId) throws InterruptedException {
+
         this.unitId = unitId;
         this.unitConnectionTimeMilli = unitConnectionTimeMilli;
+        this.serviceType = providerService;
         final List<RdfTriple> triples = new ArrayList<>();
-        MultiException.ExceptionStack exceptionStack = null;
+        ExceptionStack exceptionStack = null;
 
-        for (final String serviceType : serviceStateChangeMap.keySet()) {
-            this.serviceType = serviceType;
-
-            try {
-                switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceType))) {
-                    case ACTIVATION_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case BATTERY_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.PERCENT));
-                        break;
-                    case BLIND_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.PERCENT));
-                        break;
-                    case BRIGHTNESS_STATE_SERVICE:
-                        break;
-                    case BUTTON_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case COLOR_STATE_SERVICE:
-                        triples.addAll(hsbStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case CONTACT_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case DOOR_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case EARTHQUAKE_ALARM_STATE_SERVICE:
-                        break;
-                    case FIRE_ALARM_STATE_SERVICE:
-                        break;
-                    case HANDLE_STATE_SERVICE:
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.DOUBLE));
-                        break;
-                    case ILLUMINANCE_STATE_SERVICE:
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.LUX));
-                        break;
-                    case INTENSITY_STATE_SERVICE:
-                        break;
-                    case INTRUSION_ALARM_STATE_SERVICE:
-                        break;
-                    case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
-                        break;
-                    case MOTION_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case PASSAGE_STATE_SERVICE:
-                        break;
-                    case POWER_CONSUMPTION_STATE_SERVICE:
-                        triples.addAll(powerStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case POWER_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case PRESENCE_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case RFID_STATE_SERVICE:
+        try {
+            switch (OntConfig.SERVICE_NAME_MAP.get(StringModifier.firstCharToLowerCase(serviceType))) {
+                case ACTIVATION_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case BATTERY_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.PERCENT));
+                    break;
+                case BLIND_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.PERCENT));
+                    break;
+                case BRIGHTNESS_STATE_SERVICE:
+                    break;
+                case BUTTON_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case COLOR_STATE_SERVICE:
+                    triples.addAll(hsbStateValue(ontStateChanges));
+                    break;
+                case CONTACT_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case DOOR_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case EARTHQUAKE_ALARM_STATE_SERVICE:
+                    break;
+                case FIRE_ALARM_STATE_SERVICE:
+                    break;
+                case HANDLE_STATE_SERVICE:
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.DOUBLE));
+                    break;
+                case ILLUMINANCE_STATE_SERVICE:
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.LUX));
+                    break;
+                case INTENSITY_STATE_SERVICE:
+                    break;
+                case INTRUSION_ALARM_STATE_SERVICE:
+                    break;
+                case MEDICAL_EMERGENCY_ALARM_STATE_SERVICE:
+                    break;
+                case MOTION_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case PASSAGE_STATE_SERVICE:
+                    break;
+                case POWER_CONSUMPTION_STATE_SERVICE:
+                    triples.addAll(powerStateValue(ontStateChanges));
+                    break;
+                case POWER_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case PRESENCE_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case RFID_STATE_SERVICE:
 //                    triples.addAll(rfidStateValue(serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case SMOKE_ALARM_STATE_SERVICE:
-                        break;
-                    case SMOKE_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.PERCENT));
-                        break;
-                    case STANDBY_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case SWITCH_STATE_SERVICE:
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.DOUBLE));
-                        break;
-                    case TAMPER_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case TARGET_TEMPERATURE_STATE_SERVICE:
-                        break;
-                    case TEMPERATURE_ALARM_STATE_SERVICE:
-                        break;
-                    case TEMPERATURE_STATE_SERVICE:
-                        triples.addAll(aggregateContinuousStateValue((List<?>) serviceStateChangeMap.get(serviceType), StateValueType.CELSIUS));
-                        break;
-                    case TEMPEST_ALARM_STATE_SERVICE:
-                        break;
-                    case WATER_ALARM_STATE_SERVICE:
-                        break;
-                    case WINDOW_STATE_SERVICE:
-                        triples.addAll(aggregateDiscreteStateValue((List<?>) serviceStateChangeMap.get(serviceType)));
-                        break;
-                    case UNKNOWN:
-                        // invalid service state
-                        throw new NotAvailableException("Could not assign to providerService UNKNOWN");
-                    default:
-                        // no matched providerService
-                        throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
-                }
-            } catch (CouldNotPerformException ex) {
-                exceptionStack = MultiException.push(this, ex, exceptionStack);
+                    break;
+                case SMOKE_ALARM_STATE_SERVICE:
+                    break;
+                case SMOKE_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.PERCENT));
+                    break;
+                case STANDBY_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case SWITCH_STATE_SERVICE:
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.DOUBLE));
+                    break;
+                case TAMPER_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case TARGET_TEMPERATURE_STATE_SERVICE:
+                    break;
+                case TEMPERATURE_ALARM_STATE_SERVICE:
+                    break;
+                case TEMPERATURE_STATE_SERVICE:
+                    triples.addAll(aggregateContinuousStateValue(ontStateChanges, StateValueType.CELSIUS));
+                    break;
+                case TEMPEST_ALARM_STATE_SERVICE:
+                    break;
+                case WATER_ALARM_STATE_SERVICE:
+                    break;
+                case WINDOW_STATE_SERVICE:
+                    triples.addAll(aggregateDiscreteStateValue(ontStateChanges));
+                    break;
+                case UNKNOWN:
+                    // invalid service state
+                    throw new NotAvailableException("Could not assign to providerService UNKNOWN");
+                default:
+                    // no matched providerService
+                    throw new NotAvailableException("Could not assign to providerService. Add" + OntConfig.SERVICE_NAME_MAP.get(serviceType));
             }
+        } catch (CouldNotPerformException ex) {
+            exceptionStack = MultiException.push(this, ex, exceptionStack);
         }
 
         try {
@@ -213,6 +213,7 @@ public class DataAssignation extends DataAggregation {
      */
     private List<RdfTriple> aggregateDiscreteStateValue(final List<?> stateChanges) throws CouldNotPerformException, InterruptedException {
 
+        //TODO replace data type!!!
         if (stateChanges.get(0) instanceof OntStateChangeBuf) {
             final List<OntStateChangeBuf> bco = OntNodeHandler.getResourceElements((List<OntStateChangeBuf>) stateChanges);
             return buildAggObsOfDiscreteValues(dismissUnusedStateValues(bco));

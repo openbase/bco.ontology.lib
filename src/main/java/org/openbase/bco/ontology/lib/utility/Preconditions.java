@@ -22,10 +22,6 @@ import org.openbase.jul.exception.MultiException;
 import org.openbase.jul.exception.MultiException.ExceptionStack;
 import org.openbase.jul.exception.NotAvailableException;
 
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 /**
  * Interface contains precondition methods to validity reference object(s) as one-liner.
  *
@@ -50,24 +46,25 @@ public interface Preconditions {
     }
 
     /**
-     * Method ensures that an object reference passed as a parameter to the calling method is not null. Possible
-     * NotAvailableException is stacked and returned.
+     * Method checks the input reference is equal null and returns the reference in each case. If the reference is null,
+     * an exception is stacked. Check the exceptionStack in each case.
      *
      * @param reference is the object, which should be checked.
-     * @param source is the source of the reference. Can be ignored by NULL.
-     * @param errorMessage is the exception message to use if the check fails.
-     * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
-     * @return the exceptionStack with an following entry if the check fails. Otherwise input stack is returned.
+     * @param source is the source of the reference. Can be ignored by null.
+     * @param errorMessage is the exception message to use if the reference is null.
+     * @param exceptionStack is used to bundle possible exception. Should be not null!
+     * @return the reference and indirect the exceptionStack with possible new entry.
      */
-    static ExceptionStack checkNotNull(final Object reference, final Object source,
-                                       final String errorMessage, ExceptionStack exceptionStack) {
-        try {
-            exceptionStack = initializeIfNull(exceptionStack);
-            checkNotNull(reference, errorMessage);
-        } catch (NotAvailableException e) {
-            return MultiException.push(source, e, exceptionStack);
+    static <T> T checkNotNull(final T reference, final Object source,
+                              final String errorMessage, ExceptionStack exceptionStack) {
+        assert exceptionStack != null;
+
+        if (reference == null) {
+            final String message = (errorMessage == null) ? "Reference is null." : errorMessage;
+            exceptionStack = initializeIfNull(exceptionStack); // to prevent NPE only
+            exceptionStack.push(source, new NotAvailableException(message));
         }
-        return exceptionStack;
+        return reference;
     }
 
     /**
@@ -116,90 +113,160 @@ public interface Preconditions {
     }
 
     /**
-     * Method executes the input function (needs exactly one argument) and returns the result. If the input function
-     * provokes an exception (cause e.g. wrong parameter), it will be stacked on the input exceptionStack and NULL will
-     * be returned. Check the exceptionStack in this case.
+     * Interface represents a function that accepts one argument and produces a result.
      *
-     * @param function represents a function with one argument and produces an result.
-     * @param functionArgument is the single argument of the function.
-     * @param source is the source of the function. Can be ignored by NULL.
-     * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
-     * @param <T> is the type of the argument to the function.
-     * @param <R> is the type of the result to the function.
-     * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+     * @param <T> is the type of the input to the function.
+     * @param <R> is the type of the result of the function.
      */
-    static <T, R> R callFunction(final Function<T, R> function, final T functionArgument,
-                                 final Object source, ExceptionStack exceptionStack) {
-        try {
-            exceptionStack = initializeIfNull(exceptionStack);
-            return function.apply(functionArgument);
-        } catch (Exception e) {
-            MultiException.push(source, new Exception(e.toString()), exceptionStack);
+    interface Function<T, R> {
+
+        /**
+         * Method executes the input function given as argument and returns the result. If an exception is provoked by
+         * execution, it will be stacked on the input exceptionStack and NULL will be returned. Check exceptionStack.
+         *
+         * @param function represents a function with one argument and produces an result.
+         * @param funcArg is the single argument of the function.
+         * @param source is the source of the function. Can be ignored by NULL.
+         * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
+         * @param <T> is the type of the argument to the function.
+         * @param <R> is the type of the result to the function.
+         * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+         */
+        static <T, R> R apply(final Function<T, R> function, final T funcArg,
+                                     final Object source, ExceptionStack exceptionStack) {
+            try {
+                exceptionStack = initializeIfNull(exceptionStack);
+                return function.applyFunction(funcArg);
+            } catch (Exception e) {
+                MultiException.push(source, new Exception(e.toString()), exceptionStack);
+            }
+            return null;
         }
-        return null;
+
+        /**
+         * Method executes the input function given as argument and returns the result.
+         *
+         * @param function represents a function with one argument and produces an result.
+         * @param funcArg is the single argument of the function.
+         * @param <T> is the type of the argument to the function.
+         * @param <R> is the type of the result to the function.
+         * @return the result of the function with type R.
+         * @throws NotAvailableException is thrown in case the input function provokes an exception.
+         */
+        static <T, R> R apply(final Function<T, R> function, final T funcArg) throws NotAvailableException {
+            try {
+                return function.applyFunction(funcArg);
+            } catch (Exception e) {
+                throw new NotAvailableException("Parameter of invoked lambda function is invalid!", e);
+            }
+        }
+
+        /**
+         * Applies this function to the given argument.
+         *
+         * @param funcArg is the function argument.
+         * @return the function result.
+         * @throws Exception is thrown in case the execution throws an exception based on i.e. wrong arguments.
+         */
+        R applyFunction(T funcArg) throws Exception;
+
     }
 
     /**
-     * Method executes the input function (needs exactly two arguments) and returns the result. If the input function
-     * provokes an exception (cause e.g. wrong parameter), it will be stacked on the input exceptionStack and NULL will
-     * be returned. Check the exceptionStack in this case.
+     * Interface represents a function that accepts two arguments and produces a result.
+     * This is the two-arity specialization of {@link Function}.
      *
-     * @param function represents a function with one argument and produces an result.
-     * @param functionArgOne is the first argument of the function.
-     * @param functionArgTwo is the second argument of the function.
-     * @param source is the source of the function. Can be ignored by NULL.
-     * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
      * @param <T> is the type of the first argument to the function.
      * @param <U> is the type of the second argument to the function.
-     * @param <R> is the type of the result to the function.
-     * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+     * @param <R> is the type of the result of the function.
      */
-    static <T, U, R> R callBiFunction(final BiFunction<T, U, R> function, final T functionArgOne,
-                                      final U functionArgTwo, final Object source, ExceptionStack exceptionStack) {
-        try {
-            exceptionStack = initializeIfNull(exceptionStack);
-            return function.apply(functionArgOne, functionArgTwo);
-        } catch (Exception e) {
-            MultiException.push(source, new Exception(e.toString()), exceptionStack);
+    interface BiFunction<T, U, R> {
+
+        /**
+         * Method executes the input function given as argument and returns the result. If an exception is provoked by
+         * execution, it will be stacked on the input exceptionStack and NULL will be returned. Check exceptionStack.
+         *
+         * @param function represents a function with one argument and produces an result.
+         * @param funcArgOne is the first argument of the function.
+         * @param funcArgTwo is the second argument of the function.
+         * @param source is the source of the function. Can be ignored by NULL.
+         * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
+         * @param <T> is the type of the first argument to the function.
+         * @param <U> is the type of the second argument to the function.
+         * @param <R> is the type of the result to the function.
+         * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+         */
+        static <T, U, R> R apply(final BiFunction<T, U, R> function, final T funcArgOne,
+                                 final U funcArgTwo, final Object source, ExceptionStack exceptionStack) {
+            try {
+                exceptionStack = initializeIfNull(exceptionStack);
+                return function.applyBiFunction(funcArgOne, funcArgTwo);
+            } catch (Exception e) {
+                MultiException.push(source, new Exception(e.toString()), exceptionStack);
+            }
+            return null;
         }
-        return null;
+
+        /**
+         * Applies this biFunction to the given arguments.
+         *
+         * @param funcArgOne is the first function argument.
+         * @param funcArgTwo is the second function argument.
+         * @return the function result.
+         * @throws Exception is thrown in case the execution throws an exception based on i.e. wrong arguments.
+         */
+        R applyBiFunction(final T funcArgOne, final U funcArgTwo) throws Exception;
     }
 
     /**
-     * Method executes the input function without argument and returns the result. If the input function provokes an
-     * exception it will be stacked on the input exceptionStack object and NULL will be returned. Check the
-     * exceptionStack in this case.
+     * Interface represents a supplier of results.
      *
-     * @param function represents a function without any argument and produces an result.
-     * @param source of the function. Can be ignored by NULL.
-     * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
-     * @param <R> is the type of the result to the function.
-     * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+     * @param <R> is the type of results supplied by this supplier.
      */
-    static <R> R callSupplier(final Supplier<R> function, final Object source, ExceptionStack exceptionStack) {
-        try {
-            exceptionStack = initializeIfNull(exceptionStack);
-            return function.get();
-        } catch (Exception e) {
-            MultiException.push(source, new Exception(e.toString()), exceptionStack);
+    interface Supplier<R> {
+        /**
+         * Method executes the input function without argument and returns the result. If the input function provokes an
+         * exception it will be stacked on the input exceptionStack object and NULL will be returned. Check the
+         * exceptionStack in this case.
+         *
+         * @param function represents a function without any argument and produces an result.
+         * @param source of the function. Can be ignored by NULL.
+         * @param exceptionStack is used to bundle possible exception. If NULL a new exceptionStack will be created.
+         * @param <R> is the type of the result to the function.
+         * @return the result of the function with type R. Returns null if an exception occurs. Check exceptionStack.
+         */
+        static <R> R get(final Supplier<R> function, final Object source, ExceptionStack exceptionStack) {
+            try {
+                exceptionStack = initializeIfNull(exceptionStack);
+                return function.getSupplier();
+            } catch (Exception e) {
+                MultiException.push(source, new Exception(e.toString()), exceptionStack);
+            }
+            return null;
         }
-        return null;
-    }
 
-    /**
-     * Method executes the input function without argument and returns the result.
-     *
-     * @param function represents a function without any argument and produces an result.
-     * @param <R> is the type of the result to the function.
-     * @return the result of the function with type R.
-     * @throws NotAvailableException is thrown in case the function throws an exception.
-     */
-    static <R> R callSupplier(final Supplier<R> function) throws NotAvailableException {
-        try {
-            return function.get();
-        } catch (Exception e) {
-            throw new NotAvailableException("Function invalid", e);
+        /**
+         * Method executes the input function without argument and returns the result.
+         *
+         * @param function represents a function without any argument and produces an result.
+         * @param <R> is the type of the result to the function.
+         * @return the result of the function with type R.
+         * @throws NotAvailableException is thrown in case the function throws an exception.
+         */
+        static <R> R get(final Supplier<R> function) throws NotAvailableException {
+            try {
+                return function.getSupplier();
+            } catch (Exception e) {
+                throw new NotAvailableException("Function invalid", e);
+            }
         }
+
+        /**
+         * Gets a result.
+         *
+         * @return a result
+         */
+        R getSupplier();
     }
 
     /**
