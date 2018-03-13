@@ -33,6 +33,8 @@ import org.openbase.jul.pattern.Observer;
 import org.openbase.jul.pattern.Remote.ConnectionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rsb.converter.DefaultConverterRepository;
+import rsb.converter.ProtocolBufferConverter;
 import rst.domotic.ontology.OntologyChangeType.OntologyChange;
 import rst.domotic.ontology.TriggerConfigType.TriggerConfig;
 import rst.domotic.service.ServiceTemplateType.ServiceTemplate.ServiceType;
@@ -46,6 +48,10 @@ public class TriggerImpl implements Trigger {
 
     private static final List<OntologyChange.Category> UNKNOWN_CHANGE = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(TriggerImpl.class);
+
+    static {
+        DefaultConverterRepository.getDefaultConverterRepository().addConverter(new ProtocolBufferConverter<>(OntologyChange.getDefaultInstance()));
+    }
 
     static {
         UNKNOWN_CHANGE.add(OntologyChange.Category.UNKNOWN);
