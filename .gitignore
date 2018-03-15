@@ -101,10 +101,11 @@ local.properties
 ## Directory-based project format:
 
 # User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries
-.idea/libraries
+.idea/
+#.idea/workspace.xml
+#.idea/tasks.xml
+#.idea/dictionaries
+#.idea/libraries
 
 # Sensitive or high-churn files:
 # .idea/dataSources.ids
@@ -178,3 +179,8 @@ gen-external-apklibs
 ### Vim temporary files ###
 *.swp
 
+### Ontology Test Files ###
+/src/*.owl
+/src/catalog-v001.xml
+/src/main/resources/*.owl
+/src/main/resources/catalog-v001.xml
